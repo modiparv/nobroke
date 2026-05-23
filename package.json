@@ -1,0 +1,23 @@
+{
+  "name": "nobroke",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "NoBroke — AI-powered financial planning & wealth-management copilot. Interactive MVP prototype: goal-based corpus projections + drag-and-drop portfolio builder with real-time XIRR and goal-timeline updates.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch",
+    "serve": "serve -s . -l 5173",
+    "dev": "npm run build && npm run serve",
+    "start": "serve -s . -l 5173"
+  },
+  "keywords": [
+    "fintech",
+    "financial-planning",
+    "wealth-management",
+    "sip",
+    "xirr",
+    "portfolio"
+  ],
+  "license": "UNLICENSED"
+}

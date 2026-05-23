@@ -1,0 +1,11 @@
+# dependencies (none required to run — see README)
+node_modules/
+
+# logs / os
+*.log
+.DS_Store
+
+# local verification artifacts
+/screenshots/
+/test-results/
+*.tsbuildinfo
