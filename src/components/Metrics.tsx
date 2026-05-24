@@ -5,10 +5,10 @@ function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
   const pct = Math.max(0, Math.min(1, progress));
   const radius = 30;
   const c = 2 * Math.PI * radius;
-  const color = onTrack ? "#6B5300" : "#B45309";
+  const color = onTrack ? "#1A1AFF" : "#0A0A0A";
   return (
     <svg viewBox="0 0 72 72" className="h-[72px] w-[72px] flex-none">
-      <circle cx="36" cy="36" r={radius} fill="none" stroke="#F2EAD6" strokeWidth="7" />
+      <circle cx="36" cy="36" r={radius} fill="none" stroke="#E6DFD0" strokeWidth="7" />
       <circle
         cx="36"
         cy="36"
@@ -20,7 +20,7 @@ function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
         strokeDasharray={`${(c * pct).toFixed(1)} ${(c * (1 - pct)).toFixed(1)}`}
         transform="rotate(-90 36 36)"
       />
-      <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="600" fill="#2A2208">
+      <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="700" fill="#0A0A0A">
         {Math.round(pct * 100)}%
       </text>
     </svg>
@@ -28,11 +28,11 @@ function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
 }
 
 function Stat({ label, value, sub, accent }: { label: string; value: string; sub: string; accent?: "good" | "bad" }) {
-  const color = accent === "good" ? "text-brand-deep" : accent === "bad" ? "text-[#B45309]" : "text-ink";
+  const color = accent === "good" ? "text-brand" : "text-ink";
   return (
     <div className="rounded-xl border border-line bg-paper p-3">
-      <div className="text-[11px] font-medium text-muted">{label}</div>
-      <div className={`text-lg font-medium ${color}`}>{value}</div>
+      <div className="font-mono text-[10px] uppercase tracking-wide text-muted">{label}</div>
+      <div className={`text-lg font-semibold ${color}`}>{value}</div>
       <div className="text-[11px] text-muted">{sub}</div>
     </div>
   );
@@ -44,16 +44,16 @@ export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: P
       <div className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-paper p-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium text-muted">Projected corpus at goal</span>
+            <span className="font-mono text-[10px] uppercase tracking-wide text-muted">Projected corpus at goal</span>
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                r.onTrack ? "bg-brand-deep text-white" : "bg-[#B45309] text-white"
+              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                r.onTrack ? "bg-brand text-white" : "bg-ink text-white"
               }`}
             >
               {r.onTrack ? "On track" : "Catching up"}
             </span>
           </div>
-          <div className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">{formatINR(r.projectedCorpus)}</div>
+          <div className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">{formatINR(r.projectedCorpus)}</div>
           <div className="text-[11px] text-muted">
             in {formatYears(goal.horizonYears)} · {formatINR(r.realProjectedCorpus)} in today's value
           </div>

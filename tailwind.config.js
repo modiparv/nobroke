@@ -4,27 +4,26 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: "#2A2208",
-        muted: "#8A7B53",
-        line: "#ECE0C4",
-        paper: "#FFF8EA",
-        // Golden Investments palette
+        // Restrained "non-color" system: warm cream + black, cobalt does the signalling.
+        ink: "#0A0A0A", // near-black — headlines, body, logo, primary CTA
+        muted: "#8C8C8C", // mid grey — small/mono labels
+        line: "#E6DFD0", // hairline borders on cream
+        paper: "#F4F0E8", // warm paper background + subtle insets
         brand: {
-          DEFAULT: "#FFCC00",
-          deep: "#6B5300",
-          dark: "#4A3900",
-          mint: "#FFE6B3",
+          DEFAULT: "#1A1AFF", // electric cobalt — the single accent / signal color
+          deep: "#0A0A0A", // black — strong surfaces & emphasis text
+          dark: "#1414CC", // darker cobalt — hover for blue surfaces
+          mint: "#E6E6FF", // faint cobalt tint
         },
-        gold200: "#FFE6B3",
-        gold50: "#FFF2E6",
-        // asset-class colors (kept distinct for the basket)
-        equity: "#7F77DD",
-        debt: "#1D9E75",
-        gold: "#EF9F27",
-        hybrid: "#2CC295",
+        // asset bands — kept distinct but inside the restrained palette
+        equity: "#1A1AFF", // growth → the signal blue
+        debt: "#111111", // black
+        gold: "#A89A7C", // warm taupe (stays in the paper family)
+        hybrid: "#4B4BE6", // blue tint
       },
       fontFamily: {
-        sans: ['"IBM Plex Sans"', "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        sans: ['Archivo', "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        mono: ['"JetBrains Mono"', "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       borderRadius: { xl: "12px", "2xl": "16px" },
     },

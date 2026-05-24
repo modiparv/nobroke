@@ -29,7 +29,7 @@ function Slider({ row }: { row: Row }) {
         aria-label={row.label}
         className="w-full"
         onChange={(e) => row.onChange(Number(e.target.value))}
-        style={{ background: `linear-gradient(90deg,#FFCC00 ${pct}%,#ECE0C4 ${pct}%)`, borderRadius: 999, height: 6 }}
+        style={{ background: `linear-gradient(90deg,#1A1AFF ${pct}%,#E6DFD0 ${pct}%)`, borderRadius: 999, height: 6 }}
       />
     </div>
   );
@@ -74,22 +74,16 @@ export default function GoalParameters({ goal }: { goal: PlanGoal }) {
       display: formatINR(s.currentSavings),
       onChange: actions.setSavings,
     },
-    {
-      label: "Assumed inflation",
-      min: 0,
-      max: 12,
-      step: 0.5,
-      value: s.inflation * 100,
-      display: (s.inflation * 100).toFixed(1) + "%",
-      onChange: (v) => actions.setInflation(v / 100),
-    },
   ];
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       {rows.map((r) => (
         <Slider key={r.label} row={r} />
       ))}
+      <p className="font-mono text-[10px] uppercase tracking-wide text-muted">
+        Targets grow at {(s.inflation * 100).toFixed(0)}% assumed inflation · adjust in the plan
+      </p>
     </div>
   );
 }

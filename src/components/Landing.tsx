@@ -42,10 +42,10 @@ export default function Landing() {
 
       <main className="mx-auto max-w-6xl px-5 sm:px-10">
         <section className="max-w-3xl py-16 sm:py-24">
-          <span className="inline-block rounded-full border border-line px-3 py-1.5 text-xs font-medium uppercase tracking-[0.08em] text-brand-deep">
-            The dating agent for your money
+          <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+            <span className="inline-block h-1.5 w-1.5 bg-brand" /> The dating agent for your money
           </span>
-          <h1 className="mt-6 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
+          <h1 className="mt-6 text-5xl font-extrabold uppercase leading-[0.92] tracking-[-0.03em] sm:text-7xl lg:text-8xl">
             Meet the goals <br className="hidden sm:block" />
             you'll fall for.
           </h1>
@@ -65,7 +65,7 @@ export default function Landing() {
         </section>
 
         <section id="how" className="border-t border-line py-16">
-          <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">It works like a great first date</h2>
+          <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">It works like a great first date</h2>
           <div className="mt-10 grid gap-5 sm:grid-cols-3">
             <Step n="01" title="We get to know you" body="A handful of fun questions about your dreams and lifestyle. We never lead with “what's your salary.”" />
             <Step n="02" title="We find your match" body="Your answers become a goal plan and a portfolio tuned to your timeline and risk." />
@@ -83,7 +83,7 @@ export default function Landing() {
 
       <section className="mx-auto mb-14 max-w-6xl px-5 sm:px-10">
         <div className="rounded-3xl bg-brand-deep px-8 py-14 text-center text-white sm:py-20">
-          <h2 className="text-2xl font-semibold tracking-tight sm:text-4xl">Your money deserves a great match.</h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-5xl">Your money deserves a great match.</h2>
           <button
             className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-medium text-brand-deep transition hover:bg-brand-mint"
             onClick={actions.startOnboarding}

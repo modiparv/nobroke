@@ -5,7 +5,7 @@ import { actions, useStore } from "../store";
 function TypingDots() {
   return (
     <div className="flex justify-start">
-      <div className="flex w-fit items-center gap-1 rounded-2xl rounded-bl-sm bg-[#15233B] px-4 py-3">
+      <div className="flex w-fit items-center gap-1 rounded-2xl rounded-bl-sm bg-ink px-4 py-3">
         {[0, 0.2, 0.4].map((d, i) => (
           <span key={i} className="typing-dot inline-block h-1.5 w-1.5 rounded-full bg-white/70" style={{ animationDelay: `${d}s` }} />
         ))}
@@ -34,7 +34,7 @@ export default function ChatDock() {
       {!s.chatOpen && (
         <button
           onClick={actions.openChat}
-          className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-brand px-4 py-3 text-sm font-medium text-ink shadow-lg transition hover:bg-[#E6B800]"
+          className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-brand-dark"
         >
           <span aria-hidden>💬</span> Ask AI
         </button>
@@ -45,12 +45,12 @@ export default function ChatDock() {
           <div className="absolute inset-0 bg-ink/30" onClick={actions.closeChat} />
           <aside className="panel-slide absolute right-0 top-0 flex h-full w-full flex-col bg-white shadow-2xl sm:w-[400px]">
             <header className="flex items-center gap-2.5 border-b border-line px-4 py-3.5">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand text-sm font-semibold text-ink">N</span>
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink text-sm font-bold text-white">N</span>
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 text-[15px] font-semibold">
-                  NoBroke AI <span className="live-dot inline-block h-2 w-2 rounded-full bg-[#22C55E]" />
+                  NoBroke AI <span className="live-dot inline-block h-2 w-2 rounded-full bg-brand" />
                 </div>
-                <div className="text-[11px] text-muted">online · finance assistant</div>
+                <div className="font-mono text-[10px] uppercase tracking-wide text-muted">online · finance assistant</div>
               </div>
               <button onClick={actions.closeChat} aria-label="Close" className="grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-paper hover:text-ink">
                 ✕
@@ -77,7 +77,7 @@ export default function ChatDock() {
                 <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                   <span
                     className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed text-white ${
-                      m.role === "user" ? "rounded-br-sm bg-[#1FA463]" : "rounded-bl-sm bg-[#15233B]"
+                      m.role === "user" ? "rounded-br-sm bg-brand" : "rounded-bl-sm bg-ink"
                     }`}
                   >
                     {m.text}
@@ -102,7 +102,7 @@ export default function ChatDock() {
                 onClick={() => send(text)}
                 disabled={s.chatTyping || !text.trim()}
                 aria-label="Send"
-                className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-brand text-lg text-ink transition hover:bg-[#E6B800] disabled:opacity-40"
+                className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-brand text-lg text-white transition hover:bg-brand-dark disabled:opacity-40"
               >
                 ↑
               </button>

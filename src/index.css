@@ -9,14 +9,19 @@ html {
   scroll-behavior: smooth;
 }
 body {
-  @apply bg-white text-ink font-sans antialiased;
+  @apply bg-paper text-ink font-sans antialiased;
   margin: 0;
 }
+/* Tight, editorial display headings (Archivo). */
+h1,
+h2 {
+  letter-spacing: -0.02em;
+}
 
-/* Range sliders — gold accent. NOTE: width is set per-instance via utility
+/* Range sliders — cobalt accent. NOTE: width is set per-instance via utility
    classes (w-full / w-28), never globally, so compact holdings sliders stay small. */
 input[type="range"] {
-  accent-color: #ffcc00;
+  accent-color: #1a1aff;
   height: 4px;
   cursor: pointer;
 }
@@ -30,26 +35,9 @@ input[type="range"] {
 }
 
 /* ---------- Animations ---------- */
-@keyframes sway {
-  0%, 100% { transform: rotate(-1.2deg); }
-  50% { transform: rotate(1.2deg); }
-}
-@keyframes rise {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
-}
-@keyframes sparkle {
-  0%, 100% { opacity: 0.2; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.1); }
-}
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
-}
-@keyframes pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.04); }
-  100% { transform: scale(1); }
 }
 @keyframes slideIn {
   from { transform: translateX(100%); }
@@ -69,9 +57,5 @@ input[type="range"] {
 .typing-dot { animation: typing 1.2s infinite ease-in-out; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .basket-sway { animation: sway 4s ease-in-out infinite; transform-origin: 50% 6%; }
-  .band-rise { animation: rise 0.9s ease-out both; transform-box: fill-box; transform-origin: 50% 100%; }
-  .sparkle-anim { animation: sparkle 2.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-  .basket-pop { animation: pop 0.3s ease; }
   .panel-slide { animation: slideIn 0.3s ease both; }
 }

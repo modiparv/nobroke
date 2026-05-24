@@ -49,7 +49,7 @@ function SliderStep({ step, onContinue }: { step: Step; onContinue: () => void }
             setValue(v);
             setAnswer(step.field!, v);
           }}
-          style={{ background: `linear-gradient(90deg,#FFCC00 ${pct}%,#ECE0C4 ${pct}%)`, borderRadius: 999, height: 6 }}
+          style={{ background: `linear-gradient(90deg,#1A1AFF ${pct}%,#E6DFD0 ${pct}%)`, borderRadius: 999, height: 6 }}
         />
       </div>
       <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={onContinue}>
@@ -97,7 +97,7 @@ export default function Onboarding() {
       <div className="flex flex-1 items-center">
         {step.kind === "intro" && (
           <div className="fade-up flex w-full flex-col items-center text-center">
-            <span className="text-5xl">💚</span>
+            <span className="text-5xl">💙</span>
             <h1 className="mt-4 max-w-[16ch] text-3xl font-semibold tracking-tight sm:text-4xl">{step.title}</h1>
             <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
             <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={next}>
