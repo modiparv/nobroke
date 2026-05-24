@@ -1,22 +1,22 @@
-/** Pre-built model portfolios. Each set of weights sums to 100. */
+/** Pre-built model portfolios over products. Each set of weights sums to 100. */
 export const MODEL_PORTFOLIOS = {
     conservative: {
-        label: "Conservative",
-        tagline: "Capital protection first",
-        allocation: { liquid: 30, debt_gilt: 30, debt_corp: 20, gold: 10, equity_large: 10 },
+        label: "Steady",
+        tagline: "Protect first",
+        allocation: { debt_fd: 25, debt_ppf: 15, bond_gsec: 20, bond_corp: 10, debt_liquid: 10, comm_gold: 10, mf_hybrid: 10 },
     },
     balanced: {
         label: "Balanced",
-        tagline: "Growth with guardrails",
-        allocation: { equity_large: 30, equity_mid: 10, equity_intl: 10, debt_corp: 25, debt_gilt: 15, gold: 10 },
+        tagline: "Grow with guardrails",
+        allocation: { mf_index: 20, mf_flexi: 10, eq_large: 15, bond_corp: 15, bond_gsec: 10, debt_fd: 10, comm_gold: 10, mf_hybrid: 10 },
     },
     aggressive: {
-        label: "Aggressive",
-        tagline: "Maximize long-run growth",
-        allocation: { equity_large: 40, equity_mid: 25, equity_intl: 15, gold: 10, debt_corp: 10 },
+        label: "Bold",
+        tagline: "Maximize growth",
+        allocation: { eq_large: 20, eq_mid: 15, eq_small: 10, mf_index: 15, mf_flexi: 15, eq_intl: 10, comm_gold: 10, bond_corp: 5 },
     },
 };
-/** Heuristic "AI" allocation based on the goal's time horizon. */
+/** Heuristic "AURA" allocation based on the goal's time horizon. */
 export function autoAllocation(horizonYears) {
     let profile;
     if (horizonYears <= 3)

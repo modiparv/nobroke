@@ -1,7 +1,6 @@
-import { CUSTOM_GOAL_ID } from "../../lib/goals.js";
 import { formatINR, formatYears } from "../../lib/format.js";
 import { el } from "../dom.js";
-import { getState, setState, subscribe } from "../state.js";
+import { currentGoal, getState, setState, subscribe, updateCurrentGoal } from "../state.js";
 
 interface ControlSpec {
   label: string;
@@ -23,7 +22,6 @@ function makeControl(spec: ControlSpec): { node: HTMLElement; sync: () => void }
     step: String(spec.step),
     "aria-label": spec.label,
   }) as HTMLInputElement;
-
   slider.addEventListener("input", () => spec.set(parseFloat(slider.value)));
 
   const node = el("div", { class: "param" }, [
@@ -42,29 +40,14 @@ function makeControl(spec: ControlSpec): { node: HTMLElement; sync: () => void }
 }
 
 export function mountGoalParameters(root: HTMLElement): void {
-  const syncers: Array<() => void> = [];
-
-  // Goal name
-  const nameInput = el("input", {
-    class: "param-name",
-    type: "text",
-    maxlength: "40",
-    "aria-label": "Goal name",
-  }) as HTMLInputElement;
-  nameInput.addEventListener("input", () => setState({ goalName: nameInput.value }));
-  syncers.push(() => {
-    if (document.activeElement !== nameInput) nameInput.value = getState().goalName;
-  });
-  root.append(el("div", { class: "param-name-wrap" }, [el("span", { class: "param-label", text: "Goal name" }), nameInput]));
-
   const controls: ControlSpec[] = [
     {
       label: "Target amount (today's value)",
       min: 50000,
       max: 50000000,
       step: 50000,
-      get: () => getState().targetToday,
-      set: (v) => setState({ targetToday: v, goalId: CUSTOM_GOAL_ID }),
+      get: () => currentGoal()?.targetToday ?? 0,
+      set: (v) => updateCurrentGoal({ targetToday: v }),
       display: (v) => formatINR(v),
     },
     {
@@ -72,18 +55,9 @@ export function mountGoalParameters(root: HTMLElement): void {
       min: 1,
       max: 30,
       step: 1,
-      get: () => getState().horizonYears,
-      set: (v) => setState({ horizonYears: v, goalId: CUSTOM_GOAL_ID }),
+      get: () => currentGoal()?.horizonYears ?? 1,
+      set: (v) => updateCurrentGoal({ horizonYears: v }),
       display: (v) => formatYears(v),
-    },
-    {
-      label: "Current savings (lump sum)",
-      min: 0,
-      max: 10000000,
-      step: 25000,
-      get: () => getState().currentSavings,
-      set: (v) => setState({ currentSavings: v }),
-      display: (v) => formatINR(v),
     },
     {
       label: "Monthly investment (SIP)",
@@ -93,6 +67,15 @@ export function mountGoalParameters(root: HTMLElement): void {
       get: () => getState().monthlySip,
       set: (v) => setState({ monthlySip: v }),
       display: (v) => formatINR(v) + "/mo",
+    },
+    {
+      label: "Current savings (lump sum)",
+      min: 0,
+      max: 20000000,
+      step: 25000,
+      get: () => getState().currentSavings,
+      set: (v) => setState({ currentSavings: v }),
+      display: (v) => formatINR(v),
     },
     {
       label: "Assumed inflation",
@@ -105,6 +88,7 @@ export function mountGoalParameters(root: HTMLElement): void {
     },
   ];
 
+  const syncers: Array<() => void> = [];
   for (const spec of controls) {
     const c = makeControl(spec);
     root.append(c.node);

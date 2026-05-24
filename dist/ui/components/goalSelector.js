@@ -1,45 +1,72 @@
-import { GOALS, CUSTOM_GOAL_ID } from "../../lib/goals.js";
-import { autoAllocation } from "../../lib/portfolios.js";
+import { GOALS } from "../../lib/goals.js";
 import { clear, el } from "../dom.js";
-import { getState, setState, subscribe } from "../state.js";
+import { buildPlanGoal, getState, setState, subscribe } from "../state.js";
 export function mountGoalSelector(root) {
-    const chips = [];
-    function selectGoal(goalId) {
-        const g = GOALS.find((x) => x.id === goalId);
-        if (g) {
-            const auto = autoAllocation(g.horizonYears);
-            setState({
-                goalId: g.id,
-                goalName: g.name,
-                targetToday: g.targetToday,
-                horizonYears: g.horizonYears,
-                allocation: { ...auto.allocation },
-                activeProfile: auto.profile,
+    const menu = el("div", { class: "goal-add-menu", style: "display:none" });
+    let menuOpen = false;
+    function closeMenu() {
+        menuOpen = false;
+        menu.style.display = "none";
+    }
+    function addGoal(id) {
+        const s = getState();
+        if (s.goals.some((g) => g.id === id)) {
+            setState({ currentGoalId: id });
+            return;
+        }
+        const goal = buildPlanGoal(id, s.profile);
+        setState({ goals: [...s.goals, goal], currentGoalId: goal.id });
+    }
+    function buildMenu() {
+        clear(menu);
+        const existing = new Set(getState().goals.map((g) => g.id));
+        for (const g of GOALS) {
+            if (existing.has(g.id))
+                continue;
+            const item = el("button", { class: "goal-add-item", type: "button" }, [
+                el("span", { class: "goal-emoji", text: g.emoji }),
+                el("span", { text: g.name }),
+            ]);
+            item.addEventListener("click", () => {
+                addGoal(g.id);
+                closeMenu();
             });
+            menu.append(item);
         }
-        else {
-            setState({ goalId: CUSTOM_GOAL_ID, goalName: getState().goalName || "My Goal" });
-        }
+        if (!menu.children.length)
+            menu.append(el("span", { class: "goal-add-empty", text: "All goals added 🎉" }));
     }
-    function addChip(id, emoji, name) {
-        const chip = el("button", { class: "goal-chip", type: "button", "data-id": id }, [
-            el("span", { class: "goal-emoji", text: emoji }),
-            el("span", { class: "goal-chip-name", text: name }),
+    function render() {
+        clear(root);
+        const s = getState();
+        const chips = el("div", { class: "goal-chips" });
+        for (const g of s.goals) {
+            const chip = el("button", { class: "goal-chip" + (g.id === s.currentGoalId ? " active" : ""), type: "button" }, [
+                el("span", { class: "goal-emoji", text: g.emoji }),
+                el("span", { class: "goal-chip-name", text: g.name }),
+            ]);
+            chip.addEventListener("click", () => setState({ currentGoalId: g.id }));
+            chips.append(chip);
+        }
+        const addBtn = el("button", { class: "goal-chip goal-add-btn", type: "button" }, [
+            el("span", { class: "goal-emoji", text: "＋" }),
+            el("span", { class: "goal-chip-name", text: "Add goal" }),
         ]);
-        chip.addEventListener("click", () => selectGoal(id));
-        chips.push(chip);
-        root.append(chip);
+        addBtn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            menuOpen = !menuOpen;
+            if (menuOpen)
+                buildMenu();
+            menu.style.display = menuOpen ? "flex" : "none";
+        });
+        chips.append(addBtn);
+        root.append(el("div", { class: "goal-selector-wrap" }, [chips, menu]));
     }
-    clear(root);
-    for (const g of GOALS)
-        addChip(g.id, g.emoji, g.name);
-    addChip(CUSTOM_GOAL_ID, "✨", "Custom");
-    function sync() {
-        const { goalId } = getState();
-        for (const chip of chips)
-            chip.classList.toggle("active", chip.getAttribute("data-id") === goalId);
-    }
-    sync();
-    subscribe(sync);
+    document.addEventListener("click", () => {
+        if (menuOpen)
+            closeMenu();
+    });
+    render();
+    subscribe(render);
 }
 //# sourceMappingURL=goalSelector.js.map

@@ -1,5 +1,5 @@
 import type { Allocation, PlanInputs, PlanResult, ProjectionPoint } from "../types.js";
-import { ASSET_MAP, EQUITY_IDS } from "./assets.js";
+import { PRODUCT_MAP } from "./assets.js";
 
 export function allocationTotal(alloc: Allocation): number {
   return Object.values(alloc).reduce((s, v) => s + (v > 0 ? v : 0), 0);
@@ -15,7 +15,7 @@ export function normalizedWeights(alloc: Allocation): Array<{ id: string; weight
 
 export function blendedReturn(alloc: Allocation): number {
   return normalizedWeights(alloc).reduce(
-    (s, { id, weight }) => s + weight * (ASSET_MAP[id]?.expectedReturn ?? 0),
+    (s, { id, weight }) => s + weight * (PRODUCT_MAP[id]?.expectedReturn ?? 0),
     0,
   );
 }
@@ -23,15 +23,26 @@ export function blendedReturn(alloc: Allocation): number {
 /** Simplified blended volatility (weighted average; ignores cross-correlation). */
 export function blendedVolatility(alloc: Allocation): number {
   return normalizedWeights(alloc).reduce(
-    (s, { id, weight }) => s + weight * (ASSET_MAP[id]?.volatility ?? 0),
+    (s, { id, weight }) => s + weight * (PRODUCT_MAP[id]?.volatility ?? 0),
     0,
   );
 }
 
-export function equityWeight(alloc: Allocation): number {
+/** Share of the portfolio in growth (equity-like) products. */
+export function growthWeight(alloc: Allocation): number {
   return normalizedWeights(alloc)
-    .filter((x) => EQUITY_IDS.includes(x.id))
+    .filter((x) => PRODUCT_MAP[x.id]?.growth)
     .reduce((s, x) => s + x.weight, 0);
+}
+
+/** Share of the portfolio in each top-level category. */
+export function categoryWeights(alloc: Allocation): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const { id, weight } of normalizedWeights(alloc)) {
+    const cat = PRODUCT_MAP[id]?.categoryId;
+    if (cat) out[cat] = (out[cat] ?? 0) + weight;
+  }
+  return out;
 }
 
 /**
@@ -165,5 +176,6 @@ export function computePlan(inputs: PlanInputs): PlanResult {
     months,
     realProjectedCorpus: projectedCorpus / Math.pow(1 + inputs.inflation, inputs.horizonYears),
     goalReachedMonth,
+    progress: reqCorpus > 0 ? projectedCorpus / reqCorpus : 1,
   };
 }

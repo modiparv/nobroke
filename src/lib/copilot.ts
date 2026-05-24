@@ -1,6 +1,6 @@
 import type { Insight, PlanInputs, PlanResult } from "../types.js";
-import { allocationTotal, equityWeight, normalizedWeights } from "./finance.js";
-import { ASSET_MAP } from "./assets.js";
+import { allocationTotal, growthWeight, normalizedWeights } from "./finance.js";
+import { PRODUCT_MAP } from "./assets.js";
 import { formatINR, formatPct, formatYears } from "./format.js";
 
 /** Rule-based "copilot" guidance. Ordered by importance; capped at 5. */
@@ -46,20 +46,20 @@ export function generateInsights(inputs: PlanInputs, r: PlanResult): Insight[] {
   }
 
   // Risk vs horizon.
-  const eq = equityWeight(inputs.allocation);
+  const eq = growthWeight(inputs.allocation);
   if (inputs.horizonYears <= 3 && eq > 0.4) {
     out.push({
       tone: "warning",
       icon: "🎢",
-      title: "Aggressive for a short goal",
-      message: `${formatPct(eq, 0)} in equity with only ${formatYears(inputs.horizonYears)} left is risky — a dip could land right when you need the cash. Lean toward debt/liquid.`,
+      title: "Bold for a short goal",
+      message: `${formatPct(eq, 0)} in growth assets with only ${formatYears(inputs.horizonYears)} left is risky — a dip could land right when you need the cash. Lean toward debt/liquid.`,
     });
   } else if (inputs.horizonYears >= 10 && eq < 0.4) {
     out.push({
       tone: "info",
       icon: "🌱",
       title: "Room to grow",
-      message: `With ${formatYears(inputs.horizonYears)} on your side, ${formatPct(eq, 0)} equity is conservative. More equity has historically compounded faster over long horizons.`,
+      message: `With ${formatYears(inputs.horizonYears)} on your side, ${formatPct(eq, 0)} in growth assets is cautious. More equity has historically compounded faster over long horizons.`,
     });
   }
 
@@ -70,7 +70,7 @@ export function generateInsights(inputs: PlanInputs, r: PlanResult): Insight[] {
       tone: "info",
       icon: "🧺",
       title: "Concentrated bet",
-      message: `${formatPct(top.weight, 0)} sits in ${ASSET_MAP[top.id]?.shortName ?? "one asset"}. Spreading across assets smooths the ride.`,
+      message: `${formatPct(top.weight, 0)} sits in ${PRODUCT_MAP[top.id]?.shortName ?? "one product"}. Spreading across products smooths the ride.`,
     });
   }
 

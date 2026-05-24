@@ -4,10 +4,9 @@ export function renderCopilot(container, insights) {
     const header = el("div", { class: "copilot-head" }, [
         el("div", { class: "copilot-avatar", text: "◆" }),
         el("div", { class: "copilot-id" }, [
-            el("span", { class: "copilot-name", text: "NoBroke Copilot" }),
-            el("span", { class: "copilot-status", text: "Watching your plan in real time" }),
+            el("span", { class: "copilot-name", text: "What AURA sees" }),
+            el("span", { class: "copilot-status", text: "Updated live as you tweak" }),
         ]),
-        el("span", { class: "pill pill-ai", text: "AI" }),
     ]);
     const list = el("div", { class: "insight-list" });
     for (const ins of insights) {

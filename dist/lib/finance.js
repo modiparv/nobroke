@@ -1,4 +1,4 @@
-import { ASSET_MAP, EQUITY_IDS } from "./assets.js";
+import { PRODUCT_MAP } from "./assets.js";
 export function allocationTotal(alloc) {
     return Object.values(alloc).reduce((s, v) => s + (v > 0 ? v : 0), 0);
 }
@@ -11,16 +11,27 @@ export function normalizedWeights(alloc) {
     return entries.map(([id, v]) => ({ id, weight: v / total }));
 }
 export function blendedReturn(alloc) {
-    return normalizedWeights(alloc).reduce((s, { id, weight }) => s + weight * (ASSET_MAP[id]?.expectedReturn ?? 0), 0);
+    return normalizedWeights(alloc).reduce((s, { id, weight }) => s + weight * (PRODUCT_MAP[id]?.expectedReturn ?? 0), 0);
 }
 /** Simplified blended volatility (weighted average; ignores cross-correlation). */
 export function blendedVolatility(alloc) {
-    return normalizedWeights(alloc).reduce((s, { id, weight }) => s + weight * (ASSET_MAP[id]?.volatility ?? 0), 0);
+    return normalizedWeights(alloc).reduce((s, { id, weight }) => s + weight * (PRODUCT_MAP[id]?.volatility ?? 0), 0);
 }
-export function equityWeight(alloc) {
+/** Share of the portfolio in growth (equity-like) products. */
+export function growthWeight(alloc) {
     return normalizedWeights(alloc)
-        .filter((x) => EQUITY_IDS.includes(x.id))
+        .filter((x) => PRODUCT_MAP[x.id]?.growth)
         .reduce((s, x) => s + x.weight, 0);
+}
+/** Share of the portfolio in each top-level category. */
+export function categoryWeights(alloc) {
+    const out = {};
+    for (const { id, weight } of normalizedWeights(alloc)) {
+        const cat = PRODUCT_MAP[id]?.categoryId;
+        if (cat)
+            out[cat] = (out[cat] ?? 0) + weight;
+    }
+    return out;
 }
 /**
  * Month-by-month corpus path. Contributions are start-of-month (annuity due):
@@ -145,6 +156,7 @@ export function computePlan(inputs) {
         months,
         realProjectedCorpus: projectedCorpus / Math.pow(1 + inputs.inflation, inputs.horizonYears),
         goalReachedMonth,
+        progress: reqCorpus > 0 ? projectedCorpus / reqCorpus : 1,
     };
 }
 //# sourceMappingURL=finance.js.map

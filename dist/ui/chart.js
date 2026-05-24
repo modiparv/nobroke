@@ -41,13 +41,15 @@ export function renderChart(container, r) {
     }
     const endX = xOf(maxX);
     const endY = yOf(r.projectedCorpus);
-    const endColor = r.onTrack ? "#059669" : "#e11d48";
+    const endDot = r.onTrack
+        ? `<circle cx="${endX.toFixed(1)}" cy="${endY.toFixed(1)}" r="5" fill="#0a0a0a"/>`
+        : `<circle cx="${endX.toFixed(1)}" cy="${endY.toFixed(1)}" r="5" fill="#ffffff" stroke="#0a0a0a" stroke-width="2"/>`;
     container.innerHTML = `
   <svg viewBox="0 0 ${W} ${H}" class="chart-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Projected corpus growth over time">
     <defs>
       <linearGradient id="nb-area" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.30"/>
-        <stop offset="100%" stop-color="#4f46e5" stop-opacity="0.02"/>
+        <stop offset="0%" stop-color="#0a0a0a" stop-opacity="0.16"/>
+        <stop offset="100%" stop-color="#0a0a0a" stop-opacity="0.01"/>
       </linearGradient>
     </defs>
     ${grid}${yLabels}${xLabels}
@@ -55,7 +57,7 @@ export function renderChart(container, r) {
     <path d="${investedPath}" class="c-invested"/>
     <path d="${valuePath}" class="c-value"/>
     ${targetLine}${reachMarker}
-    <circle cx="${endX.toFixed(1)}" cy="${endY.toFixed(1)}" r="5" fill="${endColor}"/>
+    ${endDot}
     <g class="c-hover" style="opacity:0">
       <line class="c-hover-line" x1="0" y1="${PAD.top}" x2="0" y2="${(PAD.top + plotH).toFixed(1)}"/>
       <circle class="c-hover-dot" r="4.5"/>
@@ -64,9 +66,9 @@ export function renderChart(container, r) {
   </svg>
   <div class="chart-tooltip" style="opacity:0"></div>
   <div class="chart-legend">
-    <span class="lg"><i class="swatch" style="background:#4f46e5"></i>Projected value</span>
-    <span class="lg"><i class="swatch dash" style="background:#94a3b8"></i>Amount invested</span>
-    <span class="lg"><i class="swatch" style="background:#e11d48"></i>Inflation-adjusted target</span>
+    <span class="lg"><i class="swatch" style="background:#0a0a0a"></i>Projected value</span>
+    <span class="lg"><i class="swatch dash" style="background:#bfbfbf"></i>Amount invested</span>
+    <span class="lg"><i class="swatch" style="background:#0a0a0a"></i>Inflation-adjusted target</span>
   </div>`;
     // Hover interaction
     const svg = qs(".chart-svg", container);
