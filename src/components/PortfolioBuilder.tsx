@@ -28,7 +28,6 @@ export default function PortfolioBuilder() {
   const [dragOver, setDragOver] = useState(false);
 
   const total = allocationTotal(alloc);
-  const left = Math.max(0, Math.round(100 - total));
   const bands = bandWeights(alloc);
   const ret = blendedReturn(alloc);
   const vol = blendedVolatility(alloc);
@@ -39,18 +38,49 @@ export default function PortfolioBuilder() {
   const amountFor = (id: string) => (total > 0 ? (alloc[id] / total) * sip : 0);
 
   const setAlloc = (a: Allocation, profile: RiskProfile | null) => actions.setAllocation(a, profile);
+  // Weights are always kept summing to 100 so the basket is strictly 100% — the
+  // % is a true share of the monthly amount, and the ₹ values follow the SIP.
+  const normalizeTo100 = (a: Allocation): Allocation => {
+    const entries = Object.entries(a);
+    const t = entries.reduce((s, [, v]) => s + (v > 0 ? v : 0), 0);
+    if (t <= 0) return {};
+    return Object.fromEntries(entries.map(([k, v]) => [k, v > 0 ? (v / t) * 100 : 0]));
+  };
   const addFund = (id: string) => {
     if (id in alloc) return;
-    const w = total < 100 ? Math.min(100 - total, 25) : 10;
-    setAlloc({ ...alloc, [id]: w }, null);
+    const ids = Object.keys(alloc);
+    if (ids.length === 0) {
+      setAlloc({ [id]: 100 }, null);
+      return;
+    }
+    const share = 100 / (ids.length + 1);
+    const rest = 100 - share;
+    const otherTotal = ids.reduce((sum, k) => sum + (alloc[k] ?? 0), 0);
+    const next: Allocation = { [id]: share };
+    for (const k of ids) next[k] = otherTotal > 0 ? ((alloc[k] ?? 0) / otherTotal) * rest : rest / ids.length;
+    setAlloc(next, null);
   };
-  const setWeight = (id: string, w: number) => setAlloc({ ...alloc, [id]: w }, null);
+  // Dragging a slider sets this fund's %, and the others rebalance to keep 100%.
+  const setWeight = (id: string, w: number) => {
+    const ids = Object.keys(alloc);
+    if (ids.length <= 1) {
+      setAlloc({ [id]: 100 }, null);
+      return;
+    }
+    const wv = Math.max(0, Math.min(100, w));
+    const others = ids.filter((k) => k !== id);
+    const otherTotal = others.reduce((sum, k) => sum + (alloc[k] ?? 0), 0);
+    const rest = 100 - wv;
+    const next: Allocation = { [id]: wv };
+    for (const k of others) next[k] = otherTotal > 0 ? ((alloc[k] ?? 0) / otherTotal) * rest : rest / others.length;
+    setAlloc(next, null);
+  };
   const removeFund = (id: string) => {
     const next = { ...alloc };
     delete next[id];
-    setAlloc(next, null);
+    setAlloc(normalizeTo100(next), null);
   };
-  const applyPreset = (key: RiskProfile) => setAlloc({ ...MODEL_PORTFOLIOS[key].allocation }, key);
+  const applyPreset = (key: RiskProfile) => setAlloc(normalizeTo100(MODEL_PORTFOLIOS[key].allocation), key);
 
   const filtered = FUNDS.filter(
     (f) => (cat === "all" || f.assetClass === cat) && f.name.toLowerCase().includes(search.toLowerCase()),
@@ -196,9 +226,6 @@ export default function PortfolioBuilder() {
                 {l.label} {Math.round(l.v)}%
               </span>
             ))}
-            <span className="inline-flex items-center gap-1.5 text-muted">
-              <span className="inline-block h-2.5 w-2.5 rounded-sm border border-line" /> {left}% left
-            </span>
           </div>
 
           {total === 0 && (
