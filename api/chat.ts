@@ -23,6 +23,7 @@ ${planData ? `User's current plan: ${JSON.stringify(planData)}` : ""}`;
 }
 
 export default async function handler(req: any, res: any) {
+  console.log("[/api/chat]", req.method, "key:", process.env.GROQ_API_KEY ? "present" : "MISSING");
   if (req.method !== "POST") {
     res.status(405).json({ text: "Method not allowed" });
     return;
