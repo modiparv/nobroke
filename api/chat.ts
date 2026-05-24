@@ -23,14 +23,11 @@ ${planData ? `User's current plan: ${JSON.stringify(planData)}` : ""}`;
 }
 
 export default async function handler(req: any, res: any) {
-  // Diagnostic (names + presence only, never values).
-  const groqEnvNames = Object.keys(process.env).filter((k) => /groq/i.test(k));
-  const key = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
-  console.log("[/api/chat]", req.method, "groq env names:", groqEnvNames.join(",") || "(none)", "keyPresent:", Boolean(key));
   if (req.method !== "POST") {
-    res.status(405).json({ text: "Method not allowed", groqEnv: groqEnvNames, keyPresent: Boolean(key) });
+    res.status(405).json({ text: "Method not allowed" });
     return;
   }
+  const key = process.env.GROQ_API_KEY;
   if (!key) {
     res.status(200).json({ text: "NoBroke AI isn't switched on yet — add GROQ_API_KEY in Vercel and redeploy." });
     return;
