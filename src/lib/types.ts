@@ -49,6 +49,8 @@ export interface PlanGoal {
   horizonYears: number;
   allocation: Allocation;
   activeProfile: RiskProfile | null;
+  /** Whether the user has confirmed the goal's target year/tenure. */
+  tenureConfirmed: boolean;
 }
 
 export type CityTier = "metro" | "tier1" | "tier2" | "tier3";

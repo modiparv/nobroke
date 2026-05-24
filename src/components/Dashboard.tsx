@@ -4,6 +4,7 @@ import { btnGhost, card } from "../ui";
 import Logo from "./Logo";
 import GoalSelector from "./GoalSelector";
 import GoalParameters from "./GoalParameters";
+import GoalPlanner from "./GoalPlanner";
 import PortfolioBuilder from "./PortfolioBuilder";
 import Metrics from "./Metrics";
 import Insights from "./Insights";
@@ -70,6 +71,11 @@ export default function Dashboard() {
             </div>
             <Metrics r={result} goal={goal} inflation={s.inflation} />
           </section>
+        </div>
+
+        {/* Goals & money split — target year, priority, per-goal monthly amount */}
+        <div className="mt-5">
+          <GoalPlanner />
         </div>
 
         {/* Builder — graph + rebalancing together */}

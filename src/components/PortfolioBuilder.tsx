@@ -4,7 +4,7 @@ import { MODEL_PORTFOLIOS } from "../lib/portfolios";
 import { allocationTotal, bandWeights, blendedReturn, blendedVolatility, computePlan } from "../lib/finance";
 import { formatINR, formatPct } from "../lib/format";
 import type { Allocation, AssetClassId, RiskProfile } from "../lib/types";
-import { actions, currentGoal, toPlanInputs, useStore } from "../store";
+import { actions, currentGoal, goalMonthly, goalsByPriority, toPlanInputs, useStore } from "../store";
 import Chart from "./Chart";
 import { sectionLabel } from "../ui";
 
@@ -34,7 +34,8 @@ export default function PortfolioBuilder() {
   const risk = total > 0 ? riskLabel(vol) : "—";
   const tenYr = 100000 * Math.pow(1 + ret, 10);
   const result = computePlan(toPlanInputs(s));
-  const sip = s.monthlySip;
+  // The builder splits THIS goal's monthly money (its share of the pool) across instruments.
+  const sip = goal ? goalMonthly(s, goal.id) : 0;
   const amountFor = (id: string) => (total > 0 ? (alloc[id] / total) * sip : 0);
 
   const setAlloc = (a: Allocation, profile: RiskProfile | null) => actions.setAllocation(a, profile);
@@ -104,7 +105,8 @@ export default function PortfolioBuilder() {
         <div>
           <h2 className="text-[22px] font-bold tracking-tight">Build your portfolio</h2>
           <p className="text-[13px] text-muted">
-            How your <span className="font-semibold text-ink">{formatINR(sip)}/mo</span> gets split. Tap a fund to add it, then drag the sliders to set how much goes where.
+            Splitting <span className="font-semibold text-ink">{goal?.name}</span>'s{" "}
+            <span className="font-semibold text-ink">{formatINR(sip)}/mo</span> across investments. Tap a fund to add it, then drag to set the mix.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-full border border-line px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide">
@@ -112,6 +114,43 @@ export default function PortfolioBuilder() {
           <span className="text-muted">Live · {risk} risk</span>
         </div>
       </div>
+
+      {/* Money across goals — the goal split (tap to edit a goal's instrument mix) */}
+      {s.goals.length > 1 && (
+        <div className="mb-5 rounded-2xl border border-line bg-paper p-3">
+          <div className="flex items-center justify-between">
+            <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
+              <Marker /> Money across goals
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-wide text-muted">tap to edit a goal's mix</span>
+          </div>
+          <div className="mt-2 flex flex-col gap-1">
+            {goalsByPriority(s).map((g) => {
+              const amt = goalMonthly(s, g.id);
+              const share = s.monthlySip > 0 ? (amt / s.monthlySip) * 100 : 0;
+              const isCur = g.id === goal?.id;
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => actions.setCurrentGoal(g.id)}
+                  className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition ${isCur ? "border border-ink bg-white" : "border border-transparent hover:bg-white"}`}
+                >
+                  <span className="w-4 flex-none text-center">{g.emoji}</span>
+                  <span className="w-20 flex-none truncate text-[12px] font-semibold sm:w-28">{g.name}</span>
+                  <span className="h-2 flex-1 overflow-hidden rounded-full bg-line">
+                    <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${share}%`, background: isCur ? "#1A1AFF" : "#0A0A0A" }} />
+                  </span>
+                  <span className="w-20 flex-none text-right text-[12px] font-bold tabular-nums">
+                    {formatINR(amt)}
+                    <span className="text-[9px] font-normal text-muted">/mo</span>
+                  </span>
+                  <span className="w-8 flex-none text-right font-mono text-[10px] text-muted">{Math.round(share)}%</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         {/* ---- Funds library (drag source) ---- */}

@@ -54,10 +54,10 @@ export default function GoalParameters({ goal }: { goal: PlanGoal }) {
       step: 1,
       value: goal.horizonYears,
       display: formatYears(goal.horizonYears),
-      onChange: (v) => actions.updateCurrentGoal({ horizonYears: v }),
+      onChange: (v) => actions.setGoalTenure(goal.id, v),
     },
     {
-      label: "Monthly investment (SIP)",
+      label: "Total monthly investment",
       min: 0,
       max: 500000,
       step: 1000,
@@ -66,7 +66,7 @@ export default function GoalParameters({ goal }: { goal: PlanGoal }) {
       onChange: actions.setSip,
     },
     {
-      label: "Current savings (lump sum)",
+      label: "Total current savings",
       min: 0,
       max: 20000000,
       step: 25000,

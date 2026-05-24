@@ -5,7 +5,7 @@ import { autoAllocation } from "./lib/portfolios";
 import { adjustedTarget, emptyProfile, suggestedSip } from "./lib/profile";
 import { askGroq } from "./lib/groq";
 import { FUND_MAP } from "./lib/funds";
-import { computePlan } from "./lib/finance";
+import { computePlan, blendedReturn, requiredCorpus, requiredSip } from "./lib/finance";
 
 export type Screen = "landing" | "onboarding" | "dashboard";
 
@@ -20,6 +20,10 @@ export interface AppState {
   currentSavings: number;
   goals: PlanGoal[];
   currentGoalId: string;
+  /** Per-goal share of the monthly investment, as a percent (sums to 100). */
+  goalShares: Record<string, number>;
+  /** Goal ids in priority order (default: shortest tenure first). */
+  goalOrder: string[];
   chatOpen: boolean;
   chat: ChatMessage[];
   chatTyping: boolean;
@@ -36,6 +40,8 @@ let state: AppState = {
   currentSavings: 0,
   goals: [],
   currentGoalId: "",
+  goalShares: {},
+  goalOrder: [],
   chatOpen: false,
   chat: [],
   chatTyping: false,
@@ -65,28 +71,87 @@ export function useStore(): AppState {
 export function currentGoal(s: AppState = state): PlanGoal | undefined {
   return s.goals.find((g) => g.id === s.currentGoalId);
 }
-export function toPlanInputs(s: AppState = state): PlanInputs {
-  const g = currentGoal(s);
-  return {
-    targetToday: g?.targetToday ?? 0,
-    horizonYears: g?.horizonYears ?? 1,
-    currentSavings: s.currentSavings,
-    monthlySip: s.monthlySip,
-    inflation: s.inflation,
-    allocation: g?.allocation ?? {},
-  };
+/** Fraction (0..1) of the monthly pool assigned to a goal; equal split as a fallback. */
+export function goalShareFraction(s: AppState, id: string): number {
+  const v = s.goalShares[id];
+  if (v == null) return s.goals.length ? 1 / s.goals.length : 1;
+  return v / 100;
+}
+export function goalMonthly(s: AppState, id: string): number {
+  return s.monthlySip * goalShareFraction(s, id);
+}
+/** Goals in priority order (falls back to declaration order). */
+export function goalsByPriority(s: AppState = state): PlanGoal[] {
+  const order = s.goalOrder.length ? s.goalOrder : s.goals.map((g) => g.id);
+  const byId = new Map(s.goals.map((g) => [g.id, g] as const));
+  const out: PlanGoal[] = [];
+  for (const id of order) {
+    const g = byId.get(id);
+    if (g) out.push(g);
+  }
+  for (const g of s.goals) if (!order.includes(g.id)) out.push(g);
+  return out;
 }
 export function planInputsForGoal(s: AppState, g: PlanGoal): PlanInputs {
+  const share = goalShareFraction(s, g.id);
   return {
     targetToday: g.targetToday,
     horizonYears: g.horizonYears,
-    currentSavings: s.currentSavings,
-    monthlySip: s.monthlySip,
+    currentSavings: s.currentSavings * share,
+    monthlySip: s.monthlySip * share,
     inflation: s.inflation,
     allocation: g.allocation,
   };
 }
-function buildPlanGoal(goalId: string, profile: Profile, horizonOverride?: number): PlanGoal {
+export function toPlanInputs(s: AppState = state): PlanInputs {
+  const g = currentGoal(s);
+  if (!g) return { targetToday: 0, horizonYears: 1, currentSavings: 0, monthlySip: 0, inflation: s.inflation, allocation: {} };
+  return planInputsForGoal(s, g);
+}
+
+/** Recommend how to split the monthly pool across goals: fund the highest-priority
+    (shortest-tenure) goals' monthly need first (waterfall); if there's surplus, split
+    it proportionally to need. Returns percents summing to ~100. */
+export function recommendShares(goals: PlanGoal[], order: string[], monthlySip: number, inflation: number): Record<string, number> {
+  const shares: Record<string, number> = {};
+  if (goals.length === 0) return shares;
+  if (monthlySip <= 0) {
+    const each = 100 / goals.length;
+    for (const g of goals) shares[g.id] = each;
+    return shares;
+  }
+  const required: Record<string, number> = {};
+  let totalReq = 0;
+  for (const g of goals) {
+    const reqCorpus = requiredCorpus(g.targetToday, inflation, g.horizonYears);
+    const req = requiredSip(reqCorpus, 0, blendedReturn(g.allocation), g.horizonYears);
+    required[g.id] = req;
+    totalReq += req;
+  }
+  if (totalReq <= 0) {
+    const each = 100 / goals.length;
+    for (const g of goals) shares[g.id] = each;
+    return shares;
+  }
+  if (monthlySip >= totalReq) {
+    for (const g of goals) shares[g.id] = (required[g.id] / totalReq) * 100;
+    return shares;
+  }
+  const ordered = order.length ? order.filter((id) => goals.some((g) => g.id === id)) : goals.map((g) => g.id);
+  let remaining = monthlySip;
+  for (const id of ordered) {
+    const give = Math.max(0, Math.min(required[id] ?? 0, remaining));
+    shares[id] = (give / monthlySip) * 100;
+    remaining -= give;
+  }
+  for (const g of goals) if (!(g.id in shares)) shares[g.id] = 0;
+  return shares;
+}
+
+function orderByTenure(goals: PlanGoal[]): string[] {
+  return [...goals].sort((a, b) => a.horizonYears - b.horizonYears).map((g) => g.id);
+}
+function buildPlanGoal(goalId: string, profile: Profile, horizonOverride?: number, confirmed = false): PlanGoal {
   const g = GOAL_MAP[goalId];
   const horizon = horizonOverride ?? g.horizonYears;
   const auto = autoAllocation(horizon);
@@ -98,6 +163,7 @@ function buildPlanGoal(goalId: string, profile: Profile, horizonOverride?: numbe
     horizonYears: horizon,
     allocation: { ...auto.allocation },
     activeProfile: auto.profile,
+    tenureConfirmed: confirmed,
   };
 }
 
@@ -127,11 +193,17 @@ export const actions = {
   finishOnboarding: () => {
     const selected = state.selectedGoalIds.length ? state.selectedGoalIds : ["home"];
     const timeline = state.onboardingAnswers.timeline ? Number(state.onboardingAnswers.timeline) : undefined;
-    const goals = selected.map((id, i) => buildPlanGoal(id, state.profile, i === 0 ? timeline : undefined));
+    const goals = selected.map((id, i) =>
+      buildPlanGoal(id, state.profile, i === 0 ? timeline : undefined, i === 0 && timeline != null),
+    );
+    const monthlySip = suggestedSip(state.profile);
+    const order = orderByTenure(goals);
     set({
       goals,
       currentGoalId: goals[0].id,
-      monthlySip: suggestedSip(state.profile),
+      goalOrder: order,
+      goalShares: recommendShares(goals, order, monthlySip, state.inflation),
+      monthlySip,
       currentSavings: state.profile.existingSavings,
       screen: "dashboard",
     });
@@ -148,13 +220,17 @@ export const actions = {
       existingSavings: 1500000,
     };
     const selected = ["home", "travel", "fire"];
-    const goals = selected.map((id, i) => buildPlanGoal(id, profile, i === 0 ? 7 : undefined));
+    const goals = selected.map((id, i) => buildPlanGoal(id, profile, i === 0 ? 7 : undefined, true));
+    const monthlySip = suggestedSip(profile);
+    const order = orderByTenure(goals);
     set({
       profile,
       selectedGoalIds: selected,
       goals,
       currentGoalId: goals[0].id,
-      monthlySip: suggestedSip(profile),
+      goalOrder: order,
+      goalShares: recommendShares(goals, order, monthlySip, state.inflation),
+      monthlySip,
       currentSavings: profile.existingSavings,
       screen: "dashboard",
     });
@@ -175,12 +251,50 @@ export const actions = {
       return;
     }
     const goal = buildPlanGoal(id, state.profile);
-    set({ goals: [...state.goals, goal], currentGoalId: goal.id });
+    const goals = [...state.goals, goal];
+    const order = orderByTenure(goals);
+    set({
+      goals,
+      currentGoalId: goal.id,
+      goalOrder: order,
+      goalShares: recommendShares(goals, order, state.monthlySip, state.inflation),
+    });
   },
 
   setSip: (v: number) => set({ monthlySip: v }),
   setSavings: (v: number) => set({ currentSavings: v }),
   setInflation: (v: number) => set({ inflation: v }),
+
+  // ---- Goal-based waterfall: target year, priority, money split ----
+  setGoalTenure: (id: string, horizonYears: number) => {
+    const h = Math.max(1, Math.round(horizonYears));
+    set({ goals: state.goals.map((g) => (g.id === id ? { ...g, horizonYears: h, tenureConfirmed: true } : g)) });
+  },
+  moveGoalPriority: (id: string, dir: -1 | 1) => {
+    const order = state.goalOrder.length ? [...state.goalOrder] : state.goals.map((g) => g.id);
+    const i = order.indexOf(id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= order.length) return;
+    [order[i], order[j]] = [order[j], order[i]];
+    set({ goalOrder: order });
+  },
+  setGoalAmount: (id: string, amountINR: number) => {
+    const sip = state.monthlySip;
+    const ids = state.goals.map((g) => g.id);
+    if (ids.length === 0 || sip <= 0) return;
+    if (ids.length === 1) {
+      set({ goalShares: { [id]: 100 } });
+      return;
+    }
+    const wv = Math.max(0, Math.min(100, (amountINR / sip) * 100));
+    const others = ids.filter((k) => k !== id);
+    const otherTotal = others.reduce((acc, k) => acc + (state.goalShares[k] ?? 0), 0);
+    const rest = 100 - wv;
+    const shares: Record<string, number> = { [id]: wv };
+    for (const k of others) shares[k] = otherTotal > 0 ? ((state.goalShares[k] ?? 0) / otherTotal) * rest : rest / others.length;
+    set({ goalShares: shares });
+  },
+  recommendGoalSplit: () => set({ goalShares: recommendShares(state.goals, state.goalOrder, state.monthlySip, state.inflation) }),
 
   // ---- Chat (Groq-powered) ----
   openChat: () => set({ chatOpen: true }),
@@ -209,8 +323,9 @@ function buildPlanData(s: AppState): unknown | null {
     goal: g.name,
     targetTodayINR: g.targetToday,
     horizonYears: g.horizonYears,
-    monthlySipINR: s.monthlySip,
-    currentSavingsINR: s.currentSavings,
+    monthlySipINR: Math.round(goalMonthly(s, g.id)),
+    monthlyPoolINR: s.monthlySip,
+    currentSavingsINR: Math.round(s.currentSavings * goalShareFraction(s, g.id)),
     inflationPct: Math.round(s.inflation * 100),
     projectedCorpusINR: Math.round(r.projectedCorpus),
     requiredCorpusINR: Math.round(r.requiredCorpus),
