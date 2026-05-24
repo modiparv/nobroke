@@ -7,7 +7,7 @@ import { askGroq } from "./lib/groq";
 import { FUND_MAP } from "./lib/funds";
 import { computePlan, blendedReturn, requiredCorpus, requiredSip } from "./lib/finance";
 
-export type Screen = "landing" | "onboarding" | "dashboard";
+export type Screen = "landing" | "onboarding" | "goals" | "dashboard";
 
 export interface AppState {
   screen: Screen;
@@ -24,6 +24,8 @@ export interface AppState {
   goalShares: Record<string, number>;
   /** Goal ids in priority order (default: shortest tenure first). */
   goalOrder: string[];
+  /** True once the user manually reorders priority (stops auto-sort by tenure). */
+  goalOrderCustom: boolean;
   chatOpen: boolean;
   chat: ChatMessage[];
   chatTyping: boolean;
@@ -42,6 +44,7 @@ let state: AppState = {
   currentGoalId: "",
   goalShares: {},
   goalOrder: [],
+  goalOrderCustom: false,
   chatOpen: false,
   chat: [],
   chatTyping: false,
@@ -170,6 +173,8 @@ function buildPlanGoal(goalId: string, profile: Profile, horizonOverride?: numbe
 // ---- Navigation ----
 export const actions = {
   goLanding: () => set({ screen: "landing" }),
+  goGoals: () => set({ screen: "goals" }),
+  goPortfolio: () => set({ screen: "dashboard" }),
 
   startOnboarding: () =>
     set({ screen: "onboarding", onboardingStepIndex: 0, onboardingAnswers: {}, selectedGoalIds: [], profile: emptyProfile() }),
@@ -203,9 +208,10 @@ export const actions = {
       currentGoalId: goals[0].id,
       goalOrder: order,
       goalShares: recommendShares(goals, order, monthlySip, state.inflation),
+      goalOrderCustom: false,
       monthlySip,
       currentSavings: state.profile.existingSavings,
-      screen: "dashboard",
+      screen: "goals",
     });
   },
 
@@ -230,6 +236,7 @@ export const actions = {
       currentGoalId: goals[0].id,
       goalOrder: order,
       goalShares: recommendShares(goals, order, monthlySip, state.inflation),
+      goalOrderCustom: false,
       monthlySip,
       currentSavings: profile.existingSavings,
       screen: "dashboard",
@@ -252,7 +259,7 @@ export const actions = {
     }
     const goal = buildPlanGoal(id, state.profile);
     const goals = [...state.goals, goal];
-    const order = orderByTenure(goals);
+    const order = state.goalOrderCustom ? [...state.goalOrder, goal.id] : orderByTenure(goals);
     set({
       goals,
       currentGoalId: goal.id,
@@ -266,9 +273,12 @@ export const actions = {
   setInflation: (v: number) => set({ inflation: v }),
 
   // ---- Goal-based waterfall: target year, priority, money split ----
+  setGoalTarget: (id: string, targetToday: number) =>
+    set({ goals: state.goals.map((g) => (g.id === id ? { ...g, targetToday: Math.max(0, Math.round(targetToday)) } : g)) }),
   setGoalTenure: (id: string, horizonYears: number) => {
     const h = Math.max(1, Math.round(horizonYears));
-    set({ goals: state.goals.map((g) => (g.id === id ? { ...g, horizonYears: h, tenureConfirmed: true } : g)) });
+    const goals = state.goals.map((g) => (g.id === id ? { ...g, horizonYears: h, tenureConfirmed: true } : g));
+    set({ goals, goalOrder: state.goalOrderCustom ? state.goalOrder : orderByTenure(goals) });
   },
   moveGoalPriority: (id: string, dir: -1 | 1) => {
     const order = state.goalOrder.length ? [...state.goalOrder] : state.goals.map((g) => g.id);
@@ -276,7 +286,17 @@ export const actions = {
     const j = i + dir;
     if (i < 0 || j < 0 || j >= order.length) return;
     [order[i], order[j]] = [order[j], order[i]];
-    set({ goalOrder: order });
+    set({ goalOrder: order, goalOrderCustom: true });
+  },
+  reorderGoals: (draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+    const order = state.goalOrder.length ? [...state.goalOrder] : state.goals.map((g) => g.id);
+    const from = order.indexOf(draggedId);
+    const to = order.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+    order.splice(from, 1);
+    order.splice(to, 0, draggedId);
+    set({ goalOrder: order, goalOrderCustom: true });
   },
   setGoalAmount: (id: string, amountINR: number) => {
     const sip = state.monthlySip;
@@ -315,7 +335,7 @@ export const actions = {
 /** Compact plan JSON injected into the AI's system prompt on the dashboard. */
 function buildPlanData(s: AppState): unknown | null {
   const g = currentGoal(s);
-  if (s.screen !== "dashboard" || !g) return null;
+  if ((s.screen !== "dashboard" && s.screen !== "goals") || !g) return null;
   const r = computePlan(toPlanInputs(s));
   const allocationPct: Record<string, number> = {};
   for (const [id, w] of Object.entries(g.allocation)) allocationPct[FUND_MAP[id]?.name ?? id] = w;
