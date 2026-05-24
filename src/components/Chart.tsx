@@ -29,38 +29,38 @@ export default function Chart({ r }: { r: PlanResult }) {
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Projected growth">
         <defs>
           <linearGradient id="g-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#2CC295" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#2CC295" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="#FFCC00" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#FFCC00" stopOpacity="0.03" />
           </linearGradient>
         </defs>
         {yTicks.map((v, i) => (
           <g key={i}>
-            <line x1={PAD.l} y1={y(v)} x2={PAD.l + PW} y2={y(v)} stroke="#EEF2F1" strokeWidth="1" />
-            <text x={PAD.l - 10} y={y(v) + 4} textAnchor="end" fontSize="11" fill="#9aa5a1">
+            <line x1={PAD.l} y1={y(v)} x2={PAD.l + PW} y2={y(v)} stroke="#F2EAD6" strokeWidth="1" />
+            <text x={PAD.l - 10} y={y(v) + 4} textAnchor="end" fontSize="11" fill="#A99B6E">
               {formatINR(v)}
             </text>
           </g>
         ))}
         {xTicks.map((m, i) => (
-          <text key={i} x={x(m)} y={PAD.t + PH + 22} textAnchor="middle" fontSize="11" fill="#9aa5a1">
+          <text key={i} x={x(m)} y={PAD.t + PH + 22} textAnchor="middle" fontSize="11" fill="#A99B6E">
             {formatYears(m / 12)}
           </text>
         ))}
         <path d={area} fill="url(#g-area)" />
-        <path d={investedPath} fill="none" stroke="#BFD8CF" strokeWidth="1.6" strokeDasharray="4 4" />
-        <path d={valuePath} fill="none" stroke="#03654C" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
-        <line x1={PAD.l} y1={ty} x2={PAD.l + PW} y2={ty} stroke="#04130F" strokeWidth="1.3" strokeDasharray="2 4" />
-        <text x={PAD.l + PW} y={ty - 8} textAnchor="end" fontSize="11" fontWeight="500" fill="#04130F">
+        <path d={investedPath} fill="none" stroke="#E0CFA0" strokeWidth="1.6" strokeDasharray="4 4" />
+        <path d={valuePath} fill="none" stroke="#6B5300" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
+        <line x1={PAD.l} y1={ty} x2={PAD.l + PW} y2={ty} stroke="#2A2208" strokeWidth="1.3" strokeDasharray="2 4" />
+        <text x={PAD.l + PW} y={ty - 8} textAnchor="end" fontSize="11" fontWeight="500" fill="#2A2208">
           Target {formatINR(r.requiredCorpus)}
         </text>
-        <circle cx={x(maxX)} cy={y(r.projectedCorpus)} r="5" fill={r.onTrack ? "#03654C" : "#B45309"} />
+        <circle cx={x(maxX)} cy={y(r.projectedCorpus)} r="5" fill={r.onTrack ? "#6B5300" : "#B45309"} />
       </svg>
       <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted">
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-1 w-3.5 rounded bg-brand-deep" /> Projected value
+          <span className="inline-block h-1 w-3.5 rounded" style={{ background: "#6B5300" }} /> Projected value
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-1 w-3.5 rounded" style={{ background: "#BFD8CF" }} /> Amount invested
+          <span className="inline-block h-1 w-3.5 rounded" style={{ background: "#E0CFA0" }} /> Amount invested
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-1 w-3.5 rounded bg-ink" /> Inflation-adjusted target

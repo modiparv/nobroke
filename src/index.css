@@ -13,15 +13,14 @@ body {
   margin: 0;
 }
 
-/* Range sliders — green accent, light track */
+/* Range sliders — gold accent. NOTE: width is set per-instance via utility
+   classes (w-full / w-28), never globally, so compact holdings sliders stay small. */
 input[type="range"] {
-  accent-color: #2cc295;
-  width: 100%;
+  accent-color: #ffcc00;
   height: 4px;
   cursor: pointer;
 }
 
-/* Hide scrollbars on horizontal chip rows */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -30,10 +29,10 @@ input[type="range"] {
   scrollbar-width: none;
 }
 
-/* ---------- Basket + UI animations ---------- */
+/* ---------- Animations ---------- */
 @keyframes sway {
-  0%, 100% { transform: rotate(-1.5deg); }
-  50% { transform: rotate(1.5deg); }
+  0%, 100% { transform: rotate(-1.2deg); }
+  50% { transform: rotate(1.2deg); }
 }
 @keyframes rise {
   from { transform: scaleY(0); }
@@ -65,35 +64,14 @@ input[type="range"] {
   30% { opacity: 1; transform: translateY(-3px); }
 }
 
-.fade-up {
-  animation: fadeUp 0.32s ease both;
-}
-.live-dot {
-  animation: blink 1.4s ease-in-out infinite;
-}
-.typing-dot {
-  animation: typing 1.2s infinite ease-in-out;
-}
+.fade-up { animation: fadeUp 0.32s ease both; }
+.live-dot { animation: blink 1.4s ease-in-out infinite; }
+.typing-dot { animation: typing 1.2s infinite ease-in-out; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .basket-sway {
-    animation: sway 4s ease-in-out infinite;
-    transform-origin: 50% 4%;
-  }
-  .band-rise {
-    animation: rise 1s ease-out both;
-    transform-box: fill-box;
-    transform-origin: 50% 100%;
-  }
-  .sparkle-anim {
-    animation: sparkle 2.5s ease-in-out infinite;
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-  .basket-pop {
-    animation: pop 0.3s ease;
-  }
-  .panel-slide {
-    animation: slideIn 0.3s ease both;
-  }
+  .basket-sway { animation: sway 4s ease-in-out infinite; transform-origin: 50% 6%; }
+  .band-rise { animation: rise 0.9s ease-out both; transform-box: fill-box; transform-origin: 50% 100%; }
+  .sparkle-anim { animation: sparkle 2.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .basket-pop { animation: pop 0.3s ease; }
+  .panel-slide { animation: slideIn 0.3s ease both; }
 }

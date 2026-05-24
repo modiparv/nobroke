@@ -5,11 +5,11 @@ interface Props {
   pop: number;
 }
 
-const X = 72;
-const W = 176;
-const TOP = 136;
-const BOT = 268;
+const DARK = "#3A2E0A";
+const TOP = 130;
+const BOT = 256;
 const H = BOT - TOP;
+const BODY = "M66 128 L254 128 L234 252 Q231 266 217 266 L103 266 Q89 266 86 252 Z";
 
 export default function Basket({ bands, pop }: Props) {
   const [popping, setPopping] = useState(false);
@@ -31,65 +31,56 @@ export default function Basket({ bands, pop }: Props) {
   const goldY = debtY - goldH;
   const equityY = goldY - equityH;
 
-  const weaveH = [];
-  for (let i = 1; i <= 8; i++) weaveH.push(TOP + (H / 9) * i);
-  const weaveV = [];
-  for (let i = 1; i <= 6; i++) weaveV.push(X + (W / 7) * i);
+  const slats = Array.from({ length: 13 }, (_, i) => 66 + (188 / 13) * (i + 0.5));
+  const rings = Array.from({ length: 7 }, (_, i) => TOP + (H / 7) * (i + 0.5));
 
   return (
-    <svg viewBox="0 0 320 300" className="w-full" role="img" aria-label="Your portfolio basket">
+    <svg viewBox="0 0 320 300" className="mx-auto block w-full max-w-[340px]" role="img" aria-label="Your portfolio basket">
       <defs>
         <clipPath id="basket-body">
-          <path d={`M${X},${TOP} L${X + W},${TOP} L${X + W},${BOT - 18} Q${X + W},${BOT} ${X + W - 22},${BOT} L${X + 22},${BOT} Q${X},${BOT} ${X},${BOT - 18} Z`} />
+          <path d={BODY} />
         </clipPath>
       </defs>
 
       <g className={`basket-sway ${popping ? "basket-pop" : ""}`}>
         {/* Handle */}
-        <path d="M95 130 Q160 44 225 130" fill="none" stroke="#04130F" strokeWidth="3" strokeLinecap="round" />
-        <path d="M106 132 Q160 62 214 132" fill="none" stroke="#04130F" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+        <path d="M92 124 Q160 48 228 124" fill="none" stroke={DARK} strokeWidth="4" strokeLinecap="round" />
+        <path d="M104 126 Q160 66 216 126" fill="none" stroke={DARK} strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
 
-        {/* Bands (clipped to body) */}
         <g clipPath="url(#basket-body)">
-          <rect x={X} y={TOP} width={W} height={H} fill="#ffffff" />
-          {debtH > 0 && <rect className="band-rise" style={{ animationDelay: "0s" }} x={X} y={debtY} width={W} height={debtH} fill="#1D9E75" />}
-          {goldH > 0 && <rect className="band-rise" style={{ animationDelay: "0.4s" }} x={X} y={goldY} width={W} height={goldH} fill="#EF9F27" />}
-          {equityH > 0 && <rect className="band-rise" style={{ animationDelay: "0.8s" }} x={X} y={equityY} width={W} height={equityH} fill="#7F77DD" />}
+          <rect x="58" y={TOP} width="204" height={H} fill="#FFFDF6" />
+          {debtH > 0 && <rect className="band-rise" style={{ animationDelay: "0s" }} x="58" y={debtY} width="204" height={debtH} fill="#1D9E75" opacity="0.9" />}
+          {goldH > 0 && <rect className="band-rise" style={{ animationDelay: "0.35s" }} x="58" y={goldY} width="204" height={goldH} fill="#EF9F27" opacity="0.9" />}
+          {equityH > 0 && <rect className="band-rise" style={{ animationDelay: "0.7s" }} x="58" y={equityY} width="204" height={equityH} fill="#7F77DD" opacity="0.9" />}
 
-          {/* Weave over the bands */}
-          {weaveH.map((y, idx) => (
-            <line key={`h${idx}`} x1={X} y1={y} x2={X + W} y2={y} stroke="#04130F" strokeWidth="1.5" opacity="0.16" />
+          {/* Woven texture over the bands */}
+          {slats.map((x, i) => (
+            <rect key={`s${i}`} x={x - 3} y={TOP} width="6" height={H} rx="3" fill={DARK} opacity="0.08" />
           ))}
-          {weaveV.map((x, idx) => (
-            <line key={`v${idx}`} x1={x} y1={TOP} x2={x} y2={BOT} stroke="#04130F" strokeWidth="2" opacity="0.1" />
+          {rings.map((y, i) => (
+            <line key={`r${i}`} x1="58" y1={y} x2="262" y2={y} stroke={DARK} strokeWidth="1.5" opacity="0.1" />
           ))}
         </g>
 
         {/* Body outline */}
-        <path
-          d={`M${X},${TOP} L${X + W},${TOP} L${X + W},${BOT - 18} Q${X + W},${BOT} ${X + W - 22},${BOT} L${X + 22},${BOT} Q${X},${BOT} ${X},${BOT - 18} Z`}
-          fill="none"
-          stroke="#04130F"
-          strokeWidth="2"
-        />
+        <path d={BODY} fill="none" stroke={DARK} strokeWidth="2" strokeLinejoin="round" />
 
         {/* Rim */}
-        <rect x={X - 4} y={TOP - 14} width={W + 8} height="16" rx="4" fill="#04130F" />
-        <circle cx="95" cy={TOP - 6} r="4.5" fill="#04130F" />
-        <circle cx="225" cy={TOP - 6} r="4.5" fill="#04130F" />
+        <rect x="60" y="116" width="200" height="16" rx="8" fill={DARK} />
+        <circle cx="92" cy="124" r="3.5" fill={DARK} />
+        <circle cx="228" cy="124" r="3.5" fill={DARK} />
 
         {/* Sparkle */}
-        <g className="sparkle-anim" transform="translate(236 150)">
-          <path d="M0 -7 L1.6 -1.6 L7 0 L1.6 1.6 L0 7 L-1.6 1.6 L-7 0 L-1.6 -1.6 Z" fill="#2CC295" />
-          <circle cx="9" cy="-9" r="1.6" fill="#2CC295" />
+        <g className="sparkle-anim" transform="translate(238 148)">
+          <path d="M0 -7 L1.6 -1.6 L7 0 L1.6 1.6 L0 7 L-1.6 1.6 L-7 0 L-1.6 -1.6 Z" fill="#FFCC00" />
+          <circle cx="9" cy="-9" r="1.6" fill="#FFCC00" />
         </g>
       </g>
 
-      {/* Fill marker */}
       {fillTotal > 0 && (
         <g>
-          <line x1="42" y1={fillY} x2={X} y2={fillY} stroke="#5B6B66" strokeWidth="1" strokeDasharray="2 3" />
-          <text x="38" y={fillY + 4} textAnchor="end" fontSize="11" fill="#5B6B66" fontFamily="inherit">
+          <line x1="40" y1={fillY} x2="64" y2={fillY} stroke="#8A7B53" strokeWidth="1" strokeDasharray="2 3" />
+          <text x="36" y={fillY + 4} textAnchor="end" fontSize="11" fill="#8A7B53" fontFamily="inherit">
             {Math.round(fillTotal)}% full
           </text>
         </g>

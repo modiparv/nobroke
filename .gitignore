@@ -3,6 +3,11 @@ dist/
 dist-ssr/
 *.local
 
+# env / secrets — never commit
+.env
+.env.*
+!.env.example
+
 # logs / os
 *.log
 npm-debug.log*

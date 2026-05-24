@@ -6,6 +6,7 @@ import { formatINR } from "../lib/format";
 import type { Profile } from "../lib/types";
 import { actions, getState, useStore } from "../store";
 import { btnGhost, btnPrimary } from "../ui";
+import Logo from "./Logo";
 
 const PROFILE_FIELDS = new Set(["cityTier", "employment", "careerStage", "rent", "emi", "takeHome", "existingSavings"]);
 
@@ -42,12 +43,13 @@ function SliderStep({ step, onContinue }: { step: Step; onContinue: () => void }
           step={step.step ?? 1}
           value={value}
           aria-label={step.title}
+          className="w-full"
           onChange={(e) => {
             const v = Number(e.target.value);
             setValue(v);
             setAnswer(step.field!, v);
           }}
-          style={{ background: `linear-gradient(90deg,#2cc295 ${pct}%,#E3E8E6 ${pct}%)`, borderRadius: 999, height: 6 }}
+          style={{ background: `linear-gradient(90deg,#FFCC00 ${pct}%,#ECE0C4 ${pct}%)`, borderRadius: 999, height: 6 }}
         />
       </div>
       <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={onContinue}>
@@ -75,7 +77,7 @@ export default function Onboarding() {
         >
           ← Back
         </button>
-        <span className="text-base font-semibold tracking-tight">NoBroke</span>
+        <Logo />
         <button className={`${btnGhost} px-3 py-1.5 text-xs`} onClick={actions.startDemo}>
           Skip to demo
         </button>

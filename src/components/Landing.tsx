@@ -1,14 +1,6 @@
 import { actions } from "../store";
 import { btnGhost, btnPrimary } from "../ui";
-
-function Logo() {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-deep text-sm font-semibold text-white">N</span>
-      <span className="text-lg font-semibold tracking-tight">NoBroke</span>
-    </div>
-  );
-}
+import Logo from "./Logo";
 
 function Step({ n, title, body }: { n: string; title: string; body: string }) {
   return (

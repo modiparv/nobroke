@@ -27,8 +27,9 @@ function Slider({ row }: { row: Row }) {
         step={row.step}
         value={row.value}
         aria-label={row.label}
+        className="w-full"
         onChange={(e) => row.onChange(Number(e.target.value))}
-        style={{ background: `linear-gradient(90deg,#2cc295 ${pct}%,#E3E8E6 ${pct}%)`, borderRadius: 999, height: 6 }}
+        style={{ background: `linear-gradient(90deg,#FFCC00 ${pct}%,#ECE0C4 ${pct}%)`, borderRadius: 999, height: 6 }}
       />
     </div>
   );

@@ -3,7 +3,8 @@ import type { Allocation, ChatMessage, PlanGoal, PlanInputs, Profile, RiskProfil
 import { GOAL_MAP } from "./lib/goals";
 import { autoAllocation } from "./lib/portfolios";
 import { adjustedTarget, emptyProfile, suggestedSip } from "./lib/profile";
-import { aiGreeting, aiReply, type ChatPlanContext } from "./lib/chat";
+import { askGroq } from "./lib/groq";
+import { FUND_MAP } from "./lib/funds";
 import { computePlan } from "./lib/finance";
 
 export type Screen = "landing" | "onboarding" | "dashboard";
@@ -181,36 +182,42 @@ export const actions = {
   setSavings: (v: number) => set({ currentSavings: v }),
   setInflation: (v: number) => set({ inflation: v }),
 
-  // ---- Chat ----
-  openChat: () => {
-    if (state.chat.length === 0) set({ chatOpen: true, chat: [{ role: "ai", text: aiGreeting() }] });
-    else set({ chatOpen: true });
-  },
+  // ---- Chat (Groq-powered) ----
+  openChat: () => set({ chatOpen: true }),
   closeChat: () => set({ chatOpen: false, chat: [], chatTyping: false }),
 
   sendChat: (text: string) => {
     const t = text.trim();
     if (!t || state.chatTyping) return;
-    const ctx = buildChatContext(state);
-    set({ chat: [...state.chat, { role: "user", text: t }], chatTyping: true });
-    window.setTimeout(() => {
-      const reply = aiReply(t, ctx);
-      set({ chat: [...state.chat, { role: "ai", text: reply }], chatTyping: false });
-    }, 650);
+    const history: ChatMessage[] = [...state.chat, { role: "user", text: t }];
+    const planData = buildPlanData(state);
+    set({ chat: history, chatTyping: true });
+    void askGroq(history, planData).then((reply) => {
+      set({ chat: [...getState().chat, { role: "ai", text: reply }], chatTyping: false });
+    });
   },
 };
 
-function buildChatContext(s: AppState): ChatPlanContext | null {
+/** Compact plan JSON injected into the AI's system prompt on the dashboard. */
+function buildPlanData(s: AppState): unknown | null {
   const g = currentGoal(s);
   if (s.screen !== "dashboard" || !g) return null;
+  const r = computePlan(toPlanInputs(s));
+  const allocationPct: Record<string, number> = {};
+  for (const [id, w] of Object.entries(g.allocation)) allocationPct[FUND_MAP[id]?.name ?? id] = w;
   return {
-    goalName: g.name,
-    result: computePlan(toPlanInputs(s)),
-    inputs: toPlanInputs(s),
-    allGoals: s.goals.map((goal) => {
-      const r = computePlan(planInputsForGoal(s, goal));
-      return { name: goal.name, emoji: goal.emoji, progress: r.progress, onTrack: r.onTrack };
-    }),
-    suggestedSip: suggestedSip(s.profile),
+    goal: g.name,
+    targetTodayINR: g.targetToday,
+    horizonYears: g.horizonYears,
+    monthlySipINR: s.monthlySip,
+    currentSavingsINR: s.currentSavings,
+    inflationPct: Math.round(s.inflation * 100),
+    projectedCorpusINR: Math.round(r.projectedCorpus),
+    requiredCorpusINR: Math.round(r.requiredCorpus),
+    gapINR: Math.round(r.gap),
+    onTrack: r.onTrack,
+    expectedReturnPct: Math.round(r.blendedReturn * 1000) / 10,
+    allocationPct,
+    otherGoals: s.goals.filter((x) => x.id !== g.id).map((x) => x.name),
   };
 }
