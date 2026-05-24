@@ -28,7 +28,7 @@ export default async function handler(req: any, res: any) {
   const groqEnvNames = Object.keys(process.env).filter((k) => /groq/i.test(k));
   console.log("[/api/chat]", req.method, "groq env names:", groqEnvNames.join(",") || "(none)");
   if (req.method !== "POST") {
-    res.status(405).json({ text: "Method not allowed" });
+    res.status(405).json({ text: "Method not allowed", groqEnv: groqEnvNames });
     return;
   }
   const key = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
