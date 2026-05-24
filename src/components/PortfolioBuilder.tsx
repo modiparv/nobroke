@@ -35,6 +35,8 @@ export default function PortfolioBuilder() {
   const risk = total > 0 ? riskLabel(vol) : "—";
   const tenYr = 100000 * Math.pow(1 + ret, 10);
   const result = computePlan(toPlanInputs(s));
+  const sip = s.monthlySip;
+  const amountFor = (id: string) => (total > 0 ? (alloc[id] / total) * sip : 0);
 
   const setAlloc = (a: Allocation, profile: RiskProfile | null) => actions.setAllocation(a, profile);
   const addFund = (id: string) => {
@@ -71,7 +73,9 @@ export default function PortfolioBuilder() {
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-[22px] font-bold tracking-tight">Build your portfolio</h2>
-          <p className="text-[13px] text-muted">Drag a fund into your basket — or tap. The projection moves with you.</p>
+          <p className="text-[13px] text-muted">
+            How your <span className="font-semibold text-ink">{formatINR(sip)}/mo</span> gets split. Tap a fund to add it, then drag the sliders to set how much goes where.
+          </p>
         </div>
         <div className="flex items-center gap-2 rounded-full border border-line px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide">
           <span className="live-dot inline-block h-2 w-2 rounded-full bg-brand" />
@@ -133,8 +137,8 @@ export default function PortfolioBuilder() {
                     <div className="text-[14px] font-bold leading-none">{formatPct(f.expReturn, 0)}</div>
                     <div className="font-mono text-[9px] uppercase text-muted">p.a.</div>
                   </div>
-                  <span className={`grid h-5 w-5 flex-none place-items-center rounded-md text-xs font-bold ${added ? "bg-brand text-white" : "border border-line text-muted"}`}>
-                    {added ? "✓" : "+"}
+                  <span className={`flex-none rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${added ? "bg-brand text-white" : "border border-line text-muted"}`}>
+                    {added ? "Added" : "Add"}
                   </span>
                 </div>
               );
@@ -161,13 +165,13 @@ export default function PortfolioBuilder() {
             if (FUND_MAP[id]) addFund(id);
           }}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
               <Marker /> Your basket
             </span>
             <span className="font-mono text-[11px] uppercase tracking-wide">
-              <span className="font-semibold text-ink">{Math.round(total)}%</span>
-              <span className="text-muted"> allocated{left > 0 ? ` · ${left}% left` : ""}</span>
+              <span className="font-semibold text-ink">{formatINR(sip)}/mo</span>
+              <span className="text-muted"> · {Math.round(total)}% allocated</span>
             </span>
           </div>
 
@@ -198,9 +202,10 @@ export default function PortfolioBuilder() {
           </div>
 
           {total === 0 && (
-            <p className="mt-3 rounded-xl border border-dashed border-line bg-paper py-4 text-center text-sm text-muted">
-              Drag a fund here to start building — or tap one on the left.
-            </p>
+            <div className="mt-3 rounded-xl border border-dashed border-line bg-paper px-4 py-5 text-center">
+              <p className="text-sm font-semibold text-ink">Your basket is empty</p>
+              <p className="mt-1 text-[12px] text-muted">Tap a fund on the left to add it — or pick a Quick mix below to fill it for you.</p>
+            </div>
           )}
 
           {/* Stat strip */}
@@ -227,19 +232,33 @@ export default function PortfolioBuilder() {
             <Chart r={result} />
           </div>
 
-          {/* Presets */}
-          <div className="mt-4 flex gap-2">
-            {(["steady", "balanced", "bold"] as RiskProfile[]).map((key) => (
-              <button
-                key={key}
-                onClick={() => applyPreset(key)}
-                className={`flex-1 rounded-full px-3 py-2 text-xs font-semibold transition ${
-                  goal?.activeProfile === key ? "bg-ink text-white" : "border border-line text-muted hover:border-ink/40"
-                }`}
-              >
-                {MODEL_PORTFOLIOS[key].label}
-              </button>
-            ))}
+          {/* Presets — plain-language quick mixes */}
+          <div className="mt-4">
+            <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
+              <Marker /> Quick mixes
+            </span>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {(["steady", "balanced", "bold"] as RiskProfile[]).map((key) => {
+                const active = goal?.activeProfile === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => applyPreset(key)}
+                    className={`rounded-xl border px-2 py-2 text-center transition ${
+                      active ? "border-ink bg-ink text-white" : "border-line hover:border-ink/40"
+                    }`}
+                  >
+                    <div className="text-xs font-bold">{MODEL_PORTFOLIOS[key].label}</div>
+                    <div className={`mt-0.5 text-[10px] leading-tight ${active ? "text-white/70" : "text-muted"}`}>
+                      {MODEL_PORTFOLIOS[key].tagline}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {total === 0 && (
+              <p className="mt-2 text-center text-[11px] text-muted">New to investing? Tap a mix to auto-fill your basket.</p>
+            )}
           </div>
 
           {equityHeavy && (
@@ -260,13 +279,30 @@ export default function PortfolioBuilder() {
                   if (!f) return null;
                   const ac = ASSET_CLASSES[f.assetClass];
                   const pctOfTotal = total > 0 ? Math.round(((alloc[id] ?? 0) / total) * 100) : 0;
+                  const amt = amountFor(id);
                   return (
-                    <div key={id} className="flex items-center gap-2.5 rounded-[10px] border border-line p-2.5">
-                      <span className="h-7 w-[3px] flex-none rounded-full" style={{ background: ac.color }} />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13px] font-semibold">{f.name}</div>
-                        <div className="font-mono text-[9px] uppercase tracking-wide text-muted">
-                          {ac.label} · {formatPct(f.expReturn, 0)}/yr
+                    <div key={id} className="rounded-[10px] border border-line p-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="h-7 w-[3px] flex-none rounded-full" style={{ background: ac.color }} />
+                          <div className="min-w-0">
+                            <div className="truncate text-[13px] font-semibold leading-tight">{f.name}</div>
+                            <div className="font-mono text-[9px] uppercase tracking-wide text-muted">
+                              {ac.label} · {formatPct(f.expReturn, 0)}/yr
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-none items-center gap-2">
+                          <div className="text-right">
+                            <div className="text-[13px] font-bold leading-none tabular-nums">
+                              {formatINR(amt)}
+                              <span className="text-[10px] font-normal text-muted">/mo</span>
+                            </div>
+                            <div className="font-mono text-[10px] text-muted">{pctOfTotal}%</div>
+                          </div>
+                          <button onClick={() => removeFund(id)} aria-label="Remove" className="grid h-6 w-6 flex-none place-items-center rounded-md text-muted hover:bg-paper hover:text-ink">
+                            ✕
+                          </button>
                         </div>
                       </div>
                       <input
@@ -276,13 +312,9 @@ export default function PortfolioBuilder() {
                         step={1}
                         value={alloc[id] ?? 0}
                         onChange={(e) => setWeight(id, Number(e.target.value))}
-                        className="w-20 sm:w-24"
+                        className="mt-2 w-full"
                         aria-label={`${f.name} weight`}
                       />
-                      <span className="w-9 text-right text-[13px] font-semibold tabular-nums">{pctOfTotal}%</span>
-                      <button onClick={() => removeFund(id)} aria-label="Remove" className="grid h-6 w-6 flex-none place-items-center rounded-md text-muted hover:bg-paper hover:text-ink">
-                        ✕
-                      </button>
                     </div>
                   );
                 })}
