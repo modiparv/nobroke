@@ -1,11 +1,10 @@
-import type { Allocation, PlanInputs, PlanResult, ProjectionPoint } from "../types.js";
-import { PRODUCT_MAP } from "./assets.js";
+import type { Allocation, PlanInputs, PlanResult, ProjectionPoint } from "./types";
+import { COMPOSITION, FUND_MAP } from "./funds";
 
 export function allocationTotal(alloc: Allocation): number {
   return Object.values(alloc).reduce((s, v) => s + (v > 0 ? v : 0), 0);
 }
 
-/** Returns weights summing to 1 (dropping non-positive entries). */
 export function normalizedWeights(alloc: Allocation): Array<{ id: string; weight: number }> {
   const entries = Object.entries(alloc).filter(([, v]) => v > 0);
   const total = entries.reduce((s, [, v]) => s + v, 0);
@@ -14,41 +13,34 @@ export function normalizedWeights(alloc: Allocation): Array<{ id: string; weight
 }
 
 export function blendedReturn(alloc: Allocation): number {
-  return normalizedWeights(alloc).reduce(
-    (s, { id, weight }) => s + weight * (PRODUCT_MAP[id]?.expectedReturn ?? 0),
-    0,
-  );
+  return normalizedWeights(alloc).reduce((s, { id, weight }) => s + weight * (FUND_MAP[id]?.expReturn ?? 0), 0);
 }
 
-/** Simplified blended volatility (weighted average; ignores cross-correlation). */
 export function blendedVolatility(alloc: Allocation): number {
-  return normalizedWeights(alloc).reduce(
-    (s, { id, weight }) => s + weight * (PRODUCT_MAP[id]?.volatility ?? 0),
-    0,
-  );
+  return normalizedWeights(alloc).reduce((s, { id, weight }) => s + weight * (FUND_MAP[id]?.volatility ?? 0), 0);
 }
 
-/** Share of the portfolio in growth (equity-like) products. */
-export function growthWeight(alloc: Allocation): number {
-  return normalizedWeights(alloc)
-    .filter((x) => PRODUCT_MAP[x.id]?.growth)
-    .reduce((s, x) => s + x.weight, 0);
-}
-
-/** Share of the portfolio in each top-level category. */
-export function categoryWeights(alloc: Allocation): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const { id, weight } of normalizedWeights(alloc)) {
-    const cat = PRODUCT_MAP[id]?.categoryId;
-    if (cat) out[cat] = (out[cat] ?? 0) + weight;
+/** Band sizes in percentage points of 100 (the basket capacity). */
+export function bandWeights(alloc: Allocation): { equity: number; debt: number; gold: number } {
+  const out = { equity: 0, debt: 0, gold: 0 };
+  for (const [id, pct] of Object.entries(alloc)) {
+    const fund = FUND_MAP[id];
+    if (!fund || pct <= 0) continue;
+    const comp = COMPOSITION[fund.assetClass];
+    out.equity += pct * comp.equity;
+    out.debt += pct * comp.debt;
+    out.gold += pct * comp.gold;
   }
   return out;
 }
 
-/**
- * Month-by-month corpus path. Contributions are start-of-month (annuity due):
- * each month we add the SIP, then grow by one monthly period.
- */
+/** Normalized share in growth (equity) exposure, 0..1. */
+export function growthWeight(alloc: Allocation): number {
+  const total = allocationTotal(alloc);
+  if (total <= 0) return 0;
+  return bandWeights(alloc).equity / total;
+}
+
 export function projectionSeries(inputs: PlanInputs, annualReturn: number): ProjectionPoint[] {
   const months = Math.max(1, Math.round(inputs.horizonYears * 12));
   const rm = annualReturn / 12;
@@ -61,12 +53,10 @@ export function projectionSeries(inputs: PlanInputs, annualReturn: number): Proj
   return series;
 }
 
-/** Future cost of a goal that costs `targetToday` now, at the given inflation. */
 export function requiredCorpus(targetToday: number, inflation: number, horizonYears: number): number {
   return targetToday * Math.pow(1 + inflation, horizonYears);
 }
 
-/** Monthly SIP (annuity due) needed to reach `target` given a lump sum already invested. */
 export function requiredSip(target: number, currentSavings: number, annualReturn: number, horizonYears: number): number {
   const months = Math.max(1, Math.round(horizonYears * 12));
   const rm = annualReturn / 12;
@@ -90,18 +80,14 @@ function xnpv(rate: number, flows: CashFlow[]): number {
   return flows.reduce((s, f) => s + f.amount / Math.pow(1 + rate, (f.date.getTime() - t0) / MS_PER_YEAR), 0);
 }
 
-/** Money-weighted annualized return (XIRR) via bisection with a Newton fallback. */
 export function xirr(flows: CashFlow[]): number {
   if (flows.length < 2) return 0;
   if (!flows.some((f) => f.amount > 0) || !flows.some((f) => f.amount < 0)) return 0;
-
   let lo = -0.9999;
   let hi = 10;
   let flo = xnpv(lo, flows);
   const fhi = xnpv(hi, flows);
-
   if (flo * fhi > 0) {
-    // No sign change in the bracket — fall back to Newton's method.
     let rate = 0.1;
     for (let i = 0; i < 100; i++) {
       const f = xnpv(rate, flows);
@@ -114,7 +100,6 @@ export function xirr(flows: CashFlow[]): number {
     }
     return rate;
   }
-
   for (let i = 0; i < 200; i++) {
     const mid = (lo + hi) / 2;
     const fmid = xnpv(mid, flows);
@@ -128,7 +113,6 @@ export function xirr(flows: CashFlow[]): number {
   return (lo + hi) / 2;
 }
 
-/** Cashflows matching the annuity-due projection: SIP at t=0..months-1, corpus inflow at t=months. */
 export function buildCashFlows(inputs: PlanInputs, projectedCorpus: number): CashFlow[] {
   const months = Math.max(1, Math.round(inputs.horizonYears * 12));
   const start = new Date(2025, 0, 1);
@@ -153,7 +137,6 @@ export function computePlan(inputs: PlanInputs): PlanResult {
   const reqCorpus = requiredCorpus(inputs.targetToday, inputs.inflation, inputs.horizonYears);
   const gap = projectedCorpus - reqCorpus;
   const irr = xirr(buildCashFlows(inputs, projectedCorpus));
-
   let goalReachedMonth: number | null = null;
   for (const p of series) {
     if (p.value >= reqCorpus) {
@@ -161,7 +144,6 @@ export function computePlan(inputs: PlanInputs): PlanResult {
       break;
     }
   }
-
   return {
     blendedReturn: annualReturn,
     blendedVolatility: blendedVolatility(inputs.allocation),

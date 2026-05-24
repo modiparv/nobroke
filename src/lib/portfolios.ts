@@ -1,35 +1,31 @@
-import type { Allocation, RiskProfile } from "../types.js";
+import type { Allocation, RiskProfile } from "./types";
 
-/** Pre-built model portfolios over products. Each set of weights sums to 100. */
+/** Quick-start templates over funds. Each set of weights sums to 100. */
 export const MODEL_PORTFOLIOS: Record<
   RiskProfile,
   { label: string; tagline: string; allocation: Allocation }
 > = {
-  conservative: {
+  steady: {
     label: "Steady",
     tagline: "Protect first",
-    allocation: { debt_fd: 25, debt_ppf: 15, bond_gsec: 20, bond_corp: 10, debt_liquid: 10, comm_gold: 10, mf_hybrid: 10 },
+    allocation: { icici_liquid: 25, hdfc_corp_bond: 25, sbi_gilt: 20, icici_gold: 15, icici_nifty: 15 },
   },
   balanced: {
     label: "Balanced",
     tagline: "Grow with guardrails",
-    allocation: { mf_index: 20, mf_flexi: 10, eq_large: 15, bond_corp: 15, bond_gsec: 10, debt_fd: 10, comm_gold: 10, mf_hybrid: 10 },
+    allocation: { icici_nifty: 25, parag_flexi: 15, mirae_hybrid: 20, hdfc_corp_bond: 20, icici_gold: 20 },
   },
-  aggressive: {
+  bold: {
     label: "Bold",
     tagline: "Maximize growth",
-    allocation: { eq_large: 20, eq_mid: 15, eq_small: 10, mf_index: 15, mf_flexi: 15, eq_intl: 10, comm_gold: 10, bond_corp: 5 },
+    allocation: { parag_flexi: 25, nippon_small: 20, icici_nifty: 20, quant_elss: 20, icici_gold: 15 },
   },
 };
 
-/** Heuristic "AURA" allocation based on the goal's time horizon. */
-export function autoAllocation(horizonYears: number): {
-  profile: RiskProfile;
-  allocation: Allocation;
-} {
+export function autoAllocation(horizonYears: number): { profile: RiskProfile; allocation: Allocation } {
   let profile: RiskProfile;
-  if (horizonYears <= 3) profile = "conservative";
+  if (horizonYears <= 3) profile = "steady";
   else if (horizonYears <= 7) profile = "balanced";
-  else profile = "aggressive";
+  else profile = "bold";
   return { profile, allocation: { ...MODEL_PORTFOLIOS[profile].allocation } };
 }
