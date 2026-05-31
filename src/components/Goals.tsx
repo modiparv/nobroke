@@ -4,7 +4,9 @@ import { formatINR } from "../lib/format";
 import { actions, useStore } from "../store";
 import { btnPrimary, card, sectionLabel } from "../ui";
 import AppHeader from "./AppHeader";
+import Arrow from "./Arrow";
 import GoalPlanner from "./GoalPlanner";
+import Holdings from "./Holdings";
 
 function PoolSlider({
   label,
@@ -52,18 +54,24 @@ export default function Goals() {
     <div className="min-h-screen pb-24">
       <AppHeader />
       <main className="mx-auto max-w-3xl px-5 py-8 sm:px-10">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your goals</h1>
-        <p className="mt-1 text-sm text-muted">
+        <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.15em] text-muted">
+          <span aria-hidden className="inline-block h-1.5 w-1.5 bg-brand" /> Step 1 of 2 · set the brief
+        </span>
+        <h1 className="mt-3 text-3xl font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:text-5xl">Your goals</h1>
+        <p className="mt-3 max-w-xl text-sm text-muted">
           Set when you need each goal, order them by priority, and split your monthly money. Your portfolio updates
           automatically.
         </p>
 
         {/* The monthly pool being split across goals */}
-        <section className={`${card} mt-5`}>
+        <section className={`${card} mt-6`}>
           <span className={sectionLabel}>Your monthly pool</span>
           <div className="mt-3 grid gap-5 sm:grid-cols-2">
             <PoolSlider label="Total monthly investment" value={s.monthlySip} min={0} max={500000} step={1000} onChange={actions.setSip} />
             <PoolSlider label="Total current savings" value={s.currentSavings} min={0} max={20000000} step={25000} onChange={actions.setSavings} />
+          </div>
+          <div className="mt-5 border-t border-line pt-5">
+            <Holdings />
           </div>
         </section>
 
@@ -102,9 +110,10 @@ export default function Goals() {
           )}
         </div>
 
-        <div className="mt-8 flex justify-center">
-          <button className={btnPrimary} onClick={actions.goPortfolio}>
-            View portfolio →
+        <div className="mt-8 flex flex-col items-center gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted">Next · build it</span>
+          <button className={`${btnPrimary} inline-flex items-center gap-2`} onClick={actions.goPortfolio}>
+            View portfolio <Arrow />
           </button>
         </div>
       </main>

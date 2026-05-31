@@ -3,6 +3,7 @@ import { computePlan } from "../lib/finance";
 import { formatINR, formatYears } from "../lib/format";
 import { actions, currentGoal, goalMonthly, goalsByPriority, planInputsForGoal, useStore } from "../store";
 import { card } from "../ui";
+import Arrow from "./Arrow";
 
 const BASE_YEAR = new Date().getFullYear();
 
@@ -186,19 +187,31 @@ export default function GoalPlanner() {
                         style={{ width: `${progress * 100}%`, background: r.onTrack ? "#1A1AFF" : "#0A0A0A" }}
                       />
                     </div>
-                    <div className="mt-1 flex items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-wide">
+                    <div className="mt-1 flex flex-wrap items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-wide">
                       <span className={r.onTrack ? "text-brand" : "text-muted"}>
                         {r.onTrack ? "On track" : `Short by ${formatINR(Math.abs(r.gap))}`}
                       </span>
-                      <button
-                        onClick={() => {
-                          actions.setCurrentGoal(g.id);
-                          actions.goPortfolio();
-                        }}
-                        className="font-mono text-[9px] uppercase tracking-wide text-muted underline-offset-2 hover:text-ink hover:underline"
-                      >
-                        Edit investments →
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => {
+                            actions.setCurrentGoal(g.id);
+                            actions.goPortfolio();
+                          }}
+                          className="inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wide text-muted underline-offset-2 hover:text-ink hover:underline"
+                        >
+                          Edit investments <Arrow />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete "${g.name}"? Its money will be reshared across the other goals.`)) {
+                              actions.removeGoal(g.id);
+                            }
+                          }}
+                          className="font-mono text-[9px] uppercase tracking-wide text-muted underline-offset-2 hover:text-ink hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

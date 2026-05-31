@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { Allocation, ChatMessage, PlanGoal, PlanInputs, Profile, RiskProfile } from "./lib/types";
+import type { Allocation, ChatMessage, Holding, PlanGoal, PlanInputs, Profile, RiskProfile } from "./lib/types";
 import { GOAL_MAP } from "./lib/goals";
 import { autoAllocation } from "./lib/portfolios";
 import { adjustedTarget, emptyProfile, suggestedSip } from "./lib/profile";
@@ -26,6 +26,8 @@ export interface AppState {
   goalOrder: string[];
   /** True once the user manually reorders priority (stops auto-sort by tenure). */
   goalOrderCustom: boolean;
+  /** Existing investments the user adds manually; sum can be applied to current savings. */
+  externalHoldings: Holding[];
   chatOpen: boolean;
   chat: ChatMessage[];
   chatTyping: boolean;
@@ -45,6 +47,7 @@ let state: AppState = {
   goalShares: {},
   goalOrder: [],
   goalOrderCustom: false,
+  externalHoldings: [],
   chatOpen: false,
   chat: [],
   chatTyping: false,
@@ -315,6 +318,33 @@ export const actions = {
     set({ goalShares: shares });
   },
   recommendGoalSplit: () => set({ goalShares: recommendShares(state.goals, state.goalOrder, state.monthlySip, state.inflation) }),
+
+  // Removes a goal and renormalizes the remaining shares so the split still sums
+  // to 100% — no leak between the per-goal money and the monthly pool.
+  removeGoal: (id: string) => {
+    const goals = state.goals.filter((g) => g.id !== id);
+    const goalOrder = state.goalOrder.filter((x) => x !== id);
+    const remaining = Object.fromEntries(Object.entries(state.goalShares).filter(([k]) => k !== id));
+    const total = Object.values(remaining).reduce((s, v) => s + (v > 0 ? v : 0), 0);
+    let goalShares: Record<string, number> = {};
+    if (goals.length === 0) goalShares = {};
+    else if (total > 0)
+      goalShares = Object.fromEntries(Object.entries(remaining).map(([k, v]) => [k, v > 0 ? (v / total) * 100 : 0]));
+    else {
+      const each = 100 / goals.length;
+      for (const g of goals) goalShares[g.id] = each;
+    }
+    const currentGoalId = state.currentGoalId === id ? goals[0]?.id ?? "" : state.currentGoalId;
+    set({ goals, goalOrder, goalShares, currentGoalId });
+  },
+
+  // ---- Existing investments (added manually; sum can feed total current savings) ----
+  addHolding: (h: Omit<Holding, "id">) => {
+    const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    set({ externalHoldings: [...state.externalHoldings, { id, ...h }] });
+  },
+  removeHolding: (id: string) => set({ externalHoldings: state.externalHoldings.filter((h) => h.id !== id) }),
+  applyHoldingsToSavings: () => set({ currentSavings: state.externalHoldings.reduce((s, h) => s + (h.amount > 0 ? h.amount : 0), 0) }),
 
   // ---- Chat (Groq-powered) ----
   openChat: () => set({ chatOpen: true }),

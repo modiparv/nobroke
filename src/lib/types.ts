@@ -121,3 +121,12 @@ export interface AggregationProvider {
   description: string;
   icon: string;
 }
+
+/** A user-entered existing investment (stock, MF, FD, gold, etc.). */
+export interface Holding {
+  id: string;
+  category: string;
+  type: string;
+  name: string;
+  amount: number;
+}

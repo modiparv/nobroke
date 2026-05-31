@@ -2,6 +2,7 @@ import { computePlan } from "../lib/finance";
 import { actions, currentGoal, toPlanInputs, useStore } from "../store";
 import { card } from "../ui";
 import AppHeader from "./AppHeader";
+import Arrow from "./Arrow";
 import GoalSelector from "./GoalSelector";
 import PortfolioBuilder from "./PortfolioBuilder";
 import Metrics from "./Metrics";
@@ -11,7 +12,20 @@ import Aggregation from "./Aggregation";
 export default function Dashboard() {
   const s = useStore();
   const goal = currentGoal(s);
-  if (!goal) return null;
+  if (!goal) {
+    return (
+      <div className="min-h-screen pb-24">
+        <AppHeader />
+        <main className="mx-auto max-w-2xl px-5 py-20 text-center sm:px-10">
+          <h1 className="text-3xl font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:text-5xl">No goals yet</h1>
+          <p className="mx-auto mt-4 max-w-sm text-sm text-muted">Add a goal on the Goals tab and the plan + portfolio will appear here.</p>
+          <button onClick={actions.goGoals} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-ink px-5 py-3 text-sm font-semibold text-white hover:bg-[#262626]">
+            Go to Goals <Arrow />
+          </button>
+        </main>
+      </div>
+    );
+  }
   const inputs = toPlanInputs(s);
   const result = computePlan(inputs);
 
@@ -20,11 +34,14 @@ export default function Dashboard() {
       <AppHeader />
 
       <main className="mx-auto max-w-6xl px-5 py-8 sm:px-10">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your portfolio</h1>
-        <p className="mt-1 text-sm text-muted">
+        <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.15em] text-muted">
+          <span aria-hidden className="inline-block h-1.5 w-1.5 bg-brand" /> Step 2 of 2 · build it
+        </span>
+        <h1 className="mt-3 text-3xl font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:text-5xl">Your portfolio</h1>
+        <p className="mt-3 text-sm text-muted">
           Pick a goal to see its plan, then build its portfolio.{" "}
-          <button onClick={actions.goGoals} className="font-medium text-ink underline decoration-line underline-offset-2 hover:decoration-ink">
-            Manage goals &amp; priorities →
+          <button onClick={actions.goGoals} className="inline-flex items-center gap-1 font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink">
+            Manage goals <Arrow />
           </button>
         </p>
 
