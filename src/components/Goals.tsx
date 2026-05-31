@@ -39,7 +39,7 @@ function PoolSlider({
         aria-label={label}
         className="w-full"
         onChange={(e) => onChange(Number(e.target.value))}
-        style={{ background: `linear-gradient(90deg,#1A1AFF ${pct}%,#E6DFD0 ${pct}%)`, borderRadius: 999, height: 6 }}
+        style={{ background: `linear-gradient(90deg,#0031F5 ${pct}%,#E8E8E5 ${pct}%)`, borderRadius: 999, height: 6 }}
       />
     </div>
   );
@@ -57,7 +57,7 @@ export default function Goals() {
         <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.15em] text-muted">
           <span aria-hidden className="inline-block h-1.5 w-1.5 bg-brand" /> Step 1 of 2 · set the brief
         </span>
-        <h1 className="mt-3 text-3xl font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:text-5xl">Your goals</h1>
+        <h1 className="mt-3 text-3xl font-extrabold uppercase leading-[0.88] tracking-[-0.045em] sm:text-5xl">Your goals</h1>
         <p className="mt-3 max-w-xl text-sm text-muted">
           Set when you need each goal, order them by priority, and split your monthly money. Your portfolio updates
           automatically.

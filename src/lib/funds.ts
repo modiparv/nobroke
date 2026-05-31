@@ -1,10 +1,10 @@
 import type { AssetClass, AssetClassId, Fund } from "./types";
 
 export const ASSET_CLASSES: Record<AssetClassId, AssetClass> = {
-  equity: { id: "equity", label: "Equity", color: "#1A1AFF", blurb: "Owning companies. Highest long-run growth." },
-  debt: { id: "debt", label: "Debt", color: "#111111", blurb: "Lend for steady, predictable income." },
+  equity: { id: "equity", label: "Equity", color: "#0031F5", blurb: "Owning companies. Highest long-run growth." },
+  debt: { id: "debt", label: "Debt", color: "#121212", blurb: "Lend for steady, predictable income." },
   gold: { id: "gold", label: "Gold", color: "#A89A7C", blurb: "Inflation hedge and diversifier." },
-  hybrid: { id: "hybrid", label: "Hybrid", color: "#4B4BE6", blurb: "Equity + debt blend in one fund." },
+  hybrid: { id: "hybrid", label: "Hybrid", color: "#3A60F8", blurb: "Equity + debt blend in one fund." },
 };
 
 /** Illustrative dummy data for Indian funds — planning estimates, not advice. */

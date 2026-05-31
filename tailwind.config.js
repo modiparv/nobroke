@@ -4,26 +4,26 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Restrained "non-color" system: warm cream + black, cobalt does the signalling.
-        ink: "#0A0A0A", // near-black — headlines, body, logo, primary CTA
-        muted: "#8C8C8C", // mid grey — small/mono labels
-        line: "#E6DFD0", // hairline borders on cream
-        paper: "#F4F0E8", // warm paper background + subtle insets
+        // Matched to augustus.com (their CSS vars: --color-white #fcfcfc, --color-black #121212, --color-blue #0031f5).
+        ink: "#121212",
+        muted: "#8C8C8C",
+        line: "#E8E8E5",
+        paper: "#FCFCFC",
         brand: {
-          DEFAULT: "#1A1AFF", // electric cobalt — the single accent / signal color
-          deep: "#0A0A0A", // black — strong surfaces & emphasis text
-          dark: "#1414CC", // darker cobalt — hover for blue surfaces
-          mint: "#E6E6FF", // faint cobalt tint
+          DEFAULT: "#0031F5",
+          deep: "#121212",
+          dark: "#002CD9",
+          mint: "#E0E5FF",
         },
-        // asset bands — kept distinct but inside the restrained palette
-        equity: "#1A1AFF", // growth → the signal blue
-        debt: "#111111", // black
-        gold: "#A89A7C", // warm taupe (stays in the paper family)
-        hybrid: "#4B4BE6", // blue tint
+        equity: "#0031F5",
+        debt: "#121212",
+        gold: "#A89A7C",
+        hybrid: "#3A60F8",
       },
       fontFamily: {
-        sans: ['Archivo', "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
-        mono: ['"JetBrains Mono"', "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+        // Geist (Vercel) is the closest free analogue to Augustus's ABC Diatype.
+        sans: ['Geist', "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        mono: ['"Geist Mono"', "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       borderRadius: { xl: "12px", "2xl": "16px" },
     },

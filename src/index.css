@@ -12,16 +12,16 @@ body {
   @apply bg-paper text-ink font-sans antialiased;
   margin: 0;
 }
-/* Tight, editorial display headings (Archivo). */
+/* Tight, editorial display headings (matched to Augustus's ABC Diatype headlines). */
 h1,
 h2 {
-  letter-spacing: -0.02em;
+  letter-spacing: -0.045em;
 }
 
-/* Range sliders — cobalt accent. NOTE: width is set per-instance via utility
+/* Range sliders — Augustus blue. NOTE: width is set per-instance via utility
    classes (w-full / w-28), never globally, so compact holdings sliders stay small. */
 input[type="range"] {
-  accent-color: #1a1aff;
+  accent-color: #0031f5;
   height: 4px;
   cursor: pointer;
 }

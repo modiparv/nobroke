@@ -184,7 +184,7 @@ export default function GoalPlanner() {
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
                       <div
                         className="h-full rounded-full transition-[width] duration-500 ease-out"
-                        style={{ width: `${progress * 100}%`, background: r.onTrack ? "#1A1AFF" : "#0A0A0A" }}
+                        style={{ width: `${progress * 100}%`, background: r.onTrack ? "#0031F5" : "#121212" }}
                       />
                     </div>
                     <div className="mt-1 flex flex-wrap items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-wide">

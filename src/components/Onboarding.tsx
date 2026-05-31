@@ -49,7 +49,7 @@ function SliderStep({ step, onContinue }: { step: Step; onContinue: () => void }
             setValue(v);
             setAnswer(step.field!, v);
           }}
-          style={{ background: `linear-gradient(90deg,#1A1AFF ${pct}%,#E6DFD0 ${pct}%)`, borderRadius: 999, height: 6 }}
+          style={{ background: `linear-gradient(90deg,#0031F5 ${pct}%,#E8E8E5 ${pct}%)`, borderRadius: 999, height: 6 }}
         />
       </div>
       <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={onContinue}>

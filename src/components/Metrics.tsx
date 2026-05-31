@@ -5,10 +5,10 @@ function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
   const pct = Math.max(0, Math.min(1, progress));
   const radius = 30;
   const c = 2 * Math.PI * radius;
-  const color = onTrack ? "#1A1AFF" : "#0A0A0A";
+  const color = onTrack ? "#0031F5" : "#121212";
   return (
     <svg viewBox="0 0 72 72" className="h-[72px] w-[72px] flex-none">
-      <circle cx="36" cy="36" r={radius} fill="none" stroke="#E6DFD0" strokeWidth="7" />
+      <circle cx="36" cy="36" r={radius} fill="none" stroke="#E8E8E5" strokeWidth="7" />
       <circle
         cx="36"
         cy="36"
@@ -20,7 +20,7 @@ function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
         strokeDasharray={`${(c * pct).toFixed(1)} ${(c * (1 - pct)).toFixed(1)}`}
         transform="rotate(-90 36 36)"
       />
-      <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="700" fill="#0A0A0A">
+      <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="700" fill="#121212">
         {Math.round(pct * 100)}%
       </text>
     </svg>

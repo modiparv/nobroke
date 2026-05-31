@@ -138,7 +138,7 @@ export default function PortfolioBuilder() {
                   <span className="w-4 flex-none text-center">{g.emoji}</span>
                   <span className="w-20 flex-none truncate text-[12px] font-semibold sm:w-28">{g.name}</span>
                   <span className="h-2 flex-1 overflow-hidden rounded-full bg-line">
-                    <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${share}%`, background: isCur ? "#1A1AFF" : "#0A0A0A" }} />
+                    <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${share}%`, background: isCur ? "#0031F5" : "#121212" }} />
                   </span>
                   <span className="w-20 flex-none text-right text-[12px] font-bold tabular-nums">
                     {formatINR(amt)}

@@ -17,7 +17,7 @@ export default function Dashboard() {
       <div className="min-h-screen pb-24">
         <AppHeader />
         <main className="mx-auto max-w-2xl px-5 py-20 text-center sm:px-10">
-          <h1 className="text-3xl font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:text-5xl">No goals yet</h1>
+          <h1 className="text-3xl font-extrabold uppercase leading-[0.88] tracking-[-0.045em] sm:text-5xl">No goals yet</h1>
           <p className="mx-auto mt-4 max-w-sm text-sm text-muted">Add a goal on the Goals tab and the plan + portfolio will appear here.</p>
           <button onClick={actions.goGoals} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-ink px-5 py-3 text-sm font-semibold text-white hover:bg-[#262626]">
             Go to Goals <Arrow />
@@ -37,7 +37,7 @@ export default function Dashboard() {
         <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.15em] text-muted">
           <span aria-hidden className="inline-block h-1.5 w-1.5 bg-brand" /> Step 2 of 2 · build it
         </span>
-        <h1 className="mt-3 text-3xl font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:text-5xl">Your portfolio</h1>
+        <h1 className="mt-3 text-3xl font-extrabold uppercase leading-[0.88] tracking-[-0.045em] sm:text-5xl">Your portfolio</h1>
         <p className="mt-3 text-sm text-muted">
           Pick a goal to see its plan, then build its portfolio.{" "}
           <button onClick={actions.goGoals} className="inline-flex items-center gap-1 font-semibold text-ink underline decoration-line underline-offset-2 hover:decoration-ink">

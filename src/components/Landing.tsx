@@ -45,7 +45,7 @@ export default function Landing() {
           <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
             <span className="inline-block h-1.5 w-1.5 bg-brand" /> The dating agent for your money
           </span>
-          <h1 className="mt-6 text-5xl font-extrabold uppercase leading-[0.92] tracking-[-0.03em] sm:text-7xl lg:text-8xl">
+          <h1 className="mt-6 text-5xl font-extrabold uppercase leading-[0.88] tracking-[-0.045em] sm:text-7xl lg:text-8xl">
             Meet the goals <br className="hidden sm:block" />
             you'll fall for.
           </h1>

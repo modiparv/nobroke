@@ -29,13 +29,13 @@ export default function Chart({ r }: { r: PlanResult }) {
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Projected growth">
         <defs>
           <linearGradient id="g-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#1A1AFF" stopOpacity="0.16" />
-            <stop offset="100%" stopColor="#1A1AFF" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="#0031F5" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="#0031F5" stopOpacity="0.02" />
           </linearGradient>
         </defs>
         {yTicks.map((v, i) => (
           <g key={i}>
-            <line x1={PAD.l} y1={y(v)} x2={PAD.l + PW} y2={y(v)} stroke="#E6DFD0" strokeWidth="1" />
+            <line x1={PAD.l} y1={y(v)} x2={PAD.l + PW} y2={y(v)} stroke="#E8E8E5" strokeWidth="1" />
             <text x={PAD.l - 10} y={y(v) + 4} textAnchor="end" fontSize="11" fill="#8C8C8C" fontFamily="'JetBrains Mono', monospace">
               {formatINR(v)}
             </text>
@@ -47,20 +47,20 @@ export default function Chart({ r }: { r: PlanResult }) {
           </text>
         ))}
         <path d={area} fill="url(#g-area)" />
-        <path d={investedPath} fill="none" stroke="#C7BFAE" strokeWidth="1.6" strokeDasharray="4 4" />
-        <path d={valuePath} fill="none" stroke="#1A1AFF" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
-        <line x1={PAD.l} y1={ty} x2={PAD.l + PW} y2={ty} stroke="#0A0A0A" strokeWidth="1.3" strokeDasharray="2 4" />
-        <text x={PAD.l + PW} y={ty - 8} textAnchor="end" fontSize="11" fontWeight="600" fill="#0A0A0A">
+        <path d={investedPath} fill="none" stroke="#D4D4D2" strokeWidth="1.6" strokeDasharray="4 4" />
+        <path d={valuePath} fill="none" stroke="#0031F5" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
+        <line x1={PAD.l} y1={ty} x2={PAD.l + PW} y2={ty} stroke="#121212" strokeWidth="1.3" strokeDasharray="2 4" />
+        <text x={PAD.l + PW} y={ty - 8} textAnchor="end" fontSize="11" fontWeight="600" fill="#121212">
           Target {formatINR(r.requiredCorpus)}
         </text>
-        <circle cx={x(maxX)} cy={y(r.projectedCorpus)} r="5" fill={r.onTrack ? "#1A1AFF" : "#0A0A0A"} />
+        <circle cx={x(maxX)} cy={y(r.projectedCorpus)} r="5" fill={r.onTrack ? "#0031F5" : "#121212"} />
       </svg>
       <div className="mt-2 flex flex-wrap gap-4 font-mono text-[11px] uppercase tracking-wide text-muted">
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-1 w-3.5 rounded" style={{ background: "#1A1AFF" }} /> Projected
+          <span className="inline-block h-1 w-3.5 rounded" style={{ background: "#0031F5" }} /> Projected
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-1 w-3.5 rounded" style={{ background: "#C7BFAE" }} /> Invested
+          <span className="inline-block h-1 w-3.5 rounded" style={{ background: "#D4D4D2" }} /> Invested
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-1 w-3.5 rounded bg-ink" /> Target
