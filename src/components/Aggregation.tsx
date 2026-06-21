@@ -16,7 +16,7 @@ export default function Aggregation() {
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <span className="rounded-full bg-paper px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.06em] text-muted">Coming soon</span>
-        <p className="m-0 flex-1 text-sm text-muted">Already invested? Connect your accounts and NoBroke pulls everything in automatically — no spreadsheets.</p>
+        <p className="m-0 flex-1 text-sm text-muted">Already invested? Connect your accounts and NoBroke pulls everything in automatically, no spreadsheets.</p>
       </div>
       <span className={sectionLabel}>Connect your accounts</span>
       <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

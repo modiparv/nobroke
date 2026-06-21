@@ -11,20 +11,20 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
   }
 
   if (r.onTrack) {
-    out.push({ tone: "positive", icon: "✅", title: "You're on track", message: `Projected ${formatINR(r.projectedCorpus)} clears your ${formatINR(r.requiredCorpus)} target — a ${formatINR(r.gap)} cushion.` });
+    out.push({ tone: "positive", icon: "✅", title: "You're on track", message: `Projected ${formatINR(r.projectedCorpus)} clears your ${formatINR(r.requiredCorpus)} goal, with a ${formatINR(r.gap)} cushion to spare.` });
     if (r.goalReachedMonth !== null && r.goalReachedMonth < r.months) {
       out.push({ tone: "positive", icon: "⏱️", title: "Ahead of schedule", message: `At this pace you cross the goal in ~${formatYears(r.goalReachedMonth / 12)}.` });
     }
   } else {
     const extra = Math.max(0, r.requiredSip - inputs.monthlySip);
-    out.push({ tone: "warning", icon: "📉", title: "A little short", message: `You're on track for ${formatINR(r.projectedCorpus)} — about ${formatINR(Math.abs(r.gap))} under. Bump your monthly investing to ${formatINR(r.requiredSip)}/mo (+${formatINR(extra)}) to close the gap.` });
+    out.push({ tone: "warning", icon: "📉", title: "A little short", message: `You're on track for ${formatINR(r.projectedCorpus)}, about ${formatINR(Math.abs(r.gap))} under. Bump your monthly investing to ${formatINR(r.requiredSip)}/mo (+${formatINR(extra)}) to close the gap.` });
   }
 
   const eq = growthWeight(inputs.allocation);
   if (inputs.horizonYears <= 3 && eq > 0.4) {
     out.push({ tone: "warning", icon: "🎢", title: "A bit bold for a near goal", message: `${formatPct(eq, 0)} in stocks with only ${formatYears(inputs.horizonYears)} left can swing a lot. Lean toward bonds (calmer) for this one.` });
   } else if (inputs.horizonYears >= 10 && eq < 0.4) {
-    out.push({ tone: "info", icon: "🌱", title: "Room to grow", message: `With ${formatYears(inputs.horizonYears)} on your side, ${formatPct(eq, 0)} in stocks is cautious — more stocks tend to grow faster over long periods.` });
+    out.push({ tone: "info", icon: "🌱", title: "Room to grow", message: `With ${formatYears(inputs.horizonYears)} on your side, ${formatPct(eq, 0)} in stocks is cautious. More stocks tend to grow faster over long periods.` });
   }
 
   const top = [...weights].sort((a, b) => b.weight - a.weight)[0];
@@ -37,7 +37,7 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
     out.push({ tone: "info", icon: "⚖️", title: `Your mix is ${Math.round(total)}% filled`, message: `We work it out as shares of 100%. A ready-made mix fills it cleanly for you.` });
   }
 
-  out.push({ tone: "info", icon: "🔥", title: "Prices rise over time", message: `Your ${formatINR(inputs.targetToday)} goal will cost about ${formatINR(r.requiredCorpus)} in ${formatYears(inputs.horizonYears)}, so we plan for the future price — not today's.` });
+  out.push({ tone: "info", icon: "🔥", title: "Prices rise over time", message: `Your ${formatINR(inputs.targetToday)} goal will cost about ${formatINR(r.requiredCorpus)} in ${formatYears(inputs.horizonYears)}, so we plan for the future price, not today's.` });
 
   return out.slice(0, 4);
 }

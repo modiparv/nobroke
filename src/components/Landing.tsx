@@ -50,7 +50,7 @@ export default function Landing() {
             you'll fall for.
           </h1>
           <p className="mt-6 max-w-xl text-base text-muted sm:text-lg">
-            NoBroke gets to know you with a few honest questions — then matches you to a plan and a portfolio you'll
+            NoBroke gets to know you with a few honest questions, then matches you to a plan and a portfolio you'll
             actually stick with. No jargon, no forms, no judgement.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -69,14 +69,14 @@ export default function Landing() {
           <div className="mt-10 grid gap-5 sm:grid-cols-3">
             <Step n="01" title="We get to know you" body="A handful of fun questions about your dreams and lifestyle. We never lead with “what's your salary.”" />
             <Step n="02" title="We find your match" body="Your answers become a goal plan and a portfolio tuned to your timeline and risk." />
-            <Step n="03" title="You stay in control" body="Drag funds into your basket, track every goal, and ask NoBroke AI anything — anytime." />
+            <Step n="03" title="You stay in control" body="Drag funds into your basket, track every goal, and ask NoBroke AI anything, anytime." />
           </div>
         </section>
 
         <section className="grid gap-4 pb-16 sm:grid-cols-2 lg:grid-cols-4">
-          <Feature icon="🧺" title="Drag-and-drop basket" body="Fill a basket with funds across equity, debt and gold — watch returns update live." />
+          <Feature icon="🧺" title="Drag-and-drop basket" body="Fill a basket with funds across stocks, bonds and gold, and watch your returns update live." />
           <Feature icon="💬" title="NoBroke AI" body="A chat that explains any money concept and tells you exactly where you stand." />
-          <Feature icon="🎯" title="Goal tracking" body="Every dream — car, home, freedom — gets its own plan, target and timeline." />
+          <Feature icon="🎯" title="Goal tracking" body="Every dream (car, home, freedom) gets its own plan, target and timeline." />
           <Feature icon="🔗" title="Auto-import" body="Connect your accounts and pull in existing investments in one tap. (Coming soon.)" />
         </section>
       </main>

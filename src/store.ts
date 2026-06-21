@@ -456,7 +456,7 @@ function runCommand(cmd: Command): string {
     case "removeGoal":
       if (!state.goals.some((g) => g.id === cmd.goalId)) return `${cmd.name} isn't in your plan.`;
       actions.removeGoal(cmd.goalId);
-      return `Removed ${cmd.name} — its money was reshared across your other goals.`;
+      return `Removed ${cmd.name}. Its money was reshared across your other goals.`;
     case "setPool":
       actions.setSip(cmd.amount);
       return `Set your monthly investment to ${formatINR(cmd.amount)}.`;
@@ -479,7 +479,7 @@ function runCommand(cmd: Command): string {
       return `Matched your portfolio to your goals' timeline. ✨`;
     case "newPlan":
       actions.startOnboarding();
-      return `Starting you a fresh plan — answer a few quick questions. ✨`;
+      return `Starting a fresh plan. Answer a few quick questions. ✨`;
   }
 }
 

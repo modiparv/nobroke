@@ -72,7 +72,7 @@ export default function Holdings() {
         </div>
       ) : (
         <p className="mt-2 rounded-lg border border-dashed border-line bg-paper px-3 py-2 text-[11px] text-muted">
-          Add stocks, MFs, ETFs, FDs, NPS, PPF & more — they'll roll into your total savings.
+          Add stocks, MFs, ETFs, FDs, NPS, PPF & more. They'll roll into your total savings.
         </p>
       )}
 
@@ -92,7 +92,7 @@ export default function Holdings() {
               </button>
             </div>
             <p className="mb-4 text-xs text-muted">
-              Track existing money — Indian/US stocks, mutual funds, ETFs, gold/silver, FDs, NPS, EPF, PPF. We'll add it to
+              Track existing money: Indian/US stocks, mutual funds, ETFs, gold/silver, FDs, NPS, EPF, PPF. We'll add it to
               your total savings.
             </p>
 

@@ -104,8 +104,8 @@ export default function Plan() {
             : "Add a goal to start your plan."}
         </p>
         <p className="mt-3 max-w-2xl rounded-xl border border-line bg-paper px-3 py-2 text-[12.5px] leading-snug text-muted">
-          <span className="font-semibold text-ink">New here?</span> Tell us your goals and what you can save each month — we'll
-          show whether you'll reach them and suggest where to put your money. No finance words needed.
+          <span className="font-semibold text-ink">New here?</span> Tell us your goals and what you can save each month, and
+          we'll show whether you'll reach them and suggest where to put your money. No finance words needed.
         </p>
 
         {/* Your money — the pool everything is split from */}
