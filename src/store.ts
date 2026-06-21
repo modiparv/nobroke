@@ -7,7 +7,7 @@ import { askGroq } from "./lib/groq";
 import { FUND_MAP } from "./lib/funds";
 import { computePlan, blendedReturn, requiredCorpus, requiredSip } from "./lib/finance";
 
-export type Screen = "landing" | "onboarding" | "goals" | "dashboard";
+export type Screen = "landing" | "onboarding" | "plan";
 
 export interface AppState {
   screen: Screen;
@@ -176,8 +176,7 @@ function buildPlanGoal(goalId: string, profile: Profile, horizonOverride?: numbe
 // ---- Navigation ----
 export const actions = {
   goLanding: () => set({ screen: "landing" }),
-  goGoals: () => set({ screen: "goals" }),
-  goPortfolio: () => set({ screen: "dashboard" }),
+  goPlan: () => set({ screen: "plan" }),
 
   startOnboarding: () =>
     set({ screen: "onboarding", onboardingStepIndex: 0, onboardingAnswers: {}, selectedGoalIds: [], profile: emptyProfile() }),
@@ -214,7 +213,7 @@ export const actions = {
       goalOrderCustom: false,
       monthlySip,
       currentSavings: state.profile.existingSavings,
-      screen: "goals",
+      screen: "plan",
     });
   },
 
@@ -242,7 +241,7 @@ export const actions = {
       goalOrderCustom: false,
       monthlySip,
       currentSavings: profile.existingSavings,
-      screen: "dashboard",
+      screen: "plan",
     });
   },
 
@@ -365,7 +364,7 @@ export const actions = {
 /** Compact plan JSON injected into the AI's system prompt on the dashboard. */
 function buildPlanData(s: AppState): unknown | null {
   const g = currentGoal(s);
-  if ((s.screen !== "dashboard" && s.screen !== "goals") || !g) return null;
+  if (s.screen !== "plan" || !g) return null;
   const r = computePlan(toPlanInputs(s));
   const allocationPct: Record<string, number> = {};
   for (const [id, w] of Object.entries(g.allocation)) allocationPct[FUND_MAP[id]?.name ?? id] = w;

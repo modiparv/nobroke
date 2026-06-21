@@ -4,7 +4,7 @@ import { MODEL_PORTFOLIOS } from "../lib/portfolios";
 import { allocationTotal, bandWeights, blendedReturn, blendedVolatility, computePlan } from "../lib/finance";
 import { formatINR, formatPct } from "../lib/format";
 import type { Allocation, AssetClassId, RiskProfile } from "../lib/types";
-import { actions, currentGoal, goalMonthly, goalsByPriority, toPlanInputs, useStore } from "../store";
+import { actions, currentGoal, goalMonthly, toPlanInputs, useStore } from "../store";
 import Chart from "./Chart";
 import { sectionLabel } from "../ui";
 
@@ -115,44 +115,7 @@ export default function PortfolioBuilder() {
         </div>
       </div>
 
-      {/* Money across goals — the goal split (tap to edit a goal's instrument mix) */}
-      {s.goals.length > 1 && (
-        <div className="mb-5 rounded-2xl border border-line bg-paper p-3">
-          <div className="flex items-center justify-between">
-            <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-              <Marker /> Money across goals
-            </span>
-            <span className="font-mono text-[10px] uppercase tracking-wide text-muted">tap to edit a goal's mix</span>
-          </div>
-          <div className="mt-2 flex flex-col gap-1">
-            {goalsByPriority(s).map((g) => {
-              const amt = goalMonthly(s, g.id);
-              const share = s.monthlySip > 0 ? (amt / s.monthlySip) * 100 : 0;
-              const isCur = g.id === goal?.id;
-              return (
-                <button
-                  key={g.id}
-                  onClick={() => actions.setCurrentGoal(g.id)}
-                  className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition ${isCur ? "border border-ink bg-white" : "border border-transparent hover:bg-white"}`}
-                >
-                  <span className="w-4 flex-none text-center">{g.emoji}</span>
-                  <span className="w-20 flex-none truncate text-[12px] font-semibold sm:w-28">{g.name}</span>
-                  <span className="h-2 flex-1 overflow-hidden rounded-full bg-line">
-                    <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${share}%`, background: isCur ? "#0031F5" : "#121212" }} />
-                  </span>
-                  <span className="w-20 flex-none text-right text-[12px] font-bold tabular-nums">
-                    {formatINR(amt)}
-                    <span className="text-[9px] font-normal text-muted">/mo</span>
-                  </span>
-                  <span className="w-8 flex-none text-right font-mono text-[10px] text-muted">{Math.round(share)}%</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      <div className="grid gap-5 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         {/* ---- Funds library (drag source) ---- */}
         <div>
           <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>

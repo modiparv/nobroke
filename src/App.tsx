@@ -1,8 +1,7 @@
 import { useStore } from "./store";
 import Landing from "./components/Landing";
 import Onboarding from "./components/Onboarding";
-import Goals from "./components/Goals";
-import Dashboard from "./components/Dashboard";
+import Plan from "./components/Plan";
 import ChatDock from "./components/ChatPanel";
 
 export default function App() {
@@ -11,8 +10,7 @@ export default function App() {
     <>
       {s.screen === "landing" && <Landing />}
       {s.screen === "onboarding" && <Onboarding />}
-      {s.screen === "goals" && <Goals />}
-      {s.screen === "dashboard" && <Dashboard />}
+      {s.screen === "plan" && <Plan />}
       <ChatDock />
     </>
   );
