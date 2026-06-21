@@ -92,7 +92,7 @@ export default function Plan() {
     <div className="min-h-screen pb-28">
       <AppHeader />
 
-      <main className="mx-auto max-w-4xl px-5 py-8 sm:px-10">
+      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-10 sm:py-8">
         <h1 className="text-3xl font-extrabold uppercase leading-[0.88] tracking-[-0.045em] sm:text-5xl">
           Your money plan
         </h1>

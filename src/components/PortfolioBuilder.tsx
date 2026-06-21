@@ -113,7 +113,7 @@ export default function PortfolioBuilder() {
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-[22px] font-bold tracking-tight">Your portfolio</h2>
+          <h2 className="text-xl font-bold tracking-tight sm:text-[22px]">Your portfolio</h2>
           <p className="text-[13px] text-muted">
             One mix that funds <span className="font-semibold text-ink">all your goals</span>. Your whole{" "}
             <span className="font-semibold text-ink">{formatINR(sip)}/mo</span> grows here — each goal just draws its share.
@@ -279,15 +279,15 @@ export default function PortfolioBuilder() {
           {/* Stat strip */}
           <div className="mt-4 grid grid-cols-3 divide-x divide-line rounded-xl border border-line bg-paper py-3">
             <div className="px-3">
-              <div className="text-[20px] font-bold leading-none">{total > 0 ? formatPct(ret, 1) : "—"}</div>
+              <div className="text-[18px] sm:text-[20px] font-bold leading-none">{total > 0 ? formatPct(ret, 1) : "—"}</div>
               <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">per year</div>
             </div>
             <div className="px-3">
-              <div className="text-[20px] font-bold leading-none text-brand">{total > 0 ? formatINR(tenYr) : "—"}</div>
+              <div className="text-[18px] sm:text-[20px] font-bold leading-none text-brand">{total > 0 ? formatINR(tenYr) : "—"}</div>
               <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">₹1L in 10 yrs</div>
             </div>
             <div className="px-3">
-              <div className="text-[20px] font-bold leading-none">{risk}</div>
+              <div className="text-[18px] sm:text-[20px] font-bold leading-none">{risk}</div>
               <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">risk profile</div>
             </div>
           </div>

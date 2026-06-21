@@ -149,8 +149,14 @@ export default function GoalCard({
               </span>
               <span className="mt-0.5 font-mono text-[10px] text-muted">{sharePct}%</span>
             </span>
+            {/* On-track: a compact dot on phones, the full pill on larger screens */}
             <span
-              className={`flex-none rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+              aria-hidden
+              className="inline-block h-2.5 w-2.5 flex-none self-center rounded-full sm:hidden"
+              style={{ background: r.onTrack ? C.positive : C.ink }}
+            />
+            <span
+              className={`hidden flex-none rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${
                 r.onTrack ? "bg-positive text-white" : "bg-ink text-white"
               }`}
             >

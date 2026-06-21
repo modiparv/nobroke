@@ -11,6 +11,11 @@ html {
 body {
   @apply bg-paper text-ink font-sans antialiased;
   margin: 0;
+  /* Mobile safety: never let a stray wide element make the page pan sideways,
+     and stop Android from auto-inflating font sizes. */
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 /* Tight, editorial display headings (matched to Augustus's ABC Diatype headlines). */
 h1,

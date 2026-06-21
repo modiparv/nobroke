@@ -4,6 +4,6 @@ export const btnPrimary =
 export const btnGhost =
   "inline-flex items-center justify-center gap-2 rounded-xl border border-line px-4 py-2.5 text-sm font-medium text-ink transition hover:border-ink";
 
-export const card = "rounded-2xl border border-line bg-white p-5";
+export const card = "rounded-2xl border border-line bg-white p-4 sm:p-5";
 
 export const sectionLabel = "font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-muted";
