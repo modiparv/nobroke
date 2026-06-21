@@ -8,9 +8,9 @@ import { actions, recommendedPortfolio, useStore } from "../store";
 import { sectionLabel } from "../ui";
 
 function riskLabel(vol: number): string {
-  if (vol < 0.06) return "Low";
-  if (vol < 0.13) return "Moderate";
-  return "High";
+  if (vol < 0.06) return "Smooth";
+  if (vol < 0.13) return "Balanced";
+  return "Bumpy";
 }
 const CLASS_ORDER: AssetClassId[] = ["equity", "hybrid", "gold", "debt"];
 
@@ -121,7 +121,7 @@ export default function PortfolioBuilder() {
         </div>
         <div className="flex items-center gap-2 rounded-full border border-line px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide">
           <span className="live-dot inline-block h-2 w-2 rounded-full bg-brand" />
-          <span className="text-muted">Live · {risk} risk</span>
+          <span className="text-muted">Live · {risk} ride</span>
         </div>
       </div>
 
@@ -131,11 +131,11 @@ export default function PortfolioBuilder() {
           <span className="text-[12px] text-ink">
             {matchesRec ? (
               <>
-                <span className="font-semibold">Matched to your goals</span> — {recLabel} suits your timeline.
+                <span className="font-semibold">Nice — your mix fits your goals.</span> (a {recLabel} mix)
               </>
             ) : (
               <>
-                Advisor pick for your timeline: <span className="font-semibold">{recLabel}</span>.
+                Not sure what to choose? We suggest a <span className="font-semibold">{recLabel}</span> mix for your timeline.
               </>
             )}
           </span>
@@ -144,7 +144,7 @@ export default function PortfolioBuilder() {
               onClick={actions.recommendPortfolio}
               className="rounded-full border border-line px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide text-muted transition hover:border-brand hover:text-ink"
             >
-              ✨ Match to my goals
+              ✨ Use this for me
             </button>
           )}
         </div>
@@ -153,8 +153,8 @@ export default function PortfolioBuilder() {
       {nearTermRisk && soonGoal && (
         <p className="mb-4 rounded-lg border border-ink/15 bg-paper px-3 py-2 text-xs text-ink">
           ⚠️ <span className="font-semibold">{soonGoal.name}</span> is only {soonGoal.horizonYears}{" "}
-          {soonGoal.horizonYears === 1 ? "year" : "years"} away. This mix leans heavily on equity, which can swing — consider a
-          safer mix or give that goal more monthly money so a dip doesn't derail it.
+          {soonGoal.horizonYears === 1 ? "year" : "years"} away. This mix leans heavily on stocks, which can dip suddenly —
+          pick a calmer ready-made mix, or put a bit more money into this goal so a bad month can't derail it.
         </p>
       )}
 
@@ -162,8 +162,9 @@ export default function PortfolioBuilder() {
         {/* ---- Funds library (drag source) ---- */}
         <div>
           <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-            <Marker /> Funds
+            <Marker /> Pick your own
           </span>
+          <p className="mb-2 mt-1 text-[11px] text-muted">Optional — most people just tap a ready-made mix on the right.</p>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -205,7 +206,7 @@ export default function PortfolioBuilder() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[12.5px] font-semibold leading-tight">{f.name}</div>
                     <div className="truncate font-mono text-[9px] uppercase tracking-wide text-muted">
-                      {ac.label} · {formatPct(f.expReturn, 0)} p.a.
+                      {ac.label} · grows ~{formatPct(f.expReturn, 0)}/yr
                     </div>
                   </div>
                   <span className={`flex-none rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${added ? "bg-brand text-white" : "border border-line text-muted"}`}>
@@ -242,7 +243,7 @@ export default function PortfolioBuilder() {
             </span>
             <span className="font-mono text-[11px] uppercase tracking-wide">
               <span className="font-semibold text-ink">{formatINR(sip)}/mo</span>
-              <span className="text-muted"> · {Math.round(total)}% allocated</span>
+              <span className="text-muted"> · {Math.round(total)}% filled</span>
             </span>
           </div>
 
@@ -258,8 +259,8 @@ export default function PortfolioBuilder() {
           </div>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-wide">
             {[
-              { label: "Equity", v: bands.equity, color: ASSET_CLASSES.equity.color },
-              { label: "Debt", v: bands.debt, color: ASSET_CLASSES.debt.color },
+              { label: "Stocks", v: bands.equity, color: ASSET_CLASSES.equity.color },
+              { label: "Bonds", v: bands.debt, color: ASSET_CLASSES.debt.color },
               { label: "Gold", v: bands.gold, color: ASSET_CLASSES.gold.color },
             ].map((l) => (
               <span key={l.label} className="inline-flex items-center gap-1.5">
@@ -280,7 +281,7 @@ export default function PortfolioBuilder() {
           <div className="mt-4 grid grid-cols-3 divide-x divide-line rounded-xl border border-line bg-paper py-3">
             <div className="px-3">
               <div className="text-[18px] sm:text-[20px] font-bold leading-none">{total > 0 ? formatPct(ret, 1) : "—"}</div>
-              <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">per year</div>
+              <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">growth a year</div>
             </div>
             <div className="px-3">
               <div className="text-[18px] sm:text-[20px] font-bold leading-none text-brand">{total > 0 ? formatINR(tenYr) : "—"}</div>
@@ -288,14 +289,14 @@ export default function PortfolioBuilder() {
             </div>
             <div className="px-3">
               <div className="text-[18px] sm:text-[20px] font-bold leading-none">{risk}</div>
-              <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">risk profile</div>
+              <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">the ride</div>
             </div>
           </div>
 
           {/* Presets — plain-language quick mixes */}
           <div className="mt-4">
             <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-              <Marker /> Quick mixes
+              <Marker /> Ready-made mixes (easiest)
             </span>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(["steady", "balanced", "bold"] as RiskProfile[]).map((key) => {
@@ -317,13 +318,13 @@ export default function PortfolioBuilder() {
               })}
             </div>
             {total === 0 && (
-              <p className="mt-2 text-center text-[11px] text-muted">New to investing? Tap a mix to auto-fill your portfolio.</p>
+              <p className="mt-2 text-center text-[11px] text-muted">New to investing? Just tap one — we'll fill your mix for you.</p>
             )}
           </div>
 
           {equityHeavy && (
             <p className="mt-3 rounded-lg border border-line bg-paper px-3 py-2 text-center text-xs text-ink">
-              Add some debt to balance the equity-heavy mix.
+              Add some bonds to steady out this stock-heavy mix.
             </p>
           )}
 
@@ -331,7 +332,7 @@ export default function PortfolioBuilder() {
           {holdings.length > 0 && (
             <div className="mt-5">
               <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-                <Marker /> Holdings
+                <Marker /> What's in your mix
               </span>
               <div className="mt-2 flex flex-col gap-2">
                 {holdings.map((id) => {
@@ -366,7 +367,7 @@ export default function PortfolioBuilder() {
                         </div>
                       </div>
                       <div className="mt-2 flex items-center justify-between gap-2">
-                        <span className="font-mono text-[9px] uppercase tracking-wide text-muted">weight in mix</span>
+                        <span className="font-mono text-[9px] uppercase tracking-wide text-muted">your share</span>
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => setWeight(id, (alloc[id] ?? 0) - 5)}

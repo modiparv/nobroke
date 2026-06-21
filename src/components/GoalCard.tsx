@@ -180,7 +180,7 @@ export default function GoalCard({
           </div>
           {!r.onTrack && (
             <div className="mt-1 font-mono text-[10px] uppercase tracking-wide text-muted">
-              Short by {formatINR(Math.abs(r.gap))} · bridge with {formatINR(r.requiredSip)}/mo
+              {formatINR(Math.abs(r.gap))} short · add {formatINR(r.requiredSip)}/mo to catch up
             </div>
           )}
 
@@ -189,7 +189,7 @@ export default function GoalCard({
             <div className="mt-4 flex flex-col gap-5 border-t border-line pt-4">
               {/* Plan controls */}
               <div>
-                <span className={sectionLabel}>The plan</span>
+                <span className={sectionLabel}>Set up this goal</span>
                 <div className="mt-3 flex flex-col gap-3.5">
                   {/* Target year */}
                   <div className="flex items-center justify-between gap-3">
@@ -233,7 +233,7 @@ export default function GoalCard({
                   {/* Monthly money split */}
                   <MoneyInput
                     label="Monthly money for this goal"
-                    hint={`${sharePct}% of pool`}
+                    hint={`${sharePct}% of your monthly money`}
                     value={Math.round(amount)}
                     onChange={(v) => actions.setGoalAmount(g.id, v)}
                     step={500}
@@ -250,7 +250,7 @@ export default function GoalCard({
 
               {/* This goal's trajectory — its share of the money, grown in the shared portfolio */}
               <div>
-                <span className={sectionLabel}>Projected path to {g.name}</span>
+                <span className={sectionLabel}>How your money grows toward {g.name}</span>
                 <Chart r={r} />
               </div>
 

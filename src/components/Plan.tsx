@@ -98,10 +98,14 @@ export default function Plan() {
         </h1>
         <p className="mt-3 max-w-xl text-sm text-muted">
           {s.goals.length
-            ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track · splitting ${formatINR(
+            ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track · ${formatINR(
                 s.monthlySip,
-              )}/mo. Open a goal to set it up and build its portfolio.`
+              )}/mo going in. Tap any goal to see if you'll get there.`
             : "Add a goal to start your plan."}
+        </p>
+        <p className="mt-3 max-w-2xl rounded-xl border border-line bg-paper px-3 py-2 text-[12.5px] leading-snug text-muted">
+          <span className="font-semibold text-ink">New here?</span> Tell us your goals and what you can save each month — we'll
+          show whether you'll reach them and suggest where to put your money. No finance words needed.
         </p>
 
         {/* Your money — the pool everything is split from */}
