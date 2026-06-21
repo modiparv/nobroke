@@ -3,7 +3,7 @@ import { GOALS } from "../lib/goals";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { actions, goalMonthly, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
-import { btnPrimary, sectionLabel, sectionMoney, sectionNeutral, sectionPortfolio } from "../ui";
+import { btnPrimary, paneLow, paneMid, paneTop, sectionLabel } from "../ui";
 import AppHeader from "./AppHeader";
 import Aggregation from "./Aggregation";
 import GoalCard from "./GoalCard";
@@ -12,7 +12,7 @@ import MoneyInput from "./MoneyInput";
 import PortfolioBuilder from "./PortfolioBuilder";
 
 /** Distinct swatches for the cross-goal split bar/legend. */
-const SPLIT_COLORS = ["#3D46B2", "#12946B", "#B58A3C", "#3A4256", "#7B83CE", "#8A8D98"];
+const SPLIT_COLORS = ["#0F5C44", "#157A5B", "#4E9B81", "#7FB8A0", "#A7D2C2", "#C9E0D6"];
 
 function AddGoal({ onAdd }: { onAdd: (id: string) => void }) {
   const s = useStore();
@@ -89,7 +89,7 @@ export default function Plan() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F4F5FA] via-paper to-[#F2F5F3] pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-paper via-[#EFF7F2] to-[#DAEDE4] pb-24">
       <AppHeader />
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-10 sm:py-8">
@@ -104,8 +104,8 @@ export default function Plan() {
             : "Add a goal to start your plan."}
         </p>
 
-        {/* Your money — the pool everything is split from (violet pane) */}
-        <section className={`${sectionMoney} mt-5`}>
+        {/* Your money — most opaque pane (top of the page) */}
+        <section className={`${paneTop} mt-5`}>
           <div className="flex items-center justify-between gap-2">
             <span className={sectionLabel}>Your money</span>
             <span className="font-mono text-[10px] uppercase tracking-wide text-muted">
@@ -163,9 +163,9 @@ export default function Plan() {
 
         </section>
 
-        {/* One shared portfolio — funds every goal (mint pane) */}
+        {/* One shared portfolio — mid translucency */}
         {s.goals.length > 0 && (
-          <section className={`${sectionPortfolio} mt-5`}>
+          <section className={`${paneMid} mt-5`}>
             <PortfolioBuilder />
           </section>
         )}
@@ -226,8 +226,8 @@ export default function Plan() {
           </ul>
         )}
 
-        {/* Account aggregation scaffold — global, lives once at the bottom */}
-        <section className={`${sectionNeutral} mt-8`}>
+        {/* Account aggregation — most translucent pane (bottom of the page) */}
+        <section className={`${paneLow} mt-8`}>
           <Aggregation />
         </section>
 

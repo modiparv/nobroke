@@ -81,8 +81,8 @@ export default function GoalCard({
         isOver
           ? "border-brand bg-brand/5 ring-2 ring-brand/30"
           : open
-            ? "border-brand/40 bg-white/85"
-            : "border-line bg-white/65"
+            ? "border-brand/40 bg-white/72"
+            : "border-brand/15 bg-white/55"
       } ${isDragging ? "opacity-50" : ""}`}
     >
       <div className="flex items-stretch gap-1.5 p-3 sm:gap-2.5 sm:p-4">
