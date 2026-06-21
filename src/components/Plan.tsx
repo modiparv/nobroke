@@ -89,7 +89,7 @@ export default function Plan() {
   };
 
   return (
-    <div className="min-h-screen pb-40">
+    <div className="min-h-screen pb-28">
       <AppHeader />
 
       <main className="mx-auto max-w-4xl px-5 py-8 sm:px-10">
@@ -106,42 +106,21 @@ export default function Plan() {
 
         {/* Your money — the pool everything is split from */}
         <section className={`${card} mt-6`}>
-          <span className={sectionLabel}>Money you invest every month</span>
-          <div className="mt-3">
-            <MoneyInput
-              label="Monthly investment"
-              value={s.monthlySip}
-              onChange={actions.setSip}
-              step={1000}
-              min={0}
-              max={1000000}
-              quick={[10000, 25000, 50000, 100000]}
-            />
+          <div className="flex items-center justify-between gap-2">
+            <span className={sectionLabel}>Your money</span>
+            <span className="font-mono text-[10px] uppercase tracking-wide text-muted">
+              working toward goals <span className="font-semibold text-ink">{formatINR(total)}</span>
+            </span>
           </div>
-
-          <div className="mt-5 border-t border-line pt-5">
-            <span className={sectionLabel}>Money you already have</span>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2">
-              <MoneyInput
-                label="Cash in hand / bank"
-                hint="liquid"
-                value={s.currentSavings}
-                onChange={actions.setSavings}
-                step={25000}
-                min={0}
-                max={50000000}
-              />
-              <div className="flex flex-col justify-center rounded-xl border border-line bg-paper px-4 py-3">
-                <span className="font-mono text-[10px] uppercase tracking-wide text-muted">Total working toward goals</span>
-                <span className="mt-0.5 text-2xl font-bold tabular-nums">{formatINR(total)}</span>
-                <span className="mt-0.5 text-[11px] text-muted">
-                  {formatINR(s.currentSavings)} cash + {formatINR(invested)} invested
-                </span>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Holdings />
-            </div>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <MoneyInput label="Invest / month" value={s.monthlySip} onChange={actions.setSip} step={1000} min={0} max={1000000} compact />
+            <MoneyInput label="Cash in hand / bank" value={s.currentSavings} onChange={actions.setSavings} step={25000} min={0} max={50000000} compact />
+          </div>
+          <p className="mt-2 text-[11px] text-muted">
+            = {formatINR(s.currentSavings)} cash + {formatINR(invested)} in existing investments, growing toward every goal.
+          </p>
+          <div className="mt-4 border-t border-line pt-4">
+            <Holdings />
           </div>
 
           {/* Cross-goal split — one place to see (and auto-balance) how the pool divides */}

@@ -15,6 +15,7 @@ export default function MoneyInput({
   hint,
   quick,
   disabled,
+  compact,
 }: {
   label?: string;
   value: number;
@@ -25,15 +26,18 @@ export default function MoneyInput({
   hint?: string;
   quick?: number[];
   disabled?: boolean;
+  compact?: boolean;
 }) {
   const clamp = (v: number) => Math.max(min, Math.min(max, Math.round(v)));
   const set = (v: number) => onChange(clamp(v));
+  const btn = compact ? "w-9" : "w-11";
+  const field = compact ? "py-1.5 text-[15px]" : "py-2.5 text-[17px]";
 
   return (
     <div>
       {(label || hint) && (
-        <div className="mb-1.5 flex items-center justify-between gap-2">
-          {label && <span className="text-[13px] text-muted">{label}</span>}
+        <div className="mb-1 flex items-center justify-between gap-2">
+          {label && <span className="text-[12.5px] text-muted">{label}</span>}
           {hint && <span className="font-mono text-[10px] uppercase tracking-wide text-muted">{hint}</span>}
         </div>
       )}
@@ -47,7 +51,7 @@ export default function MoneyInput({
           onClick={() => set(value - step)}
           disabled={disabled || value <= min}
           aria-label="Decrease"
-          className="grid w-11 flex-none place-items-center text-lg text-muted transition hover:bg-paper hover:text-ink disabled:opacity-30"
+          className={`grid flex-none place-items-center text-lg text-muted transition hover:bg-paper hover:text-ink disabled:opacity-30 ${btn}`}
         >
           −
         </button>
@@ -64,7 +68,7 @@ export default function MoneyInput({
               set(Number.isFinite(n) ? n : 0);
             }}
             aria-label={label}
-            className="w-full bg-transparent py-2.5 text-center text-[17px] font-bold tabular-nums outline-none"
+            className={`w-full bg-transparent text-center font-bold tabular-nums outline-none ${field}`}
           />
         </div>
         <button
@@ -72,20 +76,20 @@ export default function MoneyInput({
           onClick={() => set(value + step)}
           disabled={disabled || value >= max}
           aria-label="Increase"
-          className="grid w-11 flex-none place-items-center text-lg text-muted transition hover:bg-paper hover:text-ink disabled:opacity-30"
+          className={`grid flex-none place-items-center text-lg text-muted transition hover:bg-paper hover:text-ink disabled:opacity-30 ${btn}`}
         >
           +
         </button>
       </div>
       {quick && quick.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
           {quick.map((q) => (
             <button
               key={q}
               type="button"
               disabled={disabled}
               onClick={() => set(q)}
-              className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide transition ${
+              className={`rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide transition ${
                 value === clamp(q) ? "border-brand bg-brand text-white" : "border-line text-muted hover:border-brand hover:text-ink"
               }`}
             >

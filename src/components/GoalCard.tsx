@@ -221,6 +221,7 @@ export default function GoalCard({
                     step={50000}
                     min={50000}
                     max={50000000}
+                    compact
                   />
 
                   {/* Monthly money split */}
@@ -233,6 +234,7 @@ export default function GoalCard({
                     min={0}
                     max={Math.max(1, s.monthlySip)}
                     disabled={s.monthlySip <= 0}
+                    compact
                   />
                 </div>
               </div>

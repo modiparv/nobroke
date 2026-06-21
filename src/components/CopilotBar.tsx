@@ -30,6 +30,7 @@ function TypingDots() {
 export default function CopilotBar() {
   const s = useStore();
   const [text, setText] = useState("");
+  const [focused, setFocused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -94,14 +95,17 @@ export default function CopilotBar() {
           </div>
         )}
 
-        {/* Suggestion chips — surface what the copilot can do */}
-        {!hasThread && (
+        {/* Suggestion chips — only while the bar is focused, so they don't block the page */}
+        {focused && !hasThread && (
           <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto">
             {SUGGESTIONS.map((q) => (
               <button
                 key={q}
-                onClick={() => send(q)}
-                className="flex-none whitespace-nowrap rounded-full border border-line bg-white/80 px-3 py-1.5 text-[12px] font-medium text-ink shadow-sm backdrop-blur transition hover:border-brand"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  send(q);
+                }}
+                className="flex-none whitespace-nowrap rounded-full border border-line bg-white/90 px-3 py-1.5 text-[12px] font-medium text-ink shadow-sm backdrop-blur transition hover:border-brand"
               >
                 {q}
               </button>
@@ -124,8 +128,10 @@ export default function CopilotBar() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onFocus={() => {
+              setFocused(true);
               if (s.chat.length) actions.openChat();
             }}
+            onBlur={() => window.setTimeout(() => setFocused(false), 120)}
             disabled={s.chatTyping}
             placeholder="Tell me to change a goal, or ask anything…"
             aria-label="Ask the NoBroke copilot"

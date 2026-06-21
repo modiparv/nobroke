@@ -477,6 +477,9 @@ function runCommand(cmd: Command): string {
     case "recommendPortfolio":
       actions.recommendPortfolio();
       return `Matched your portfolio to your goals' timeline. ✨`;
+    case "newPlan":
+      actions.startOnboarding();
+      return `Starting you a fresh plan — answer a few quick questions. ✨`;
   }
 }
 
