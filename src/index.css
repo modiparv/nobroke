@@ -18,10 +18,9 @@ h2 {
   letter-spacing: -0.045em;
 }
 
-/* Range sliders — Augustus blue. NOTE: width is set per-instance via utility
-   classes (w-full / w-28), never globally, so compact holdings sliders stay small. */
+/* Range sliders (onboarding only now) — brand violet. */
 input[type="range"] {
-  accent-color: #0031f5;
+  accent-color: #6750f2;
   height: 4px;
   cursor: pointer;
 }
@@ -55,6 +54,16 @@ input[type="range"] {
 .fade-up { animation: fadeUp 0.32s ease both; }
 .live-dot { animation: blink 1.4s ease-in-out infinite; }
 .typing-dot { animation: typing 1.2s infinite ease-in-out; }
+
+/* Copilot command bar — soft violet glow, lifts on focus. */
+.copilot-bar {
+  box-shadow: 0 10px 34px rgba(103, 80, 242, 0.1), 0 2px 8px rgba(20, 22, 27, 0.06);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.copilot-bar:focus-within {
+  border-color: #6750f2;
+  box-shadow: 0 12px 38px rgba(103, 80, 242, 0.2), 0 2px 8px rgba(20, 22, 27, 0.06);
+}
 
 @media (prefers-reduced-motion: no-preference) {
   .panel-slide { animation: slideIn 0.3s ease both; }

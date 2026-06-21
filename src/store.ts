@@ -6,6 +6,8 @@ import { adjustedTarget, emptyProfile, suggestedSip } from "./lib/profile";
 import { askGroq } from "./lib/groq";
 import { FUND_MAP } from "./lib/funds";
 import { computePlan, blendedReturn, requiredCorpus, requiredSip } from "./lib/finance";
+import { formatINR } from "./lib/format";
+import { parseCommand, type Command } from "./lib/command";
 
 export type Screen = "landing" | "onboarding" | "plan";
 
@@ -95,6 +97,14 @@ export function goalShareFraction(s: AppState, id: string): number {
 export function goalMonthly(s: AppState, id: string): number {
   return s.monthlySip * goalShareFraction(s, id);
 }
+/** Sum of the user's already-invested holdings (existing investments). */
+export function holdingsTotal(s: AppState = state): number {
+  return s.externalHoldings.reduce((sum, h) => sum + (h.amount > 0 ? h.amount : 0), 0);
+}
+/** Money already working toward goals = cash in hand/bank + existing investments. */
+export function totalCapital(s: AppState = state): number {
+  return s.currentSavings + holdingsTotal(s);
+}
 /** Goals in priority order (falls back to declaration order). */
 export function goalsByPriority(s: AppState = state): PlanGoal[] {
   const order = s.goalOrder.length ? s.goalOrder : s.goals.map((g) => g.id);
@@ -112,7 +122,8 @@ export function planInputsForGoal(s: AppState, g: PlanGoal): PlanInputs {
   return {
     targetToday: g.targetToday,
     horizonYears: g.horizonYears,
-    currentSavings: s.currentSavings * share,
+    // Starting corpus = cash in hand + existing investments, split per goal.
+    currentSavings: totalCapital(s) * share,
     monthlySip: s.monthlySip * share,
     inflation: s.inflation,
     allocation: s.portfolio,
@@ -394,10 +405,10 @@ export const actions = {
     set({ externalHoldings: [...state.externalHoldings, { id, ...h }] });
   },
   removeHolding: (id: string) => set({ externalHoldings: state.externalHoldings.filter((h) => h.id !== id) }),
-  applyHoldingsToSavings: () => set({ currentSavings: state.externalHoldings.reduce((s, h) => s + (h.amount > 0 ? h.amount : 0), 0) }),
 
-  // ---- Chat (Groq-powered) ----
+  // ---- Copilot / chat ----
   openChat: () => set({ chatOpen: true }),
+  collapseChat: () => set({ chatOpen: false }),
   closeChat: () => set({ chatOpen: false, chat: [], chatTyping: false }),
 
   sendChat: (text: string) => {
@@ -410,7 +421,64 @@ export const actions = {
       set({ chat: [...getState().chat, { role: "ai", text: reply }], chatTyping: false });
     });
   },
+
+  /** Copilot input: first try to understand it as a goal/plan command and apply
+      it instantly; otherwise fall back to the AI for a general answer. */
+  submitCopilot: (text: string) => {
+    const t = text.trim();
+    if (!t || state.chatTyping) return;
+    const cmd = parseCommand(t);
+    if (cmd) {
+      set({ chat: [...state.chat, { role: "user", text: t }], chatOpen: true });
+      const reply = runCommand(cmd);
+      set({ chat: [...getState().chat, { role: "ai", text: reply }] });
+      return;
+    }
+    set({ chatOpen: true });
+    actions.sendChat(t);
+  },
 };
+
+function ensureGoal(id: string) {
+  if (!state.goals.some((g) => g.id === id)) actions.addGoal(id);
+}
+
+/** Execute a parsed copilot command and return a short, friendly confirmation. */
+function runCommand(cmd: Command): string {
+  switch (cmd.kind) {
+    case "addGoal":
+      if (state.goals.some((g) => g.id === cmd.goalId)) {
+        actions.setCurrentGoal(cmd.goalId);
+        return `${cmd.name} is already in your plan.`;
+      }
+      actions.addGoal(cmd.goalId);
+      return `Added ${cmd.name} to your goals. ✨`;
+    case "removeGoal":
+      if (!state.goals.some((g) => g.id === cmd.goalId)) return `${cmd.name} isn't in your plan.`;
+      actions.removeGoal(cmd.goalId);
+      return `Removed ${cmd.name} — its money was reshared across your other goals.`;
+    case "setPool":
+      actions.setSip(cmd.amount);
+      return `Set your monthly investment to ${formatINR(cmd.amount)}.`;
+    case "setCash":
+      actions.setSavings(cmd.amount);
+      return `Set your cash in hand to ${formatINR(cmd.amount)}.`;
+    case "setTarget":
+      ensureGoal(cmd.goalId);
+      actions.setGoalTarget(cmd.goalId, cmd.amount);
+      return `Set ${cmd.name}'s target to ${formatINR(cmd.amount)} in today's money.`;
+    case "setYears":
+      ensureGoal(cmd.goalId);
+      actions.setGoalTenure(cmd.goalId, cmd.years);
+      return `Set ${cmd.name} to ${cmd.years} ${cmd.years === 1 ? "year" : "years"} away.`;
+    case "autoSplit":
+      actions.recommendGoalSplit();
+      return `Auto-balanced your money across goals. ✨`;
+    case "recommendPortfolio":
+      actions.recommendPortfolio();
+      return `Matched your portfolio to your goals' timeline. ✨`;
+  }
+}
 
 /** Compact plan JSON injected into the AI's system prompt on the dashboard. */
 function buildPlanData(s: AppState): unknown | null {
@@ -425,7 +493,7 @@ function buildPlanData(s: AppState): unknown | null {
     horizonYears: g.horizonYears,
     monthlySipINR: Math.round(goalMonthly(s, g.id)),
     monthlyPoolINR: s.monthlySip,
-    currentSavingsINR: Math.round(s.currentSavings * goalShareFraction(s, g.id)),
+    currentSavingsINR: Math.round(totalCapital(s) * goalShareFraction(s, g.id)),
     inflationPct: Math.round(s.inflation * 100),
     projectedCorpusINR: Math.round(r.projectedCorpus),
     requiredCorpusINR: Math.round(r.requiredCorpus),

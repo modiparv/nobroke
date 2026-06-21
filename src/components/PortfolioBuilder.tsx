@@ -184,7 +184,7 @@ export default function PortfolioBuilder() {
             ))}
           </div>
 
-          <div className="mt-3 flex flex-col gap-2">
+          <div className="mt-3 flex flex-col gap-1.5">
             {filtered.map((f) => {
               const ac = ASSET_CLASSES[f.assetClass];
               const added = f.id in alloc;
@@ -197,22 +197,18 @@ export default function PortfolioBuilder() {
                     e.dataTransfer.effectAllowed = "copy";
                   }}
                   onClick={() => (added ? removeFund(f.id) : addFund(f.id))}
-                  className={`flex cursor-grab select-none items-center gap-2.5 rounded-[10px] border bg-white p-2.5 transition hover:border-ink active:cursor-grabbing ${
-                    added ? "border-ink" : "border-line"
+                  className={`flex cursor-grab select-none items-center gap-2 rounded-lg border bg-white px-2.5 py-1.5 transition hover:border-brand active:cursor-grabbing ${
+                    added ? "border-brand" : "border-line"
                   }`}
                 >
-                  <span className="h-8 w-1 flex-none rounded-full" style={{ background: ac.color }} />
+                  <span className="h-6 w-1 flex-none rounded-full" style={{ background: ac.color }} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] font-semibold leading-tight">{f.name}</div>
-                    <div className="truncate font-mono text-[9.5px] uppercase tracking-wide text-muted">
-                      {ac.label} · {f.risk} risk · {f.fiveYr}% 5Y
+                    <div className="truncate text-[12.5px] font-semibold leading-tight">{f.name}</div>
+                    <div className="truncate font-mono text-[9px] uppercase tracking-wide text-muted">
+                      {ac.label} · {formatPct(f.expReturn, 0)} p.a.
                     </div>
                   </div>
-                  <div className="flex-none text-right">
-                    <div className="text-[14px] font-bold leading-none">{formatPct(f.expReturn, 0)}</div>
-                    <div className="font-mono text-[9px] uppercase text-muted">p.a.</div>
-                  </div>
-                  <span className={`flex-none rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${added ? "bg-brand text-white" : "border border-line text-muted"}`}>
+                  <span className={`flex-none rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${added ? "bg-brand text-white" : "border border-line text-muted"}`}>
                     {added ? "Added" : "Add"}
                   </span>
                 </div>
@@ -369,16 +365,26 @@ export default function PortfolioBuilder() {
                           </button>
                         </div>
                       </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        step={1}
-                        value={alloc[id] ?? 0}
-                        onChange={(e) => setWeight(id, Number(e.target.value))}
-                        className="mt-2 w-full"
-                        aria-label={`${f.name} weight`}
-                      />
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <span className="font-mono text-[9px] uppercase tracking-wide text-muted">weight in mix</span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setWeight(id, (alloc[id] ?? 0) - 5)}
+                            aria-label={`Lower ${f.name} weight`}
+                            className="grid h-6 w-6 place-items-center rounded-md border border-line text-muted transition hover:border-ink hover:text-ink"
+                          >
+                            −
+                          </button>
+                          <span className="w-11 text-center text-[12px] font-bold tabular-nums">{Math.round(alloc[id] ?? 0)}%</span>
+                          <button
+                            onClick={() => setWeight(id, (alloc[id] ?? 0) + 5)}
+                            aria-label={`Raise ${f.name} weight`}
+                            className="grid h-6 w-6 place-items-center rounded-md border border-line text-muted transition hover:border-ink hover:text-ink"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}

@@ -4,21 +4,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Matched to augustus.com (their CSS vars: --color-white #fcfcfc, --color-black #121212, --color-blue #0031f5).
-        ink: "#121212",
-        muted: "#8C8C8C",
-        line: "#E8E8E5",
-        paper: "#FCFCFC",
+        // New-age copilot palette — electric violet accent, mint "on-track", soft graphite.
+        ink: "#15161B",
+        muted: "#8A8D98",
+        line: "#ECECEF",
+        paper: "#FCFCFD",
         brand: {
-          DEFAULT: "#0031F5",
-          deep: "#121212",
-          dark: "#002CD9",
-          mint: "#E0E5FF",
+          DEFAULT: "#6750F2",
+          deep: "#4B3DDB",
+          dark: "#5A45E6",
+          mint: "#ECEAFE",
         },
-        equity: "#0031F5",
-        debt: "#121212",
-        gold: "#A89A7C",
-        hybrid: "#3A60F8",
+        positive: "#16C098",
+        equity: "#6750F2",
+        debt: "#15161B",
+        gold: "#E0A23C",
+        hybrid: "#9B8CFF",
       },
       fontFamily: {
         // Geist (Vercel) is the closest free analogue to Augustus's ABC Diatype.

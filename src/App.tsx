@@ -2,7 +2,7 @@ import { useStore } from "./store";
 import Landing from "./components/Landing";
 import Onboarding from "./components/Onboarding";
 import Plan from "./components/Plan";
-import ChatDock from "./components/ChatPanel";
+import CopilotBar from "./components/CopilotBar";
 
 export default function App() {
   const s = useStore();
@@ -11,7 +11,7 @@ export default function App() {
       {s.screen === "landing" && <Landing />}
       {s.screen === "onboarding" && <Onboarding />}
       {s.screen === "plan" && <Plan />}
-      <ChatDock />
+      {s.screen === "plan" && <CopilotBar />}
     </>
   );
 }

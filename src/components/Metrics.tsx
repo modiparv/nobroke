@@ -1,14 +1,15 @@
 import type { PlanGoal, PlanResult } from "../lib/types";
 import { formatINR, formatPct, formatYears } from "../lib/format";
+import { C } from "../lib/theme";
 
 function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
   const pct = Math.max(0, Math.min(1, progress));
   const radius = 30;
   const c = 2 * Math.PI * radius;
-  const color = onTrack ? "#0031F5" : "#121212";
+  const color = onTrack ? C.positive : C.ink;
   return (
     <svg viewBox="0 0 72 72" className="h-[72px] w-[72px] flex-none">
-      <circle cx="36" cy="36" r={radius} fill="none" stroke="#E8E8E5" strokeWidth="7" />
+      <circle cx="36" cy="36" r={radius} fill="none" stroke={C.track} strokeWidth="7" />
       <circle
         cx="36"
         cy="36"
@@ -20,7 +21,7 @@ function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
         strokeDasharray={`${(c * pct).toFixed(1)} ${(c * (1 - pct)).toFixed(1)}`}
         transform="rotate(-90 36 36)"
       />
-      <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="700" fill="#121212">
+      <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="700" fill={C.ink}>
         {Math.round(pct * 100)}%
       </text>
     </svg>
@@ -28,7 +29,7 @@ function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
 }
 
 function Stat({ label, value, sub, accent }: { label: string; value: string; sub: string; accent?: "good" | "bad" }) {
-  const color = accent === "good" ? "text-brand" : "text-ink";
+  const color = accent === "good" ? "text-positive" : "text-ink";
   return (
     <div className="rounded-xl border border-line bg-paper p-3">
       <div className="font-mono text-[10px] uppercase tracking-wide text-muted">{label}</div>
@@ -47,7 +48,7 @@ export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: P
             <span className="font-mono text-[10px] uppercase tracking-wide text-muted">Projected corpus at goal</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                r.onTrack ? "bg-brand text-white" : "bg-ink text-white"
+                r.onTrack ? "bg-positive text-white" : "bg-ink text-white"
               }`}
             >
               {r.onTrack ? "On track" : "Catching up"}

@@ -4,6 +4,8 @@ import { computePlan } from "../lib/finance";
 import { formatINR, formatYears } from "../lib/format";
 import { actions, goalMonthly, planInputsForGoal, useStore } from "../store";
 import { sectionLabel } from "../ui";
+import { C } from "../lib/theme";
+import MoneyInput from "./MoneyInput";
 import Chart from "./Chart";
 import Metrics from "./Metrics";
 import Insights from "./Insights";
@@ -149,7 +151,7 @@ export default function GoalCard({
             </span>
             <span
               className={`flex-none rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                r.onTrack ? "bg-brand text-white" : "bg-ink text-white"
+                r.onTrack ? "bg-positive text-white" : "bg-ink text-white"
               }`}
             >
               {r.onTrack ? "On track" : "Catching up"}
@@ -167,7 +169,7 @@ export default function GoalCard({
           <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-line">
             <div
               className="h-full rounded-full transition-[width] duration-500 ease-out"
-              style={{ width: `${progress * 100}%`, background: r.onTrack ? "#0031F5" : "#121212" }}
+              style={{ width: `${progress * 100}%`, background: r.onTrack ? C.positive : C.ink }}
             />
           </div>
           {!r.onTrack && (
@@ -212,43 +214,26 @@ export default function GoalCard({
                   </div>
 
                   {/* Target amount */}
-                  <div>
-                    <div className="mb-1 flex items-baseline justify-between gap-2">
-                      <span className="text-[13px] text-muted">How much (in today's money)?</span>
-                      <span className="text-sm font-bold tabular-nums">{formatINR(g.targetToday)}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={50000}
-                      max={50000000}
-                      step={50000}
-                      value={g.targetToday}
-                      onChange={(e) => actions.setGoalTarget(g.id, Number(e.target.value))}
-                      aria-label={`${g.name} target amount`}
-                      className="w-full"
-                    />
-                  </div>
+                  <MoneyInput
+                    label="How much (in today's money)?"
+                    value={g.targetToday}
+                    onChange={(v) => actions.setGoalTarget(g.id, v)}
+                    step={50000}
+                    min={50000}
+                    max={50000000}
+                  />
 
                   {/* Monthly money split */}
-                  <div>
-                    <div className="mb-1 flex items-baseline justify-between gap-2">
-                      <span className="text-[13px] text-muted">Monthly money for this goal</span>
-                      <span className="text-sm font-bold tabular-nums">
-                        {formatINR(amount)} <span className="font-mono text-[10px] font-normal text-muted">{sharePct}%</span>
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={Math.max(1, s.monthlySip)}
-                      step={500}
-                      value={Math.round(amount)}
-                      onChange={(e) => actions.setGoalAmount(g.id, Number(e.target.value))}
-                      aria-label={`${g.name} monthly amount`}
-                      className="w-full"
-                      disabled={s.monthlySip <= 0}
-                    />
-                  </div>
+                  <MoneyInput
+                    label="Monthly money for this goal"
+                    hint={`${sharePct}% of pool`}
+                    value={Math.round(amount)}
+                    onChange={(v) => actions.setGoalAmount(g.id, v)}
+                    step={500}
+                    min={0}
+                    max={Math.max(1, s.monthlySip)}
+                    disabled={s.monthlySip <= 0}
+                  />
                 </div>
               </div>
 

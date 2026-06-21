@@ -42,7 +42,7 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
   return out.slice(0, 4);
 }
 
-const BORDER: Record<string, string> = { positive: "#0031F5", warning: "#121212", info: "#E8E8E5" };
+const BORDER: Record<string, string> = { positive: "#16C098", warning: "#15161B", info: "#ECECEF" };
 
 export default function Insights({ r, inputs }: { r: PlanResult; inputs: PlanInputs }) {
   const list = generate(inputs, r);

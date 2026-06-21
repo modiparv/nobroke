@@ -2,53 +2,17 @@ import { useState } from "react";
 import { GOALS } from "../lib/goals";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
-import { actions, goalMonthly, goalsByPriority, planInputsForGoal, useStore } from "../store";
+import { actions, goalMonthly, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
 import { btnPrimary, card, sectionLabel } from "../ui";
 import AppHeader from "./AppHeader";
 import Aggregation from "./Aggregation";
 import GoalCard from "./GoalCard";
 import Holdings from "./Holdings";
+import MoneyInput from "./MoneyInput";
 import PortfolioBuilder from "./PortfolioBuilder";
 
 /** Distinct swatches for the cross-goal split bar/legend. */
-const SPLIT_COLORS = ["#0031F5", "#121212", "#A89A7C", "#3A60F8", "#8C8C8C", "#5B6470", "#C2B280"];
-
-function PoolSlider({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (v: number) => void;
-}) {
-  const pct = ((value - min) / (max - min)) * 100;
-  return (
-    <div>
-      <div className="mb-1.5 flex items-baseline justify-between">
-        <span className="text-[13px] text-muted">{label}</span>
-        <span className="text-sm font-semibold">{formatINR(value)}</span>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        aria-label={label}
-        className="w-full"
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ background: `linear-gradient(90deg,#0031F5 ${pct}%,#E8E8E5 ${pct}%)`, borderRadius: 999, height: 6 }}
-      />
-    </div>
-  );
-}
+const SPLIT_COLORS = ["#6750F2", "#16C098", "#E0A23C", "#15161B", "#9B8CFF", "#8A8D98"];
 
 function AddGoal({ onAdd }: { onAdd: (id: string) => void }) {
   const s = useStore();
@@ -105,6 +69,8 @@ export default function Plan() {
   const [overId, setOverId] = useState<string | null>(null);
 
   const onTrackCount = ordered.filter((g) => computePlan(planInputsForGoal(s, g)).onTrack).length;
+  const invested = holdingsTotal(s);
+  const total = totalCapital(s);
 
   const openGoal = (id: string) => {
     actions.setCurrentGoal(id);
@@ -123,7 +89,7 @@ export default function Plan() {
   };
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-40">
       <AppHeader />
 
       <main className="mx-auto max-w-4xl px-5 py-8 sm:px-10">
@@ -140,10 +106,42 @@ export default function Plan() {
 
         {/* Your money — the pool everything is split from */}
         <section className={`${card} mt-6`}>
-          <span className={sectionLabel}>Your monthly money</span>
-          <div className="mt-3 grid gap-5 sm:grid-cols-2">
-            <PoolSlider label="Total monthly investment" value={s.monthlySip} min={0} max={500000} step={1000} onChange={actions.setSip} />
-            <PoolSlider label="Total current savings" value={s.currentSavings} min={0} max={20000000} step={25000} onChange={actions.setSavings} />
+          <span className={sectionLabel}>Money you invest every month</span>
+          <div className="mt-3">
+            <MoneyInput
+              label="Monthly investment"
+              value={s.monthlySip}
+              onChange={actions.setSip}
+              step={1000}
+              min={0}
+              max={1000000}
+              quick={[10000, 25000, 50000, 100000]}
+            />
+          </div>
+
+          <div className="mt-5 border-t border-line pt-5">
+            <span className={sectionLabel}>Money you already have</span>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">
+              <MoneyInput
+                label="Cash in hand / bank"
+                hint="liquid"
+                value={s.currentSavings}
+                onChange={actions.setSavings}
+                step={25000}
+                min={0}
+                max={50000000}
+              />
+              <div className="flex flex-col justify-center rounded-xl border border-line bg-paper px-4 py-3">
+                <span className="font-mono text-[10px] uppercase tracking-wide text-muted">Total working toward goals</span>
+                <span className="mt-0.5 text-2xl font-bold tabular-nums">{formatINR(total)}</span>
+                <span className="mt-0.5 text-[11px] text-muted">
+                  {formatINR(s.currentSavings)} cash + {formatINR(invested)} invested
+                </span>
+              </div>
+            </div>
+            <div className="mt-4">
+              <Holdings />
+            </div>
           </div>
 
           {/* Cross-goal split — one place to see (and auto-balance) how the pool divides */}
@@ -184,9 +182,6 @@ export default function Plan() {
             </div>
           )}
 
-          <div className="mt-5 border-t border-line pt-5">
-            <Holdings />
-          </div>
         </section>
 
         {/* One shared portfolio — funds every goal (no per-goal baskets) */}

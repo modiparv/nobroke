@@ -3,7 +3,6 @@ import { HOLDING_TYPES, HOLDING_TYPE_BY_LABEL } from "../lib/holdings";
 import { formatINR } from "../lib/format";
 import { actions, useStore } from "../store";
 import { sectionLabel } from "../ui";
-import Arrow from "./Arrow";
 
 export default function Holdings() {
   const s = useStore();
@@ -67,18 +66,8 @@ export default function Holdings() {
               </div>
             );
           })}
-          <div className="mt-1 flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-wide">
-            <span className="text-muted">
-              Total <span className="font-semibold text-ink">{formatINR(sum)}</span>
-            </span>
-            {Math.round(sum) !== Math.round(s.currentSavings) && (
-              <button
-                onClick={actions.applyHoldingsToSavings}
-                className="inline-flex items-center gap-1.5 text-brand hover:underline"
-              >
-                Use as total savings <Arrow />
-              </button>
-            )}
+          <div className="mt-1 font-mono text-[10px] uppercase tracking-wide text-muted">
+            Invested <span className="font-semibold text-ink">{formatINR(sum)}</span> · added to your total automatically
           </div>
         </div>
       ) : (
@@ -159,7 +148,7 @@ export default function Holdings() {
               <button
                 onClick={save}
                 disabled={!name.trim() || amount <= 0}
-                className="flex-1 rounded-xl bg-ink py-2.5 text-sm font-semibold text-white transition hover:bg-[#262626] disabled:opacity-40"
+                className="flex-1 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white transition hover:bg-brand-deep disabled:opacity-40"
               >
                 Save
               </button>
