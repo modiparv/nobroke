@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { ASSET_CLASSES, CATEGORY_FILTERS, FUNDS, FUND_MAP } from "../lib/funds";
 import { MODEL_PORTFOLIOS } from "../lib/portfolios";
-import { allocationTotal, bandWeights, blendedReturn, blendedVolatility, computePlan } from "../lib/finance";
+import { allocationTotal, bandWeights, blendedReturn, blendedVolatility } from "../lib/finance";
 import { formatINR, formatPct } from "../lib/format";
 import type { Allocation, AssetClassId, RiskProfile } from "../lib/types";
-import { actions, currentGoal, goalMonthly, toPlanInputs, useStore } from "../store";
-import Chart from "./Chart";
+import { actions, recommendedPortfolio, useStore } from "../store";
 import { sectionLabel } from "../ui";
 
 function riskLabel(vol: number): string {
@@ -19,10 +18,15 @@ function Marker() {
   return <span className="inline-block h-1.5 w-1.5 flex-none bg-brand" />;
 }
 
+/**
+ * The ONE portfolio every goal shares. There's no per-goal basket anymore — the
+ * whole monthly pool grows in this single mix, and each goal simply draws its
+ * share of that money. We surface an advisor recommendation (a mix matched to
+ * the goals' blended horizon) and a near-term mismatch warning.
+ */
 export default function PortfolioBuilder() {
   const s = useStore();
-  const goal = currentGoal(s);
-  const alloc: Allocation = goal?.allocation ?? {};
+  const alloc: Allocation = s.portfolio;
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState<"all" | AssetClassId>("all");
   const [dragOver, setDragOver] = useState(false);
@@ -33,17 +37,15 @@ export default function PortfolioBuilder() {
   const vol = blendedVolatility(alloc);
   const risk = total > 0 ? riskLabel(vol) : "—";
   const tenYr = 100000 * Math.pow(1 + ret, 10);
-  const result = computePlan(toPlanInputs(s));
-  // The builder splits THIS goal's monthly money (its share of the pool) across instruments.
-  const sip = goal ? goalMonthly(s, goal.id) : 0;
+  // The entire monthly pool funds this single portfolio (all goals share it).
+  const sip = s.monthlySip;
   const amountFor = (id: string) => (total > 0 ? (alloc[id] / total) * sip : 0);
 
-  const setAlloc = (a: Allocation, profile: RiskProfile | null) => actions.setAllocation(a, profile);
-  // Weights are always kept summing to 100 so the basket is strictly 100% — the
-  // % is a true share of the monthly amount, and the ₹ values follow the SIP.
+  const setAlloc = (a: Allocation, profile: RiskProfile | null) => actions.setPortfolio(a, profile);
+  // Weights are always kept summing to 100 so the basket is strictly 100%.
   const normalizeTo100 = (a: Allocation): Allocation => {
     const entries = Object.entries(a);
-    const t = entries.reduce((s, [, v]) => s + (v > 0 ? v : 0), 0);
+    const t = entries.reduce((sum, [, v]) => sum + (v > 0 ? v : 0), 0);
     if (t <= 0) return {};
     return Object.fromEntries(entries.map(([k, v]) => [k, v > 0 ? (v / t) * 100 : 0]));
   };
@@ -89,7 +91,15 @@ export default function PortfolioBuilder() {
   const holdings = Object.keys(alloc).sort(
     (a, b) => CLASS_ORDER.indexOf(FUND_MAP[a]?.assetClass) - CLASS_ORDER.indexOf(FUND_MAP[b]?.assetClass),
   );
-  const equityHeavy = total > 0 && bands.equity / total > 0.7 && bands.debt / Math.max(total, 1) < 0.1;
+  const equityShare = total > 0 ? bands.equity / total : 0;
+  const equityHeavy = total > 0 && equityShare > 0.7 && bands.debt / Math.max(total, 1) < 0.1;
+
+  // ---- Advisor overlay: a mix matched to the goals' blended horizon ----
+  const rec = recommendedPortfolio(s.goals);
+  const recLabel = MODEL_PORTFOLIOS[rec.profile].label;
+  const matchesRec = s.portfolioProfile === rec.profile;
+  const soonGoal = s.goals.length ? [...s.goals].sort((a, b) => a.horizonYears - b.horizonYears)[0] : undefined;
+  const nearTermRisk = !!soonGoal && soonGoal.horizonYears <= 3 && equityShare > 0.55;
 
   // Stacked allocation bar — scale segments so an over-100 mix still fills the bar.
   const scale = total > 100 ? 100 / total : 1;
@@ -103,10 +113,10 @@ export default function PortfolioBuilder() {
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-[22px] font-bold tracking-tight">Build your portfolio</h2>
+          <h2 className="text-[22px] font-bold tracking-tight">Your portfolio</h2>
           <p className="text-[13px] text-muted">
-            Splitting <span className="font-semibold text-ink">{goal?.name}</span>'s{" "}
-            <span className="font-semibold text-ink">{formatINR(sip)}/mo</span> across investments. Tap a fund to add it, then drag to set the mix.
+            One mix that funds <span className="font-semibold text-ink">all your goals</span>. Your whole{" "}
+            <span className="font-semibold text-ink">{formatINR(sip)}/mo</span> grows here — each goal just draws its share.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-full border border-line px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide">
@@ -114,6 +124,39 @@ export default function PortfolioBuilder() {
           <span className="text-muted">Live · {risk} risk</span>
         </div>
       </div>
+
+      {/* Advisor pick — match the single mix to the goals' blended horizon */}
+      {s.goals.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-paper px-3 py-2.5">
+          <span className="text-[12px] text-ink">
+            {matchesRec ? (
+              <>
+                <span className="font-semibold">Matched to your goals</span> — {recLabel} suits your timeline.
+              </>
+            ) : (
+              <>
+                Advisor pick for your timeline: <span className="font-semibold">{recLabel}</span>.
+              </>
+            )}
+          </span>
+          {!matchesRec && (
+            <button
+              onClick={actions.recommendPortfolio}
+              className="rounded-full border border-line px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide text-muted transition hover:border-brand hover:text-ink"
+            >
+              ✨ Match to my goals
+            </button>
+          )}
+        </div>
+      )}
+
+      {nearTermRisk && soonGoal && (
+        <p className="mb-4 rounded-lg border border-ink/15 bg-paper px-3 py-2 text-xs text-ink">
+          ⚠️ <span className="font-semibold">{soonGoal.name}</span> is only {soonGoal.horizonYears}{" "}
+          {soonGoal.horizonYears === 1 ? "year" : "years"} away. This mix leans heavily on equity, which can swing — consider a
+          safer mix or give that goal more monthly money so a dip doesn't derail it.
+        </p>
+      )}
 
       <div className="grid gap-5 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         {/* ---- Funds library (drag source) ---- */}
@@ -179,7 +222,7 @@ export default function PortfolioBuilder() {
           </div>
         </div>
 
-        {/* ---- Basket (drop zone) + projection ---- */}
+        {/* ---- Basket (drop zone) ---- */}
         <div
           className={`rounded-2xl border bg-white p-4 transition ${dragOver ? "border-brand ring-2 ring-brand/40" : "border-line"}`}
           onDragOver={(e) => {
@@ -199,7 +242,7 @@ export default function PortfolioBuilder() {
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-              <Marker /> Your basket
+              <Marker /> Your mix
             </span>
             <span className="font-mono text-[11px] uppercase tracking-wide">
               <span className="font-semibold text-ink">{formatINR(sip)}/mo</span>
@@ -232,7 +275,7 @@ export default function PortfolioBuilder() {
 
           {total === 0 && (
             <div className="mt-3 rounded-xl border border-dashed border-line bg-paper px-4 py-5 text-center">
-              <p className="text-sm font-semibold text-ink">Your basket is empty</p>
+              <p className="text-sm font-semibold text-ink">Your mix is empty</p>
               <p className="mt-1 text-[12px] text-muted">Tap a fund on the left to add it — or pick a Quick mix below to fill it for you.</p>
             </div>
           )}
@@ -253,14 +296,6 @@ export default function PortfolioBuilder() {
             </div>
           </div>
 
-          {/* Projection graph — lives with the rebalancing controls */}
-          <div className="mt-4">
-            <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-              <Marker /> Projection
-            </span>
-            <Chart r={result} />
-          </div>
-
           {/* Presets — plain-language quick mixes */}
           <div className="mt-4">
             <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
@@ -268,7 +303,7 @@ export default function PortfolioBuilder() {
             </span>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(["steady", "balanced", "bold"] as RiskProfile[]).map((key) => {
-                const active = goal?.activeProfile === key;
+                const active = s.portfolioProfile === key;
                 return (
                   <button
                     key={key}
@@ -286,7 +321,7 @@ export default function PortfolioBuilder() {
               })}
             </div>
             {total === 0 && (
-              <p className="mt-2 text-center text-[11px] text-muted">New to investing? Tap a mix to auto-fill your basket.</p>
+              <p className="mt-2 text-center text-[11px] text-muted">New to investing? Tap a mix to auto-fill your portfolio.</p>
             )}
           </div>
 
@@ -296,7 +331,7 @@ export default function PortfolioBuilder() {
             </p>
           )}
 
-          {/* Holdings — the contents of your basket */}
+          {/* Holdings — the contents of your portfolio */}
           {holdings.length > 0 && (
             <div className="mt-5">
               <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>

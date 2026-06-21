@@ -8,6 +8,7 @@ import AppHeader from "./AppHeader";
 import Aggregation from "./Aggregation";
 import GoalCard from "./GoalCard";
 import Holdings from "./Holdings";
+import PortfolioBuilder from "./PortfolioBuilder";
 
 /** Distinct swatches for the cross-goal split bar/legend. */
 const SPLIT_COLORS = ["#0031F5", "#121212", "#A89A7C", "#3A60F8", "#8C8C8C", "#5B6470", "#C2B280"];
@@ -188,13 +189,21 @@ export default function Plan() {
           </div>
         </section>
 
-        {/* Goals — each opens in place to reveal its plan + portfolio */}
+        {/* One shared portfolio — funds every goal (no per-goal baskets) */}
+        {s.goals.length > 0 && (
+          <section className={`${card} mt-5`}>
+            <PortfolioBuilder />
+          </section>
+        )}
+
+        {/* Goals — each opens in place to reveal its plan + how it's tracking */}
         <div className="mt-8 flex items-center justify-between gap-3">
           <h2 className="text-base font-bold">Your goals</h2>
           <AddGoal onAdd={addGoal} />
         </div>
         <p className="mt-1 text-[13px] text-muted">
-          Tap a goal to set its plan and build its portfolio — all in one place.
+          Each goal draws its share of the money above and grows in your one portfolio. Tap a goal to set its target and see if
+          it's on track.
           {s.goals.length > 1 && (
             <>
               {" "}

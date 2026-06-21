@@ -26,6 +26,12 @@ export interface AppState {
   goalOrder: string[];
   /** True once the user manually reorders priority (stops auto-sort by tenure). */
   goalOrderCustom: boolean;
+  /** The single shared portfolio every goal's money grows in (one mix for all goals). */
+  portfolio: Allocation;
+  /** Risk preset backing the shared portfolio, if one is active. */
+  portfolioProfile: RiskProfile | null;
+  /** True once the user hand-edits the portfolio (stops auto re-recommendation). */
+  portfolioCustom: boolean;
   /** Existing investments the user adds manually; sum can be applied to current savings. */
   externalHoldings: Holding[];
   chatOpen: boolean;
@@ -47,6 +53,9 @@ let state: AppState = {
   goalShares: {},
   goalOrder: [],
   goalOrderCustom: false,
+  portfolio: {},
+  portfolioProfile: null,
+  portfolioCustom: false,
   externalHoldings: [],
   chatOpen: false,
   chat: [],
@@ -106,7 +115,7 @@ export function planInputsForGoal(s: AppState, g: PlanGoal): PlanInputs {
     currentSavings: s.currentSavings * share,
     monthlySip: s.monthlySip * share,
     inflation: s.inflation,
-    allocation: g.allocation,
+    allocation: s.portfolio,
   };
 }
 export function toPlanInputs(s: AppState = state): PlanInputs {
@@ -118,7 +127,7 @@ export function toPlanInputs(s: AppState = state): PlanInputs {
 /** Recommend how to split the monthly pool across goals: fund the highest-priority
     (shortest-tenure) goals' monthly need first (waterfall); if there's surplus, split
     it proportionally to need. Returns percents summing to ~100. */
-export function recommendShares(goals: PlanGoal[], order: string[], monthlySip: number, inflation: number): Record<string, number> {
+export function recommendShares(goals: PlanGoal[], order: string[], monthlySip: number, inflation: number, allocation: Allocation): Record<string, number> {
   const shares: Record<string, number> = {};
   if (goals.length === 0) return shares;
   if (monthlySip <= 0) {
@@ -130,7 +139,7 @@ export function recommendShares(goals: PlanGoal[], order: string[], monthlySip: 
   let totalReq = 0;
   for (const g of goals) {
     const reqCorpus = requiredCorpus(g.targetToday, inflation, g.horizonYears);
-    const req = requiredSip(reqCorpus, 0, blendedReturn(g.allocation), g.horizonYears);
+    const req = requiredSip(reqCorpus, 0, blendedReturn(allocation), g.horizonYears);
     required[g.id] = req;
     totalReq += req;
   }
@@ -160,17 +169,32 @@ function orderByTenure(goals: PlanGoal[]): string[] {
 function buildPlanGoal(goalId: string, profile: Profile, horizonOverride?: number, confirmed = false): PlanGoal {
   const g = GOAL_MAP[goalId];
   const horizon = horizonOverride ?? g.horizonYears;
-  const auto = autoAllocation(horizon);
   return {
     id: g.id,
     name: g.name,
     emoji: g.emoji,
     targetToday: adjustedTarget(g, profile.cityTier),
     horizonYears: horizon,
-    allocation: { ...auto.allocation },
-    activeProfile: auto.profile,
     tenureConfirmed: confirmed,
   };
+}
+
+/** One portfolio for all goals. As an advisor would, we calibrate its risk to the
+    goals' corpus-weighted time horizon — bigger / longer goals pull the single mix
+    toward equity, shorter ones toward debt — then flag any near-term mismatch in
+    the UI. This keeps the user on ONE simple mix instead of a basket per goal. */
+export function recommendedPortfolio(goals: PlanGoal[]): { allocation: Allocation; profile: RiskProfile } {
+  if (goals.length === 0) return { allocation: {}, profile: "balanced" };
+  let weight = 0;
+  let weightedYears = 0;
+  for (const g of goals) {
+    const w = Math.max(1, g.targetToday);
+    weight += w;
+    weightedYears += w * g.horizonYears;
+  }
+  const horizon = weight > 0 ? weightedYears / weight : goals[0].horizonYears;
+  const auto = autoAllocation(horizon);
+  return { allocation: { ...auto.allocation }, profile: auto.profile };
 }
 
 // ---- Navigation ----
@@ -205,14 +229,18 @@ export const actions = {
     );
     const monthlySip = suggestedSip(state.profile);
     const order = orderByTenure(goals);
+    const { allocation: portfolio, profile: portfolioProfile } = recommendedPortfolio(goals);
     set({
       goals,
       currentGoalId: goals[0].id,
       goalOrder: order,
-      goalShares: recommendShares(goals, order, monthlySip, state.inflation),
+      goalShares: recommendShares(goals, order, monthlySip, state.inflation, portfolio),
       goalOrderCustom: false,
       monthlySip,
       currentSavings: state.profile.existingSavings,
+      portfolio,
+      portfolioProfile,
+      portfolioCustom: false,
       screen: "plan",
     });
   },
@@ -231,16 +259,20 @@ export const actions = {
     const goals = selected.map((id, i) => buildPlanGoal(id, profile, i === 0 ? 7 : undefined, true));
     const monthlySip = suggestedSip(profile);
     const order = orderByTenure(goals);
+    const { allocation: portfolio, profile: portfolioProfile } = recommendedPortfolio(goals);
     set({
       profile,
       selectedGoalIds: selected,
       goals,
       currentGoalId: goals[0].id,
       goalOrder: order,
-      goalShares: recommendShares(goals, order, monthlySip, state.inflation),
+      goalShares: recommendShares(goals, order, monthlySip, state.inflation, portfolio),
       goalOrderCustom: false,
       monthlySip,
       currentSavings: profile.existingSavings,
+      portfolio,
+      portfolioProfile,
+      portfolioCustom: false,
       screen: "plan",
     });
   },
@@ -251,8 +283,15 @@ export const actions = {
   updateCurrentGoal: (patch: Partial<PlanGoal>) =>
     set({ goals: state.goals.map((g) => (g.id === state.currentGoalId ? { ...g, ...patch } : g)) }),
 
-  setAllocation: (allocation: Allocation, activeProfile: RiskProfile | null) =>
-    set({ goals: state.goals.map((g) => (g.id === state.currentGoalId ? { ...g, allocation, activeProfile } : g)) }),
+  /** The one portfolio every goal shares. Editing it marks it custom so we stop
+      auto-re-recommending a mix from the goals' horizon. */
+  setPortfolio: (portfolio: Allocation, portfolioProfile: RiskProfile | null) =>
+    set({ portfolio, portfolioProfile, portfolioCustom: true }),
+  /** Re-tune the single mix to the goals' blended horizon (the ✨ advisor pick). */
+  recommendPortfolio: () => {
+    const { allocation, profile } = recommendedPortfolio(state.goals);
+    set({ portfolio: allocation, portfolioProfile: profile, portfolioCustom: false });
+  },
 
   addGoal: (id: string) => {
     if (state.goals.some((g) => g.id === id)) {
@@ -262,11 +301,18 @@ export const actions = {
     const goal = buildPlanGoal(id, state.profile);
     const goals = [...state.goals, goal];
     const order = state.goalOrderCustom ? [...state.goalOrder, goal.id] : orderByTenure(goals);
+    // A new goal can shift the goals' blended horizon, so re-tune the shared
+    // portfolio too — unless the user has hand-customized it.
+    const rec = recommendedPortfolio(goals);
+    const portfolio = state.portfolioCustom ? state.portfolio : rec.allocation;
+    const portfolioProfile = state.portfolioCustom ? state.portfolioProfile : rec.profile;
     set({
       goals,
       currentGoalId: goal.id,
       goalOrder: order,
-      goalShares: recommendShares(goals, order, state.monthlySip, state.inflation),
+      goalShares: recommendShares(goals, order, state.monthlySip, state.inflation, portfolio),
+      portfolio,
+      portfolioProfile,
     });
   },
 
@@ -316,7 +362,7 @@ export const actions = {
     for (const k of others) shares[k] = otherTotal > 0 ? ((state.goalShares[k] ?? 0) / otherTotal) * rest : rest / others.length;
     set({ goalShares: shares });
   },
-  recommendGoalSplit: () => set({ goalShares: recommendShares(state.goals, state.goalOrder, state.monthlySip, state.inflation) }),
+  recommendGoalSplit: () => set({ goalShares: recommendShares(state.goals, state.goalOrder, state.monthlySip, state.inflation, state.portfolio) }),
 
   // Removes a goal and renormalizes the remaining shares so the split still sums
   // to 100% — no leak between the per-goal money and the monthly pool.
@@ -334,7 +380,12 @@ export const actions = {
       for (const g of goals) goalShares[g.id] = each;
     }
     const currentGoalId = state.currentGoalId === id ? goals[0]?.id ?? "" : state.currentGoalId;
-    set({ goals, goalOrder, goalShares, currentGoalId });
+    // Re-tune the shared mix to whatever goals remain (unless hand-customized).
+    const rec = recommendedPortfolio(goals);
+    const keep = state.portfolioCustom || goals.length === 0;
+    const portfolio = keep ? state.portfolio : rec.allocation;
+    const portfolioProfile = keep ? state.portfolioProfile : rec.profile;
+    set({ goals, goalOrder, goalShares, currentGoalId, portfolio, portfolioProfile });
   },
 
   // ---- Existing investments (added manually; sum can feed total current savings) ----
@@ -367,7 +418,7 @@ function buildPlanData(s: AppState): unknown | null {
   if (s.screen !== "plan" || !g) return null;
   const r = computePlan(toPlanInputs(s));
   const allocationPct: Record<string, number> = {};
-  for (const [id, w] of Object.entries(g.allocation)) allocationPct[FUND_MAP[id]?.name ?? id] = w;
+  for (const [id, w] of Object.entries(s.portfolio)) allocationPct[FUND_MAP[id]?.name ?? id] = w;
   return {
     goal: g.name,
     targetTodayINR: g.targetToday,

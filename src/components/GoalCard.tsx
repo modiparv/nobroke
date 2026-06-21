@@ -4,9 +4,9 @@ import { computePlan } from "../lib/finance";
 import { formatINR, formatYears } from "../lib/format";
 import { actions, goalMonthly, planInputsForGoal, useStore } from "../store";
 import { sectionLabel } from "../ui";
+import Chart from "./Chart";
 import Metrics from "./Metrics";
 import Insights from "./Insights";
-import PortfolioBuilder from "./PortfolioBuilder";
 
 const BASE_YEAR = new Date().getFullYear();
 
@@ -255,6 +255,12 @@ export default function GoalCard({
               {/* Plan summary */}
               <Metrics r={r} goal={g} inflation={s.inflation} />
 
+              {/* This goal's trajectory — its share of the money, grown in the shared portfolio */}
+              <div>
+                <span className={sectionLabel}>Projected path to {g.name}</span>
+                <Chart r={r} />
+              </div>
+
               {/* Why this plan — the old "What NoBroke sees" insights, on demand */}
               <div>
                 <button
@@ -269,11 +275,6 @@ export default function GoalCard({
                     <Insights r={r} inputs={inputs} />
                   </div>
                 )}
-              </div>
-
-              {/* The portfolio for this goal */}
-              <div className="rounded-2xl border border-line bg-paper p-3 sm:p-4">
-                <PortfolioBuilder />
               </div>
 
               <div className="flex justify-end">

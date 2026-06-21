@@ -47,8 +47,6 @@ export interface PlanGoal {
   emoji: string;
   targetToday: number;
   horizonYears: number;
-  allocation: Allocation;
-  activeProfile: RiskProfile | null;
   /** Whether the user has confirmed the goal's target year/tenure. */
   tenureConfirmed: boolean;
 }
