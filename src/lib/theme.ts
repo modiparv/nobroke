@@ -7,13 +7,13 @@
  *  - ink/muted/line = soft graphite neutrals
  */
 export const C = {
-  brand: "#6750F2",
-  brandDeep: "#4B3DDB",
-  positive: "#16C098",
+  brand: "#3D46B2",
+  brandDeep: "#2E3690",
+  positive: "#12946B",
   ink: "#15161B",
   muted: "#8A8D98",
   line: "#ECECEF",
   track: "#E9E9EE",
-  gold: "#E0A23C",
+  gold: "#B58A3C",
   invested: "#CBCBD4",
 } as const;

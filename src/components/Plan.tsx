@@ -12,7 +12,7 @@ import MoneyInput from "./MoneyInput";
 import PortfolioBuilder from "./PortfolioBuilder";
 
 /** Distinct swatches for the cross-goal split bar/legend. */
-const SPLIT_COLORS = ["#6750F2", "#16C098", "#E0A23C", "#15161B", "#9B8CFF", "#8A8D98"];
+const SPLIT_COLORS = ["#3D46B2", "#12946B", "#B58A3C", "#3A4256", "#7B83CE", "#8A8D98"];
 
 function AddGoal({ onAdd }: { onAdd: (id: string) => void }) {
   const s = useStore();
@@ -89,7 +89,7 @@ export default function Plan() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F3F1FF] via-paper to-[#EBFAF3] pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-[#F4F5FA] via-paper to-[#F2F5F3] pb-24">
       <AppHeader />
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-10 sm:py-8">
