@@ -3,7 +3,7 @@ import { GOALS } from "../lib/goals";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { actions, goalMonthly, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
-import { btnPrimary, card, sectionLabel } from "../ui";
+import { btnPrimary, sectionLabel, sectionMoney, sectionNeutral, sectionPortfolio } from "../ui";
 import AppHeader from "./AppHeader";
 import Aggregation from "./Aggregation";
 import GoalCard from "./GoalCard";
@@ -89,7 +89,7 @@ export default function Plan() {
   };
 
   return (
-    <div className="min-h-screen pb-28">
+    <div className="min-h-screen bg-gradient-to-b from-[#F3F1FF] via-paper to-[#EBFAF3] pb-24">
       <AppHeader />
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-10 sm:py-8">
@@ -103,13 +103,9 @@ export default function Plan() {
               )}/mo going in. Tap any goal to see if you'll get there.`
             : "Add a goal to start your plan."}
         </p>
-        <p className="mt-3 max-w-2xl rounded-xl border border-line bg-paper px-3 py-2 text-[12.5px] leading-snug text-muted">
-          <span className="font-semibold text-ink">New here?</span> Tell us your goals and what you can save each month, and
-          we'll show whether you'll reach them and suggest where to put your money. No finance words needed.
-        </p>
 
-        {/* Your money — the pool everything is split from */}
-        <section className={`${card} mt-6`}>
+        {/* Your money — the pool everything is split from (violet pane) */}
+        <section className={`${sectionMoney} mt-5`}>
           <div className="flex items-center justify-between gap-2">
             <span className={sectionLabel}>Your money</span>
             <span className="font-mono text-[10px] uppercase tracking-wide text-muted">
@@ -167,9 +163,9 @@ export default function Plan() {
 
         </section>
 
-        {/* One shared portfolio — funds every goal (no per-goal baskets) */}
+        {/* One shared portfolio — funds every goal (mint pane) */}
         {s.goals.length > 0 && (
-          <section className={`${card} mt-5`}>
+          <section className={`${sectionPortfolio} mt-5`}>
             <PortfolioBuilder />
           </section>
         )}
@@ -231,7 +227,7 @@ export default function Plan() {
         )}
 
         {/* Account aggregation scaffold — global, lives once at the bottom */}
-        <section className={`${card} mt-8`}>
+        <section className={`${sectionNeutral} mt-8`}>
           <Aggregation />
         </section>
 

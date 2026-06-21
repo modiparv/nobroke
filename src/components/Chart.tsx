@@ -3,20 +3,19 @@ import { formatINR, formatYears } from "../lib/format";
 import { C } from "../lib/theme";
 
 const W = 720;
-const H = 250;
-const PAD = { t: 18, r: 16, b: 30, l: 58 };
+const H = 196;
+const PAD = { t: 14, r: 18, b: 26, l: 56 };
 const PW = W - PAD.l - PAD.r;
 const PH = H - PAD.t - PAD.b;
 
 export default function Chart({ r }: { r: PlanResult }) {
   const maxX = Math.max(1, r.months);
 
-  // Scale the chart to your money's own path so the curve is always clearly
-  // visible. If the goal sits far above the projection, don't squash the curve
-  // into a flat line at the bottom — annotate the goal at the top instead.
+  // Scale to your money's own path so the curve is always readable. If the goal
+  // is far above the projection, annotate it rather than squashing the curve.
   const peak = Math.max(r.projectedCorpus, r.totalInvested, 1);
   const goalInView = r.requiredCorpus <= peak * 1.6;
-  const maxY = (goalInView ? Math.max(peak, r.requiredCorpus) : peak) * 1.18;
+  const maxY = (goalInView ? Math.max(peak, r.requiredCorpus) : peak) * 1.2;
 
   const x = (m: number) => PAD.l + (m / maxX) * PW;
   const y = (v: number) => PAD.t + PH - (Math.min(Math.max(v, 0), maxY) / maxY) * PH;
@@ -24,14 +23,15 @@ export default function Chart({ r }: { r: PlanResult }) {
   const pts = r.series;
   const valuePath = pts.map((p, i) => `${i ? "L" : "M"}${x(p.month).toFixed(1)},${y(p.value).toFixed(1)}`).join(" ");
   const investedPath = pts.map((p, i) => `${i ? "L" : "M"}${x(p.month).toFixed(1)},${y(p.invested).toFixed(1)}`).join(" ");
-  const baseline = (PAD.t + PH).toFixed(1);
-  const area = `${valuePath} L${x(maxX).toFixed(1)},${baseline} L${x(0).toFixed(1)},${baseline} Z`;
+  const base = (PAD.t + PH).toFixed(1);
+  const area = `${valuePath} L${x(maxX).toFixed(1)},${base} L${x(0).toFixed(1)},${base} Z`;
 
-  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * maxY);
-  const tickCount = Math.min(6, Math.max(2, Math.round(maxX / 12)));
+  const yTicks = [0, 0.5, 1].map((f) => f * maxY);
+  const tickCount = Math.min(5, Math.max(2, Math.round(maxX / 12)));
   const xTicks = Array.from({ length: tickCount + 1 }, (_, i) => Math.round((maxX / tickCount) * i));
   const mono = "'Geist Mono', ui-monospace, monospace";
   const ty = y(r.requiredCorpus);
+  const progressPct = Math.min(999, Math.round(r.progress * 100));
 
   return (
     <div className="mt-3">
@@ -52,7 +52,7 @@ export default function Chart({ r }: { r: PlanResult }) {
           </g>
         ))}
         {xTicks.map((m, i) => (
-          <text key={i} x={x(m)} y={PAD.t + PH + 20} textAnchor="middle" fontSize="11" fill={C.muted} fontFamily={mono}>
+          <text key={i} x={x(m)} y={PAD.t + PH + 18} textAnchor="middle" fontSize="11" fill={C.muted} fontFamily={mono}>
             {formatYears(m / 12)}
           </text>
         ))}
@@ -63,34 +63,37 @@ export default function Chart({ r }: { r: PlanResult }) {
 
         {goalInView ? (
           <>
-            <line x1={PAD.l} y1={ty} x2={PAD.l + PW} y2={ty} stroke={C.ink} strokeWidth="1.3" strokeDasharray="2 4" />
-            <text x={PAD.l + PW} y={ty - 7} textAnchor="end" fontSize="11" fontWeight="600" fill={C.ink}>
-              Goal {formatINR(r.requiredCorpus)}
+            <line x1={PAD.l} y1={ty} x2={PAD.l + PW} y2={ty} stroke={C.ink} strokeWidth="1.2" strokeDasharray="2 4" />
+            <text x={PAD.l + 4} y={ty - 5} textAnchor="start" fontSize="10" fontWeight="600" fill={C.ink} fontFamily={mono}>
+              GOAL
             </text>
           </>
         ) : (
-          <text x={PAD.l + PW} y={PAD.t + 11} textAnchor="end" fontSize="11" fontWeight="600" fill={C.ink}>
-            ↑ Goal {formatINR(r.requiredCorpus)} (far above)
+          <text x={PAD.l + PW} y={PAD.t + 10} textAnchor="end" fontSize="10" fontWeight="600" fill={C.ink} fontFamily={mono}>
+            ↑ GOAL FAR ABOVE
           </text>
         )}
 
-        {/* Today and the finish line */}
         <circle cx={x(0)} cy={y(pts[0]?.value ?? 0)} r="3.5" fill={C.brand} />
         <circle cx={x(maxX)} cy={y(r.projectedCorpus)} r="5" fill={r.onTrack ? C.positive : C.brand} />
-        <text x={x(maxX) - 8} y={y(r.projectedCorpus) - 9} textAnchor="end" fontSize="11" fontWeight="700" fill={C.ink}>
-          {formatINR(r.projectedCorpus)}
-        </text>
       </svg>
 
-      <div className="mt-2 flex flex-wrap gap-4 font-mono text-[11px] uppercase tracking-wide text-muted">
+      {/* All the numbers live here, so the chart itself stays uncluttered. */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-wide text-muted">
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-1 w-3.5 rounded" style={{ background: C.brand }} /> Your money
+          <span className="inline-block h-1 w-3.5 rounded" style={{ background: C.brand }} /> Your money{" "}
+          <span className="font-bold text-ink">{formatINR(r.projectedCorpus)}</span>
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-1 w-3.5 rounded" style={{ background: C.invested }} /> What you put in
+          <span className="inline-block h-1 w-3.5 rounded" style={{ background: C.invested }} /> Put in{" "}
+          <span className="text-ink">{formatINR(r.totalInvested)}</span>
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-1 w-3.5 rounded bg-ink" /> Goal
+          <span className="inline-block h-1 w-3.5 rounded bg-ink" /> Goal{" "}
+          <span className="font-bold text-ink">{formatINR(r.requiredCorpus)}</span>
+        </span>
+        <span className="ml-auto font-bold" style={{ color: r.onTrack ? C.positive : C.ink }}>
+          {progressPct}% there
         </span>
       </div>
     </div>

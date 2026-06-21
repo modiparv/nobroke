@@ -77,8 +77,12 @@ export default function GoalCard({
         e.preventDefault();
         onDrop();
       }}
-      className={`rounded-2xl border bg-white transition ${
-        isOver ? "border-brand ring-2 ring-brand/30" : open ? "border-ink" : "border-line"
+      className={`rounded-2xl border backdrop-blur-sm transition ${
+        isOver
+          ? "border-brand bg-brand/5 ring-2 ring-brand/30"
+          : open
+            ? "border-gold/50 bg-gold/[0.12]"
+            : "border-gold/30 bg-gold/[0.06]"
       } ${isDragging ? "opacity-50" : ""}`}
     >
       <div className="flex items-stretch gap-1.5 p-3 sm:gap-2.5 sm:p-4">

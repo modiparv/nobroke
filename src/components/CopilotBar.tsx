@@ -46,10 +46,10 @@ export default function CopilotBar() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
-      <div className="pointer-events-auto mx-auto max-w-3xl px-4 pb-4">
+      <div className="pointer-events-auto mx-auto max-w-3xl px-4 pb-3">
         {/* Conversation — opens upward above the bar */}
         {hasThread && (
-          <div className="mb-2 overflow-hidden rounded-2xl border border-line bg-white shadow-2xl">
+          <div className="mb-2 overflow-hidden rounded-2xl border border-white/50 bg-white/85 shadow-2xl backdrop-blur-xl">
             <header className="flex items-center gap-2.5 border-b border-line px-4 py-2.5">
               <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand text-xs font-bold text-white">N</span>
               <div className="flex-1">
@@ -119,9 +119,9 @@ export default function CopilotBar() {
             e.preventDefault();
             send(text);
           }}
-          className="copilot-bar flex items-center gap-2 rounded-2xl border border-line bg-white px-2.5 py-2"
+          className="copilot-bar flex items-center gap-1.5 rounded-2xl border border-white/50 bg-white/70 px-2 py-1.5 backdrop-blur-xl"
         >
-          <span aria-hidden className="grid h-9 w-9 flex-none place-items-center rounded-xl bg-brand text-base text-white">
+          <span aria-hidden className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-brand text-sm text-white">
             ✨
           </span>
           <input
@@ -135,13 +135,13 @@ export default function CopilotBar() {
             disabled={s.chatTyping}
             placeholder="Tell me to change a goal, or ask anything…"
             aria-label="Ask the NoBroke copilot"
-            className="h-9 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted disabled:opacity-60"
+            className="h-8 flex-1 bg-transparent text-[14px] outline-none placeholder:text-muted disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={!text.trim() || s.chatTyping}
             aria-label="Send"
-            className="grid h-9 w-9 flex-none place-items-center rounded-xl bg-brand text-lg text-white transition hover:bg-brand-deep disabled:opacity-40"
+            className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-brand text-base text-white transition hover:bg-brand-deep disabled:opacity-40"
           >
             ↑
           </button>

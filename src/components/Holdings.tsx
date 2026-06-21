@@ -71,8 +71,8 @@ export default function Holdings() {
           </div>
         </div>
       ) : (
-        <p className="mt-2 rounded-lg border border-dashed border-line bg-paper px-3 py-2 text-[11px] text-muted">
-          Add stocks, MFs, ETFs, FDs, NPS, PPF & more. They'll roll into your total savings.
+        <p className="mt-1.5 text-[11px] text-muted">
+          Add stocks, MFs, ETFs, FDs, NPS, PPF &amp; more. They'll roll into your total savings.
         </p>
       )}
 
