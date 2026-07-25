@@ -5,7 +5,7 @@ import Logo from "./Logo";
 function Step({ n, title, body }: { n: string; title: string; body: string }) {
   return (
     <div className="rounded-2xl border border-line p-6">
-      <span className="text-xs font-medium tracking-widest text-brand">{n}</span>
+      <span className="text-xs font-medium tracking-widest text-text-3">{n}</span>
       <h3 className="mt-2 text-lg font-medium">{title}</h3>
       <p className="mt-2 text-sm text-muted">{body}</p>
     </div>
@@ -85,7 +85,7 @@ export default function Landing() {
         <div className="rounded-3xl bg-brand-deep px-8 py-14 text-center text-on-accent sm:py-20">
           <h2 className="text-3xl font-medium tracking-tight sm:text-5xl">Your money deserves a great match.</h2>
           <button
-            className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-surface px-6 py-3.5 text-sm font-medium text-brand-deep transition hover:bg-brand-mint"
+            className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-surface px-6 py-3.5 text-sm font-medium text-text transition hover:bg-accent-tint"
             onClick={actions.startOnboarding}
           >
             Start now →

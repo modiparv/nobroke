@@ -107,10 +107,10 @@ export default function GoalCard({
           <span className="flex items-center gap-2">
             <span className="truncate text-row font-medium tracking-[-0.005em]">{g.name}</span>
             <span
-              // Monochrome palette: status is fill weight, not hue. The state
-              // that needs attention is the darkest thing in the row.
+              // Status is carried by the pill, never by a coloured number:
+              // teal for on track, warm amber for needs a change.
               className={`flex-none rounded-full px-2 py-0.5 text-caption ${
-                r.onTrack ? "border border-line text-text-2" : "bg-text text-bg"
+                r.onTrack ? "bg-pos-bg text-pos" : "bg-cau-bg text-cau"
               }`}
             >
               {r.onTrack ? "On track" : "Needs a change"}

@@ -33,7 +33,7 @@ export default function Aggregation() {
               </div>
               <p className="m-0 flex-1 text-xs text-muted">{p.description}</p>
               <div className="flex items-center justify-between">
-                <span className={`text-caption font-medium ${isOn ? "text-brand-deep" : "text-muted"}`}>{isOn ? "Synced · demo" : "Not connected"}</span>
+                <span className={`text-caption font-medium ${isOn ? "text-pos" : "text-muted"}`}>{isOn ? "Synced · demo" : "Not connected"}</span>
                 <button
                   disabled={isOn}
                   onClick={() => setConnected((c) => ({ ...c, [p.id]: true }))}

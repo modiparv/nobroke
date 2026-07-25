@@ -46,7 +46,7 @@ export default function CopilotBar() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
-      <div className="pointer-events-auto mx-auto max-w-page px-4 pb-3 sm:px-6 sm:pb-4">
+      <div className="pointer-events-auto mx-auto max-w-3xl px-4 pb-3 sm:px-6 sm:pb-4">
         {/* Conversation — opens upward above the bar */}
         {hasThread && (
           <div className="mb-2 overflow-hidden rounded-2xl border border-line bg-surface">

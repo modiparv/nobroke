@@ -3,82 +3,84 @@
 @tailwind utilities;
 
 /**
- * Palette. Black, grey and white. Light primary, dark in the same pass.
+ * Palette. Tropical Sunrise: orange #FF9F1C, light orange #FFBF69, white,
+ * pale mint #CBF3F0, teal #2EC4B6. Light primary, dark in the same pass.
  *
  * Values are raw "R G B" channels rather than hex so Tailwind opacity
  * modifiers keep working (bg-accent/10).
  *
- * The palette is monochrome, so status cannot be carried by hue. It is carried
- * by fill weight instead: the state that needs attention is the darkest thing
- * on the screen, and a healthy state recedes.
+ * Mapping: orange is the ONE interactive accent; teal carries on-track status
+ * (pale mint as its pill fill); neutrals are warm off-whites so the orange
+ * does not sit on a cold grey. Filled accent surfaces take DARK text
+ * (--on-accent): white on #FF9F1C is ~2:1 and unreadable, dark is ~9:1.
  */
 :root,
 [data-theme="light"] {
   color-scheme: light;
-  --bg: 244 244 244;
+  --bg: 250 247 241;
   --surface: 255 255 255;
-  --surface-2: 232 232 232;
-  --line: 224 224 224;
-  --line-2: 183 183 183;
-  --text: 0 0 0;
-  --text-2: 82 82 82;
-  --text-3: 140 140 140;
-  --accent: 0 0 0;
-  --accent-hi: 82 82 82;
-  --accent-tint: 232 232 232;
-  --on-accent: 255 255 255;
-  --pos: 0 0 0;
-  --pos-bg: 232 232 232;
-  --cau: 82 82 82;
-  --cau-bg: 232 232 232;
-  --neg: 0 0 0;
-  --neg-bg: 232 232 232;
+  --surface-2: 247 242 233;
+  --line: 235 229 218;
+  --line-2: 214 205 189;
+  --text: 31 26 18;
+  --text-2: 110 100 84;
+  --text-3: 168 158 140;
+  --accent: 255 159 28;
+  --accent-hi: 232 138 0;
+  --accent-tint: 255 239 218;
+  --on-accent: 43 29 6;
+  --pos: 23 135 125;
+  --pos-bg: 203 243 240;
+  --cau: 166 101 8;
+  --cau-bg: 255 239 214;
+  --neg: 193 75 36;
+  --neg-bg: 251 233 226;
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg: 0 0 0;
-  --surface: 23 23 23;
-  --surface-2: 38 38 38;
-  --line: 45 45 45;
-  --line-2: 82 82 82;
-  --text: 232 232 232;
-  --text-2: 183 183 183;
-  --text-3: 140 140 140;
-  --accent: 232 232 232;
-  --accent-hi: 255 255 255;
-  --accent-tint: 38 38 38;
-  --on-accent: 0 0 0;
-  --pos: 232 232 232;
-  --pos-bg: 38 38 38;
-  --cau: 183 183 183;
-  --cau-bg: 38 38 38;
-  --neg: 232 232 232;
-  --neg-bg: 38 38 38;
+  --bg: 20 16 10;
+  --surface: 30 25 18;
+  --surface-2: 42 35 26;
+  --line: 53 44 32;
+  --line-2: 85 72 58;
+  --text: 244 239 230;
+  --text-2: 191 180 163;
+  --text-3: 133 122 105;
+  --accent: 255 167 51;
+  --accent-hi: 255 185 92;
+  --accent-tint: 58 43 20;
+  --on-accent: 27 20 9;
+  --pos: 61 217 200;
+  --pos-bg: 18 59 54;
+  --cau: 229 165 59;
+  --cau-bg: 58 46 23;
+  --neg: 241 132 106;
+  --neg-bg: 67 38 30;
 }
 
 /* Follow the system unless the user has pinned a theme. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: 0 0 0;
-    --surface: 23 23 23;
-    --surface-2: 38 38 38;
-    --line: 45 45 45;
-    --line-2: 82 82 82;
-    --text: 232 232 232;
-    --text-2: 183 183 183;
-    --text-3: 140 140 140;
-    --accent: 232 232 232;
-    --accent-hi: 255 255 255;
-    --accent-tint: 38 38 38;
-    --on-accent: 0 0 0;
-    --pos: 232 232 232;
-    --pos-bg: 38 38 38;
-    --cau: 183 183 183;
-    --cau-bg: 38 38 38;
-    --neg: 232 232 232;
-    --neg-bg: 38 38 38;
+    --bg: 20 16 10;
+    --surface: 30 25 18;
+    --surface-2: 42 35 26;
+    --line: 53 44 32;
+    --line-2: 85 72 58;
+    --text: 244 239 230;
+    --text-2: 191 180 163;
+    --text-3: 133 122 105;
+    --accent: 255 167 51;
+    --accent-hi: 255 185 92;
+    --accent-tint: 58 43 20;
+    --on-accent: 27 20 9;
+    --pos: 61 217 200;
+    --pos-bg: 18 59 54;
+    --cau: 229 165 59;
+    --cau-bg: 58 46 23;
+    --neg: 241 132 106;
+    --neg-bg: 67 38 30;
   }
 }
 
