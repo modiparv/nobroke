@@ -20,6 +20,10 @@ export interface AppState {
   inflation: number;
   monthlySip: number;
   currentSavings: number;
+  /** Monthly take-home income from the intake; editable later in Money. */
+  monthlyIncome: number;
+  /** Total monthly outgoings: rent + EMIs + everything else. */
+  monthlyExpenses: number;
   goals: PlanGoal[];
   currentGoalId: string;
   /** Per-goal share of the monthly investment, as a percent (sums to 100). */
@@ -58,6 +62,8 @@ let state: AppState = {
   inflation: 0.06,
   monthlySip: 25000,
   currentSavings: 0,
+  monthlyIncome: 0,
+  monthlyExpenses: 0,
   goals: [],
   currentGoalId: "",
   goalShares: {},
@@ -244,12 +250,13 @@ export const actions = {
   },
 
   finishOnboarding: () => {
+    const p = state.profile;
     const selected = state.selectedGoalIds.length ? state.selectedGoalIds : ["home"];
     const timeline = state.onboardingAnswers.timeline ? Number(state.onboardingAnswers.timeline) : undefined;
     const goals = selected.map((id, i) =>
-      buildPlanGoal(id, state.profile, i === 0 ? timeline : undefined, i === 0 && timeline != null),
+      buildPlanGoal(id, p, i === 0 ? timeline : undefined, i === 0 && timeline != null),
     );
-    const monthlySip = suggestedSip(state.profile);
+    const monthlySip = suggestedSip(p);
     const order = orderByTenure(goals);
     const { allocation: portfolio, profile: portfolioProfile } = recommendedPortfolio(goals);
     set({
@@ -259,7 +266,13 @@ export const actions = {
       goalShares: recommendShares(goals, order, monthlySip, state.inflation, portfolio),
       goalOrderCustom: false,
       monthlySip,
-      currentSavings: state.profile.existingSavings,
+      monthlyIncome: p.takeHome,
+      monthlyExpenses: p.rent + p.emi + p.monthlySpend,
+      currentSavings: p.cashOnHand,
+      externalHoldings:
+        p.investedValue > 0
+          ? [{ id: "intake", category: "Funds", type: "Portfolio", name: "Existing investments", amount: p.investedValue }]
+          : [],
       portfolio,
       portfolioProfile,
       portfolioCustom: false,
@@ -272,10 +285,13 @@ export const actions = {
       cityTier: "metro",
       employment: "salaried",
       careerStage: "stable",
+      dependents: "partner",
       rent: 30000,
       emi: 12000,
+      monthlySpend: 55000,
       takeHome: 185000,
-      existingSavings: 1500000,
+      cashOnHand: 400000,
+      investedValue: 1100000,
     };
     const selected = ["home", "travel", "fire"];
     const goals = selected.map((id, i) => buildPlanGoal(id, profile, i === 0 ? 7 : undefined, true));
@@ -291,7 +307,12 @@ export const actions = {
       goalShares: recommendShares(goals, order, monthlySip, state.inflation, portfolio),
       goalOrderCustom: false,
       monthlySip,
-      currentSavings: profile.existingSavings,
+      monthlyIncome: profile.takeHome,
+      monthlyExpenses: profile.rent + profile.emi + profile.monthlySpend,
+      currentSavings: profile.cashOnHand,
+      externalHoldings: [
+        { id: "intake", category: "Funds", type: "Portfolio", name: "Existing investments", amount: profile.investedValue },
+      ],
       portfolio,
       portfolioProfile,
       portfolioCustom: false,
@@ -348,6 +369,8 @@ export const actions = {
     });
   },
   setSavings: (v: number) => set({ currentSavings: v }),
+  setIncome: (v: number) => set({ monthlyIncome: Math.max(0, Math.round(v)) }),
+  setExpenses: (v: number) => set({ monthlyExpenses: Math.max(0, Math.round(v)) }),
   setInflation: (v: number) => set({ inflation: v }),
 
   // ---- Goal-based waterfall: target year, priority, money split ----

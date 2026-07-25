@@ -113,10 +113,27 @@ export default function MoneyTab() {
 
         <aside className="flex flex-col gap-4">
           <section className={card}>
-            <MoneyInput label="Monthly investing" value={s.monthlySip} onChange={actions.setSip} step={1000} min={0} max={1000000} compact />
+            <MoneyInput label="Monthly income" value={s.monthlyIncome} onChange={actions.setIncome} step={5000} min={0} max={10000000} compact />
+            <div className="mt-4 border-t border-line pt-4">
+              <MoneyInput label="Monthly spend" value={s.monthlyExpenses} onChange={actions.setExpenses} step={5000} min={0} max={10000000} compact />
+            </div>
+            <div className="mt-4 border-t border-line pt-4">
+              <MoneyInput label="Monthly investing" value={s.monthlySip} onChange={actions.setSip} step={1000} min={0} max={1000000} compact />
+            </div>
             <div className="mt-4 border-t border-line pt-4">
               <MoneyInput label="Cash" value={s.currentSavings} onChange={actions.setSavings} step={25000} min={0} max={50000000} compact />
             </div>
+            {s.monthlyIncome > 0 &&
+              (s.monthlySip > Math.max(0, s.monthlyIncome - s.monthlyExpenses) ? (
+                <p className="mt-3 text-caption text-cau">
+                  You invest more than what is left after spending. Worth a look.
+                </p>
+              ) : (
+                <p className="mt-3 text-caption text-text-3">
+                  {formatINR(Math.max(0, s.monthlyIncome - s.monthlyExpenses))} left after spending. You put{" "}
+                  {formatINR(s.monthlySip)} of it to work.
+                </p>
+              ))}
           </section>
 
           <section className={card}>

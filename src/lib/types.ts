@@ -54,15 +54,22 @@ export interface PlanGoal {
 export type CityTier = "metro" | "tier1" | "tier2" | "tier3";
 export type Employment = "salaried" | "self_employed" | "freelancer" | "student";
 export type CareerStage = "starting" | "growing" | "stable";
+export type Dependents = "none" | "partner" | "kids" | "parents";
 
 export interface Profile {
   cityTier: CityTier | null;
   employment: Employment | null;
   careerStage: CareerStage | null;
+  dependents: Dependents | null;
   rent: number;
   emi: number;
+  /** Monthly spend besides rent and EMIs: groceries, bills, lifestyle. */
+  monthlySpend: number;
   takeHome: number;
-  existingSavings: number;
+  /** Cash in bank today. */
+  cashOnHand: number;
+  /** Current value of existing investments. */
+  investedValue: number;
 }
 
 export interface PlanInputs {

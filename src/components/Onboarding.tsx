@@ -1,58 +1,74 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { STEPS, TOTAL_STAGES, type Step } from "../lib/onboarding";
 import { GOALS } from "../lib/goals";
-import { inferIncome, rentDefault } from "../lib/profile";
-import { formatINR } from "../lib/format";
 import type { Profile } from "../lib/types";
 import { actions, getState, useStore } from "../store";
-import { btnGhost, btnPrimary } from "../ui";
+import { btnPrimary } from "../ui";
 import Logo from "./Logo";
 
-const PROFILE_FIELDS = new Set(["cityTier", "employment", "careerStage", "rent", "emi", "takeHome", "existingSavings"]);
+const PROFILE_FIELDS = new Set([
+  "cityTier",
+  "employment",
+  "careerStage",
+  "dependents",
+  "rent",
+  "emi",
+  "monthlySpend",
+  "takeHome",
+  "cashOnHand",
+  "investedValue",
+]);
 
 function setAnswer(field: string, value: string | number) {
   if (PROFILE_FIELDS.has(field)) actions.setProfileField(field as keyof Profile, value);
   else actions.setAnswer(field, String(value));
 }
 
-function SliderStep({ step, onContinue }: { step: Step; onContinue: () => void }) {
+/**
+ * A compulsory money question: type the exact amount, then continue. Continue
+ * stays disabled until an explicit answer exists (0 typed out counts; an empty
+ * field does not), which is what makes the intake honest.
+ */
+function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void }) {
+  const prior = PROFILE_FIELDS.has(step.field!)
+    ? Number((getState().profile as unknown as Record<string, unknown>)[step.field!] ?? 0)
+    : Number(getState().onboardingAnswers[step.field!] ?? 0);
+  const [raw, setRaw] = useState(prior > 0 ? String(prior) : "");
+
   const min = step.min ?? 0;
-  const max = step.max ?? 100;
-  const profile = getState().profile;
-  const seed =
-    step.field === "rent" ? rentDefault(profile.cityTier) : step.field === "takeHome" ? inferIncome(profile) : min;
-  const [value, setValue] = useState(seed);
+  const value = raw === "" ? null : Number(raw);
+  const ok = value != null && Number.isFinite(value) && value >= min;
 
-  useEffect(() => {
-    setAnswer(step.field!, seed);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const pct = ((value - min) / (max - min)) * 100;
+  const commit = () => {
+    if (!ok) return;
+    setAnswer(step.field!, value!);
+    onContinue();
+  };
 
   return (
     <div className="fade-up flex w-full flex-col items-center text-center">
-      <h1 className="max-w-[16ch] text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
+      <h1 className="max-w-[22ch] text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
       {step.subtitle && <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
-      <div className="mt-8 w-full max-w-md">
-        <div className="mb-5 text-4xl font-medium tracking-tight sm:text-5xl">{formatINR(value)}</div>
+      <div className="mt-8 flex w-full max-w-sm items-center justify-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
+        <span className="text-3xl font-medium text-muted">₹</span>
         <input
-          type="range"
-          min={min}
-          max={max}
-          step={step.step ?? 1}
-          value={value}
+          autoFocus
+          type="text"
+          inputMode="numeric"
+          value={raw === "" ? "" : Number(raw).toLocaleString("en-IN")}
+          placeholder="0"
           aria-label={step.title}
-          className="w-full"
-          onChange={(e) => {
-            const v = Number(e.target.value);
-            setValue(v);
-            setAnswer(step.field!, v);
+          onChange={(e) => setRaw(e.target.value.replace(/[^\d]/g, ""))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
           }}
-          style={{ background: `linear-gradient(90deg,rgb(var(--accent)) ${pct}%,rgb(var(--line)) ${pct}%)`, borderRadius: 999, height: 6 }}
+          className="num w-full bg-transparent text-center text-4xl font-medium tracking-tight outline-none sm:text-5xl"
         />
       </div>
-      <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={onContinue}>
+      {min > 0 && raw !== "" && !ok && (
+        <p className="mt-3 text-caption text-muted">Enter at least ₹{min.toLocaleString("en-IN")}.</p>
+      )}
+      <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={commit} disabled={!ok}>
         Continue
       </button>
     </div>
@@ -71,16 +87,16 @@ export default function Onboarding() {
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-5 pb-10 pt-5 sm:px-8">
       <div className="flex items-center justify-between gap-3 pb-4">
         <button
-          className="px-1 py-1.5 text-sm font-medium text-muted hover:text-ink"
+          className="w-16 px-1 py-1.5 text-left text-sm font-medium text-muted hover:text-ink"
           style={{ visibility: i > 0 && step.kind !== "outro" ? "visible" : "hidden" }}
           onClick={() => actions.setStep(i - 1)}
         >
           ← Back
         </button>
         <Logo />
-        <button className={`${btnGhost} px-3 py-1.5 text-xs`} onClick={actions.startDemo}>
-          Skip to demo
-        </button>
+        {/* Spacer keeps the logo centred. There is deliberately no skip: the
+            intake is the plan's foundation, so every question is answered. */}
+        <span className="w-16" aria-hidden="true" />
       </div>
 
       <div className="mb-2 flex items-center gap-3">
@@ -97,8 +113,7 @@ export default function Onboarding() {
       <div className="flex flex-1 items-center">
         {step.kind === "intro" && (
           <div className="fade-up flex w-full flex-col items-center text-center">
-            <span className="text-5xl">💙</span>
-            <h1 className="mt-4 max-w-[16ch] text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
+            <h1 className="max-w-[16ch] text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
             <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
             <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={next}>
               {step.cta}
@@ -121,7 +136,6 @@ export default function Onboarding() {
                       sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-brand"
                     }`}
                   >
-                    <span className="text-2xl">{g.emoji}</span>
                     <span className="text-sm font-medium">{g.name}</span>
                     <span className={`text-xs ${sel ? "text-on-accent/70" : "text-muted"}`}>{g.blurb}</span>
                   </button>
@@ -158,7 +172,6 @@ export default function Onboarding() {
                       sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-brand"
                     }`}
                   >
-                    <span className="text-2xl">{opt.emoji}</span>
                     <span className="text-base font-medium">{opt.label}</span>
                     {opt.hint && <span className={`text-xs ${sel ? "text-on-accent/70" : "text-muted"}`}>{opt.hint}</span>}
                   </button>
@@ -168,12 +181,11 @@ export default function Onboarding() {
           </div>
         )}
 
-        {step.kind === "slider" && <SliderStep key={step.id} step={step} onContinue={next} />}
+        {step.kind === "money" && <MoneyStep key={step.id} step={step} onContinue={next} />}
 
         {step.kind === "outro" && (
           <div className="fade-up flex w-full flex-col items-center text-center">
-            <span className="text-5xl">💞</span>
-            <h1 className="mt-4 max-w-[18ch] text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
+            <h1 className="max-w-[18ch] text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
             <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
             <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={actions.finishOnboarding}>
               {step.cta}
