@@ -180,10 +180,10 @@ export default function PortfolioBuilder() {
       )}
 
       {nearTermRisk && soonGoal && (
-        <p className="mb-4 rounded-lg border border-ink/15 bg-surface-2 px-3 py-2 text-xs text-ink">
-          ⚠️ <span className="font-medium">{soonGoal.name}</span> is only {soonGoal.horizonYears}{" "}
-          {soonGoal.horizonYears === 1 ? "year" : "years"} away. This mix leans heavily on stocks, which can dip suddenly.
-          Pick a calmer ready-made mix, or put a bit more money into this goal so a bad month can't derail it.
+        <p className="mb-3 rounded-lg border border-ink/15 bg-surface-2 px-2.5 py-1.5 text-xs text-ink">
+          ⚠️ <span className="font-medium">{soonGoal.name}</span> is {soonGoal.horizonYears}{" "}
+          {soonGoal.horizonYears === 1 ? "year" : "years"} away. Too much in stocks for a goal this close. Try a calmer
+          mix.
         </p>
       )}
 
