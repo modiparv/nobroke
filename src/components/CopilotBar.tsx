@@ -46,12 +46,12 @@ export default function CopilotBar() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
-      <div className="pointer-events-auto mx-auto max-w-page px-6 pb-4">
+      <div className="pointer-events-auto mx-auto max-w-page px-4 pb-3 sm:px-6 sm:pb-4">
         {/* Conversation — opens upward above the bar */}
         {hasThread && (
           <div className="mb-2 overflow-hidden rounded-2xl border border-line bg-surface">
             <header className="flex items-center gap-2.5 border-b border-line px-4 py-2.5">
-              <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand text-xs font-medium text-white">N</span>
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand text-xs font-medium text-on-accent">N</span>
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 text-support font-medium">
                   NoBroke copilot <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-positive" />
@@ -78,7 +78,7 @@ export default function CopilotBar() {
                   <span
                     className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-support leading-relaxed ${
                       m.role === "user"
-                        ? "rounded-br-sm bg-brand text-white"
+                        ? "rounded-br-sm bg-brand text-on-accent"
                         : "rounded-bl-sm border border-line bg-surface-2 text-ink"
                     }`}
                   >
@@ -121,7 +121,7 @@ export default function CopilotBar() {
           }}
           className="copilot-bar flex items-center gap-1.5 rounded-2xl border border-line bg-surface px-2 py-1.5"
         >
-          <span aria-hidden className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-brand text-sm text-white">
+          <span aria-hidden className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-brand text-sm text-on-accent">
             ✨
           </span>
           <input
@@ -141,7 +141,7 @@ export default function CopilotBar() {
             type="submit"
             disabled={!text.trim() || s.chatTyping}
             aria-label="Send"
-            className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-brand text-base text-white transition hover:bg-brand-deep disabled:opacity-40"
+            className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-brand text-base text-on-accent transition hover:bg-brand-deep disabled:opacity-40"
           >
             ↑
           </button>

@@ -9,7 +9,7 @@ function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
   const pct = Math.max(0, Math.min(1, progress));
   const radius = 30;
   const c = 2 * Math.PI * radius;
-  const color = onTrack ? C.positive : C.ink;
+  const color = C.brand;
   return (
     <svg viewBox="0 0 72 72" className="h-[72px] w-[72px] flex-none">
       <circle cx="36" cy="36" r={radius} fill="none" stroke={C.track} strokeWidth="7" />
@@ -24,19 +24,18 @@ function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
         strokeDasharray={`${(c * pct).toFixed(1)} ${(c * (1 - pct)).toFixed(1)}`}
         transform="rotate(-90 36 36)"
       />
-      <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="700" fill={C.ink}>
+      <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="500" fill={C.ink}>
         {Math.round(pct * 100)}%
       </text>
     </svg>
   );
 }
 
-function Stat({ label, value, sub, accent }: { label: string; value: string; sub: string; accent?: "good" | "bad" }) {
-  const color = accent === "good" ? "text-positive" : "text-ink";
+function Stat({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
     <div className="rounded-xl border border-line bg-surface-2 p-3">
       <div className="text-caption font-medium text-muted">{label}</div>
-      <div className={`text-lg font-medium ${color}`}>{value}</div>
+      <div className="text-lg font-medium text-text">{value}</div>
       <div className="text-caption leading-snug text-muted">{sub}</div>
     </div>
   );
@@ -76,7 +75,6 @@ export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: P
           label={r.onTrack ? "Extra cushion" : "You'll be short by"}
           value={formatINR(Math.abs(r.gap))}
           sub={r.onTrack ? "More than enough to hit the goal 🎉" : `Add about ${formatINR(r.requiredSip)}/mo to get there.`}
-          accent={r.onTrack ? "good" : "bad"}
         />
         <Stat
           label="Money you'll put in"
@@ -98,7 +96,7 @@ export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: P
           <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             <Stat label="Growth each year (estimate)" value={formatPct(r.blendedReturn)} sub="A rough yearly average across your mix." />
             <Stat label="Real return (XIRR)" value={formatPct(r.xirr)} sub="Your true return after the timing of each deposit." />
-            <Stat label="How bumpy the ride" value={formatPct(r.blendedVolatility, 0)} sub="Higher means bigger ups and downs along the way." />
+            <Stat label="Volatility" value={formatPct(r.blendedVolatility, 0)} sub="Higher means bigger ups and downs along the way." />
           </div>
         )}
       </div>

@@ -21,6 +21,7 @@ export default {
         accent: channel("--accent"),
         "accent-hi": channel("--accent-hi"),
         "accent-tint": channel("--accent-tint"),
+        "on-accent": channel("--on-accent"),
         pos: channel("--pos"),
         "pos-bg": channel("--pos-bg"),
         cau: channel("--cau"),

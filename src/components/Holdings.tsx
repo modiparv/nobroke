@@ -148,7 +148,7 @@ export default function Holdings() {
               <button
                 onClick={save}
                 disabled={!name.trim() || amount <= 0}
-                className="flex-1 rounded-xl bg-brand py-2.5 text-sm font-medium text-white transition hover:bg-brand-deep disabled:opacity-40"
+                className="flex-1 rounded-xl bg-brand py-2.5 text-sm font-medium text-on-accent transition hover:bg-brand-deep disabled:opacity-40"
               >
                 Save
               </button>

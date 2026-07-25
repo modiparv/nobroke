@@ -199,7 +199,7 @@ export default function PortfolioBuilder() {
                     <div className="truncate text-support font-medium leading-tight">{f.name}</div>
                     <div className="truncate text-caption text-muted">{ac.label}</div>
                   </div>
-                  <span className={`flex-none rounded-full px-2 py-0.5 text-index font-medium uppercase tracking-wide ${added ? "bg-brand text-white" : "border border-line text-muted"}`}>
+                  <span className={`flex-none rounded-full px-2 py-0.5 text-index font-medium uppercase tracking-wide ${added ? "bg-brand text-on-accent" : "border border-line text-muted"}`}>
                     {added ? "Added" : "Add"}
                   </span>
                 </div>
@@ -297,7 +297,7 @@ export default function PortfolioBuilder() {
                     }`}
                   >
                     <div className="text-xs font-medium">{MODEL_PORTFOLIOS[key].label}</div>
-                    <div className={`mt-0.5 text-index leading-tight ${active ? "text-white/70" : "text-muted"}`}>
+                    <div className={`mt-0.5 text-index leading-tight ${active ? "text-on-accent/70" : "text-muted"}`}>
                       {MODEL_PORTFOLIOS[key].tagline}
                     </div>
                   </button>

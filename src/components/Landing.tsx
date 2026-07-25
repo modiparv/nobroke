@@ -82,7 +82,7 @@ export default function Landing() {
       </main>
 
       <section className="mx-auto mb-14 max-w-6xl px-5 sm:px-10">
-        <div className="rounded-3xl bg-brand-deep px-8 py-14 text-center text-white sm:py-20">
+        <div className="rounded-3xl bg-brand-deep px-8 py-14 text-center text-on-accent sm:py-20">
           <h2 className="text-3xl font-medium tracking-tight sm:text-5xl">Your money deserves a great match.</h2>
           <button
             className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-surface px-6 py-3.5 text-sm font-medium text-brand-deep transition hover:bg-brand-mint"

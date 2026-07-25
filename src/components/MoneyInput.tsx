@@ -90,7 +90,7 @@ export default function MoneyInput({
               disabled={disabled}
               onClick={() => set(q)}
               className={`rounded-full border px-2 py-0.5 text-index uppercase tracking-wide transition ${
-                value === clamp(q) ? "border-brand bg-brand text-white" : "border-line text-muted hover:border-brand hover:text-ink"
+                value === clamp(q) ? "border-brand bg-brand text-on-accent" : "border-line text-muted hover:border-brand hover:text-ink"
               }`}
             >
               {formatINR(q)}

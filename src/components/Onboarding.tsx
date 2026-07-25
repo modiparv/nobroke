@@ -118,12 +118,12 @@ export default function Onboarding() {
                     key={g.id}
                     onClick={() => actions.toggleGoal(g.id)}
                     className={`flex flex-col gap-1 rounded-2xl border p-4 text-left transition ${
-                      sel ? "border-brand-deep bg-brand-deep text-white" : "border-line hover:border-brand"
+                      sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-brand"
                     }`}
                   >
                     <span className="text-2xl">{g.emoji}</span>
                     <span className="text-sm font-medium">{g.name}</span>
-                    <span className={`text-xs ${sel ? "text-white/70" : "text-muted"}`}>{g.blurb}</span>
+                    <span className={`text-xs ${sel ? "text-on-accent/70" : "text-muted"}`}>{g.blurb}</span>
                   </button>
                 );
               })}
@@ -155,12 +155,12 @@ export default function Onboarding() {
                       window.setTimeout(next, 200);
                     }}
                     className={`flex flex-col gap-1 rounded-2xl border p-5 text-left transition ${
-                      sel ? "border-brand-deep bg-brand-deep text-white" : "border-line hover:border-brand"
+                      sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-brand"
                     }`}
                   >
                     <span className="text-2xl">{opt.emoji}</span>
                     <span className="text-base font-medium">{opt.label}</span>
-                    {opt.hint && <span className={`text-xs ${sel ? "text-white/70" : "text-muted"}`}>{opt.hint}</span>}
+                    {opt.hint && <span className={`text-xs ${sel ? "text-on-accent/70" : "text-muted"}`}>{opt.hint}</span>}
                   </button>
                 );
               })}

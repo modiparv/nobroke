@@ -86,7 +86,7 @@ export default function GoalCard({
       }}
       className={`transition ${isOver ? "bg-brand/5" : ""} ${isDragging ? "opacity-50" : ""}`}
     >
-      <div className="flex items-start gap-3 px-4 py-3.5">
+      <div className="flex items-start gap-2.5 px-3 py-3.5 sm:gap-3 sm:px-4">
         {/* The index doubles as the priority marker and the drag affordance. */}
         <span
           draggable
@@ -107,8 +107,10 @@ export default function GoalCard({
           <span className="flex items-center gap-2">
             <span className="truncate text-row font-medium tracking-[-0.005em]">{g.name}</span>
             <span
+              // Monochrome palette: status is fill weight, not hue. The state
+              // that needs attention is the darkest thing in the row.
               className={`flex-none rounded-full px-2 py-0.5 text-caption ${
-                r.onTrack ? "bg-positive/10 text-positive" : "bg-ink/[0.06] text-ink"
+                r.onTrack ? "border border-line text-text-2" : "bg-text text-bg"
               }`}
             >
               {r.onTrack ? "On track" : "Needs a change"}
@@ -118,9 +120,9 @@ export default function GoalCard({
             <span className="num">{formatINR(g.targetToday)}</span> by <span className="num">{year}</span>
           </span>
 
-          <span className="mt-2.5 block h-[3px] w-full overflow-hidden rounded-[2px] bg-line">
+          <span className="mt-2.5 block h-[3px] w-full overflow-hidden rounded-[2px] bg-surface-2">
             <span
-              className="block h-full rounded-[2px] bg-brand transition-[width] duration-500 ease-out"
+              className="block h-full rounded-[2px] bg-accent transition-[width] duration-500 ease-out"
               style={{ width: `${railPct}%` }}
             />
           </span>
@@ -133,7 +135,7 @@ export default function GoalCard({
       </div>
 
       {open && (
-        <div className="flex flex-col gap-5 border-t border-line px-4 pb-5 pt-4">
+        <div className="flex flex-col gap-5 border-t border-line px-3 pb-5 pt-4 sm:px-4">
           <div>
             <span className={sectionLabel}>Set up this goal</span>
             <div className="mt-3 flex flex-col gap-3.5">

@@ -3,77 +3,82 @@
 @tailwind utilities;
 
 /**
- * Palette. Blue and white, light primary, dark shipped in the same pass.
+ * Palette. Black, grey and white. Light primary, dark in the same pass.
  *
  * Values are raw "R G B" channels rather than hex so Tailwind opacity
- * modifiers keep working (bg-accent/10). The *-bg tints are pre-composited
- * against the dark surface instead of carrying alpha, which keeps them
- * predictable when they stack.
+ * modifiers keep working (bg-accent/10).
+ *
+ * The palette is monochrome, so status cannot be carried by hue. It is carried
+ * by fill weight instead: the state that needs attention is the darkest thing
+ * on the screen, and a healthy state recedes.
  */
 :root,
 [data-theme="light"] {
   color-scheme: light;
-  --bg: 246 248 251;
+  --bg: 244 244 244;
   --surface: 255 255 255;
-  --surface-2: 241 245 250;
-  --line: 227 233 241;
-  --line-2: 207 217 230;
-  --text: 13 27 46;
-  --text-2: 90 107 128;
-  --text-3: 150 162 180;
-  --accent: 37 99 235;
-  --accent-hi: 29 79 208;
-  --accent-tint: 238 243 254;
-  --pos: 14 124 90;
-  --pos-bg: 231 244 239;
-  --cau: 180 105 14;
-  --cau-bg: 253 243 228;
-  --neg: 179 39 30;
-  --neg-bg: 252 237 235;
+  --surface-2: 232 232 232;
+  --line: 224 224 224;
+  --line-2: 183 183 183;
+  --text: 0 0 0;
+  --text-2: 82 82 82;
+  --text-3: 140 140 140;
+  --accent: 0 0 0;
+  --accent-hi: 82 82 82;
+  --accent-tint: 232 232 232;
+  --on-accent: 255 255 255;
+  --pos: 0 0 0;
+  --pos-bg: 232 232 232;
+  --cau: 82 82 82;
+  --cau-bg: 232 232 232;
+  --neg: 0 0 0;
+  --neg-bg: 232 232 232;
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg: 10 18 32;
-  --surface: 17 28 45;
-  --surface-2: 22 35 58;
-  --line: 34 49 74;
-  --line-2: 51 69 95;
-  --text: 234 240 248;
-  --text-2: 147 163 184;
-  --text-3: 95 113 137;
-  --accent: 91 141 239;
-  --accent-hi: 123 165 245;
-  --accent-tint: 22 41 74;
-  --pos: 61 220 151;
-  --pos-bg: 22 51 58;
-  --cau: 229 165 59;
-  --cau-bg: 47 47 47;
-  --neg: 241 112 106;
-  --neg-bg: 44 38 52;
+  --bg: 0 0 0;
+  --surface: 23 23 23;
+  --surface-2: 38 38 38;
+  --line: 45 45 45;
+  --line-2: 82 82 82;
+  --text: 232 232 232;
+  --text-2: 183 183 183;
+  --text-3: 140 140 140;
+  --accent: 232 232 232;
+  --accent-hi: 255 255 255;
+  --accent-tint: 38 38 38;
+  --on-accent: 0 0 0;
+  --pos: 232 232 232;
+  --pos-bg: 38 38 38;
+  --cau: 183 183 183;
+  --cau-bg: 38 38 38;
+  --neg: 232 232 232;
+  --neg-bg: 38 38 38;
 }
 
 /* Follow the system unless the user has pinned a theme. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: 10 18 32;
-    --surface: 17 28 45;
-    --surface-2: 22 35 58;
-    --line: 34 49 74;
-    --line-2: 51 69 95;
-    --text: 234 240 248;
-    --text-2: 147 163 184;
-    --text-3: 95 113 137;
-    --accent: 91 141 239;
-    --accent-hi: 123 165 245;
-    --accent-tint: 22 41 74;
-    --pos: 61 220 151;
-    --pos-bg: 22 51 58;
-    --cau: 229 165 59;
-    --cau-bg: 47 47 47;
-    --neg: 241 112 106;
-    --neg-bg: 44 38 52;
+    --bg: 0 0 0;
+    --surface: 23 23 23;
+    --surface-2: 38 38 38;
+    --line: 45 45 45;
+    --line-2: 82 82 82;
+    --text: 232 232 232;
+    --text-2: 183 183 183;
+    --text-3: 140 140 140;
+    --accent: 232 232 232;
+    --accent-hi: 255 255 255;
+    --accent-tint: 38 38 38;
+    --on-accent: 0 0 0;
+    --pos: 232 232 232;
+    --pos-bg: 38 38 38;
+    --cau: 183 183 183;
+    --cau-bg: 38 38 38;
+    --neg: 232 232 232;
+    --neg-bg: 38 38 38;
   }
 }
 

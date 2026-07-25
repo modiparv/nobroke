@@ -45,7 +45,7 @@ function Pill({ label, onClick, accent }: { label: string; onClick: () => void; 
     <button
       onClick={onClick}
       className={`rounded-full px-3.5 py-2 text-support transition ${
-        accent ? "bg-accent text-white hover:bg-accent-hi" : "border border-line text-text hover:border-line-2"
+        accent ? "bg-accent text-on-accent hover:bg-accent-hi" : "border border-line text-text hover:border-line-2"
       }`}
     >
       {label}
@@ -135,9 +135,9 @@ export default function Plan() {
       <AppHeader />
 
       {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
-      <div className="mx-auto max-w-page px-6 pb-[88px]">
+      <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
         {/* Hero strip: figures left, actions right, closed by a rule. */}
-        <section className="flex flex-col gap-5 border-b border-line py-8 sm:flex-row sm:items-end sm:justify-between">
+        <section className="flex flex-col gap-5 border-b border-line py-6 sm:flex-row sm:items-end sm:justify-between sm:py-8">
           <div>
             <span className={sectionLabel}>Total saved</span>
             <HeroAmount value={totalCapital(s)} />
@@ -159,7 +159,7 @@ export default function Plan() {
           </div>
         </section>
 
-        <div className="grid gap-6 py-6 lg:grid-cols-[1.55fr_1fr]">
+        <div className="grid gap-4 py-6 lg:grid-cols-[1.55fr_1fr] lg:gap-6">
           <div>
             {s.goals.length === 0 ? (
               <div className={`${card} py-10 text-center`}>
