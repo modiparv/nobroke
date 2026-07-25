@@ -305,6 +305,34 @@ export interface PricePoint {
 }
 
 // ---------------------------------------------------------------------------
+// Statement balances — the reconciliation counterparty
+// ---------------------------------------------------------------------------
+
+/**
+ * A closing balance as PRINTED on a statement, before we believe it.
+ *
+ * This is the independent figure the ledger is checked against (spec §2.3):
+ * ingestion emits it, reconciliation compares our replayed lots to it. It
+ * deliberately lives in the shared contract so the producer and the consumer
+ * can never drift apart.
+ *
+ * Not to be confused with valuation's `ProviderBalance`, which is a balance
+ * only the provider can know (a PPF passbook, an EPF statement, a ULIP fund
+ * value) and is therefore an input to pricing rather than a thing to verify.
+ */
+export interface StatementBalance {
+  accountId: AccountId;
+  instrumentId: InstrumentId;
+  folioNumber: string;
+  asOf: DateISO;
+  closingUnits: number;
+  /** Absent when the statement prints units but no value (e.g. suspended NAV). */
+  closingValue?: number;
+  /** Artifact this balance was read from. */
+  sourceId?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Valuation output (spec §3.1)
 // ---------------------------------------------------------------------------
 
