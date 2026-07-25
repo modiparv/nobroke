@@ -187,9 +187,11 @@ export default function PortfolioBuilder() {
         </p>
       )}
 
-      <div className="grid gap-5 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      {/* Single column: the builder lives in the 40 percent pane beside the
+          goals, so its sections stack. The mix leads; picking funds follows. */}
+      <div className="grid gap-5">
         {/* ---- Funds library (drag source) ---- */}
-        <div>
+        <div className="order-2 min-w-0">
           <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
             <Marker /> Pick your own (optional)
           </span>
@@ -280,7 +282,7 @@ export default function PortfolioBuilder() {
 
         {/* ---- Basket (drop zone) ---- */}
         <div
-          className={`rounded-2xl border bg-surface p-4 transition ${dragOver ? "border-brand ring-2 ring-brand/40" : "border-line"}`}
+          className={`order-1 min-w-0 rounded-2xl border bg-surface p-4 transition ${dragOver ? "border-brand ring-2 ring-brand/40" : "border-line"}`}
           onDragOver={(e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";
