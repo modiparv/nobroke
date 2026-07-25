@@ -376,23 +376,36 @@ export const actions = {
     order.splice(to, 0, draggedId);
     set({ goalOrder: order, goalOrderCustom: true });
   },
+  /** Pin one goal's monthly amount, then hand the REMAINDER back to the
+      recommendation model: the other goals re-split by the priority waterfall
+      (nearest goals funded first), not by dumb proportional scaling. */
   setGoalAmount: (id: string, amountINR: number) => {
     const sip = state.monthlySip;
-    const ids = state.goals.map((g) => g.id);
-    if (ids.length === 0 || sip <= 0) return;
-    if (ids.length === 1) {
+    const goals = state.goals;
+    if (goals.length === 0 || sip <= 0) return;
+    if (goals.length === 1) {
       set({ goalShares: { [id]: 100 }, goalSharesCustom: true });
       return;
     }
-    const wv = Math.max(0, Math.min(100, (amountINR / sip) * 100));
-    const others = ids.filter((k) => k !== id);
-    const otherTotal = others.reduce((acc, k) => acc + (state.goalShares[k] ?? 0), 0);
-    const rest = 100 - wv;
-    const shares: Record<string, number> = { [id]: wv };
-    for (const k of others) shares[k] = otherTotal > 0 ? ((state.goalShares[k] ?? 0) / otherTotal) * rest : rest / others.length;
+    const pinnedPct = Math.max(0, Math.min(100, (amountINR / sip) * 100));
+    const others = goals.filter((g) => g.id !== id);
+    const order = (state.goalOrder.length ? state.goalOrder : goals.map((g) => g.id)).filter((x) => x !== id);
+    const remaining = sip * (1 - pinnedPct / 100);
+    const shares: Record<string, number> = { [id]: pinnedPct };
+    if (remaining <= 0) {
+      for (const g of others) shares[g.id] = 0;
+    } else {
+      const rec = recommendShares(others, order, remaining, state.inflation, state.portfolio);
+      for (const g of others) shares[g.id] = (rec[g.id] ?? 0) * (remaining / sip);
+    }
     set({ goalShares: shares, goalSharesCustom: true });
   },
-  recommendGoalSplit: () => set({ goalShares: recommendShares(state.goals, state.goalOrder, state.monthlySip, state.inflation, state.portfolio) }),
+  /** Apply the model's split outright and unpin, so silent rebalancing resumes. */
+  recommendGoalSplit: () =>
+    set({
+      goalShares: recommendShares(state.goals, state.goalOrder, state.monthlySip, state.inflation, state.portfolio),
+      goalSharesCustom: false,
+    }),
 
   // Removes a goal and renormalizes the remaining shares so the split still sums
   // to 100% — no leak between the per-goal money and the monthly pool.

@@ -37,7 +37,7 @@ export default function Landing() {
         <section className="max-w-3xl py-20 sm:py-28">
           <span className="text-eyebrow uppercase text-text-3">Wealth, minus the noise</span>
           <h1 className="mt-4 text-4xl font-medium leading-[1.05] tracking-[-0.025em] sm:text-6xl">
-            Wealth management for people who weren't born wealthy.
+            We won't let you go broke.
           </h1>
           <p className="mt-5 max-w-xl text-body text-text-2 sm:text-base">
             Track everything you own, plan every goal, and grow it all in one simple portfolio.

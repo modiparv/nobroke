@@ -25,6 +25,13 @@ export const FUNDS: Fund[] = [
 
 export const FUND_MAP: Record<string, Fund> = Object.fromEntries(FUNDS.map((f) => [f.id, f]));
 
+/** Register a scheme fetched from the live universe (AMFI via /api/instruments)
+    so every FUND_MAP lookup, and therefore all the blended math, resolves it
+    exactly like a built-in row. Idempotent. */
+export function registerFund(f: Fund): void {
+  FUND_MAP[f.id] = f;
+}
+
 /** How a fund's weight splits into the three basket bands. */
 export const COMPOSITION: Record<AssetClassId, { equity: number; debt: number; gold: number }> = {
   equity: { equity: 1, debt: 0, gold: 0 },

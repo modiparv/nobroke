@@ -175,73 +175,80 @@ export default function Plan() {
 
       {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
       <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
-        <div className="grid gap-4 py-6 lg:grid-cols-[1.55fr_1fr] lg:gap-6">
-          <div>
-            {s.goals.length === 0 ? (
-              <div className={`${card} py-10 text-center`}>
-                <p className="text-row font-medium">No goals yet</p>
-                <p className="mx-auto mt-1 max-w-xs text-support text-text-2">Add your first goal, or start a fresh plan.</p>
-                <button className={`${btnPrimary} mt-4`} onClick={actions.startOnboarding}>
-                  Start a new plan
-                </button>
-              </div>
-            ) : (
-              <ul
-                className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface"
-                aria-label="Your goals"
+        <div className="flex flex-col gap-4 py-6">
+          {s.goals.length > 1 && (
+            <div className="flex items-center justify-end">
+              <button
+                onClick={actions.recommendGoalSplit}
+                className="rounded-full border border-line px-3.5 py-2 text-support text-text transition hover:border-line-2"
               >
-                {ordered.map((g, i) => (
-                  <GoalCard
-                    key={g.id}
-                    g={g}
-                    rank={i + 1}
-                    count={ordered.length}
-                    open={openId === g.id}
-                    onToggle={() => toggle(g.id)}
-                    onDelete={() => del(g)}
-                    dragActive={dragId !== null}
-                    isDragging={dragId === g.id}
-                    isOver={overId === g.id && dragId !== g.id}
-                    onDragStart={() => setDragId(g.id)}
-                    onDragEnd={() => {
-                      setDragId(null);
-                      setOverId(null);
-                    }}
-                    onDragOver={() => {
-                      if (overId !== g.id) setOverId(g.id);
-                    }}
-                    onDrop={() => {
-                      if (dragId && dragId !== g.id) actions.reorderGoals(dragId, g.id);
-                      setDragId(null);
-                      setOverId(null);
-                    }}
-                  />
-                ))}
-              </ul>
-            )}
-          </div>
+                Use recommended split
+              </button>
+            </div>
+          )}
 
-          {/* Right rail: the consequences of the goals, not more inputs. */}
-          <aside className="flex flex-col gap-4">
-            {s.goals.length > 0 && (
-              <div className="rounded-card border border-line bg-surface">
-                <button
-                  onClick={() => setShowMix((v) => !v)}
-                  aria-expanded={showMix}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
-                >
-                  <span className="text-support text-text">{mixLabel(s.portfolio)}</span>
-                  <span className="flex-none text-support text-text-2">{showMix ? "Hide" : "See how"} ▾</span>
-                </button>
-                {showMix && (
-                  <div className="border-t border-line p-4">
-                    <PortfolioBuilder />
-                  </div>
-                )}
-              </div>
-            )}
+          {s.goals.length === 0 ? (
+            <div className={`${card} py-10 text-center`}>
+              <p className="text-row font-medium">No goals yet</p>
+              <p className="mx-auto mt-1 max-w-xs text-support text-text-2">Add your first goal, or start a fresh plan.</p>
+              <button className={`${btnPrimary} mt-4`} onClick={actions.startOnboarding}>
+                Start a new plan
+              </button>
+            </div>
+          ) : (
+            <ul
+              className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface"
+              aria-label="Your goals"
+            >
+              {ordered.map((g, i) => (
+                <GoalCard
+                  key={g.id}
+                  g={g}
+                  rank={i + 1}
+                  count={ordered.length}
+                  open={openId === g.id}
+                  onToggle={() => toggle(g.id)}
+                  onDelete={() => del(g)}
+                  dragActive={dragId !== null}
+                  isDragging={dragId === g.id}
+                  isOver={overId === g.id && dragId !== g.id}
+                  onDragStart={() => setDragId(g.id)}
+                  onDragEnd={() => {
+                    setDragId(null);
+                    setOverId(null);
+                  }}
+                  onDragOver={() => {
+                    if (overId !== g.id) setOverId(g.id);
+                  }}
+                  onDrop={() => {
+                    if (dragId && dragId !== g.id) actions.reorderGoals(dragId, g.id);
+                    setDragId(null);
+                    setOverId(null);
+                  }}
+                />
+              ))}
+            </ul>
+          )}
 
-          </aside>
+          {/* The mix: one collapsed line; opening it gets the full page width,
+              so the builder's two columns are no longer crushed into a rail. */}
+          {s.goals.length > 0 && (
+            <div className="rounded-card border border-line bg-surface">
+              <button
+                onClick={() => setShowMix((v) => !v)}
+                aria-expanded={showMix}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
+              >
+                <span className="text-support text-text">{mixLabel(s.portfolio)}</span>
+                <span className="flex-none text-support text-text-2">{showMix ? "Hide" : "See how"} ▾</span>
+              </button>
+              {showMix && (
+                <div className="border-t border-line p-4 sm:p-5">
+                  <PortfolioBuilder />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <p className="pb-2 text-center text-caption text-text-3">

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { ASSET_CLASSES, CATEGORY_FILTERS, FUNDS, FUND_MAP } from "../lib/funds";
+import { useEffect, useRef, useState } from "react";
+import { ASSET_CLASSES, CATEGORY_FILTERS, FUNDS, FUND_MAP, registerFund } from "../lib/funds";
+import { fundFromLiveScheme, getLiveSchemeDetail, searchLiveSchemes, type LiveSchemeRow } from "../lib/instrumentsApi";
 import { MODEL_PORTFOLIOS } from "../lib/portfolios";
 import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
 import { formatINR, formatPct } from "../lib/format";
@@ -45,6 +46,42 @@ export default function PortfolioBuilder() {
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState<"all" | AssetClassId>("all");
   const [dragOver, setDragOver] = useState(false);
+
+  // Live universe search (AMFI via /api/instruments), debounced. Failures are
+  // silent: the built-in list keeps working without the network.
+  const [liveRows, setLiveRows] = useState<LiveSchemeRow[]>([]);
+  const [liveBusy, setLiveBusy] = useState(false);
+  const [addingCode, setAddingCode] = useState<number | null>(null);
+  const searchSeq = useRef(0);
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 3) {
+      setLiveRows([]);
+      setLiveBusy(false);
+      return;
+    }
+    const seq = ++searchSeq.current;
+    setLiveBusy(true);
+    const t = window.setTimeout(() => {
+      void searchLiveSchemes(q).then((rows) => {
+        if (searchSeq.current !== seq) return;
+        setLiveRows(rows.slice(0, 8));
+        setLiveBusy(false);
+      });
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  const addLive = async (row: LiveSchemeRow) => {
+    const id = `live_${row.schemeCode}`;
+    if (id in alloc) return;
+    setAddingCode(row.schemeCode);
+    const detail = await getLiveSchemeDetail(row.schemeCode);
+    setAddingCode(null);
+    if (!detail) return;
+    registerFund(fundFromLiveScheme(detail));
+    addFund(id);
+  };
 
   const total = allocationTotal(alloc);
   const bands = bandWeights(alloc);
@@ -204,7 +241,40 @@ export default function PortfolioBuilder() {
                 </div>
               );
             })}
-            {filtered.length === 0 && <p className="py-6 text-center text-sm text-muted">No funds match “{search}”.</p>}
+            {filtered.length === 0 && liveRows.length === 0 && !liveBusy && (
+              <p className="py-6 text-center text-sm text-muted">No funds match “{search}”.</p>
+            )}
+
+            {(liveBusy || liveRows.length > 0) && (
+              <div className="mt-2">
+                <span className={sectionLabel}>Live universe · AMFI</span>
+                {liveBusy && <p className="mt-1.5 text-caption text-muted">Searching every scheme…</p>}
+                <div className="mt-1.5 flex flex-col gap-1.5">
+                  {liveRows.map((row) => {
+                    const id = `live_${row.schemeCode}`;
+                    const added = id in alloc;
+                    const busy = addingCode === row.schemeCode;
+                    return (
+                      <div
+                        key={row.schemeCode}
+                        onClick={() => (added ? removeFund(id) : void addLive(row))}
+                        className={`flex cursor-pointer select-none items-center gap-2 rounded-lg border bg-surface px-2.5 py-1.5 transition hover:border-brand ${
+                          added ? "border-brand" : "border-line"
+                        }`}
+                      >
+                        <span className="min-w-0 flex-1 truncate text-support font-medium leading-tight">{row.schemeName}</span>
+                        <span className={`flex-none rounded-full px-2 py-0.5 text-index font-medium uppercase tracking-wide ${added ? "bg-brand text-on-accent" : "border border-line text-muted"}`}>
+                          {busy ? "…" : added ? "Added" : "Add"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-1.5 text-caption text-text-3">
+                  AMFI scheme data via mfapi.in. Projections for live schemes use category estimates, not past returns.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
