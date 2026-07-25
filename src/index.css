@@ -17,25 +17,27 @@
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
+  /* Elevation is the whole game in mono dark: page #000, cards #121212,
+     hero band #1C1C1C, raised fills #242424. Same hue, four depths. */
   --bg: 0 0 0;
-  --surface: 20 20 20;
-  --surface-2: 38 38 38;
-  --line: 45 45 45;
-  --line-2: 82 82 82;
-  --text: 232 232 232;
+  --surface: 18 18 18;
+  --surface-2: 36 36 36;
+  --line: 51 51 51;
+  --line-2: 92 92 92;
+  --text: 237 237 237;
   --text-2: 183 183 183;
   --text-3: 140 140 140;
   --accent: 255 255 255;
-  --accent-hi: 232 232 232;
-  --accent-tint: 38 38 38;
+  --accent-hi: 224 224 224;
+  --accent-tint: 36 36 36;
   --on-accent: 0 0 0;
-  --band: 20 20 20;
+  --band: 28 28 28;
   --on-band: 255 255 255;
   --on-band-2: 183 183 183;
   --on-band-3: 140 140 140;
-  --pos: 183 183 183;
-  --pos-bg: 38 38 38;
-  --cau: 0 0 0;
+  --pos: 200 200 200;
+  --pos-bg: 42 42 42;
+  --cau: 17 17 17;
   --cau-bg: 232 232 232;
   --neg: 0 0 0;
   --neg-bg: 255 255 255;
@@ -72,7 +74,7 @@ html {
 }
 
 :focus-visible {
-  outline: 2px solid rgb(var(--accent));
+  outline: 2px solid rgb(var(--text-3));
   outline-offset: 2px;
 }
 
