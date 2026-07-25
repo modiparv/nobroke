@@ -23,9 +23,9 @@ function HeroAmount({ value }: { value: number }) {
   const dim = tail !== "" && !/^0+$/.test(tail);
 
   return (
-    <div className="num mt-1.5 text-hero font-medium">
+    <div className="num mt-1.5 text-hero font-medium text-on-band">
       ₹{dim ? head : digits}
-      {dim && <span className="text-text-3">{tail}</span>}
+      {dim && <span className="text-on-band-3">{tail}</span>}
     </div>
   );
 }
@@ -40,27 +40,27 @@ function mixLabel(alloc: Record<string, number>): string {
   return "Invested in a balanced mix";
 }
 
-function Pill({ label, onClick, accent }: { label: string; onClick: () => void; accent?: boolean }) {
+function Pill({ label, onClick, accent, onBand }: { label: string; onClick: () => void; accent?: boolean; onBand?: boolean }) {
+  const tone = accent
+    ? "bg-accent text-on-accent hover:bg-accent-hi"
+    : onBand
+      ? "border border-on-band/30 text-on-band hover:border-on-band/60"
+      : "border border-line text-text hover:border-line-2";
   return (
-    <button
-      onClick={onClick}
-      className={`rounded-full px-3.5 py-2 text-support transition ${
-        accent ? "bg-accent text-on-accent hover:bg-accent-hi" : "border border-line text-text hover:border-line-2"
-      }`}
-    >
+    <button onClick={onClick} className={`rounded-full px-3.5 py-2 text-support transition ${tone}`}>
       {label}
     </button>
   );
 }
 
-function AddGoal({ onAdd }: { onAdd: (id: string) => void }) {
+function AddGoal({ onAdd, onBand }: { onAdd: (id: string) => void; onBand?: boolean }) {
   const s = useStore();
   const [open, setOpen] = useState(false);
   const remaining = GOALS.filter((g) => !s.goals.some((x) => x.id === g.id));
 
   return (
     <span className="relative inline-block">
-      <Pill label="New goal" onClick={() => setOpen((o) => !o)} />
+      <Pill label="New goal" onBand={onBand} onClick={() => setOpen((o) => !o)} />
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
@@ -134,14 +134,15 @@ export default function Plan() {
     <div className="min-h-screen bg-bg">
       <AppHeader />
 
-      {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
-      <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
-        {/* Hero strip: figures left, actions right, closed by a rule. */}
-        <section className="flex flex-col gap-5 border-b border-line py-6 sm:flex-row sm:items-end sm:justify-between sm:py-8">
+      {/* The one dark surface on this screen: a full-bleed ink band carrying
+          the total-saved figure (spec section 4). Everything below is white
+          cards on the pale page. */}
+      <section className="bg-band">
+        <div className="mx-auto flex max-w-page flex-col gap-5 px-4 py-7 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-9">
           <div>
-            <span className={sectionLabel}>Total saved</span>
+            <span className="text-eyebrow uppercase text-on-band-2">Total saved</span>
             <HeroAmount value={totalCapital(s)} />
-            <p className="mt-2 text-body text-text-2">
+            <p className="mt-2 text-body text-on-band-2">
               {s.goals.length
                 ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track · ${formatINR(
                     s.monthlySip,
@@ -151,14 +152,17 @@ export default function Plan() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Pill label="Add money" onClick={() => actions.setTab("money")} />
-            <AddGoal onAdd={addGoal} />
+            <Pill label="Add money" onBand onClick={() => actions.setTab("money")} />
+            <AddGoal onAdd={addGoal} onBand />
             {firstOffTrack && (
               <Pill label={`Fix ${firstOffTrack.name.toLowerCase()}`} accent onClick={() => openGoal(firstOffTrack.id)} />
             )}
           </div>
-        </section>
+        </div>
+      </section>
 
+      {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
+      <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
         <div className="grid gap-4 py-6 lg:grid-cols-[1.55fr_1fr] lg:gap-6">
           <div>
             {s.goals.length === 0 ? (

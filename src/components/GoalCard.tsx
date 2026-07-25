@@ -84,7 +84,7 @@ export default function GoalCard({
         e.preventDefault();
         onDrop();
       }}
-      className={`transition ${isOver ? "bg-brand/5" : ""} ${isDragging ? "opacity-50" : ""}`}
+      className={`transition ${isOver ? "bg-accent-tint" : ""} ${isDragging ? "opacity-50" : ""}`}
     >
       <div className="flex items-start gap-2.5 px-3 py-3.5 sm:gap-3 sm:px-4">
         {/* The index doubles as the priority marker and the drag affordance. */}
@@ -122,7 +122,7 @@ export default function GoalCard({
 
           <span className="mt-2.5 block h-[3px] w-full overflow-hidden rounded-[2px] bg-surface-2">
             <span
-              className="block h-full rounded-[2px] bg-accent transition-[width] duration-500 ease-out"
+              className="block h-full rounded-[2px] bg-text transition-[width] duration-500 ease-out"
               style={{ width: `${railPct}%` }}
             />
           </span>

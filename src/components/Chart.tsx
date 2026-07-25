@@ -29,20 +29,13 @@ export default function Chart({ r }: { r: PlanResult }) {
   const yTicks = [0, 0.5, 1].map((f) => f * maxY);
   const tickCount = Math.min(5, Math.max(2, Math.round(maxX / 12)));
   const xTicks = Array.from({ length: tickCount + 1 }, (_, i) => Math.round((maxX / tickCount) * i));
-  const mono = "'Geist Mono', ui-monospace, monospace";
+  const mono = "Inter, ui-sans-serif, system-ui, sans-serif";
   const ty = y(r.requiredCorpus);
   const progressPct = Math.min(999, Math.round(r.progress * 100));
 
   return (
     <div className="mt-3">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="How your money grows over time">
-        <defs>
-          <linearGradient id="g-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={C.brand} stopOpacity="0.18" />
-            <stop offset="100%" stopColor={C.brand} stopOpacity="0.02" />
-          </linearGradient>
-        </defs>
-
         {yTicks.map((v, i) => (
           <g key={i}>
             <line x1={PAD.l} y1={y(v)} x2={PAD.l + PW} y2={y(v)} stroke={C.line} strokeWidth="1" />
@@ -57,7 +50,7 @@ export default function Chart({ r }: { r: PlanResult }) {
           </text>
         ))}
 
-        <path d={area} fill="url(#g-area)" />
+        <path d={area} fill={C.brand} opacity="0.06" />
         <path d={investedPath} fill="none" stroke={C.invested} strokeWidth="2" strokeDasharray="4 4" />
         <path d={valuePath} fill="none" stroke={C.brand} strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
 

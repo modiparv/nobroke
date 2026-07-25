@@ -43,7 +43,7 @@ export default function Landing() {
       <main className="mx-auto max-w-6xl px-5 sm:px-10">
         <section className="max-w-3xl py-16 sm:py-24">
           <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
-            <span className="inline-block h-1.5 w-1.5 bg-brand" /> The dating agent for your money
+            <span className="inline-block h-1.5 w-1.5 bg-text-3" /> The dating agent for your money
           </span>
           <h1 className="mt-6 text-5xl font-medium uppercase leading-[0.88] tracking-[-0.045em] sm:text-7xl lg:text-8xl">
             Meet the goals <br className="hidden sm:block" />
@@ -82,7 +82,7 @@ export default function Landing() {
       </main>
 
       <section className="mx-auto mb-14 max-w-6xl px-5 sm:px-10">
-        <div className="rounded-3xl bg-brand-deep px-8 py-14 text-center text-on-accent sm:py-20">
+        <div className="rounded-3xl px-8 py-14 text-center text-white sm:py-20" style={{ background: "linear-gradient(135deg,#0B1B33,#1F45D6)" }}>
           <h2 className="text-3xl font-medium tracking-tight sm:text-5xl">Your money deserves a great match.</h2>
           <button
             className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-surface px-6 py-3.5 text-sm font-medium text-text transition hover:bg-accent-tint"

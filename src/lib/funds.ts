@@ -1,10 +1,10 @@
 import type { AssetClass, AssetClassId, Fund } from "./types";
 
 export const ASSET_CLASSES: Record<AssetClassId, AssetClass> = {
-  equity: { id: "equity", label: "Stocks", color: "rgb(var(--accent))", blurb: "Owning companies. Grows the most over long periods, but moves around more." },
+  equity: { id: "equity", label: "Stocks", color: "rgb(var(--text))", blurb: "Owning companies. Grows the most over long periods, but moves around more." },
   debt: { id: "debt", label: "Bonds", color: "rgb(var(--text-2))", blurb: "Lending for steady, predictable returns. Calmer than stocks." },
-  gold: { id: "gold", label: "Gold", color: "rgb(var(--cau))", blurb: "A safety cushion that tends to hold value when things wobble." },
-  hybrid: { id: "hybrid", label: "Mix", color: "rgb(var(--accent-hi))", blurb: "Stocks and bonds blended together in one fund." },
+  gold: { id: "gold", label: "Gold", color: "rgb(var(--text-3))", blurb: "A safety cushion that tends to hold value when things wobble." },
+  hybrid: { id: "hybrid", label: "Mix", color: "rgb(var(--line-2))", blurb: "Stocks and bonds blended together in one fund." },
 };
 
 /** Illustrative dummy data for Indian funds — planning estimates, not advice. */

@@ -30,7 +30,7 @@ function growthBand(ret: number) {
 }
 
 function Marker() {
-  return <span className="inline-block h-1.5 w-1.5 flex-none bg-brand" />;
+  return <span className="inline-block h-1.5 w-1.5 flex-none bg-text-3" />;
 }
 
 /**

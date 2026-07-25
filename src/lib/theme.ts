@@ -14,5 +14,5 @@ export const C = {
   line: "rgb(var(--line))",
   track: "rgb(var(--surface-2))",
   gold: "rgb(var(--cau))",
-  invested: "rgb(var(--line-2))",
+  invested: "rgb(var(--text-3))",
 } as const;

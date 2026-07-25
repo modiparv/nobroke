@@ -3,49 +3,58 @@ import type { AggregationProvider } from "../lib/types";
 import { sectionLabel } from "../ui";
 
 const PROVIDERS: AggregationProvider[] = [
-  { id: "cas", name: "Investment Portfolio", providers: "CAMS · KFintech", description: "Auto-import every stock, mutual fund & bond from your Consolidated Account Statement.", icon: "📊" },
-  { id: "aa", name: "Banking & Income", providers: "Finvu · OneMoney · CAMSFinserv", description: "Consent-based access to income & spending via the RBI Account Aggregator network.", icon: "🏦" },
-  { id: "baas", name: "Trading & Execution", providers: "DhanHQ · HDFC Sec · AngelOne", description: "Place trades, track holdings and pull real-time market data.", icon: "📈" },
-  { id: "kyc", name: "Identity & KYC", providers: "NSDL · KRA", description: "Verify PAN and complete KYC in seconds. Fully paperless.", icon: "🪪" },
+  { id: "cas", name: "Investment portfolio", providers: "CAMS · KFintech", description: "Auto-import every stock, mutual fund and bond from your Consolidated Account Statement.", icon: "" },
+  { id: "aa", name: "Banking and income", providers: "Finvu · OneMoney · CAMSFinserv", description: "Consent-based access to income and spending via the RBI Account Aggregator network.", icon: "" },
+  { id: "baas", name: "Trading and execution", providers: "DhanHQ · HDFC Sec · AngelOne", description: "Place trades, track holdings and pull market data.", icon: "" },
+  { id: "kyc", name: "Identity and KYC", providers: "NSDL · KRA", description: "Verify PAN and complete KYC. Fully paperless.", icon: "" },
 ];
 
+/**
+ * Account connections, as hairline-separated rows in one container.
+ *
+ * This was a four-column card grid keyed to VIEWPORT width, so inside the
+ * narrow side rail it rendered four ~100px columns of truncated text. Rows
+ * scale with their container instead of the screen (spec section 8: rows over
+ * cards for lists).
+ */
 export default function Aggregation() {
   const [connected, setConnected] = useState<Record<string, boolean>>({});
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-3">
-        <span className="rounded-full bg-surface-2 px-2.5 py-1 text-caption font-medium uppercase tracking-[0.06em] text-muted">Coming soon</span>
-        <p className="m-0 flex-1 text-sm text-muted">Already invested? Connect your accounts and NoBroke pulls everything in automatically, no spreadsheets.</p>
+      <div className="flex items-center justify-between gap-2">
+        <span className={sectionLabel}>Connect your accounts</span>
+        <span className="flex-none rounded-full bg-surface-2 px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
+          Coming soon
+        </span>
       </div>
-      <span className={sectionLabel}>Connect your accounts</span>
-      <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <p className="mt-1.5 text-support text-text-2">
+        Already invested? Connect your accounts and NoBroke pulls everything in automatically.
+      </p>
+
+      <ul className="mt-2 divide-y divide-line">
         {PROVIDERS.map((p) => {
           const isOn = !!connected[p.id];
           return (
-            <div key={p.id} className={`flex flex-col gap-2.5 rounded-2xl border bg-surface-2 p-4 ${isOn ? "border-brand" : "border-line"}`}>
-              <div className="flex items-center gap-2.5">
-                <span className="text-xl">{p.icon}</span>
-                <div>
-                  <div className="text-sm font-medium">{p.name}</div>
-                  <div className="text-caption text-muted">{p.providers}</div>
-                </div>
+            <li key={p.id} className="flex items-center gap-3 py-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-support font-medium text-text">{p.name}</div>
+                <div className="truncate text-caption text-text-2">{p.providers}</div>
               </div>
-              <p className="m-0 flex-1 text-xs text-muted">{p.description}</p>
-              <div className="flex items-center justify-between">
-                <span className={`text-caption font-medium ${isOn ? "text-pos" : "text-muted"}`}>{isOn ? "Synced · demo" : "Not connected"}</span>
+              {isOn ? (
+                <span className="flex-none rounded-full bg-pos-bg px-2.5 py-1 text-caption text-pos">Connected</span>
+              ) : (
                 <button
-                  disabled={isOn}
                   onClick={() => setConnected((c) => ({ ...c, [p.id]: true }))}
-                  className="rounded-xl border border-line px-3 py-1.5 text-xs font-medium transition hover:border-brand disabled:opacity-50"
+                  className="flex-none rounded-full border border-line px-3 py-1.5 text-caption font-medium text-text transition hover:border-line-2"
                 >
-                  {isOn ? "Connected ✓" : "Connect"}
+                  Connect
                 </button>
-              </div>
-            </div>
+              )}
+            </li>
           );
         })}
-      </div>
+      </ul>
     </div>
   );
 }
