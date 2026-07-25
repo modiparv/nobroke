@@ -64,7 +64,7 @@ function AddGoal({ onAdd, onBand }: { onAdd: (id: string) => void; onBand?: bool
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-[calc(100%+8px)] z-20 flex max-h-72 w-60 flex-col overflow-y-auto rounded-card border border-line bg-surface p-1.5">
+          <div className="absolute left-0 top-[calc(100%+8px)] z-20 flex max-h-72 w-60 flex-col overflow-y-auto rounded-card border border-line bg-surface p-1.5 sm:left-auto sm:right-0">
             {remaining.length === 0 && <span className="p-3 text-center text-support text-text-2">All goals added</span>}
             {remaining.map((g) => (
               <button

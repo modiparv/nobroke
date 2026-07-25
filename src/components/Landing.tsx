@@ -2,99 +2,89 @@ import { actions } from "../store";
 import { btnGhost, btnPrimary } from "../ui";
 import Logo from "./Logo";
 
-function Step({ n, title, body }: { n: string; title: string; body: string }) {
-  return (
-    <div className="rounded-2xl border border-line p-6">
-      <span className="text-xs font-medium tracking-widest text-text-3">{n}</span>
-      <h3 className="mt-2 text-lg font-medium">{title}</h3>
-      <p className="mt-2 text-sm text-muted">{body}</p>
-    </div>
-  );
-}
+/**
+ * Landing, repositioned on the premium wealth-management idea: expert-grade
+ * care, previously reserved for the wealthy, for people who are still building.
+ * Dark, editorial, numbers-led, minimal copy. The wealth monitor leads because
+ * it is the product's strongest honest promise (the Money tab).
+ */
 
-function Feature({ icon, title, body }: { icon: string; title: string; body: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-surface-2 p-5">
-      <span className="text-2xl">{icon}</span>
-      <h3 className="mt-3 text-base font-medium">{title}</h3>
-      <p className="mt-1 text-sm text-muted">{body}</p>
-    </div>
-  );
-}
+const FEATURES = [
+  { n: "01", title: "Wealth monitor", body: "Everything you own in one place. Cash, funds, FDs, gold." },
+  { n: "02", title: "Goal planning", body: "Each goal gets a target, a date and a monthly amount." },
+  { n: "03", title: "One portfolio", body: "A single mix funds every goal." },
+  { n: "04", title: "Copilot", body: "Ask anything. Change anything. Plain words." },
+];
 
 export default function Landing() {
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-surface px-5 py-4 sm:px-10">
-        <Logo />
-        <nav className="flex items-center gap-2">
-          <a href="#how" className="hidden px-3 py-2 text-sm font-medium text-muted hover:text-ink sm:block">
-            How it works
-          </a>
-          <button className={btnGhost} onClick={actions.startDemo}>
-            Explore demo
-          </button>
-          <button className={btnPrimary} onClick={actions.startOnboarding}>
-            Find your match
-          </button>
-        </nav>
+    <div className="min-h-screen bg-bg">
+      <header className="sticky top-0 z-30 bg-bg/40">
+        <div className="mx-auto flex h-14 max-w-page items-center justify-between px-4 sm:px-6">
+          <Logo />
+          <div className="flex items-center gap-2">
+            <button className={`${btnGhost} px-3.5 py-2`} onClick={actions.startDemo}>
+              See the demo
+            </button>
+            <button className={`${btnPrimary} px-3.5 py-2`} onClick={actions.startOnboarding}>
+              Start
+            </button>
+          </div>
+        </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-5 sm:px-10">
-        <section className="max-w-3xl py-16 sm:py-24">
-          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
-            <span className="inline-block h-1.5 w-1.5 bg-text-3" /> The dating agent for your money
-          </span>
-          <h1 className="mt-6 text-5xl font-medium uppercase leading-[0.88] tracking-[-0.045em] sm:text-7xl lg:text-8xl">
-            Meet the goals <br className="hidden sm:block" />
-            you'll fall for.
+      <main className="mx-auto max-w-page px-4 sm:px-6">
+        <section className="max-w-3xl py-20 sm:py-28">
+          <span className="text-eyebrow uppercase text-text-3">Wealth, minus the noise</span>
+          <h1 className="mt-4 text-4xl font-medium leading-[1.05] tracking-[-0.025em] sm:text-6xl">
+            Wealth management for people who weren't born wealthy.
           </h1>
-          <p className="mt-6 max-w-xl text-base text-muted sm:text-lg">
-            NoBroke gets to know you with a few honest questions, then matches you to a plan and a portfolio you'll
-            actually stick with. No jargon, no forms, no judgement.
+          <p className="mt-5 max-w-xl text-body text-text-2 sm:text-base">
+            Track everything you own, plan every goal, and grow it all in one simple portfolio.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap gap-2.5">
             <button className={btnPrimary} onClick={actions.startOnboarding}>
-              Find your match →
+              Start free
             </button>
             <button className={btnGhost} onClick={actions.startDemo}>
-              Explore the demo
+              See the demo
             </button>
           </div>
-          <p className="mt-4 text-sm text-muted">Built for Gen-Z &amp; millennials · 2-minute setup · cancel anytime</p>
+          <p className="mt-5 text-caption text-text-3">2-minute setup · No jargon · Cancel anytime</p>
         </section>
 
-        <section id="how" className="border-t border-line py-16">
-          <h2 className="text-center text-3xl font-medium tracking-tight sm:text-4xl">It works like a great first date</h2>
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
-            <Step n="01" title="We get to know you" body="A handful of fun questions about your dreams and lifestyle. We never lead with “what's your salary.”" />
-            <Step n="02" title="We find your match" body="Your answers become a goal plan and a portfolio tuned to your timeline and risk." />
-            <Step n="03" title="You stay in control" body="Drag funds into your basket, track every goal, and ask NoBroke AI anything, anytime." />
+        <section className="border-t border-line">
+          <ul className="divide-y divide-line">
+            {FEATURES.map((f) => (
+              <li key={f.n} className="flex items-baseline gap-5 py-6 sm:gap-8 sm:py-8">
+                <span className="num text-index tracking-[0.06em] text-text-3">{f.n}</span>
+                <div className="grid flex-1 gap-1 sm:grid-cols-[240px_1fr] sm:gap-8">
+                  <h3 className="text-section font-medium">{f.title}</h3>
+                  <p className="text-body text-text-2">{f.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="py-14 sm:py-20">
+          <div
+            className="rounded-screen px-6 py-14 text-center text-white sm:py-20"
+            style={{ background: "linear-gradient(135deg,#000000,#525252)" }}
+          >
+            <h2 className="text-2xl font-medium tracking-[-0.02em] sm:text-4xl">Start with what you have.</h2>
+            <button
+              className="mt-7 inline-flex items-center justify-center rounded-control bg-white px-6 py-3 text-sm font-medium text-black transition hover:bg-text-2"
+              onClick={actions.startOnboarding}
+            >
+              Start now
+            </button>
           </div>
-        </section>
-
-        <section className="grid gap-4 pb-16 sm:grid-cols-2 lg:grid-cols-4">
-          <Feature icon="🧺" title="Drag-and-drop basket" body="Fill a basket with funds across stocks, bonds and gold, and watch your returns update live." />
-          <Feature icon="💬" title="NoBroke AI" body="A chat that explains any money concept and tells you exactly where you stand." />
-          <Feature icon="🎯" title="Goal tracking" body="Every dream (car, home, freedom) gets its own plan, target and timeline." />
-          <Feature icon="🔗" title="Auto-import" body="Connect your accounts and pull in existing investments in one tap. (Coming soon.)" />
         </section>
       </main>
 
-      <section className="mx-auto mb-14 max-w-6xl px-5 sm:px-10">
-        <div className="rounded-3xl px-8 py-14 text-center text-white sm:py-20" style={{ background: "linear-gradient(135deg,#000000,#525252)" }}>
-          <h2 className="text-3xl font-medium tracking-tight sm:text-5xl">Your money deserves a great match.</h2>
-          <button
-            className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-surface px-6 py-3.5 text-sm font-medium text-text transition hover:bg-accent-tint"
-            onClick={actions.startOnboarding}
-          >
-            Start now →
-          </button>
-        </div>
-      </section>
-
-      <footer className="mx-auto max-w-6xl px-5 pb-12 sm:px-10">
-        <p className="mx-auto max-w-2xl text-center text-xs text-muted">
+      <footer className="mx-auto max-w-page px-4 pb-10 sm:px-6">
+        <p className="mx-auto max-w-2xl text-center text-caption text-text-3">
           NoBroke is an early prototype. Projections are illustrative, use simplified assumptions, and are not investment
           advice.
         </p>

@@ -4,14 +4,14 @@ import Logo from "./Logo";
 /**
  * App nav: logo, the Plan / Money toggle, and account actions.
  *
- * The bar is translucent: a 70% page-colour fill, no blur (backdrop-filter
+ * The bar is translucent: a 40% page-colour fill, no blur (backdrop-filter
  * stays banned), so content ghosts through it faintly as it scrolls.
  */
 export default function AppHeader() {
   const s = useStore();
 
   return (
-    <header className="sticky top-0 z-30 bg-bg/70">
+    <header className="sticky top-0 z-30 bg-bg/40">
       <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-3 px-4 sm:px-6">
         <Logo />
 

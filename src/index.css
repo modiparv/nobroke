@@ -80,6 +80,10 @@ body {
   @apply bg-bg text-text font-sans antialiased;
   margin: 0;
   font-size: 14px;
+  /* A stray wide popover must never put the page into sideways scroll. */
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* Two weights only, 400 and 500. Headings are not bold. */
