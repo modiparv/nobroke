@@ -98,23 +98,23 @@ export default function GoalCard({
           role="button"
           aria-label={`${g.name}, priority ${rank}. Drag to reorder.`}
           title="Drag to reorder"
-          className="num mt-0.5 cursor-grab select-none pt-px text-[10px] tracking-[0.06em] text-muted active:cursor-grabbing"
+          className="num mt-0.5 cursor-grab select-none pt-px text-index tracking-[0.06em] text-muted active:cursor-grabbing"
         >
           {String(rank).padStart(2, "0")}
         </span>
 
         <button onClick={onToggle} aria-expanded={open} className="min-w-0 flex-1 text-left">
           <span className="flex items-center gap-2">
-            <span className="truncate text-[15px] font-medium tracking-[-0.005em]">{g.name}</span>
+            <span className="truncate text-row font-medium tracking-[-0.005em]">{g.name}</span>
             <span
-              className={`flex-none rounded-full px-2 py-0.5 text-[11px] ${
+              className={`flex-none rounded-full px-2 py-0.5 text-caption ${
                 r.onTrack ? "bg-positive/10 text-positive" : "bg-ink/[0.06] text-ink"
               }`}
             >
               {r.onTrack ? "On track" : "Needs a change"}
             </span>
           </span>
-          <span className="mt-0.5 block text-[13px] text-muted">
+          <span className="mt-0.5 block text-support text-muted">
             <span className="num">{formatINR(g.targetToday)}</span> by <span className="num">{year}</span>
           </span>
 
@@ -127,8 +127,8 @@ export default function GoalCard({
         </button>
 
         <span className="flex-none pt-0.5 text-right">
-          <span className="num block text-[15px] font-medium">{formatINR(savedForGoal)}</span>
-          <span className="num mt-0.5 block text-[12px] text-muted">{Math.round(savedRatio * 100)}%</span>
+          <span className="num block text-row font-medium">{formatINR(savedForGoal)}</span>
+          <span className="num mt-0.5 block text-caption text-muted">{Math.round(savedRatio * 100)}%</span>
         </span>
       </div>
 
@@ -138,7 +138,7 @@ export default function GoalCard({
             <span className={sectionLabel}>Set up this goal</span>
             <div className="mt-3 flex flex-col gap-3.5">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[13px] text-muted">Target year</span>
+                <span className="text-support text-muted">Target year</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => actions.setGoalTenure(g.id, g.horizonYears - 1)}
@@ -148,7 +148,7 @@ export default function GoalCard({
                   >
                     −
                   </button>
-                  <span className="num w-14 text-center text-[15px] font-medium">{year}</span>
+                  <span className="num w-14 text-center text-row font-medium">{year}</span>
                   <button
                     onClick={() => actions.setGoalTenure(g.id, g.horizonYears + 1)}
                     aria-label={`${g.name} target year later`}
@@ -183,7 +183,7 @@ export default function GoalCard({
           </div>
 
           {!r.onTrack && (
-            <p className="text-[13px] text-ink">
+            <p className="text-support text-ink">
               On this plan you'd reach about <span className="num">{formatINR(r.projectedCorpus)}</span>.
             </p>
           )}
@@ -198,7 +198,7 @@ export default function GoalCard({
           <div>
             <button
               onClick={() => setShowWhy((v) => !v)}
-              className="text-[13px] text-muted underline-offset-2 transition hover:text-ink hover:underline"
+              className="text-support text-muted underline-offset-2 transition hover:text-ink hover:underline"
             >
               {showWhy ? "Hide the why" : "Why this plan?"}
             </button>
@@ -212,7 +212,7 @@ export default function GoalCard({
           <div className="flex justify-end">
             <button
               onClick={onDelete}
-              className="text-[13px] text-muted underline-offset-2 transition hover:text-ink hover:underline"
+              className="text-support text-muted underline-offset-2 transition hover:text-ink hover:underline"
             >
               Remove this goal
             </button>

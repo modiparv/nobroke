@@ -14,7 +14,7 @@ function Step({ n, title, body }: { n: string; title: string; body: string }) {
 
 function Feature({ icon, title, body }: { icon: string; title: string; body: string }) {
   return (
-    <div className="rounded-2xl border border-line bg-paper p-5">
+    <div className="rounded-2xl border border-line bg-surface-2 p-5">
       <span className="text-2xl">{icon}</span>
       <h3 className="mt-3 text-base font-medium">{title}</h3>
       <p className="mt-1 text-sm text-muted">{body}</p>
@@ -25,7 +25,7 @@ function Feature({ icon, title, body }: { icon: string; title: string; body: str
 export default function Landing() {
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-white/95 px-5 py-4 sm:px-10">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-surface px-5 py-4 sm:px-10">
         <Logo />
         <nav className="flex items-center gap-2">
           <a href="#how" className="hidden px-3 py-2 text-sm font-medium text-muted hover:text-ink sm:block">
@@ -42,10 +42,10 @@ export default function Landing() {
 
       <main className="mx-auto max-w-6xl px-5 sm:px-10">
         <section className="max-w-3xl py-16 sm:py-24">
-          <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
             <span className="inline-block h-1.5 w-1.5 bg-brand" /> The dating agent for your money
           </span>
-          <h1 className="mt-6 text-5xl font-extrabold uppercase leading-[0.88] tracking-[-0.045em] sm:text-7xl lg:text-8xl">
+          <h1 className="mt-6 text-5xl font-medium uppercase leading-[0.88] tracking-[-0.045em] sm:text-7xl lg:text-8xl">
             Meet the goals <br className="hidden sm:block" />
             you'll fall for.
           </h1>
@@ -65,7 +65,7 @@ export default function Landing() {
         </section>
 
         <section id="how" className="border-t border-line py-16">
-          <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">It works like a great first date</h2>
+          <h2 className="text-center text-3xl font-medium tracking-tight sm:text-4xl">It works like a great first date</h2>
           <div className="mt-10 grid gap-5 sm:grid-cols-3">
             <Step n="01" title="We get to know you" body="A handful of fun questions about your dreams and lifestyle. We never lead with “what's your salary.”" />
             <Step n="02" title="We find your match" body="Your answers become a goal plan and a portfolio tuned to your timeline and risk." />
@@ -83,9 +83,9 @@ export default function Landing() {
 
       <section className="mx-auto mb-14 max-w-6xl px-5 sm:px-10">
         <div className="rounded-3xl bg-brand-deep px-8 py-14 text-center text-white sm:py-20">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-5xl">Your money deserves a great match.</h2>
+          <h2 className="text-3xl font-medium tracking-tight sm:text-5xl">Your money deserves a great match.</h2>
           <button
-            className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-medium text-brand-deep transition hover:bg-brand-mint"
+            className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-surface px-6 py-3.5 text-sm font-medium text-brand-deep transition hover:bg-brand-mint"
             onClick={actions.startOnboarding}
           >
             Start now →

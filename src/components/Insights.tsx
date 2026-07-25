@@ -42,17 +42,21 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
   return out.slice(0, 4);
 }
 
-const BORDER: Record<string, string> = { positive: "#157A5B", warning: "#15161B", info: "#ECECEF" };
+const BORDER: Record<string, string> = {
+  positive: "rgb(var(--pos))",
+  warning: "rgb(var(--cau))",
+  info: "rgb(var(--line))",
+};
 
 export default function Insights({ r, inputs }: { r: PlanResult; inputs: PlanInputs }) {
   const list = generate(inputs, r);
   return (
     <div className="flex flex-col gap-2.5">
       {list.map((ins, i) => (
-        <div key={i} className="flex gap-3 rounded-xl border border-line bg-paper p-3" style={{ borderLeft: `4px solid ${BORDER[ins.tone]}` }}>
+        <div key={i} className="flex gap-3 rounded-xl border border-line bg-surface-2 p-3" style={{ borderLeft: `4px solid ${BORDER[ins.tone]}` }}>
           <span className="text-lg leading-tight">{ins.icon}</span>
           <div>
-            <div className="text-[13px] font-medium">{ins.title}</div>
+            <div className="text-support font-medium">{ins.title}</div>
             <div className="text-xs text-muted">{ins.message}</div>
           </div>
         </div>

@@ -79,10 +79,10 @@ export default function Chart({ r }: { r: PlanResult }) {
       </svg>
 
       {/* All the numbers live here, so the chart itself stays uncluttered. */}
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-wide text-muted">
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-index uppercase text-text-3">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-1 w-3.5 rounded" style={{ background: C.brand }} /> Your money{" "}
-          <span className="font-bold text-ink">{formatINR(r.projectedCorpus)}</span>
+          <span className="font-medium text-ink">{formatINR(r.projectedCorpus)}</span>
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-1 w-3.5 rounded" style={{ background: C.invested }} /> Put in{" "}
@@ -90,9 +90,9 @@ export default function Chart({ r }: { r: PlanResult }) {
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-1 w-3.5 rounded bg-ink" /> Goal{" "}
-          <span className="font-bold text-ink">{formatINR(r.requiredCorpus)}</span>
+          <span className="font-medium text-ink">{formatINR(r.requiredCorpus)}</span>
         </span>
-        <span className="ml-auto font-bold" style={{ color: r.onTrack ? C.positive : C.ink }}>
+        <span className="ml-auto font-medium" style={{ color: r.onTrack ? C.positive : C.ink }}>
           {progressPct}% there
         </span>
       </div>

@@ -32,10 +32,10 @@ function SliderStep({ step, onContinue }: { step: Step; onContinue: () => void }
 
   return (
     <div className="fade-up flex w-full flex-col items-center text-center">
-      <h1 className="max-w-[16ch] text-3xl font-semibold tracking-tight sm:text-4xl">{step.title}</h1>
+      <h1 className="max-w-[16ch] text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
       {step.subtitle && <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
       <div className="mt-8 w-full max-w-md">
-        <div className="mb-5 text-4xl font-semibold tracking-tight sm:text-5xl">{formatINR(value)}</div>
+        <div className="mb-5 text-4xl font-medium tracking-tight sm:text-5xl">{formatINR(value)}</div>
         <input
           type="range"
           min={min}
@@ -49,7 +49,7 @@ function SliderStep({ step, onContinue }: { step: Step; onContinue: () => void }
             setValue(v);
             setAnswer(step.field!, v);
           }}
-          style={{ background: `linear-gradient(90deg,#157A5B ${pct}%,#ECECEF ${pct}%)`, borderRadius: 999, height: 6 }}
+          style={{ background: `linear-gradient(90deg,rgb(var(--accent)) ${pct}%,rgb(var(--line)) ${pct}%)`, borderRadius: 999, height: 6 }}
         />
       </div>
       <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={onContinue}>
@@ -84,7 +84,7 @@ export default function Onboarding() {
       </div>
 
       <div className="mb-2 flex items-center gap-3">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-paper">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
           <div className="h-full rounded-full bg-brand-deep transition-all duration-300" style={{ width: `${progress}%` }} />
         </div>
         {step.stage > 0 && (
@@ -98,7 +98,7 @@ export default function Onboarding() {
         {step.kind === "intro" && (
           <div className="fade-up flex w-full flex-col items-center text-center">
             <span className="text-5xl">💙</span>
-            <h1 className="mt-4 max-w-[16ch] text-3xl font-semibold tracking-tight sm:text-4xl">{step.title}</h1>
+            <h1 className="mt-4 max-w-[16ch] text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
             <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
             <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={next}>
               {step.cta}
@@ -108,7 +108,7 @@ export default function Onboarding() {
 
         {step.kind === "goals" && (
           <div className="fade-up w-full">
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{step.title}</h1>
+            <h1 className="text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
             <p className="mt-3 text-muted">{step.subtitle}</p>
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {GOALS.map((g) => {
@@ -139,7 +139,7 @@ export default function Onboarding() {
 
         {step.kind === "single" && (
           <div className="fade-up w-full">
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{step.title}</h1>
+            <h1 className="text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
             {step.subtitle && <p className="mt-3 text-muted">{step.subtitle}</p>}
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {step.options!.map((opt) => {
@@ -173,7 +173,7 @@ export default function Onboarding() {
         {step.kind === "outro" && (
           <div className="fade-up flex w-full flex-col items-center text-center">
             <span className="text-5xl">💞</span>
-            <h1 className="mt-4 max-w-[18ch] text-3xl font-semibold tracking-tight sm:text-4xl">{step.title}</h1>
+            <h1 className="mt-4 max-w-[18ch] text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
             <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
             <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={actions.finishOnboarding}>
               {step.cta}

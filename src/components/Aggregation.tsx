@@ -15,7 +15,7 @@ export default function Aggregation() {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <span className="rounded-full bg-paper px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.06em] text-muted">Coming soon</span>
+        <span className="rounded-full bg-surface-2 px-2.5 py-1 text-caption font-medium uppercase tracking-[0.06em] text-muted">Coming soon</span>
         <p className="m-0 flex-1 text-sm text-muted">Already invested? Connect your accounts and NoBroke pulls everything in automatically, no spreadsheets.</p>
       </div>
       <span className={sectionLabel}>Connect your accounts</span>
@@ -23,17 +23,17 @@ export default function Aggregation() {
         {PROVIDERS.map((p) => {
           const isOn = !!connected[p.id];
           return (
-            <div key={p.id} className={`flex flex-col gap-2.5 rounded-2xl border bg-paper p-4 ${isOn ? "border-brand" : "border-line"}`}>
+            <div key={p.id} className={`flex flex-col gap-2.5 rounded-2xl border bg-surface-2 p-4 ${isOn ? "border-brand" : "border-line"}`}>
               <div className="flex items-center gap-2.5">
                 <span className="text-xl">{p.icon}</span>
                 <div>
                   <div className="text-sm font-medium">{p.name}</div>
-                  <div className="text-[11px] text-muted">{p.providers}</div>
+                  <div className="text-caption text-muted">{p.providers}</div>
                 </div>
               </div>
               <p className="m-0 flex-1 text-xs text-muted">{p.description}</p>
               <div className="flex items-center justify-between">
-                <span className={`text-[11px] font-medium ${isOn ? "text-brand-deep" : "text-muted"}`}>{isOn ? "Synced · demo" : "Not connected"}</span>
+                <span className={`text-caption font-medium ${isOn ? "text-brand-deep" : "text-muted"}`}>{isOn ? "Synced · demo" : "Not connected"}</span>
                 <button
                   disabled={isOn}
                   onClick={() => setConnected((c) => ({ ...c, [p.id]: true }))}

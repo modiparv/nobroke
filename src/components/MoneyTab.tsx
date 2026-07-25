@@ -19,9 +19,10 @@ export default function MoneyTab() {
   const total = totalCapital(s);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 sm:px-10 sm:py-8">
+    <div className="mx-auto max-w-page px-6 pb-[88px] pt-8">
+      <div className="max-w-xl">
       <span className={sectionLabel}>Money</span>
-      <h1 className="mt-2 text-[23px] font-medium tracking-[-0.02em]">Your money</h1>
+      <h1 className="mt-2 text-headline font-medium">Your money</h1>
       <p className="mt-1 text-sm text-muted">What you put in each month, and what you already have.</p>
 
       <section className={`${paneTop} mt-5`}>
@@ -49,8 +50,8 @@ export default function MoneyTab() {
         <Holdings />
         {invested > 0 && (
           <div className="mt-4 flex items-baseline justify-between border-t border-line pt-3">
-            <span className="text-[13px] text-muted">Total saved</span>
-            <span className="num text-[15px] font-medium">{formatINR(total)}</span>
+            <span className="text-support text-muted">Total saved</span>
+            <span className="num text-row font-medium">{formatINR(total)}</span>
           </div>
         )}
       </section>
@@ -59,9 +60,10 @@ export default function MoneyTab() {
         <Aggregation />
       </section>
 
-      <p className="mt-6 text-center text-xs text-muted">
-        Projections are illustrative and not investment advice.
-      </p>
+        <p className="mt-6 text-caption text-text-3">
+          Projections are illustrative and not investment advice.
+        </p>
+      </div>
     </div>
   );
 }

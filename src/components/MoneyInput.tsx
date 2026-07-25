@@ -31,18 +31,18 @@ export default function MoneyInput({
   const clamp = (v: number) => Math.max(min, Math.min(max, Math.round(v)));
   const set = (v: number) => onChange(clamp(v));
   const btn = compact ? "w-9" : "w-11";
-  const field = compact ? "py-1.5 text-[15px]" : "py-2.5 text-[17px]";
+  const field = compact ? "py-1.5 text-row" : "py-2.5 text-section";
 
   return (
     <div>
       {(label || hint) && (
         <div className="mb-1 flex items-center justify-between gap-2">
-          {label && <span className="text-[12.5px] text-muted">{label}</span>}
-          {hint && <span className="font-mono text-[10px] uppercase tracking-wide text-muted">{hint}</span>}
+          {label && <span className="text-support text-muted">{label}</span>}
+          {hint && <span className="text-index uppercase tracking-wide text-muted">{hint}</span>}
         </div>
       )}
       <div
-        className={`flex items-stretch overflow-hidden rounded-xl border border-line bg-white transition focus-within:border-brand ${
+        className={`flex items-stretch overflow-hidden rounded-xl border border-line bg-surface transition focus-within:border-brand ${
           disabled ? "opacity-50" : ""
         }`}
       >
@@ -51,12 +51,12 @@ export default function MoneyInput({
           onClick={() => set(value - step)}
           disabled={disabled || value <= min}
           aria-label="Decrease"
-          className={`grid flex-none place-items-center text-lg text-muted transition hover:bg-paper hover:text-ink disabled:opacity-30 ${btn}`}
+          className={`grid flex-none place-items-center text-lg text-muted transition hover:bg-surface-2 hover:text-ink disabled:opacity-30 ${btn}`}
         >
           −
         </button>
         <div className="flex flex-1 items-center justify-center gap-1 border-x border-line px-2">
-          <span className="text-[15px] font-semibold text-muted">₹</span>
+          <span className="text-row font-medium text-muted">₹</span>
           <input
             type="text"
             inputMode="numeric"
@@ -68,7 +68,7 @@ export default function MoneyInput({
               set(Number.isFinite(n) ? n : 0);
             }}
             aria-label={label}
-            className={`w-full bg-transparent text-center font-bold tabular-nums outline-none ${field}`}
+            className={`w-full bg-transparent text-center font-medium tabular-nums outline-none ${field}`}
           />
         </div>
         <button
@@ -76,7 +76,7 @@ export default function MoneyInput({
           onClick={() => set(value + step)}
           disabled={disabled || value >= max}
           aria-label="Increase"
-          className={`grid flex-none place-items-center text-lg text-muted transition hover:bg-paper hover:text-ink disabled:opacity-30 ${btn}`}
+          className={`grid flex-none place-items-center text-lg text-muted transition hover:bg-surface-2 hover:text-ink disabled:opacity-30 ${btn}`}
         >
           +
         </button>
@@ -89,7 +89,7 @@ export default function MoneyInput({
               type="button"
               disabled={disabled}
               onClick={() => set(q)}
-              className={`rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide transition ${
+              className={`rounded-full border px-2 py-0.5 text-index uppercase tracking-wide transition ${
                 value === clamp(q) ? "border-brand bg-brand text-white" : "border-line text-muted hover:border-brand hover:text-ink"
               }`}
             >

@@ -1,12 +1,12 @@
 export const btnPrimary =
-  "inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-deep disabled:opacity-40 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-2 rounded-control bg-accent px-5 py-2.5 text-support font-medium text-white transition hover:bg-accent-hi disabled:opacity-40 disabled:cursor-not-allowed";
 
 export const btnGhost =
-  "inline-flex items-center justify-center gap-2 rounded-xl border border-line px-4 py-2.5 text-sm font-medium text-ink transition hover:border-ink";
-
-export const card = "rounded-2xl border border-line bg-white p-4 sm:p-5";
+  "inline-flex items-center justify-center gap-2 rounded-control border border-line px-4 py-2.5 text-support font-medium text-text transition hover:border-line-2";
 
 /** A bounded surface. Flat fill and a hairline: no blur, no shadow (section 9). */
-export const paneTop = "rounded-2xl border border-line bg-white p-4 sm:p-5";
+export const card = "rounded-card border border-line bg-surface p-4 sm:p-5";
+export const paneTop = card;
 
-export const sectionLabel = "font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-muted";
+/** One eyebrow per section. Everything else is sentence case. */
+export const sectionLabel = "text-eyebrow uppercase text-text-3";

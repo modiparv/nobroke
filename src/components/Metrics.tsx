@@ -34,10 +34,10 @@ function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
 function Stat({ label, value, sub, accent }: { label: string; value: string; sub: string; accent?: "good" | "bad" }) {
   const color = accent === "good" ? "text-positive" : "text-ink";
   return (
-    <div className="rounded-xl border border-line bg-paper p-3">
-      <div className="text-[11px] font-medium text-muted">{label}</div>
-      <div className={`text-lg font-semibold ${color}`}>{value}</div>
-      <div className="text-[11px] leading-snug text-muted">{sub}</div>
+    <div className="rounded-xl border border-line bg-surface-2 p-3">
+      <div className="text-caption font-medium text-muted">{label}</div>
+      <div className={`text-lg font-medium ${color}`}>{value}</div>
+      <div className="text-caption leading-snug text-muted">{sub}</div>
     </div>
   );
 }
@@ -50,16 +50,16 @@ export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: P
   return (
     <div className="flex flex-col gap-4">
       {/* The plain-English answer first */}
-      <div className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-paper p-4">
+      <div className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-surface-2 p-4">
         <div className="min-w-0">
-          <div className="text-[11px] font-medium text-muted">Will you reach {goal.name}?</div>
-          <div className="mt-0.5 text-2xl font-bold tracking-tight sm:text-3xl">
+          <div className="text-caption font-medium text-muted">Will you reach {goal.name}?</div>
+          <div className="mt-0.5 text-2xl font-medium tracking-tight sm:text-3xl">
             {r.onTrack ? "Yes, you're on track 🎉" : "Almost there, just a little short"}
           </div>
-          <div className="mt-1 text-[12.5px] leading-snug text-muted">
-            By <span className="font-semibold text-ink">{year}</span> you'll have about{" "}
-            <span className="font-semibold text-ink">{formatINR(r.projectedCorpus)}</span>. Your goal needs{" "}
-            <span className="font-semibold text-ink">{formatINR(r.requiredCorpus)}</span>.
+          <div className="mt-1 text-support leading-snug text-muted">
+            By <span className="font-medium text-ink">{year}</span> you'll have about{" "}
+            <span className="font-medium text-ink">{formatINR(r.projectedCorpus)}</span>. Your goal needs{" "}
+            <span className="font-medium text-ink">{formatINR(r.requiredCorpus)}</span>.
           </div>
         </div>
         <Ring progress={r.progress} onTrack={r.onTrack} />
@@ -89,7 +89,7 @@ export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: P
       <div>
         <button
           onClick={() => setShowNumbers((v) => !v)}
-          className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wide text-muted transition hover:text-ink"
+          className="inline-flex items-center gap-1.5 text-caption uppercase tracking-wide text-muted transition hover:text-ink"
         >
           {showNumbers ? "Hide the technical numbers" : "Show the technical numbers"}
           <span className={`inline-block transition-transform ${showNumbers ? "rotate-180" : ""}`}>▾</span>
