@@ -28,6 +28,14 @@ export interface AppState {
   goalOrder: string[];
   /** True once the user manually reorders priority (stops auto-sort by tenure). */
   goalOrderCustom: boolean;
+  /** Which surface is showing. Plan is the only screen most users ever see. */
+  tab: "plan" | "money";
+  /**
+   * True once the user sets a goal's monthly amount by hand. Balancing the split
+   * is otherwise silent and automatic (there is no Auto-balance button), but an
+   * explicit edit must never be quietly overwritten.
+   */
+  goalSharesCustom: boolean;
   /** The single shared portfolio every goal's money grows in (one mix for all goals). */
   portfolio: Allocation;
   /** Risk preset backing the shared portfolio, if one is active. */
@@ -55,6 +63,8 @@ let state: AppState = {
   goalShares: {},
   goalOrder: [],
   goalOrderCustom: false,
+  tab: "plan",
+  goalSharesCustom: false,
   portfolio: {},
   portfolioProfile: null,
   portfolioCustom: false,
@@ -212,6 +222,7 @@ export function recommendedPortfolio(goals: PlanGoal[]): { allocation: Allocatio
 export const actions = {
   goLanding: () => set({ screen: "landing" }),
   goPlan: () => set({ screen: "plan" }),
+  setTab: (tab: AppState["tab"]) => set({ tab }),
 
   startOnboarding: () =>
     set({ screen: "onboarding", onboardingStepIndex: 0, onboardingAnswers: {}, selectedGoalIds: [], profile: emptyProfile() }),
@@ -327,7 +338,15 @@ export const actions = {
     });
   },
 
-  setSip: (v: number) => set({ monthlySip: v }),
+  setSip: (v: number) => {
+    // Rebalancing across goals is the silent default; only an explicit per-goal
+    // edit pins the split (spec section 4).
+    if (state.goalSharesCustom) return set({ monthlySip: v });
+    set({
+      monthlySip: v,
+      goalShares: recommendShares(state.goals, state.goalOrder, v, state.inflation, state.portfolio),
+    });
+  },
   setSavings: (v: number) => set({ currentSavings: v }),
   setInflation: (v: number) => set({ inflation: v }),
 
@@ -362,7 +381,7 @@ export const actions = {
     const ids = state.goals.map((g) => g.id);
     if (ids.length === 0 || sip <= 0) return;
     if (ids.length === 1) {
-      set({ goalShares: { [id]: 100 } });
+      set({ goalShares: { [id]: 100 }, goalSharesCustom: true });
       return;
     }
     const wv = Math.max(0, Math.min(100, (amountINR / sip) * 100));
@@ -371,7 +390,7 @@ export const actions = {
     const rest = 100 - wv;
     const shares: Record<string, number> = { [id]: wv };
     for (const k of others) shares[k] = otherTotal > 0 ? ((state.goalShares[k] ?? 0) / otherTotal) * rest : rest / others.length;
-    set({ goalShares: shares });
+    set({ goalShares: shares, goalSharesCustom: true });
   },
   recommendGoalSplit: () => set({ goalShares: recommendShares(state.goals, state.goalOrder, state.monthlySip, state.inflation, state.portfolio) }),
 

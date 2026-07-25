@@ -47,8 +47,8 @@ function Tab({ id, active, onClick, children }: { id: InfoPanel; active: boolean
 export default function InfoModal({ panel, onPanel, onClose }: { panel: InfoPanel; onPanel: (p: InfoPanel) => void; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="NoBroke info">
-      <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute left-1/2 top-1/2 max-h-[88vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-white/50 bg-white/85 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
+      <div className="absolute inset-0 bg-ink/40" onClick={onClose} />
+      <div className="absolute left-1/2 top-1/2 max-h-[88vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-white/50 bg-white p-5 sm:p-6">
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="no-scrollbar flex gap-1 overflow-x-auto rounded-full border border-line bg-white/60 p-1">
             <Tab id="about" active={panel === "about"} onClick={onPanel}>About</Tab>

@@ -6,10 +6,7 @@ export const btnGhost =
 
 export const card = "rounded-2xl border border-line bg-white p-4 sm:p-5";
 
-/** One finance-green palette. Panes are translucent white over the page's
-    top-to-bottom green wash, getting more see-through (greener) further down. */
-export const paneTop = "rounded-2xl border border-brand/15 bg-white/80 p-4 backdrop-blur-md sm:p-5";
-export const paneMid = "rounded-2xl border border-brand/15 bg-white/60 p-4 backdrop-blur-md sm:p-5";
-export const paneLow = "rounded-2xl border border-brand/15 bg-white/45 p-4 backdrop-blur-md sm:p-5";
+/** A bounded surface. Flat fill and a hairline: no blur, no shadow (section 9). */
+export const paneTop = "rounded-2xl border border-line bg-white p-4 sm:p-5";
 
 export const sectionLabel = "font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-muted";

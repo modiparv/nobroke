@@ -1,18 +1,63 @@
 import { useState } from "react";
 import { GOALS } from "../lib/goals";
-import { computePlan } from "../lib/finance";
+import { bandWeights, allocationTotal, computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
-import { actions, goalMonthly, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
-import { btnPrimary, paneLow, paneMid, paneTop, sectionLabel } from "../ui";
+import { actions, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
+import { btnPrimary, sectionLabel } from "../ui";
 import AppHeader from "./AppHeader";
-import Aggregation from "./Aggregation";
 import GoalCard from "./GoalCard";
-import Holdings from "./Holdings";
-import MoneyInput from "./MoneyInput";
+import MoneyTab from "./MoneyTab";
 import PortfolioBuilder from "./PortfolioBuilder";
 
-/** Distinct swatches for the cross-goal split bar/legend. */
-const SPLIT_COLORS = ["#0F5C44", "#157A5B", "#4E9B81", "#7FB8A0", "#A7D2C2", "#C9E0D6"];
+const inrDigits = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+
+/** Hero figure with the trailing group dimmed, so the eye lands on the magnitude. */
+function HeroAmount({ value }: { value: number }) {
+  const digits = inrDigits.format(Math.max(0, Math.round(value)));
+  const cut = digits.lastIndexOf(",");
+  const head = cut >= 0 ? digits.slice(0, cut + 1) : digits;
+  const tail = cut >= 0 ? digits.slice(cut + 1) : "";
+  return (
+    <div className="num mt-2 text-[40px] font-medium leading-none tracking-[-0.025em]">
+      ₹{head}
+      {tail && <span className="text-muted">{tail}</span>}
+    </div>
+  );
+}
+
+/** Plain-language description of the one shared mix. Never a percentage here. */
+function mixLabel(alloc: Record<string, number>): string {
+  const total = allocationTotal(alloc);
+  if (total <= 0) return "Not invested yet";
+  const bands = bandWeights(alloc);
+  const equityShare = bands.equity / total;
+  if (equityShare >= 0.65) return "Invested in a mostly-stocks mix";
+  if (equityShare <= 0.35) return "Invested in a mostly-bonds mix";
+  return "Invested in a balanced mix";
+}
+
+function Pill({
+  label,
+  onClick,
+  accent,
+}: {
+  label: string;
+  onClick: () => void;
+  accent?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-full px-3.5 py-2 text-[13px] transition ${
+        accent
+          ? "bg-brand text-white hover:bg-brand-deep"
+          : "border border-line bg-white/70 text-ink hover:border-ink"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
 
 function AddGoal({ onAdd }: { onAdd: (id: string) => void }) {
   const s = useStore();
@@ -20,18 +65,13 @@ function AddGoal({ onAdd }: { onAdd: (id: string) => void }) {
   const remaining = GOALS.filter((g) => !s.goals.some((x) => x.id === g.id));
 
   return (
-    <div className="relative flex-none">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-line px-4 py-2 text-sm font-medium text-muted transition hover:border-brand hover:text-ink"
-      >
-        ＋ Add a goal
-      </button>
+    <span className="relative inline-block">
+      <Pill label="New goal" onClick={() => setOpen((o) => !o)} />
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-[calc(100%+8px)] z-20 flex max-h-72 w-60 flex-col gap-0.5 overflow-y-auto rounded-2xl border border-line bg-white p-2 shadow-xl">
-            {remaining.length === 0 && <span className="p-3 text-center text-sm text-muted">All goals added 🎉</span>}
+          <div className="absolute left-0 top-[calc(100%+8px)] z-20 flex max-h-72 w-60 flex-col overflow-y-auto rounded-2xl border border-line bg-white p-1.5">
+            {remaining.length === 0 && <span className="p-3 text-center text-[13px] text-muted">All goals added</span>}
             {remaining.map((g) => (
               <button
                 key={g.id}
@@ -39,38 +79,37 @@ function AddGoal({ onAdd }: { onAdd: (id: string) => void }) {
                   onAdd(g.id);
                   setOpen(false);
                 }}
-                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-paper"
+                className="rounded-[10px] px-3 py-2 text-left text-[13px] hover:bg-paper"
               >
-                <span>{g.emoji}</span>
                 {g.name}
               </button>
             ))}
           </div>
         </>
       )}
-    </div>
+    </span>
   );
 }
 
 /**
- * One screen for the whole plan. The money inputs live up top, then every goal
- * is a card you open in place to reveal its plan AND its portfolio — replacing
- * the old two-tab Goals / Portfolio split where one goal lived on two screens.
+ * The plan screen.
+ *
+ * Goals come first because they are the only object the user manipulates. The
+ * shared mix is a consequence, so it collapses to a single line and opens on
+ * demand. Cash and existing investments moved to the Money tab.
  */
 export default function Plan() {
   const s = useStore();
   const ordered = goalsByPriority(s);
 
-  // The open goal is the one whose plan + portfolio is expanded. Keeping it in
-  // sync with currentGoalId means the embedded PortfolioBuilder always edits the
-  // goal the user is looking at.
   const [openId, setOpenId] = useState<string>(() => s.currentGoalId);
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  const [showMix, setShowMix] = useState(false);
 
-  const onTrackCount = ordered.filter((g) => computePlan(planInputsForGoal(s, g)).onTrack).length;
-  const invested = holdingsTotal(s);
-  const total = totalCapital(s);
+  const plans = ordered.map((g) => ({ g, r: computePlan(planInputsForGoal(s, g)) }));
+  const onTrackCount = plans.filter((p) => p.r.onTrack).length;
+  const firstOffTrack = plans.find((p) => !p.r.onTrack)?.g;
 
   const openGoal = (id: string) => {
     actions.setCurrentGoal(id);
@@ -82,120 +121,57 @@ export default function Plan() {
     setOpenId(id);
   };
   const del = (g: { id: string; name: string }) => {
-    if (window.confirm(`Delete "${g.name}"? Its money will be reshared across the other goals.`)) {
+    if (window.confirm(`Remove "${g.name}"? Its money is shared across your other goals.`)) {
       actions.removeGoal(g.id);
       setOpenId("");
     }
   };
 
+  if (s.tab === "money") {
+    return (
+      <div className="min-h-screen bg-paper pb-28">
+        <AppHeader />
+        <MoneyTab />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-paper via-[#EFF7F2] to-[#DAEDE4] pb-24">
+    <div className="min-h-screen bg-paper pb-28">
       <AppHeader />
 
-      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-10 sm:py-8">
-        <h1 className="text-3xl font-extrabold uppercase leading-[0.88] tracking-[-0.045em] sm:text-5xl">
-          Your money plan
-        </h1>
-        <p className="mt-3 max-w-xl text-sm text-muted">
+      <main className="mx-auto max-w-2xl px-4 py-6 sm:px-10 sm:py-8">
+        <span className={sectionLabel}>Total saved</span>
+        <HeroAmount value={totalCapital(s)} />
+        <p className="mt-2 text-sm text-muted">
           {s.goals.length
             ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track · ${formatINR(
                 s.monthlySip,
-              )}/mo going in. Tap any goal to see if you'll get there.`
-            : "Add a goal to start your plan."}
+              )} a month going in`
+            : "Add a goal to start your plan"}
         </p>
 
-        {/* Your money — most opaque pane (top of the page) */}
-        <section className={`${paneTop} mt-5`}>
-          <div className="flex items-center justify-between gap-2">
-            <span className={sectionLabel}>Your money</span>
-            <span className="font-mono text-[10px] uppercase tracking-wide text-muted">
-              working toward goals <span className="font-semibold text-ink">{formatINR(total)}</span>
-            </span>
-          </div>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
-            <MoneyInput label="Invest / month" value={s.monthlySip} onChange={actions.setSip} step={1000} min={0} max={1000000} compact />
-            <MoneyInput label="Cash in hand / bank" value={s.currentSavings} onChange={actions.setSavings} step={25000} min={0} max={50000000} compact />
-          </div>
-          <p className="mt-2 text-[11px] text-muted">
-            = {formatINR(s.currentSavings)} cash + {formatINR(invested)} in existing investments, growing toward every goal.
-          </p>
-          <div className="mt-4 border-t border-line pt-4">
-            <Holdings />
-          </div>
-
-          {/* Cross-goal split — one place to see (and auto-balance) how the pool divides */}
-          {s.goals.length > 1 && (
-            <div className="mt-5 border-t border-line pt-5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className={sectionLabel}>How your {formatINR(s.monthlySip)}/mo is split</span>
-                <button
-                  onClick={actions.recommendGoalSplit}
-                  className="rounded-full border border-line px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide text-muted transition hover:border-brand hover:text-ink"
-                >
-                  ✨ Auto-balance
-                </button>
-              </div>
-              <div className="mt-2.5 flex h-3 w-full overflow-hidden rounded-full bg-line">
-                {ordered.map((g, i) => {
-                  const share = s.monthlySip > 0 ? (goalMonthly(s, g.id) / s.monthlySip) * 100 : 0;
-                  return (
-                    <div
-                      key={g.id}
-                      className="h-full transition-[width] duration-500 ease-out"
-                      style={{ width: `${share}%`, background: SPLIT_COLORS[i % SPLIT_COLORS.length] }}
-                    />
-                  );
-                })}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-wide text-muted">
-                {ordered.map((g, i) => {
-                  const share = s.monthlySip > 0 ? (goalMonthly(s, g.id) / s.monthlySip) * 100 : 0;
-                  return (
-                    <span key={g.id} className="inline-flex items-center gap-1.5">
-                      <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: SPLIT_COLORS[i % SPLIT_COLORS.length] }} />
-                      {g.emoji} {g.name} {Math.round(share)}%
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-        </section>
-
-        {/* One shared portfolio — mid translucency */}
-        {s.goals.length > 0 && (
-          <section className={`${paneMid} mt-5`}>
-            <PortfolioBuilder />
-          </section>
-        )}
-
-        {/* Goals — each opens in place to reveal its plan + how it's tracking */}
-        <div className="mt-8 flex items-center justify-between gap-3">
-          <h2 className="text-base font-bold">Your goals</h2>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Pill label="Add money" onClick={() => actions.setTab("money")} />
           <AddGoal onAdd={addGoal} />
-        </div>
-        <p className="mt-1 text-[13px] text-muted">
-          Each goal draws its share of the money above and grows in your one portfolio. Tap a goal to set its target and see if
-          it's on track.
-          {s.goals.length > 1 && (
-            <>
-              {" "}
-              Drag <span aria-hidden>⠿</span> to set priority.
-            </>
+          {firstOffTrack && (
+            <Pill label={`Fix ${firstOffTrack.name.toLowerCase()}`} accent onClick={() => openGoal(firstOffTrack.id)} />
           )}
-        </p>
+        </div>
 
         {s.goals.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-line bg-paper px-5 py-10 text-center">
-            <p className="text-sm font-semibold">No goals yet</p>
-            <p className="mx-auto mt-1 max-w-xs text-[13px] text-muted">Add your first goal above, or start a fresh plan.</p>
+          <div className="mt-6 rounded-2xl border border-line bg-white px-5 py-10 text-center">
+            <p className="text-[15px] font-medium">No goals yet</p>
+            <p className="mx-auto mt-1 max-w-xs text-[13px] text-muted">Add your first goal, or start a fresh plan.</p>
             <button className={`${btnPrimary} mt-4`} onClick={actions.startOnboarding}>
               Start a new plan
             </button>
           </div>
         ) : (
-          <ul className="mt-4 flex flex-col gap-3" aria-label="Your goals">
+          <ul
+            className="mt-6 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white"
+            aria-label="Your goals"
+          >
             {ordered.map((g, i) => (
               <GoalCard
                 key={g.id}
@@ -226,13 +202,27 @@ export default function Plan() {
           </ul>
         )}
 
-        {/* Account aggregation — most translucent pane (bottom of the page) */}
-        <section className={`${paneLow} mt-8`}>
-          <Aggregation />
-        </section>
+        {/* The mix is a consequence of the goals, so it stays one line until asked for. */}
+        {s.goals.length > 0 && (
+          <div className="mt-4 rounded-2xl border border-line bg-white">
+            <button
+              onClick={() => setShowMix((v) => !v)}
+              aria-expanded={showMix}
+              className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
+            >
+              <span className="text-[13px] text-ink">{mixLabel(s.portfolio)}</span>
+              <span className="flex-none text-[13px] text-muted">{showMix ? "Hide" : "See how"} ▾</span>
+            </button>
+            {showMix && (
+              <div className="border-t border-line p-4">
+                <PortfolioBuilder />
+              </div>
+            )}
+          </div>
+        )}
 
-        <p className="mx-auto mt-8 max-w-2xl text-center text-xs text-muted">
-          NoBroke is an early prototype. Projections are illustrative and not investment advice.
+        <p className="mt-8 text-center text-xs text-muted">
+          Projections are illustrative and not investment advice.
         </p>
       </main>
     </div>

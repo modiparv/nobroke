@@ -30,6 +30,13 @@ input[type="range"] {
   cursor: pointer;
 }
 
+/* Every number in the product. Tabular figures stop digits jittering as values
+   change, and lining figures keep them aligned against uppercase labels. */
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.01em;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -60,14 +67,12 @@ input[type="range"] {
 .live-dot { animation: blink 1.4s ease-in-out infinite; }
 .typing-dot { animation: typing 1.2s infinite ease-in-out; }
 
-/* Copilot command bar — soft violet glow, lifts on focus. */
+/* Copilot command bar. Focus is carried by the border alone: no shadow, no glow. */
 .copilot-bar {
-  box-shadow: 0 10px 34px rgba(21, 122, 91, 0.12), 0 2px 8px rgba(20, 22, 27, 0.06);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 .copilot-bar:focus-within {
   border-color: #157a5b;
-  box-shadow: 0 12px 38px rgba(21, 122, 91, 0.2), 0 2px 8px rgba(20, 22, 27, 0.06);
 }
 
 @media (prefers-reduced-motion: no-preference) {

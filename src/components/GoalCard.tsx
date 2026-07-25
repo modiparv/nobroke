@@ -1,23 +1,22 @@
 import { useState } from "react";
 import type { PlanGoal } from "../lib/types";
 import { computePlan } from "../lib/finance";
-import { formatINR, formatYears } from "../lib/format";
-import { actions, goalMonthly, planInputsForGoal, useStore } from "../store";
+import { formatINR } from "../lib/format";
+import { actions, goalShareFraction, planInputsForGoal, totalCapital, useStore } from "../store";
 import { sectionLabel } from "../ui";
-import { C } from "../lib/theme";
-import MoneyInput from "./MoneyInput";
 import Chart from "./Chart";
 import Metrics from "./Metrics";
 import Insights from "./Insights";
+import MoneyInput from "./MoneyInput";
 
 const BASE_YEAR = new Date().getFullYear();
 
 const stepper =
-  "grid h-7 w-7 flex-none place-items-center rounded-md border border-line text-muted transition hover:border-ink hover:text-ink disabled:opacity-30";
+  "grid h-7 w-7 flex-none place-items-center rounded-[10px] border border-line text-muted transition hover:border-ink hover:text-ink disabled:opacity-30";
 
 export interface GoalCardProps {
   g: PlanGoal;
-  /** 1-based rank in priority order. */
+  /** 1-based rank in priority order. The numbered row IS the priority marker. */
   rank: number;
   count: number;
   open: boolean;
@@ -33,15 +32,15 @@ export interface GoalCardProps {
 }
 
 /**
- * One goal, end-to-end. Collapsed it's a scannable summary (name, year, money,
- * on-track); expanded it reveals everything for THAT goal in one place — the
- * plan controls, the projection metrics and the portfolio builder — so a goal
- * and its portfolio never live on separate screens.
+ * One goal, as a hairline-separated row rather than a card.
+ *
+ * The goal is the only object the user manipulates, so everything here is
+ * either the goal's own facts or a control over them. Asset mix and funds are
+ * consequences and live elsewhere.
  */
 export default function GoalCard({
   g,
   rank,
-  count,
   open,
   onToggle,
   onDelete,
@@ -58,10 +57,19 @@ export default function GoalCard({
 
   const inputs = planInputsForGoal(s, g);
   const r = computePlan(inputs);
-  const amount = goalMonthly(s, g.id);
-  const sharePct = s.monthlySip > 0 ? Math.round((amount / s.monthlySip) * 100) : 0;
-  const progress = Math.max(0, Math.min(1, r.progress));
+  const amount = s.monthlySip * goalShareFraction(s, g.id);
   const year = BASE_YEAR + g.horizonYears;
+
+  /**
+   * The rail binds to saved over target and nothing else (spec section 10.2).
+   * It previously showed projectedCorpus / requiredCorpus, so a goal with
+   * nothing saved but a healthy SIP rendered a full bar, which reads as
+   * "nearly funded". Both figures here are in today's rupees so they compare
+   * like for like.
+   */
+  const savedForGoal = totalCapital(s) * goalShareFraction(s, g.id);
+  const savedRatio = g.targetToday > 0 ? savedForGoal / g.targetToday : 0;
+  const railPct = Math.max(0, Math.min(1, savedRatio)) * 100;
 
   return (
     <li
@@ -72,220 +80,145 @@ export default function GoalCard({
         onDragOver();
       }}
       onDrop={(e) => {
-        // Only handle goal reordering — let fund drops bubble to the builder's basket.
         if (!dragActive) return;
         e.preventDefault();
         onDrop();
       }}
-      className={`rounded-2xl border backdrop-blur-sm transition ${
-        isOver
-          ? "border-brand bg-brand/5 ring-2 ring-brand/30"
-          : open
-            ? "border-brand/40 bg-white/72"
-            : "border-brand/15 bg-white/55"
-      } ${isDragging ? "opacity-50" : ""}`}
+      className={`transition ${isOver ? "bg-brand/5" : ""} ${isDragging ? "opacity-50" : ""}`}
     >
-      <div className="flex items-stretch gap-1.5 p-3 sm:gap-2.5 sm:p-4">
-        {/* Priority rail — drag handle + keyboard reorder (only when there's more than one goal) */}
-        {count > 1 && (
-          <div className="flex flex-none flex-col items-center pt-0.5">
-            <span
-              draggable
-              onDragStart={(e) => {
-                onDragStart();
-                e.dataTransfer.effectAllowed = "move";
-              }}
-              onDragEnd={onDragEnd}
-              role="button"
-              aria-label={`Drag to reorder ${g.name}`}
-              title="Drag to reorder"
-              className="cursor-grab select-none px-1 text-muted hover:text-ink active:cursor-grabbing"
-            >
-              ⠿
-            </span>
-            <button
-              onClick={() => actions.moveGoalPriority(g.id, -1)}
-              disabled={rank === 1}
-              aria-label={`Raise ${g.name} priority`}
-              className="grid h-4 w-5 place-items-center text-[10px] text-muted hover:text-ink disabled:opacity-25"
-            >
-              ▲
-            </button>
-            <span className="font-mono text-[11px] font-bold text-ink" aria-hidden>
-              {rank}
-            </span>
-            <button
-              onClick={() => actions.moveGoalPriority(g.id, 1)}
-              disabled={rank === count}
-              aria-label={`Lower ${g.name} priority`}
-              className="grid h-4 w-5 place-items-center text-[10px] text-muted hover:text-ink disabled:opacity-25"
-            >
-              ▼
-            </button>
-          </div>
-        )}
+      <div className="flex items-start gap-3 px-4 py-3.5">
+        {/* The index doubles as the priority marker and the drag affordance. */}
+        <span
+          draggable
+          onDragStart={(e) => {
+            onDragStart();
+            e.dataTransfer.effectAllowed = "move";
+          }}
+          onDragEnd={onDragEnd}
+          role="button"
+          aria-label={`${g.name}, priority ${rank}. Drag to reorder.`}
+          title="Drag to reorder"
+          className="num mt-0.5 cursor-grab select-none pt-px text-[10px] tracking-[0.06em] text-muted active:cursor-grabbing"
+        >
+          {String(rank).padStart(2, "0")}
+        </span>
 
-        <div className="min-w-0 flex-1">
-          {/* Summary header — tap anywhere here to open/close the goal */}
-          <button
-            onClick={onToggle}
-            aria-expanded={open}
-            className="flex w-full items-center gap-2 text-left"
-          >
-            <span className="text-lg leading-none">{g.emoji}</span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-1.5">
-                <span className="truncate text-[15px] font-bold">{g.name}</span>
-                {!g.tenureConfirmed && (
-                  <span className="flex-none rounded-full bg-brand/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-brand">
-                    confirm year
-                  </span>
-                )}
-              </span>
-              <span className="block font-mono text-[10px] uppercase tracking-wide text-muted">
-                by {year} · in {formatYears(g.horizonYears)}
-              </span>
-            </span>
-            <span className="flex flex-none flex-col items-end">
-              <span className="text-sm font-bold leading-none tabular-nums">
-                {formatINR(amount)}
-                <span className="text-[10px] font-normal text-muted">/mo</span>
-              </span>
-              <span className="mt-0.5 font-mono text-[10px] text-muted">{sharePct}%</span>
-            </span>
-            {/* On-track: a compact dot on phones, the full pill on larger screens */}
+        <button onClick={onToggle} aria-expanded={open} className="min-w-0 flex-1 text-left">
+          <span className="flex items-center gap-2">
+            <span className="truncate text-[15px] font-medium tracking-[-0.005em]">{g.name}</span>
             <span
-              aria-hidden
-              className="inline-block h-2.5 w-2.5 flex-none self-center rounded-full sm:hidden"
-              style={{ background: r.onTrack ? C.positive : C.ink }}
-            />
-            <span
-              className={`hidden flex-none rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${
-                r.onTrack ? "bg-positive text-white" : "bg-ink text-white"
+              className={`flex-none rounded-full px-2 py-0.5 text-[11px] ${
+                r.onTrack ? "bg-positive/10 text-positive" : "bg-ink/[0.06] text-ink"
               }`}
             >
-              {r.onTrack ? "On track" : "Catching up"}
+              {r.onTrack ? "On track" : "Needs a change"}
             </span>
+          </span>
+          <span className="mt-0.5 block text-[13px] text-muted">
+            <span className="num">{formatINR(g.targetToday)}</span> by <span className="num">{year}</span>
+          </span>
+
+          <span className="mt-2.5 block h-[3px] w-full overflow-hidden rounded-[2px] bg-line">
             <span
-              aria-hidden
-              className={`flex-none text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-              style={{ display: "inline-block" }}
-            >
-              ▾
-            </span>
-          </button>
-
-          {/* On-track bar (always visible) */}
-          <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-line">
-            <div
-              className="h-full rounded-full transition-[width] duration-500 ease-out"
-              style={{ width: `${progress * 100}%`, background: r.onTrack ? C.positive : C.ink }}
+              className="block h-full rounded-[2px] bg-brand transition-[width] duration-500 ease-out"
+              style={{ width: `${railPct}%` }}
             />
-          </div>
-          {!r.onTrack && (
-            <div className="mt-1 font-mono text-[10px] uppercase tracking-wide text-muted">
-              {formatINR(Math.abs(r.gap))} short · add {formatINR(r.requiredSip)}/mo to catch up
-            </div>
-          )}
+          </span>
+        </button>
 
-          {/* Expanded: plan controls + metrics + portfolio builder — everything for this goal */}
-          {open && (
-            <div className="mt-4 flex flex-col gap-5 border-t border-line pt-4">
-              {/* Plan controls */}
-              <div>
-                <span className={sectionLabel}>Set up this goal</span>
-                <div className="mt-3 flex flex-col gap-3.5">
-                  {/* Target year */}
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[13px] text-muted">When do you need it?</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => actions.setGoalTenure(g.id, g.horizonYears - 1)}
-                        disabled={g.horizonYears <= 1}
-                        aria-label={`${g.name} target year earlier`}
-                        className={stepper}
-                      >
-                        −
-                      </button>
-                      <div className="w-16 text-center">
-                        <div className="text-base font-bold leading-none tabular-nums">{year}</div>
-                        <div className="font-mono text-[9px] uppercase tracking-wide text-muted">
-                          in {formatYears(g.horizonYears)}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => actions.setGoalTenure(g.id, g.horizonYears + 1)}
-                        aria-label={`${g.name} target year later`}
-                        className={stepper}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
+        <span className="flex-none pt-0.5 text-right">
+          <span className="num block text-[15px] font-medium">{formatINR(savedForGoal)}</span>
+          <span className="num mt-0.5 block text-[12px] text-muted">{Math.round(savedRatio * 100)}%</span>
+        </span>
+      </div>
 
-                  {/* Target amount */}
-                  <MoneyInput
-                    label="How much (in today's money)?"
-                    value={g.targetToday}
-                    onChange={(v) => actions.setGoalTarget(g.id, v)}
-                    step={50000}
-                    min={50000}
-                    max={50000000}
-                    compact
-                  />
-
-                  {/* Monthly money split */}
-                  <MoneyInput
-                    label="Monthly money for this goal"
-                    hint={`${sharePct}% of your monthly money`}
-                    value={Math.round(amount)}
-                    onChange={(v) => actions.setGoalAmount(g.id, v)}
-                    step={500}
-                    min={0}
-                    max={Math.max(1, s.monthlySip)}
-                    disabled={s.monthlySip <= 0}
-                    compact
-                  />
+      {open && (
+        <div className="flex flex-col gap-5 border-t border-line px-4 pb-5 pt-4">
+          <div>
+            <span className={sectionLabel}>Set up this goal</span>
+            <div className="mt-3 flex flex-col gap-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[13px] text-muted">Target year</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => actions.setGoalTenure(g.id, g.horizonYears - 1)}
+                    disabled={g.horizonYears <= 1}
+                    aria-label={`${g.name} target year earlier`}
+                    className={stepper}
+                  >
+                    −
+                  </button>
+                  <span className="num w-14 text-center text-[15px] font-medium">{year}</span>
+                  <button
+                    onClick={() => actions.setGoalTenure(g.id, g.horizonYears + 1)}
+                    aria-label={`${g.name} target year later`}
+                    className={stepper}
+                  >
+                    +
+                  </button>
                 </div>
               </div>
 
-              {/* Plan summary */}
-              <Metrics r={r} goal={g} inflation={s.inflation} />
+              <MoneyInput
+                label="Target amount, in today's money"
+                value={g.targetToday}
+                onChange={(v) => actions.setGoalTarget(g.id, v)}
+                step={50000}
+                min={50000}
+                max={50000000}
+                compact
+              />
 
-              {/* This goal's trajectory — its share of the money, grown in the shared portfolio */}
-              <div>
-                <span className={sectionLabel}>How your money grows toward {g.name}</span>
-                <Chart r={r} />
-              </div>
-
-              {/* Why this plan — the old "What NoBroke sees" insights, on demand */}
-              <div>
-                <button
-                  onClick={() => setShowWhy((v) => !v)}
-                  className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wide text-muted transition hover:text-ink"
-                >
-                  <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-brand" />
-                  {showWhy ? "Hide the why" : "Why this plan?"}
-                </button>
-                {showWhy && (
-                  <div className="mt-2">
-                    <Insights r={r} inputs={inputs} />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  onClick={onDelete}
-                  className="font-mono text-[10px] uppercase tracking-wide text-muted underline-offset-2 transition hover:text-ink hover:underline"
-                >
-                  Delete this goal
-                </button>
-              </div>
+              <MoneyInput
+                label="Going in each month"
+                value={Math.round(amount)}
+                onChange={(v) => actions.setGoalAmount(g.id, v)}
+                step={500}
+                min={0}
+                max={Math.max(1, s.monthlySip)}
+                disabled={s.monthlySip <= 0}
+                compact
+              />
             </div>
+          </div>
+
+          {!r.onTrack && (
+            <p className="text-[13px] text-ink">
+              On this plan you'd reach about <span className="num">{formatINR(r.projectedCorpus)}</span>.
+            </p>
           )}
+
+          <Metrics r={r} goal={g} inflation={s.inflation} />
+
+          <div>
+            <span className={sectionLabel}>How your money grows toward {g.name}</span>
+            <Chart r={r} />
+          </div>
+
+          <div>
+            <button
+              onClick={() => setShowWhy((v) => !v)}
+              className="text-[13px] text-muted underline-offset-2 transition hover:text-ink hover:underline"
+            >
+              {showWhy ? "Hide the why" : "Why this plan?"}
+            </button>
+            {showWhy && (
+              <div className="mt-2">
+                <Insights r={r} inputs={inputs} />
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={onDelete}
+              className="text-[13px] text-muted underline-offset-2 transition hover:text-ink hover:underline"
+            >
+              Remove this goal
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </li>
   );
 }

@@ -1,18 +1,33 @@
 import { useState } from "react";
 import { ASSET_CLASSES, CATEGORY_FILTERS, FUNDS, FUND_MAP } from "../lib/funds";
 import { MODEL_PORTFOLIOS } from "../lib/portfolios";
-import { allocationTotal, bandWeights, blendedReturn, blendedVolatility } from "../lib/finance";
+import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
 import { formatINR, formatPct } from "../lib/format";
 import type { Allocation, AssetClassId, RiskProfile } from "../lib/types";
 import { actions, recommendedPortfolio, useStore } from "../store";
 import { sectionLabel } from "../ui";
 
-function riskLabel(vol: number): string {
-  if (vol < 0.06) return "Low";
-  if (vol < 0.13) return "Medium";
-  return "High";
-}
 const CLASS_ORDER: AssetClassId[] = ["equity", "hybrid", "gold", "debt"];
+
+/**
+ * An illustrative spread around the blended return, so we never print a point
+ * estimate (spec section 5). These multipliers are a presentation band, NOT a
+ * modelled confidence interval; a real p10/p90 needs the Monte Carlo work in a
+ * later phase, and the copy says "not guaranteed" for that reason.
+ */
+const BAND_LOW = 0.7;
+const BAND_HIGH = 1.15;
+
+function growthBand(ret: number) {
+  const low = ret * BAND_LOW;
+  const high = ret * BAND_HIGH;
+  return {
+    low,
+    high,
+    tenYearLow: 100000 * Math.pow(1 + low, 10),
+    tenYearHigh: 100000 * Math.pow(1 + high, 10),
+  };
+}
 
 function Marker() {
   return <span className="inline-block h-1.5 w-1.5 flex-none bg-brand" />;
@@ -34,9 +49,7 @@ export default function PortfolioBuilder() {
   const total = allocationTotal(alloc);
   const bands = bandWeights(alloc);
   const ret = blendedReturn(alloc);
-  const vol = blendedVolatility(alloc);
-  const risk = total > 0 ? riskLabel(vol) : "—";
-  const tenYr = 100000 * Math.pow(1 + ret, 10);
+  const band = growthBand(ret);
   // The entire monthly pool funds this single portfolio (all goals share it).
   const sip = s.monthlySip;
   const amountFor = (id: string) => (total > 0 ? (alloc[id] / total) * sip : 0);
@@ -111,40 +124,19 @@ export default function PortfolioBuilder() {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight sm:text-[22px]">Your portfolio</h2>
-          <p className="text-[13px] text-muted">
-            One mix that funds <span className="font-semibold text-ink">all your goals</span>. Your whole{" "}
-            <span className="font-semibold text-ink">{formatINR(sip)}/mo</span> grows here, and each goal draws its share.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 rounded-full border border-line px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide">
-          <span className="live-dot inline-block h-2 w-2 rounded-full bg-brand" />
-          <span className="text-muted">Live · {risk} risk</span>
-        </div>
-      </div>
 
       {/* Advisor pick — match the single mix to the goals' blended horizon */}
-      {s.goals.length > 0 && (
+      {s.goals.length > 0 && !matchesRec && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-paper px-3 py-2.5">
-          <span className="text-[12px] text-ink">
-            {matchesRec ? (
-              <>
-                <span className="font-semibold">Nice! Your mix fits your goals.</span> (a {recLabel} mix)
-              </>
-            ) : (
-              <>
-                Not sure what to choose? We suggest a <span className="font-semibold">{recLabel}</span> mix for your timeline.
-              </>
-            )}
+          <span className="text-[13px] text-ink">
+            A {recLabel.toLowerCase()} mix suits your timeline better.
           </span>
           {!matchesRec && (
             <button
               onClick={actions.recommendPortfolio}
-              className="rounded-full border border-line px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide text-muted transition hover:border-brand hover:text-ink"
+              className="rounded-full border border-line px-3 py-1.5 text-[13px] text-ink transition hover:border-ink"
             >
-              ✨ Use this for me
+              Use this
             </button>
           )}
         </div>
@@ -205,9 +197,7 @@ export default function PortfolioBuilder() {
                   <span className="h-6 w-1 flex-none rounded-full" style={{ background: ac.color }} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[12.5px] font-semibold leading-tight">{f.name}</div>
-                    <div className="truncate font-mono text-[9px] uppercase tracking-wide text-muted">
-                      {ac.label} · grows ~{formatPct(f.expReturn, 0)}/yr
-                    </div>
+                    <div className="truncate text-[12px] text-muted">{ac.label}</div>
                   </div>
                   <span className={`flex-none rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${added ? "bg-brand text-white" : "border border-line text-muted"}`}>
                     {added ? "Added" : "Add"}
@@ -243,7 +233,6 @@ export default function PortfolioBuilder() {
             </span>
             <span className="font-mono text-[11px] uppercase tracking-wide">
               <span className="font-semibold text-ink">{formatINR(sip)}/mo</span>
-              <span className="text-muted"> · {Math.round(total)}% filled</span>
             </span>
           </div>
 
@@ -277,21 +266,19 @@ export default function PortfolioBuilder() {
             </div>
           )}
 
-          {/* Stat strip */}
-          <div className="mt-4 grid grid-cols-3 divide-x divide-line rounded-xl border border-line bg-paper py-3">
-            <div className="px-3">
-              <div className="text-[18px] sm:text-[20px] font-bold leading-none">{total > 0 ? formatPct(ret, 1) : "—"}</div>
-              <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">growth a year</div>
+          {/* Ranges, never point estimates (section 5). */}
+          {total > 0 && (
+            <div className="mt-4 rounded-xl border border-line bg-paper px-3.5 py-3">
+              <p className="text-[13px] text-ink">
+                Historically <span className="num">{formatPct(band.low, 0)}</span> to{" "}
+                <span className="num">{formatPct(band.high, 0)}</span> a year. Not guaranteed.
+              </p>
+              <p className="mt-1 text-[13px] text-muted">
+                ₹1 lakh today could be <span className="num">{formatINR(band.tenYearLow)}</span> to{" "}
+                <span className="num">{formatINR(band.tenYearHigh)}</span> in 10 years.
+              </p>
             </div>
-            <div className="px-3">
-              <div className="text-[18px] sm:text-[20px] font-bold leading-none text-brand">{total > 0 ? formatINR(tenYr) : "—"}</div>
-              <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">₹1L in 10 yrs</div>
-            </div>
-            <div className="px-3">
-              <div className="text-[18px] sm:text-[20px] font-bold leading-none">{risk}</div>
-              <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">risk level</div>
-            </div>
-          </div>
+          )}
 
           {/* Presets — plain-language quick mixes */}
           <div className="mt-4">

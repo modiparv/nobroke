@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { actions } from "../store";
+import { actions, useStore } from "../store";
 import Logo from "./Logo";
 import InfoModal, { type InfoPanel } from "./InfoModal";
 
@@ -8,13 +8,29 @@ import InfoModal, { type InfoPanel } from "./InfoModal";
  * subscription + new-plan actions. The nav items open a lightweight info modal.
  */
 export default function AppHeader() {
+  const s = useStore();
   const [panel, setPanel] = useState<InfoPanel | null>(null);
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-brand/10 bg-white/65 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-brand/10 bg-white/95">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2 sm:px-8">
           <Logo />
+
+          <nav className="flex items-center gap-0.5 rounded-full border border-line bg-white/60 p-0.5" aria-label="Sections">
+            {(["plan", "money"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => actions.setTab(t)}
+                aria-current={s.tab === t ? "page" : undefined}
+                className={`rounded-full px-3 py-1.5 text-[13px] capitalize transition ${
+                  s.tab === t ? "bg-ink text-white" : "text-muted hover:text-ink"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </nav>
 
           <nav className="hidden items-center gap-0.5 sm:flex" aria-label="Primary">
             <button onClick={() => setPanel("about")} className="rounded-full px-3 py-1.5 text-[13px] font-medium text-muted transition hover:bg-brand/5 hover:text-ink">

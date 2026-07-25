@@ -49,7 +49,7 @@ export default function CopilotBar() {
       <div className="pointer-events-auto mx-auto max-w-3xl px-4 pb-3">
         {/* Conversation — opens upward above the bar */}
         {hasThread && (
-          <div className="mb-2 overflow-hidden rounded-2xl border border-white/50 bg-white/85 shadow-2xl backdrop-blur-xl">
+          <div className="mb-2 overflow-hidden rounded-2xl border border-white/50 bg-white">
             <header className="flex items-center gap-2.5 border-b border-line px-4 py-2.5">
               <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand text-xs font-bold text-white">N</span>
               <div className="flex-1">
@@ -105,7 +105,7 @@ export default function CopilotBar() {
                   e.preventDefault();
                   send(q);
                 }}
-                className="flex-none whitespace-nowrap rounded-full border border-line bg-white/90 px-3 py-1.5 text-[12px] font-medium text-ink shadow-sm backdrop-blur transition hover:border-brand"
+                className="flex-none whitespace-nowrap rounded-full border border-line bg-white px-3 py-1.5 text-[12px] font-medium text-ink transition hover:border-brand"
               >
                 {q}
               </button>
@@ -119,7 +119,7 @@ export default function CopilotBar() {
             e.preventDefault();
             send(text);
           }}
-          className="copilot-bar flex items-center gap-1.5 rounded-2xl border border-white/50 bg-white/70 px-2 py-1.5 backdrop-blur-xl"
+          className="copilot-bar flex items-center gap-1.5 rounded-2xl border border-white/50 bg-white px-2 py-1.5"
         >
           <span aria-hidden className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-brand text-sm text-white">
             ✨

@@ -25,7 +25,7 @@ function Feature({ icon, title, body }: { icon: string; title: string; body: str
 export default function Landing() {
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-white/80 px-5 py-4 backdrop-blur sm:px-10">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-white/95 px-5 py-4 sm:px-10">
         <Logo />
         <nav className="flex items-center gap-2">
           <a href="#how" className="hidden px-3 py-2 text-sm font-medium text-muted hover:text-ink sm:block">
