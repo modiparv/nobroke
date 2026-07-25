@@ -53,7 +53,7 @@ export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: P
         <div className="min-w-0">
           <div className="text-caption font-medium text-muted">Will you reach {goal.name}?</div>
           <div className="mt-0.5 text-2xl font-medium tracking-tight sm:text-3xl">
-            {r.onTrack ? "Yes, you're on track 🎉" : "Almost there, just a little short"}
+            {r.onTrack ? "Yes, on track" : "A little short"}
           </div>
           <div className="mt-1 text-support leading-snug text-muted">
             By <span className="font-medium text-ink">{year}</span> you'll have about{" "}
@@ -69,17 +69,17 @@ export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: P
         <Stat
           label="What it'll cost by then"
           value={formatINR(r.requiredCorpus)}
-          sub={`It's ${formatINR(goal.targetToday)} today. Prices slowly rise (about ${formatPct(inflation, 0)} a year), so you'll need more by then.`}
+          sub={`${formatINR(goal.targetToday)} today, adjusted for rising prices (${formatPct(inflation, 0)} a year).`}
         />
         <Stat
           label={r.onTrack ? "Extra cushion" : "You'll be short by"}
           value={formatINR(Math.abs(r.gap))}
-          sub={r.onTrack ? "More than enough to hit the goal 🎉" : `Add about ${formatINR(r.requiredSip)}/mo to get there.`}
+          sub={r.onTrack ? "More than the goal needs." : `About ${formatINR(r.requiredSip)}/mo gets there.`}
         />
         <Stat
           label="Money you'll put in"
           value={formatINR(r.totalInvested)}
-          sub={`The other ${formatINR(growth)} is growth on top: your money earning more money.`}
+          sub={`Plus ${formatINR(growth)} of growth on top.`}
         />
       </div>
 

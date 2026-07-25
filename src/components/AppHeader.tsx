@@ -4,16 +4,14 @@ import Logo from "./Logo";
 /**
  * App nav: logo, the Plan / Money toggle, and account actions.
  *
- * The bar itself is transparent, so it reads as the page rather than as a
- * separate white pane. It carries the page background rather than being truly
- * see-through, because it is sticky and the spec forbids backdrop-filter, so a
- * literally transparent bar would let content scroll through the labels.
+ * The bar is translucent: a 70% page-colour fill, no blur (backdrop-filter
+ * stays banned), so content ghosts through it faintly as it scrolls.
  */
 export default function AppHeader() {
   const s = useStore();
 
   return (
-    <header className="sticky top-0 z-30 bg-bg">
+    <header className="sticky top-0 z-30 bg-bg/70">
       <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-3 px-4 sm:px-6">
         <Logo />
 

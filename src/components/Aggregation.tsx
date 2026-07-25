@@ -29,7 +29,7 @@ export default function Aggregation() {
         </span>
       </div>
       <p className="mt-1.5 text-support text-text-2">
-        Already invested? Connect your accounts and NoBroke pulls everything in automatically.
+        Auto-import your existing investments.
       </p>
 
       <ul className="mt-2 divide-y divide-line">

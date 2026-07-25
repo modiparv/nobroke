@@ -67,12 +67,12 @@ export default function Holdings() {
             );
           })}
           <div className="mt-1 text-index uppercase tracking-wide text-muted">
-            Invested <span className="font-medium text-ink">{formatINR(sum)}</span> · added to your total automatically
+            Invested <span className="font-medium text-ink">{formatINR(sum)}</span>
           </div>
         </div>
       ) : (
         <p className="mt-1.5 text-caption text-muted">
-          Add stocks, MFs, ETFs, FDs, NPS, PPF &amp; more. They'll roll into your total savings.
+          Stocks, MFs, FDs, NPS, PPF and more.
         </p>
       )}
 
@@ -92,8 +92,7 @@ export default function Holdings() {
               </button>
             </div>
             <p className="mb-4 text-xs text-muted">
-              Track existing money: Indian/US stocks, mutual funds, ETFs, gold/silver, FDs, NPS, EPF, PPF. We'll add it to
-              your total savings.
+              It rolls into your total automatically.
             </p>
 
             <label className="mb-3 block">

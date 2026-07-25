@@ -129,7 +129,7 @@ export default function PortfolioBuilder() {
       {s.goals.length > 0 && !matchesRec && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-surface-2 px-3 py-2.5">
           <span className="text-support text-ink">
-            A {recLabel.toLowerCase()} mix suits your timeline better.
+            Better fit: a {recLabel.toLowerCase()} mix.
           </span>
           {!matchesRec && (
             <button
@@ -154,9 +154,8 @@ export default function PortfolioBuilder() {
         {/* ---- Funds library (drag source) ---- */}
         <div>
           <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-            <Marker /> Pick your own
+            <Marker /> Pick your own (optional)
           </span>
-          <p className="mb-2 mt-1 text-caption text-muted">Optional. Most people just tap a ready-made mix on the right.</p>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -262,7 +261,7 @@ export default function PortfolioBuilder() {
           {total === 0 && (
             <div className="mt-3 rounded-xl border border-dashed border-line bg-surface-2 px-4 py-5 text-center">
               <p className="text-sm font-medium text-ink">Your mix is empty</p>
-              <p className="mt-1 text-caption text-muted">Tap a fund on the left to add it, or pick a ready-made mix below to fill it for you.</p>
+              <p className="mt-1 text-caption text-muted">Tap a fund to add it, or pick a ready-made mix.</p>
             </div>
           )}
 
@@ -274,7 +273,7 @@ export default function PortfolioBuilder() {
                 <span className="num">{formatPct(band.high, 0)}</span> a year. Not guaranteed.
               </p>
               <p className="mt-1 text-support text-muted">
-                ₹1 lakh today could be <span className="num">{formatINR(band.tenYearLow)}</span> to{" "}
+                ₹1 lakh could be <span className="num">{formatINR(band.tenYearLow)}</span> to{" "}
                 <span className="num">{formatINR(band.tenYearHigh)}</span> in 10 years.
               </p>
             </div>
@@ -283,7 +282,7 @@ export default function PortfolioBuilder() {
           {/* Presets — plain-language quick mixes */}
           <div className="mt-4">
             <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-              <Marker /> Ready-made mixes (easiest)
+              <Marker /> Ready-made mixes
             </span>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(["steady", "balanced", "bold"] as RiskProfile[]).map((key) => {
@@ -305,7 +304,7 @@ export default function PortfolioBuilder() {
               })}
             </div>
             {total === 0 && (
-              <p className="mt-2 text-center text-caption text-muted">New to investing? Just tap one and we'll fill your mix for you.</p>
+              <p className="mt-2 text-center text-caption text-muted">Tap one to fill your mix.</p>
             )}
           </div>
 

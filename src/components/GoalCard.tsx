@@ -162,7 +162,7 @@ export default function GoalCard({
               </div>
 
               <MoneyInput
-                label="Target amount, in today's money"
+                label="Target amount"
                 value={g.targetToday}
                 onChange={(v) => actions.setGoalTarget(g.id, v)}
                 step={50000}
@@ -172,7 +172,7 @@ export default function GoalCard({
               />
 
               <MoneyInput
-                label="Going in each month"
+                label="Monthly amount"
                 value={Math.round(amount)}
                 onChange={(v) => actions.setGoalAmount(g.id, v)}
                 step={500}
@@ -193,7 +193,7 @@ export default function GoalCard({
           <Metrics r={r} goal={g} inflation={s.inflation} />
 
           <div>
-            <span className={sectionLabel}>How your money grows toward {g.name}</span>
+            <span className={sectionLabel}>Path to {g.name}</span>
             <Chart r={r} />
           </div>
 

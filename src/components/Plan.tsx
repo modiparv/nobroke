@@ -3,7 +3,7 @@ import { GOALS } from "../lib/goals";
 import { allocationTotal, bandWeights, computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
-import { btnPrimary, card, sectionLabel } from "../ui";
+import { btnPrimary, card } from "../ui";
 import AppHeader from "./AppHeader";
 import GoalCard from "./GoalCard";
 import MoneyTab from "./MoneyTab";
@@ -144,11 +144,23 @@ export default function Plan() {
             <HeroAmount value={totalCapital(s)} />
             <p className="mt-2 text-body text-on-band-2">
               {s.goals.length
-                ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track · ${formatINR(
-                    s.monthlySip,
-                  )} a month going in`
+                ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track`
                 : "Add a goal to start your plan"}
             </p>
+
+            {/* The breakup, in the band itself: no separate card below. */}
+            <dl className="mt-4 flex flex-wrap gap-x-7 gap-y-2">
+              {[
+                { label: "Cash", v: s.currentSavings },
+                { label: "Invested", v: holdingsTotal(s) },
+                { label: "Monthly", v: s.monthlySip },
+              ].map(({ label, v }) => (
+                <div key={label}>
+                  <dt className="text-eyebrow uppercase text-on-band-3">{label}</dt>
+                  <dd className="num mt-0.5 text-row font-medium text-on-band">{formatINR(v)}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -229,23 +241,6 @@ export default function Plan() {
               </div>
             )}
 
-            <div className={card}>
-              <span className={sectionLabel}>Saved per month</span>
-              <div className="num mt-1.5 text-headline font-medium">{formatINR(s.monthlySip)}</div>
-              <dl className="mt-3 flex flex-col gap-2 border-t border-line pt-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-support text-text-2">Cash</dt>
-                  <dd className="num text-support">{formatINR(s.currentSavings)}</dd>
-                </div>
-                <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-support text-text-2">Already invested</dt>
-                  <dd className="num text-support">{formatINR(holdingsTotal(s))}</dd>
-                </div>
-              </dl>
-              <p className="mt-3 text-caption text-text-3">
-                Month-by-month history appears once contributions are recorded.
-              </p>
-            </div>
           </aside>
         </div>
 
