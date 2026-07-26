@@ -1,12 +1,11 @@
-import { makePool, PgDb, resolveDatabaseUrl } from "../../db/pg.ts";
-import type { Pool } from "@neondatabase/serverless";
+import { makePool, PgDb, resolveDatabaseUrl } from "../_data.js";
 
 /**
  * GET /api/health/sources: last successful sync per data source, in the
  * standard read envelope. Reports not-provisioned honestly if the database
  * does not exist yet.
  */
-export default async function handler(_req: any, res: any) {
+export default async function handler(_req, res) {
   if (!resolveDatabaseUrl()) {
     res.status(503).json({
       ok: false,
@@ -19,7 +18,7 @@ export default async function handler(_req: any, res: any) {
     return;
   }
 
-  let pool: Pool | null = null;
+  let pool = null;
   try {
     pool = makePool();
     const db = new PgDb(pool);

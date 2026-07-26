@@ -1,8 +1,4 @@
-import { makePool, PgDb, resolveDatabaseUrl } from "../../db/pg.ts";
-import { BlobStorage } from "../../db/blob.ts";
-import { amfiAdapter, AMFI_URL } from "../../adapters/amfi.ts";
-import { runSync } from "../../db/runner.ts";
-import type { Pool } from "@neondatabase/serverless";
+import { amfiAdapter, AMFI_URL, BlobStorage, makePool, PgDb, resolveDatabaseUrl, runSync } from "../_data.js";
 
 /**
  * Nightly AMFI sync (Vercel cron, see vercel.json), also runnable by hand:
@@ -15,9 +11,9 @@ import type { Pool } from "@neondatabase/serverless";
  */
 export const config = { maxDuration: 60 };
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req, res) {
   const secret = process.env.CRON_SECRET;
-  const auth = (req.headers?.authorization as string | undefined) ?? "";
+  const auth = req.headers?.authorization ?? "";
   if (!secret || auth !== `Bearer ${secret}`) {
     res.status(401).json({ ok: false, error: "unauthorized" });
     return;
@@ -39,7 +35,7 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  let pool: Pool | null = null;
+  let pool = null;
   try {
     pool = makePool();
     const ports = { db: new PgDb(pool), storage: new BlobStorage(), now: () => new Date() };

@@ -10,7 +10,7 @@
     }
   ],
   "functions": {
-    "api/admin/migrate.ts": {
+    "api/admin/migrate.js": {
       "includeFiles": "db/migrations/**"
     }
   }

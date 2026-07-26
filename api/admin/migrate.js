@@ -1,25 +1,21 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { makePool, resolveDatabaseUrl } from "../../db/pg.ts";
-import type { Pool } from "@neondatabase/serverless";
+import { makePool, resolveDatabaseUrl } from "../_data.js";
 
 /**
  * Applies pending SQL migrations from db/migrations in filename order,
  * tracked in schema_migration so each file runs exactly once. Guarded by
  * CRON_SECRET; POST applies, GET reports.
- *
- * Imports are static: the bundler inlines them, while dynamic import paths
- * survive as literal specifiers that do not exist at runtime.
  */
-export default async function handler(req: any, res: any) {
+export default async function handler(req, res) {
   const secret = process.env.CRON_SECRET;
-  const auth = (req.headers?.authorization as string | undefined) ?? "";
+  const auth = req.headers?.authorization ?? "";
   if (!secret || auth !== `Bearer ${secret}`) {
     res.status(401).json({ ok: false, error: "unauthorized" });
     return;
   }
 
-  let pool: Pool | null = null;
+  let pool = null;
   try {
     if (!resolveDatabaseUrl()) {
       res.status(503).json({ ok: false, error: "no Postgres connection string (DATABASE_URL / POSTGRES_URL)" });
@@ -34,7 +30,7 @@ export default async function handler(req: any, res: any) {
        )`,
     );
     const appliedRes = await pool.query(`select id from schema_migration order by id`);
-    const applied = new Set(appliedRes.rows.map((r: { id: string }) => r.id));
+    const applied = new Set(appliedRes.rows.map((r) => r.id));
 
     const dir = join(process.cwd(), "db", "migrations");
     const files = readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
@@ -44,7 +40,7 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const ran: string[] = [];
+    const ran = [];
     for (const file of files) {
       if (applied.has(file)) continue;
       const sql = readFileSync(join(dir, file), "utf8");
