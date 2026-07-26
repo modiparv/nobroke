@@ -41,6 +41,11 @@
   --cau-bg: 232 232 232;
   --neg: 0 0 0;
   --neg-bg: 255 255 255;
+  /* Logo mark: brand constants, not part of the mono ramp. The falling and
+     rising strokes keep their own colours in both themes. */
+  --logo-fall: #f2f5fa;
+  --logo-rise: #5c82ff;
+  --ink-800: rgb(var(--text));
 }
 
 [data-theme="light"] {
@@ -67,6 +72,9 @@
   --cau-bg: 0 0 0;
   --neg: 255 255 255;
   --neg-bg: 0 0 0;
+  --logo-fall: #0b1b33;
+  --logo-rise: #2e5bff;
+  --ink-800: rgb(var(--text));
 }
 
 html {

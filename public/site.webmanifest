@@ -1,0 +1,11 @@
+{
+  "name": "NoBroke",
+  "short_name": "NoBroke",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
+  ],
+  "theme_color": "#0B1B33",
+  "background_color": "#0B1B33",
+  "display": "standalone"
+}
