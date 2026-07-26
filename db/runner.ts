@@ -44,8 +44,13 @@ export async function runSync(adapter: SourceAdapter, ports: SyncPorts, baseUrl:
     const { payload, contentType } = await fetchWithRetry(adapter);
 
     const receivedAt = ports.now().toISOString();
-    const storageKey = `raw/${adapter.code}/${receivedAt.slice(0, 10)}/${runId}`;
-    await ports.storage.put(storageKey, payload, contentType);
+    // The port returns the canonical key (object storage may mint a URL); the
+    // raw_artifact row records whatever handle retrieves the bytes later.
+    const storageKey = await ports.storage.put(
+      `raw/${adapter.code}/${receivedAt.slice(0, 10)}/${runId}`,
+      payload,
+      contentType,
+    );
     await ports.db.insertRawArtifact({
       syncRunId: runId,
       storageKey,

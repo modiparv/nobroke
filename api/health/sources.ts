@@ -1,7 +1,7 @@
 /**
  * GET /api/health/sources: last successful sync per data source, in the
- * standard read envelope. Reports not-provisioned honestly until the backing
- * services exist.
+ * standard read envelope. Reports not-provisioned honestly if the database
+ * does not exist yet.
  */
 export default async function handler(_req: any, res: any) {
   if (!process.env.DATABASE_URL) {
@@ -16,12 +16,30 @@ export default async function handler(_req: any, res: any) {
     return;
   }
 
-  res.status(503).json({
-    ok: false,
-    data: null,
-    as_of: null,
-    sources: [],
-    confidence: "stale",
-    warnings: ["health query wiring pending: Postgres client not yet installed."],
-  });
+  const { makePool, PgDb } = await import("../../db/pg.ts");
+  const pool = makePool();
+  try {
+    const db = new PgDb(pool);
+    const syncs = await db.lastSuccessfulSyncs();
+    res.status(200).json({
+      ok: true,
+      data: { sources: syncs },
+      as_of: new Date().toISOString(),
+      sources: syncs.map((s) => s.dataSourceCode),
+      confidence: "high",
+      warnings: syncs.length === 0 ? ["no successful sync recorded yet"] : [],
+    });
+  } catch (err) {
+    console.error("health/sources failed", err);
+    res.status(500).json({
+      ok: false,
+      data: null,
+      as_of: null,
+      sources: [],
+      confidence: "stale",
+      warnings: [err instanceof Error ? err.message : String(err)],
+    });
+  } finally {
+    await pool.end();
+  }
 }

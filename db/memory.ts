@@ -74,36 +74,43 @@ export class MemoryDb implements DbPort {
     this.rawArtifacts.push(row);
   }
 
-  async upsertInstrument(row: InstrumentUpsert): Promise<{ created: boolean }> {
-    const existing = this.instrumentsByIsin.get(row.isin);
-    if (existing) {
-      // amfi_code is unique where not null: never move it onto a second row.
-      const amfiCode = existing.amfiCode ?? row.amfiCode;
-      Object.assign(existing, row, { amfiCode });
-      return { created: false };
-    }
-    if (row.amfiCode != null) {
-      for (const other of this.instrumentsByIsin.values()) {
-        if (other.amfiCode === row.amfiCode) throw new Error(`amfi_code ${row.amfiCode} already on another instrument`);
+  async upsertInstruments(rows: InstrumentUpsert[]): Promise<{ created: number }> {
+    let created = 0;
+    for (const row of rows) {
+      const existing = this.instrumentsByIsin.get(row.isin);
+      if (existing) {
+        // amfi_code is unique where not null: never move it onto a second row.
+        const amfiCode = existing.amfiCode ?? row.amfiCode;
+        Object.assign(existing, row, { amfiCode });
+        continue;
       }
+      if (row.amfiCode != null) {
+        for (const other of this.instrumentsByIsin.values()) {
+          if (other.amfiCode === row.amfiCode) throw new Error(`amfi_code ${row.amfiCode} already on another instrument`);
+        }
+      }
+      this.instrumentsByIsin.set(row.isin, { ...row, id: this.id("ins") });
+      created++;
     }
-    this.instrumentsByIsin.set(row.isin, { ...row, id: this.id("ins") });
-    return { created: true };
+    return { created };
   }
 
-  async upsertPriceQuote(row: PriceQuoteUpsert): Promise<{ created: boolean; changed: boolean }> {
-    const instrument = this.instrumentsByIsin.get(row.isin);
-    if (!instrument) throw new Error(`price for unknown isin ${row.isin}`);
-    const existing = this.quotes.find(
-      (q) => q.instrumentId === instrument.id && q.asOf === row.asOf && q.source === row.source,
-    );
-    if (existing) {
-      if (existing.price === row.price) return { created: false, changed: false };
-      existing.price = row.price;
-      return { created: false, changed: true };
+  async upsertPriceQuotes(rows: PriceQuoteUpsert[]): Promise<{ created: number }> {
+    let created = 0;
+    for (const row of rows) {
+      const instrument = this.instrumentsByIsin.get(row.isin);
+      if (!instrument) throw new Error(`price for unknown isin ${row.isin}`);
+      const existing = this.quotes.find(
+        (q) => q.instrumentId === instrument.id && q.asOf === row.asOf && q.source === row.source,
+      );
+      if (existing) {
+        existing.price = row.price;
+        continue;
+      }
+      this.quotes.push({ instrumentId: instrument.id, asOf: row.asOf, price: row.price, source: row.source, isStale: false });
+      created++;
     }
-    this.quotes.push({ instrumentId: instrument.id, asOf: row.asOf, price: row.price, source: row.source, isStale: false });
-    return { created: true, changed: true };
+    return { created };
   }
 
   async markQuotesStaleOnOrBefore(cutoff: string): Promise<number> {

@@ -81,14 +81,18 @@ export interface DbPort {
     byteSize: number;
     receivedAt: string;
   }): Promise<void>;
-  /** Insert or update on the ISIN unique key. Returns whether a row was created. */
-  upsertInstrument(row: InstrumentUpsert): Promise<{ created: boolean }>;
   /**
-   * Insert on (instrument_id, as_of, source); an identical existing row is a
-   * no-op so re-running a sync changes nothing. Returns whether a row was
-   * created or an existing one changed.
+   * Insert or update a batch on the ISIN unique key. Batched because the AMFI
+   * file carries tens of thousands of rows and a round trip per row would not
+   * fit a serverless window. Returns how many rows were newly created.
    */
-  upsertPriceQuote(row: PriceQuoteUpsert): Promise<{ created: boolean; changed: boolean }>;
+  upsertInstruments(rows: InstrumentUpsert[]): Promise<{ created: number }>;
+  /**
+   * Insert a batch on (instrument_id, as_of, source); identical existing rows
+   * are no-ops so re-running a sync changes nothing. Returns how many quotes
+   * were newly created.
+   */
+  upsertPriceQuotes(rows: PriceQuoteUpsert[]): Promise<{ created: number }>;
   /** Flag quotes dated on/before the cutoff (ISO date) as stale. Returns count flipped. */
   markQuotesStaleOnOrBefore(cutoff: string): Promise<number>;
   lastSuccessfulSyncs(): Promise<Array<{ dataSourceCode: string; finishedAt: string }>>;

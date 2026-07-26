@@ -144,29 +144,40 @@ export function amfiAdapter(ports: SyncPorts): SourceAdapter {
     parse: parseAmfi,
 
     async persist(rows) {
+      const CHUNK = 500;
       let ingested = 0;
       let skipped = 0;
+      let buffer: ParsedInstrumentRow[] = [];
+
+      const flush = async () => {
+        if (buffer.length === 0) return;
+        // Instruments land before their quotes; both live in the same chunk.
+        await ports.db.upsertInstruments(
+          buffer.map((r) => ({
+            isin: r.isin,
+            amfiCode: r.amfiCode,
+            name: r.name,
+            assetClass: r.assetClass,
+            instrumentType: r.instrumentType,
+            taxRegimeKey: r.taxRegimeKey,
+          })),
+        );
+        const quotes = await ports.db.upsertPriceQuotes(
+          buffer.map((r) => ({ isin: r.isin, asOf: r.asOf, price: r.nav, source: "amfi" })),
+        );
+        ingested += quotes.created;
+        buffer = [];
+      };
+
       for await (const row of rows) {
         if (row.kind === "skip") {
           skipped++;
           continue;
         }
-        await ports.db.upsertInstrument({
-          isin: row.isin,
-          amfiCode: row.amfiCode,
-          name: row.name,
-          assetClass: row.assetClass,
-          instrumentType: row.instrumentType,
-          taxRegimeKey: row.taxRegimeKey,
-        });
-        const quote = await ports.db.upsertPriceQuote({
-          isin: row.isin,
-          asOf: row.asOf,
-          price: row.nav,
-          source: "amfi",
-        });
-        if (quote.created) ingested++;
+        buffer.push(row);
+        if (buffer.length >= CHUNK) await flush();
       }
+      await flush();
       return { ingested, skipped };
     },
   };

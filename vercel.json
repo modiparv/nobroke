@@ -8,5 +8,10 @@
       "path": "/api/sync/amfi",
       "schedule": "45 17 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/admin/migrate.ts": {
+      "includeFiles": "db/migrations/**"
+    }
+  }
 }
