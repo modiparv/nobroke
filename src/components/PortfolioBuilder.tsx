@@ -63,10 +63,22 @@ export default function PortfolioBuilder() {
     const seq = ++searchSeq.current;
     setLiveBusy(true);
     const t = window.setTimeout(() => {
-      void searchLiveSchemes(q).then((rows) => {
+      void searchLiveSchemes(q).then(async (rows) => {
         if (searchSeq.current !== seq) return;
-        setLiveRows(rows.slice(0, 8));
+        // Names first, instantly. Returns stream in per row (each detail call
+        // is edge-cached), then one re-rank by real 5-year performance.
+        const base = rows.slice(0, 8);
+        setLiveRows(base);
         setLiveBusy(false);
+        const detailed = await Promise.all(
+          base.map(async (r) => {
+            const d = await getLiveSchemeDetail(r.schemeCode);
+            return d ? { ...r, cagr1y: d.cagr1y, cagr3y: d.cagr3y, cagr5y: d.cagr5y } : r;
+          }),
+        );
+        if (searchSeq.current !== seq) return;
+        detailed.sort((a, b) => (b.cagr5y ?? -999) - (a.cagr5y ?? -999));
+        setLiveRows(detailed);
       });
     }, 400);
     return () => window.clearTimeout(t);
@@ -230,10 +242,11 @@ export default function PortfolioBuilder() {
               <div>
                 {liveBusy && <p className="mt-1 text-caption text-muted">Searching every scheme…</p>}
                 <div className="mt-1.5 flex flex-col gap-1.5">
-                  {liveRows.map((row) => {
+                  {liveRows.map((row, i) => {
                     const id = `live_${row.schemeCode}`;
                     const added = id in alloc;
                     const busy = addingCode === row.schemeCode;
+                    const isTop = i === 0 && row.cagr5y != null && liveRows.length > 1;
                     return (
                       <div
                         key={row.schemeCode}
@@ -249,6 +262,11 @@ export default function PortfolioBuilder() {
                               {row.cagr3y != null && <>3Y {formatPct(row.cagr3y, 1)}</>}
                               {row.cagr3y != null && row.cagr5y != null && " · "}
                               {row.cagr5y != null && <>5Y {formatPct(row.cagr5y, 1)}</>}
+                              {isTop && (
+                                <span className="ml-1.5 rounded-full border border-line px-1.5 py-px text-index uppercase tracking-wide text-muted">
+                                  Best 5Y here
+                                </span>
+                              )}
                             </span>
                           )}
                         </span>
@@ -259,7 +277,9 @@ export default function PortfolioBuilder() {
                     );
                   })}
                 </div>
-                <p className="mt-1.5 text-caption text-text-3">Actual past performance, from official NAV records.</p>
+                <p className="mt-1.5 text-caption text-text-3">
+                  Ranked by 5-year performance. Actual past returns, from official NAV records.
+                </p>
               </div>
             )}
           </div>
@@ -369,6 +389,10 @@ export default function PortfolioBuilder() {
             {total === 0 && (
               <p className="mt-2 text-center text-caption text-muted">Tap one to fill your mix.</p>
             )}
+            <p className="mt-2 text-caption text-text-3">
+              Mixes are matched to your goals' timelines. The funds inside are yours to choose, ranked by real
+              performance in the search above.
+            </p>
           </div>
 
           {equityHeavy && (

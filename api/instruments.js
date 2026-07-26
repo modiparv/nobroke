@@ -138,18 +138,9 @@ export default async function handler(req, res) {
         results = await searchMfapi(q);
         source = "mfapi_fallback";
       }
-      // Real past returns on every result, the way fund pickers are expected
-      // to read. A failed enrichment degrades that row to name-only.
-      results = await Promise.all(
-        results.map(async (row) => {
-          try {
-            const d = await schemeDetail(row.schemeCode);
-            return { ...row, cagr1y: d.cagr1y, cagr3y: d.cagr3y, cagr5y: d.cagr5y };
-          } catch {
-            return { ...row, cagr1y: null, cagr3y: null, cagr5y: null };
-          }
-        }),
-      );
+      // Names only, fast: the client fetches each row's returns through the
+      // (edge-cached) detail endpoint so one slow upstream history call can
+      // never stall the whole search.
       res.setHeader("Cache-Control", "s-maxage=21600, stale-while-revalidate=86400");
       res.status(200).json({ results, source });
       return;
