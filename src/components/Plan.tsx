@@ -48,7 +48,7 @@ function Pill({ label, onClick, accent, onBand }: { label: string; onClick: () =
       ? "border border-on-band/30 text-on-band hover:border-on-band/60"
       : "border border-line text-text hover:border-line-2";
   return (
-    <button onClick={onClick} className={`rounded-full px-3.5 py-2 text-support transition ${tone}`}>
+    <button onClick={onClick} className={`inline-flex h-9 items-center rounded-full px-3.5 text-support transition ${tone}`}>
       {label}
     </button>
   );

@@ -178,7 +178,7 @@ export default function Onboarding() {
                   <button
                     key={g.id}
                     onClick={() => actions.toggleGoal(g.id)}
-                    className={`flex flex-col gap-1 rounded-2xl border p-4 text-left transition ${
+                    className={`flex flex-col gap-1 rounded-card border p-4 text-left transition ${
                       sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-brand"
                     }`}
                   >
@@ -214,7 +214,7 @@ export default function Onboarding() {
                       setAnswer(step.field!, opt.value);
                       window.setTimeout(next, 200);
                     }}
-                    className={`flex flex-col gap-1 rounded-2xl border p-5 text-left transition ${
+                    className={`flex flex-col gap-1 rounded-card border p-5 text-left transition ${
                       sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-brand"
                     }`}
                   >

@@ -96,11 +96,23 @@ body {
   text-size-adjust: 100%;
 }
 
-/* Two weights only, 400 and 500. Headings are not bold. */
+/* Two weights only, 400 and 500. Headings are not bold, and they track
+   tight: crispness lives in the letterfit. */
 h1,
 h2,
 h3 {
   font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* Inverted selection: the sharpest detail a mono palette can offer. */
+::selection {
+  background: rgb(var(--text));
+  color: rgb(var(--bg));
+}
+
+::placeholder {
+  color: rgb(var(--text-3));
 }
 
 /* Every number in the product. Tabular figures stop digits jittering as values

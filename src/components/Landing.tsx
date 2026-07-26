@@ -56,7 +56,7 @@ export default function Landing() {
         <section className="border-t border-line">
           <ul className="divide-y divide-line">
             {FEATURES.map((f) => (
-              <li key={f.n} className="flex items-baseline gap-5 py-6 sm:gap-8 sm:py-8">
+              <li key={f.n} className="-mx-3 flex items-baseline gap-5 rounded-card px-3 py-6 transition-colors hover:bg-surface/60 sm:gap-8 sm:py-8">
                 <span className="num text-index tracking-[0.06em] text-text-3">{f.n}</span>
                 <div className="grid flex-1 gap-1 sm:grid-cols-[240px_1fr] sm:gap-8">
                   <h3 className="text-section font-medium">{f.title}</h3>

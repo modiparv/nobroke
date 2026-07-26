@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { actions, useStore } from "../store";
+import { LogoMark } from "./Logo";
 
 /** Example prompts that show the copilot can DO things, not just answer. */
 const SUGGESTIONS = [
@@ -13,7 +14,7 @@ const SUGGESTIONS = [
 
 function TypingDots() {
   return (
-    <div className="flex w-fit items-center gap-1 rounded-2xl rounded-bl-sm border border-line bg-surface-2 px-3.5 py-3">
+    <div className="flex w-fit items-center gap-1 rounded-2xl rounded-bl-sm bg-surface-2 px-3.5 py-3">
       {[0, 0.2, 0.4].map((d, i) => (
         <span key={i} className="typing-dot inline-block h-1.5 w-1.5 rounded-full bg-muted" style={{ animationDelay: `${d}s` }} />
       ))}
@@ -49,9 +50,11 @@ export default function CopilotBar() {
       <div className="pointer-events-auto mx-auto max-w-3xl px-4 pb-3 sm:px-6 sm:pb-4">
         {/* Conversation — opens upward above the bar */}
         {hasThread && (
-          <div className="mb-2 overflow-hidden rounded-2xl border border-line bg-surface">
+          <div className="mb-2 overflow-hidden rounded-card border border-line bg-surface">
             <header className="flex items-center gap-2.5 border-b border-line px-4 py-2.5">
-              <span className="grid h-7 w-7 place-items-center rounded-lg bg-band text-xs font-medium text-on-band">N</span>
+              <span className="grid h-7 w-7 place-items-center rounded-control bg-band">
+                <LogoMark size={15} />
+              </span>
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 text-support font-medium">
                   NoBroke copilot <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-positive" />
@@ -79,7 +82,7 @@ export default function CopilotBar() {
                     className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-support leading-relaxed ${
                       m.role === "user"
                         ? "rounded-br-sm bg-band text-on-band"
-                        : "rounded-bl-sm border border-line bg-surface-2 text-ink"
+                        : "rounded-bl-sm bg-surface-2 text-ink"
                     }`}
                   >
                     {m.text}
@@ -105,7 +108,7 @@ export default function CopilotBar() {
                   e.preventDefault();
                   send(q);
                 }}
-                className="flex-none whitespace-nowrap rounded-full border border-line bg-surface px-3 py-1.5 text-caption font-medium text-ink transition hover:border-brand"
+                className="flex-none whitespace-nowrap rounded-full bg-surface-2 px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-line"
               >
                 {q}
               </button>
@@ -119,9 +122,9 @@ export default function CopilotBar() {
             e.preventDefault();
             send(text);
           }}
-          className="copilot-bar flex items-center gap-1.5 rounded-2xl border border-line bg-surface px-2 py-1.5"
+          className="copilot-bar flex items-center gap-1.5 rounded-card border border-line bg-surface px-2 py-1.5"
         >
-          <span aria-hidden className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-band text-sm text-on-band">
+          <span aria-hidden className="grid h-8 w-8 flex-none place-items-center rounded-control bg-band text-sm text-on-band">
             ✨
           </span>
           <input

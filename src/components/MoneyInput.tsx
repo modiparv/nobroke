@@ -42,7 +42,7 @@ export default function MoneyInput({
         </div>
       )}
       <div
-        className={`flex items-stretch overflow-hidden rounded-xl border border-line bg-surface transition focus-within:border-brand ${
+        className={`flex items-stretch overflow-hidden rounded-control border border-line bg-surface transition focus-within:border-brand ${
           disabled ? "opacity-50" : ""
         }`}
       >

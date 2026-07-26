@@ -173,7 +173,7 @@ export default function PortfolioBuilder() {
 
       {/* Advisor pick — match the single mix to the goals' blended horizon */}
       {s.goals.length > 0 && !matchesRec && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-surface-2 px-3 py-2.5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface-2 px-3 py-2.5">
           <span className="text-support text-ink">
             Better fit: a {recLabel.toLowerCase()} mix.
           </span>
@@ -196,7 +196,7 @@ export default function PortfolioBuilder() {
             onClick={() => setRiskOpen((v) => !v)}
             aria-expanded={riskOpen}
             title={`${soonGoal.name} is ${soonGoal.horizonYears} ${soonGoal.horizonYears === 1 ? "year" : "years"} away and this mix leans on stocks.`}
-            className="flex w-full items-center justify-between gap-2 rounded-lg border border-line bg-surface-2 px-2.5 py-1.5 text-left"
+            className="flex w-full items-center justify-between gap-2 rounded-control bg-surface-2 px-2.5 py-1.5 text-left"
           >
             <span className="truncate text-xs text-ink">
               ⚠️ <span className="font-medium">{soonGoal.name}</span> is close. Review the mix.
@@ -225,7 +225,7 @@ export default function PortfolioBuilder() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search any fund, A to Z"
-            className="mt-2 h-9 w-full rounded-[10px] border border-line bg-surface px-3 text-sm outline-none focus:border-ink"
+            className="mt-2 h-10 w-full rounded-control border border-line bg-surface px-3 text-sm outline-none transition focus:border-ink"
           />
 
           <div className="no-scrollbar mt-3 flex max-h-[22rem] flex-col gap-1.5 overflow-y-auto pr-0.5">
@@ -251,8 +251,8 @@ export default function PortfolioBuilder() {
                       <div
                         key={row.schemeCode}
                         onClick={() => (added ? removeFund(id) : void addLive(row))}
-                        className={`flex cursor-pointer select-none items-center gap-2 rounded-lg border bg-surface px-2.5 py-1.5 transition hover:border-brand ${
-                          added ? "border-brand" : "border-line"
+                        className={`flex cursor-pointer select-none items-center gap-2 rounded-control border px-2.5 py-2 transition ${
+                          added ? "border-brand bg-surface" : "border-transparent bg-surface-2/50 hover:bg-surface-2"
                         }`}
                       >
                         <span className="min-w-0 flex-1">
@@ -287,7 +287,7 @@ export default function PortfolioBuilder() {
 
         {/* ---- Basket (drop zone) ---- */}
         <div
-          className={`order-1 min-w-0 rounded-2xl border bg-surface p-4 transition ${dragOver ? "border-brand ring-2 ring-brand/40" : "border-line"}`}
+          className={`order-1 min-w-0 rounded-card border bg-surface p-4 transition ${dragOver ? "border-brand ring-2 ring-brand/40" : "border-line"}`}
           onDragOver={(e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";
@@ -344,7 +344,7 @@ export default function PortfolioBuilder() {
 
           {/* Ranges, never point estimates (section 5). */}
           {total > 0 && (
-            <div className="mt-4 rounded-xl border border-line bg-surface-2 px-3.5 py-3">
+            <div className="mt-4 rounded-control bg-surface-2 px-3.5 py-3">
               <p className="text-support text-ink">
                 Historically <span className="num">{formatPct(band.low, 0)}</span> to{" "}
                 <span className="num">{formatPct(band.high, 0)}</span> a year for a mix like this.
@@ -374,8 +374,8 @@ export default function PortfolioBuilder() {
                   <button
                     key={key}
                     onClick={() => applyPreset(key)}
-                    className={`rounded-xl border px-2 py-2 text-center transition ${
-                      active ? "border-ink bg-surface-2 text-text" : "border-line hover:border-ink/40"
+                    className={`rounded-control border px-2 py-2 text-center transition ${
+                      active ? "border-ink bg-surface-2 text-text" : "border-line hover:border-ink/40 hover:bg-surface-2/40"
                     }`}
                   >
                     <div className="text-xs font-medium">{MODEL_PORTFOLIOS[key].label}</div>
@@ -396,7 +396,7 @@ export default function PortfolioBuilder() {
           </div>
 
           {equityHeavy && (
-            <p className="mt-3 rounded-lg border border-line bg-surface-2 px-3 py-2 text-center text-xs text-ink">
+            <p className="mt-3 rounded-control bg-surface-2 px-3 py-2 text-center text-xs text-ink">
               Add some bonds to steady out this stock-heavy mix.
             </p>
           )}
@@ -421,7 +421,7 @@ export default function PortfolioBuilder() {
                   const pctOfTotal = total > 0 ? Math.round(((alloc[id] ?? 0) / total) * 100) : 0;
                   const amt = amountFor(id);
                   return (
-                    <div key={id} className="flex items-center gap-1.5 rounded-lg border border-line px-2 py-1.5">
+                    <div key={id} className="flex items-center gap-1.5 rounded-control bg-surface-2/40 px-2 py-1.5">
                       <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: ac.color }} title={ac.label} />
                       <span className="min-w-0 flex-1 truncate text-support font-medium leading-tight">{f.name}</span>
                       <span className="hidden flex-none text-index tabular-nums text-muted sm:inline">{formatINR(amt)}/mo</span>
