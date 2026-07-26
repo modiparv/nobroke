@@ -12,7 +12,14 @@ import type { DbPort, InstrumentUpsert, PriceQuoteUpsert, SyncStatus } from "./p
  */
 
 export class PgDb implements DbPort {
-  constructor(private pool: Pool) {}
+  // An explicit field, not a constructor parameter property: parameter
+  // properties are non-erasable syntax that node --experimental-strip-types
+  // rejects the moment a test imports this file.
+  private pool: Pool;
+
+  constructor(pool: Pool) {
+    this.pool = pool;
+  }
 
   async ensureDataSource(code: string, kind: string, baseUrl: string): Promise<void> {
     await this.pool.query(

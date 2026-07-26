@@ -16,7 +16,11 @@ interface PoolLike {
 }
 
 export class PgArtifactStorage implements StoragePort {
-  constructor(private pool: PoolLike) {}
+  private pool: PoolLike;
+
+  constructor(pool: PoolLike) {
+    this.pool = pool;
+  }
 
   async put(key: string, payload: Buffer, contentType: string): Promise<string> {
     const storageKey = `pg://raw_payload/${key}`;
@@ -33,11 +37,13 @@ export class PgArtifactStorage implements StoragePort {
 export class FallbackStorage implements StoragePort {
   /** Set after put() when the primary refused and the fallback stored it. */
   fellBackWith: string | null = null;
+  private primary: StoragePort;
+  private fallback: StoragePort;
 
-  constructor(
-    private primary: StoragePort,
-    private fallback: StoragePort,
-  ) {}
+  constructor(primary: StoragePort, fallback: StoragePort) {
+    this.primary = primary;
+    this.fallback = fallback;
+  }
 
   async put(key: string, payload: Buffer, contentType: string): Promise<string> {
     try {
