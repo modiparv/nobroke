@@ -1,0 +1,32 @@
+name: probe
+
+# Manual endpoint probe for the preview deployment. This sandboxed agent has
+# no outbound network; GitHub runners do. Dispatched remotely to check
+# endpoints and, when a CRON_SECRET repository secret exists, to drive the
+# guarded sync/migrate endpoints too.
+on:
+  workflow_dispatch:
+    inputs:
+      method:
+        description: HTTP method
+        default: GET
+        required: false
+      path:
+        description: Path on the preview deployment
+        default: /api/health/sources
+        required: false
+
+jobs:
+  curl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          METHOD: ${{ inputs.method }}
+          ENDPOINT_PATH: ${{ inputs.path }}
+        run: |
+          URL="https://nobroke-git-claude-adoring-keller-npx37u-modiparvs-projects.vercel.app${ENDPOINT_PATH}"
+          ARGS=(-sS -X "$METHOD" -w "\nHTTP_STATUS:%{http_code}\n" --max-time 120)
+          if [ -n "$CRON_SECRET" ]; then ARGS+=(-H "Authorization: Bearer $CRON_SECRET"); fi
+          curl "${ARGS[@]}" "$URL"
