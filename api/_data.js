@@ -14,6 +14,7 @@
  *
  * Files starting with an underscore are not exposed as endpoints.
  */
+import { gzipSync } from "node:zlib";
 import { Pool } from "@neondatabase/serverless";
 import { put } from "@vercel/blob";
 
@@ -200,6 +201,46 @@ export class BlobStorage {
       if (!/private/i.test(msg)) throw err;
       const res = await put(key, payload, { access: "private", ...base });
       return res.url;
+    }
+  }
+}
+
+// ---- db/artifacts.ts ----
+
+/** Raw payloads in Postgres (gzipped bytea) so archive-before-parse holds
+ *  even when no object store is writable. byte_size is the ORIGINAL size. */
+export class PgArtifactStorage {
+  constructor(pool) {
+    this.pool = pool;
+  }
+
+  async put(key, payload, contentType) {
+    const storageKey = `pg://raw_payload/${key}`;
+    await this.pool.query(
+      `insert into raw_payload (storage_key, payload, content_type, encoding, byte_size)
+       values ($1, $2, $3, 'gzip', $4)
+       on conflict (storage_key) do nothing`,
+      [storageKey, gzipSync(payload), contentType, payload.length],
+    );
+    return storageKey;
+  }
+}
+
+/** Prefers the primary store; falls back and remembers that it did, so the
+ *  caller surfaces the degradation as a warning instead of hiding it. */
+export class FallbackStorage {
+  constructor(primary, fallback) {
+    this.primary = primary;
+    this.fallback = fallback;
+    this.fellBackWith = null;
+  }
+
+  async put(key, payload, contentType) {
+    try {
+      return await this.primary.put(key, payload, contentType);
+    } catch (err) {
+      this.fellBackWith = err instanceof Error ? err.message : String(err);
+      return this.fallback.put(key, payload, contentType);
     }
   }
 }

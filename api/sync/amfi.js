@@ -3,7 +3,9 @@ import {
   AMFI_URL,
   BlobStorage,
   blobTokenShape,
+  FallbackStorage,
   makePool,
+  PgArtifactStorage,
   PgDb,
   resolveBlobToken,
   resolveDatabaseUrl,
@@ -29,25 +31,14 @@ export default async function handler(req, res) {
     return;
   }
 
-  const blobToken = resolveBlobToken();
-  const missing = [
-    ...(resolveDatabaseUrl() ? [] : ["a Postgres URL (DATABASE_URL / POSTGRES_URL)"]),
-    ...(blobToken ? [] : ["a Blob read-write token (BLOB_READ_WRITE_TOKEN or *_READ_WRITE_TOKEN)"]),
-  ];
-  if (missing.length > 0) {
-    // Env NAMES only, never values: shows what the store connection actually
-    // created so a rename never needs another guessing round.
-    const blobEnvSeen = Object.keys(process.env).filter((n) => n.includes("BLOB")).sort();
+  if (!resolveDatabaseUrl()) {
     res.status(503).json({
       ok: false,
       data: null,
       as_of: null,
       sources: [],
       confidence: "stale",
-      warnings: [
-        `data layer not provisioned: missing ${missing.join(", ")}. No sync attempted.`,
-        `blob-related env names present: ${blobEnvSeen.join(", ") || "(none)"}`,
-      ],
+      warnings: ["data layer not provisioned: no Postgres URL (DATABASE_URL / POSTGRES_URL). No sync attempted."],
     });
     return;
   }
@@ -55,12 +46,18 @@ export default async function handler(req, res) {
   let pool = null;
   try {
     pool = makePool();
-    const ports = { db: new PgDb(pool), storage: new BlobStorage(blobToken), now: () => new Date() };
+    // Raw artifacts prefer object storage; Postgres (gzipped bytea) is the
+    // always-available fallback so the archive-before-parse rule never
+    // blocks a sync. Falling back is reported, not hidden.
+    const blobToken = resolveBlobToken();
+    const pgStore = new PgArtifactStorage(pool);
+    const storage = blobToken ? new FallbackStorage(new BlobStorage(blobToken), pgStore) : pgStore;
+    const ports = { db: new PgDb(pool), storage, now: () => new Date() };
     const result = await runSync(amfiAdapter(ports), ports, AMFI_URL);
     const warnings = result.error ? [result.error] : [];
-    // A Blob failure with a token present is nearly always a polluted paste;
-    // describe the token's shape (never its value) so the fix is obvious.
     if (result.error && /blob/i.test(result.error)) warnings.push(`blob token: ${blobTokenShape()}`);
+    if (storage.fellBackWith) warnings.push(`raw artifact stored in Postgres fallback; object storage said: ${storage.fellBackWith}`);
+    if (!blobToken) warnings.push("no Blob token configured; raw artifacts go to the Postgres fallback");
     res.status(result.status === "success" ? 200 : 502).json({
       ok: result.status === "success",
       data: { runId: result.runId, ingested: result.ingested, skipped: result.skipped },
