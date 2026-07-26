@@ -1,0 +1,55 @@
+Scheme Code;ISIN Div Payout/ ISIN Growth;ISIN Div Reinvestment;Scheme Name;Net Asset Value;Date
+
+Open Ended Schemes(Equity Scheme - Flexi Cap Fund)
+
+Axis Mutual Fund
+
+120465;INF846K01AA1;-;Axis Flexi Cap Fund - Direct Plan - Growth;28.4512;24-Jul-2026
+120466;INF846K01AB9;-;Axis Flexi Cap Fund - Regular Plan - Growth;25.1034;24-Jul-2026
+120467;INF846K01AC7;-;Axis Flexi Cap Fund - Direct Plan - IDCW;19.8825;24-Jul-2026
+120468;INF846K01AD5;-;Axis Flexi Cap Fund - Regular Plan - IDCW;18.2201;24-Jul-2026
+120469;-;-;Axis Flexi Cap Fund - Segregated Portfolio 1;10.0000;24-Jul-2026
+120470;INF846K01AE3;-;Axis Flexi Cap Fund - Institutional Plan;N.A.;24-Jul-2026
+
+Parag Parikh Mutual Fund
+
+122639;INF879O01AA7;-;Parag Parikh Flexi Cap Fund - Direct Plan - Growth;81.3327;24-Jul-2026
+122640;INF879O01AB5;-;Parag Parikh Flexi Cap Fund - Regular Plan - Growth;76.0942;24-Jul-2026
+122641;INF879O01AC3;-;Parag Parikh ELSS Tax Saver Fund - Direct - Growth;31.5570;24-Jul-2026
+122642;INF879O01AD1;-;Parag Parikh ELSS Tax Saver Fund - Regular - Growth;29.7189;24-Jul-2026
+
+Open Ended Schemes(Debt Scheme - Liquid Fund)
+
+ICICI Prudential Mutual Fund
+
+120471;INF109K01BA4;-;ICICI Prudential Liquid Fund - Direct Plan - Growth;372.4451;24-Jul-2026
+120472;INF109K01BB2;-;ICICI Prudential Liquid Fund - Regular Plan - Growth;364.9902;24-Jul-2026
+120473;INF109K01BC0;-;ICICI Prudential Liquid Fund - Direct Plan - Daily IDCW;100.0512;24-Jul-2026
+120474;INF109K01BD8;-;ICICI Prudential Money Market Fund - Direct - Growth;351.7719;24-Jul-2026
+120475;INF109K01BE6;-;ICICI Prudential Money Market Fund - Regular - Growth;344.2210;24-Jul-2026
+120476;INF109K01BF3;INF109K01BG1;ICICI Prudential Liquid Fund - Direct Plan - Weekly IDCW;100.1121;24-Jul-2026
+120477;INF109K01BH9;ICICI Prudential Liquid Fund - broken row;24-Jul-2026
+
+Open Ended Schemes(Other Scheme - Gold ETF)
+
+Nippon India Mutual Fund
+
+120503;INF204KB1AA6;-;Nippon India ETF Gold BeES;55.2145;24-Jul-2026
+120504;INF204KB1AB4;-;ICICI Prudential Gold ETF;58.9910;24-Jul-2026
+120505;INF204KB1AC2;-;HDFC Gold Exchange Traded Fund;61.4402;24-Jul-2026
+
+Open Ended Schemes(Hybrid Scheme - Balanced Advantage Fund)
+
+HDFC Mutual Fund
+
+120510;INF179K01CA9;-;HDFC Balanced Advantage Fund - Direct Plan - Growth;412.5510;24-Jul-2026
+120511;INF179K01CB7;-;HDFC Balanced Advantage Fund - Regular Plan - Growth;398.7702;24-Jul-2026
+120512;INF179K01CC5;-;HDFC Hybrid Equity Fund - Direct Plan - Growth;101.2245;24-Jul-2026
+120513;INF179K01CD3;-;HDFC Hybrid Equity Fund - Regular Plan - Growth;96.5570;24-Jul-2026
+
+Open Ended Schemes(Other Scheme - Index Funds)
+
+UTI Mutual Fund
+
+120520;INF789F01DA2;-;UTI Nifty 50 Index Fund - Direct Plan - Growth;148.2214;24-Jul-2026
+120521;INF789F01DB0;-;UTI Nifty Next 50 Index Fund - Direct Plan - Growth;19.4471;24-Jul-2026

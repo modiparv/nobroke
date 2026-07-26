@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test \"src/wealth/**/*.test.ts\""
+    "test": "node --experimental-strip-types --test \"src/wealth/**/*.test.ts\" \"db/**/*.test.ts\" \"adapters/**/*.test.ts\""
   },
   "dependencies": {
     "groq-sdk": "latest",
