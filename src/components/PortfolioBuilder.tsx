@@ -264,7 +264,16 @@ export default function PortfolioBuilder() {
                           added ? "border-brand" : "border-line"
                         }`}
                       >
-                        <span className="min-w-0 flex-1 truncate text-support font-medium leading-tight">{row.schemeName}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-support font-medium leading-tight">{row.schemeName}</span>
+                          {(row.cagr3y != null || row.cagr5y != null) && (
+                            <span className="num block truncate text-caption text-muted">
+                              {row.cagr3y != null && <>3Y {formatPct(row.cagr3y, 1)}</>}
+                              {row.cagr3y != null && row.cagr5y != null && " · "}
+                              {row.cagr5y != null && <>5Y {formatPct(row.cagr5y, 1)}</>}
+                            </span>
+                          )}
+                        </span>
                         <span className={`flex-none rounded-full px-2 py-0.5 text-index font-medium uppercase tracking-wide ${added ? "bg-brand text-on-accent" : "border border-line text-muted"}`}>
                           {busy ? "…" : added ? "Added" : "Add"}
                         </span>
@@ -273,8 +282,8 @@ export default function PortfolioBuilder() {
                   })}
                 </div>
                 <p className="mt-1.5 text-caption text-text-3">
-                  AMFI scheme data from our instrument master. Projections for live schemes use category estimates, not
-                  past returns.
+                  Returns are past performance from official NAV history, not a promise. Projections use category
+                  estimates.
                 </p>
               </div>
             )}
@@ -345,10 +354,16 @@ export default function PortfolioBuilder() {
                 Historically <span className="num">{formatPct(band.low, 0)}</span> to{" "}
                 <span className="num">{formatPct(band.high, 0)}</span> a year. Not guaranteed.
               </p>
-              <p className="mt-1 text-support text-muted">
-                ₹1 lakh could be <span className="num">{formatINR(band.tenYearLow)}</span> to{" "}
-                <span className="num">{formatINR(band.tenYearHigh)}</span> in 10 years.
-              </p>
+              <div className="mt-2 space-y-1">
+                {[3, 5, 10].map((n) => (
+                  <p key={n} className="flex items-baseline justify-between gap-3 text-support text-muted">
+                    <span>₹1 lakh in {n} years</span>
+                    <span className="num">
+                      {formatINR(100000 * Math.pow(1 + band.low, n))} to {formatINR(100000 * Math.pow(1 + band.high, n))}
+                    </span>
+                  </p>
+                ))}
+              </div>
             </div>
           )}
 

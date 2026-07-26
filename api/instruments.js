@@ -17,7 +17,9 @@ import { makePool, resolveDatabaseUrl } from "./_data.js";
 
 let listCache = null;
 const LIST_TTL_MS = 12 * 3600 * 1000;
-const MAX_RESULTS = 30;
+// Kept small because every search result is enriched with real trailing
+// returns from its full NAV history before the response goes out.
+const MAX_RESULTS = 10;
 
 async function searchDb(q) {
   const pool = makePool();
@@ -89,29 +91,35 @@ export function trailingCagr(history, years) {
   return Math.pow(latestNav / pastNav, 1 / actualYears) - 1;
 }
 
+/** Full detail for one scheme: meta, latest NAV, and trailing CAGRs computed
+ *  from the complete NAV history. */
+async function schemeDetail(code) {
+  const r = await fetch(`https://api.mfapi.in/mf/${encodeURIComponent(String(code))}`);
+  if (!r.ok) throw new Error(`mfapi detail ${r.status}`);
+  const body = await r.json();
+  const history = body.data ?? [];
+  const latest = history[0];
+  return {
+    code: String(code),
+    name: body.meta?.scheme_name ?? "",
+    category: body.meta?.scheme_category ?? "",
+    fundHouse: body.meta?.fund_house ?? "",
+    nav: latest ? parseFloat(latest.nav) : null,
+    navDate: latest?.date ?? null,
+    cagr1y: trailingCagr(history, 1),
+    cagr3y: trailingCagr(history, 3),
+    cagr5y: trailingCagr(history, 5),
+  };
+}
+
 export default async function handler(req, res) {
   const q = typeof req.query?.q === "string" ? req.query.q.trim() : "";
   const code = typeof req.query?.code === "string" ? req.query.code.trim() : "";
 
   try {
     if (code) {
-      const r = await fetch(`https://api.mfapi.in/mf/${encodeURIComponent(code)}`);
-      if (!r.ok) throw new Error(`mfapi detail ${r.status}`);
-      const body = await r.json();
-      const history = body.data ?? [];
-      const latest = history[0];
       res.setHeader("Cache-Control", "s-maxage=21600, stale-while-revalidate=86400");
-      res.status(200).json({
-        code,
-        name: body.meta?.scheme_name ?? "",
-        category: body.meta?.scheme_category ?? "",
-        fundHouse: body.meta?.fund_house ?? "",
-        nav: latest ? parseFloat(latest.nav) : null,
-        navDate: latest?.date ?? null,
-        cagr1y: trailingCagr(history, 1),
-        cagr3y: trailingCagr(history, 3),
-        cagr5y: trailingCagr(history, 5),
-      });
+      res.status(200).json(await schemeDetail(code));
       return;
     }
 
@@ -130,6 +138,18 @@ export default async function handler(req, res) {
         results = await searchMfapi(q);
         source = "mfapi_fallback";
       }
+      // Real past returns on every result, the way fund pickers are expected
+      // to read. A failed enrichment degrades that row to name-only.
+      results = await Promise.all(
+        results.map(async (row) => {
+          try {
+            const d = await schemeDetail(row.schemeCode);
+            return { ...row, cagr1y: d.cagr1y, cagr3y: d.cagr3y, cagr5y: d.cagr5y };
+          } catch {
+            return { ...row, cagr1y: null, cagr3y: null, cagr5y: null };
+          }
+        }),
+      );
       res.setHeader("Cache-Control", "s-maxage=21600, stale-while-revalidate=86400");
       res.status(200).json({ results, source });
       return;
