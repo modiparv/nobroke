@@ -273,7 +273,8 @@ export default function PortfolioBuilder() {
                   })}
                 </div>
                 <p className="mt-1.5 text-caption text-text-3">
-                  AMFI scheme data via mfapi.in. Projections for live schemes use category estimates, not past returns.
+                  AMFI scheme data from our instrument master. Projections for live schemes use category estimates, not
+                  past returns.
                 </p>
               </div>
             )}

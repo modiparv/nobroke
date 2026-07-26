@@ -23,9 +23,13 @@ export default async function handler(_req, res) {
     pool = makePool();
     const db = new PgDb(pool);
     const syncs = await db.lastSuccessfulSyncs();
+    const counts = await pool.query(
+      `select (select count(*)::int from instrument) as instruments,
+              (select count(*)::int from price_quote) as quotes`,
+    );
     res.status(200).json({
       ok: true,
-      data: { sources: syncs },
+      data: { sources: syncs, instruments: counts.rows[0].instruments, quotes: counts.rows[0].quotes },
       as_of: new Date().toISOString(),
       sources: syncs.map((s) => s.dataSourceCode),
       confidence: "high",
