@@ -187,14 +187,20 @@ export class BlobStorage {
     this.token = token;
   }
 
+  /** Adapts to the store's access mode. A private store is the better home
+   *  for raw artifacts (Phase 2 holds user statements), so private is tried
+   *  whenever the store refuses public. */
   async put(key, payload, contentType) {
-    const res = await put(key, payload, {
-      access: "public",
-      contentType,
-      addRandomSuffix: false,
-      ...(this.token ? { token: this.token } : {}),
-    });
-    return res.url;
+    const base = { contentType, addRandomSuffix: false, ...(this.token ? { token: this.token } : {}) };
+    try {
+      const res = await put(key, payload, { access: "public", ...base });
+      return res.url;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!/private/i.test(msg)) throw err;
+      const res = await put(key, payload, { access: "private", ...base });
+      return res.url;
+    }
   }
 }
 
