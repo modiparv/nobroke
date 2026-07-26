@@ -1,4 +1,4 @@
-import { amfiAdapter, AMFI_URL, BlobStorage, makePool, PgDb, resolveDatabaseUrl, runSync } from "../_data.js";
+import { amfiAdapter, AMFI_URL, BlobStorage, makePool, PgDb, resolveBlobToken, resolveDatabaseUrl, runSync } from "../_data.js";
 
 /**
  * Nightly AMFI sync (Vercel cron, see vercel.json), also runnable by hand:
@@ -19,18 +19,25 @@ export default async function handler(req, res) {
     return;
   }
 
+  const blobToken = resolveBlobToken();
   const missing = [
     ...(resolveDatabaseUrl() ? [] : ["a Postgres URL (DATABASE_URL / POSTGRES_URL)"]),
-    ...(process.env.BLOB_READ_WRITE_TOKEN ? [] : ["BLOB_READ_WRITE_TOKEN"]),
+    ...(blobToken ? [] : ["a Blob read-write token (BLOB_READ_WRITE_TOKEN or *_READ_WRITE_TOKEN)"]),
   ];
   if (missing.length > 0) {
+    // Env NAMES only, never values: shows what the store connection actually
+    // created so a rename never needs another guessing round.
+    const blobEnvSeen = Object.keys(process.env).filter((n) => n.includes("BLOB")).sort();
     res.status(503).json({
       ok: false,
       data: null,
       as_of: null,
       sources: [],
       confidence: "stale",
-      warnings: [`data layer not provisioned: missing ${missing.join(", ")}. No sync attempted.`],
+      warnings: [
+        `data layer not provisioned: missing ${missing.join(", ")}. No sync attempted.`,
+        `blob-related env names present: ${blobEnvSeen.join(", ") || "(none)"}`,
+      ],
     });
     return;
   }
@@ -38,7 +45,7 @@ export default async function handler(req, res) {
   let pool = null;
   try {
     pool = makePool();
-    const ports = { db: new PgDb(pool), storage: new BlobStorage(), now: () => new Date() };
+    const ports = { db: new PgDb(pool), storage: new BlobStorage(blobToken), now: () => new Date() };
     const result = await runSync(amfiAdapter(ports), ports, AMFI_URL);
     res.status(result.status === "success" ? 200 : 502).json({
       ok: result.status === "success",

@@ -158,9 +158,26 @@ export class PgDb {
 
 // ---- db/blob.ts ----
 
+/** The Blob store's read-write token: the classic name, or any custom-prefix
+ *  variant the newer store connections create (<PREFIX>_READ_WRITE_TOKEN). */
+export function resolveBlobToken() {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
+  const key = Object.keys(process.env).find((n) => n.endsWith("_READ_WRITE_TOKEN"));
+  return key ? process.env[key] : null;
+}
+
 export class BlobStorage {
+  constructor(token) {
+    this.token = token;
+  }
+
   async put(key, payload, contentType) {
-    const res = await put(key, payload, { access: "public", contentType, addRandomSuffix: false });
+    const res = await put(key, payload, {
+      access: "public",
+      contentType,
+      addRandomSuffix: false,
+      ...(this.token ? { token: this.token } : {}),
+    });
     return res.url;
   }
 }
