@@ -4,14 +4,14 @@
  * does not exist yet.
  */
 export default async function handler(_req: any, res: any) {
-  if (!process.env.DATABASE_URL) {
+  if (!(process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.POSTGRES_URL_NON_POOLING)) {
     res.status(503).json({
       ok: false,
       data: null,
       as_of: null,
       sources: [],
       confidence: "stale",
-      warnings: ["data layer not provisioned: DATABASE_URL missing."],
+      warnings: ["data layer not provisioned: no Postgres URL (DATABASE_URL / POSTGRES_URL)."],
     });
     return;
   }

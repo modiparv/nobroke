@@ -149,8 +149,14 @@ export class PgDb implements DbPort {
   }
 }
 
+/** The Neon/Vercel integration names the connection string differently across
+ *  versions; accept the common spellings so provisioning "just works". */
+export function resolveDatabaseUrl(): string | null {
+  return process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.POSTGRES_URL_NON_POOLING ?? null;
+}
+
 export function makePool(): Pool {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set");
+  const url = resolveDatabaseUrl();
+  if (!url) throw new Error("no Postgres connection string (DATABASE_URL / POSTGRES_URL)");
   return new Pool({ connectionString: url });
 }

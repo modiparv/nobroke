@@ -17,7 +17,11 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const missing = ["DATABASE_URL", "BLOB_READ_WRITE_TOKEN"].filter((k) => !process.env[k]);
+  const hasDb = !!(process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.POSTGRES_URL_NON_POOLING);
+  const missing = [
+    ...(hasDb ? [] : ["a Postgres URL (DATABASE_URL / POSTGRES_URL)"]),
+    ...(process.env.BLOB_READ_WRITE_TOKEN ? [] : ["BLOB_READ_WRITE_TOKEN"]),
+  ];
   if (missing.length > 0) {
     res.status(503).json({
       ok: false,

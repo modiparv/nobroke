@@ -15,8 +15,8 @@ export default async function handler(req: any, res: any) {
     res.status(401).json({ ok: false, error: "unauthorized" });
     return;
   }
-  if (!process.env.DATABASE_URL) {
-    res.status(503).json({ ok: false, error: "DATABASE_URL is not set" });
+  if (!(process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.POSTGRES_URL_NON_POOLING)) {
+    res.status(503).json({ ok: false, error: "no Postgres connection string (DATABASE_URL / POSTGRES_URL)" });
     return;
   }
 
