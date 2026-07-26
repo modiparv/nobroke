@@ -1,12 +1,15 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { makePool, resolveDatabaseUrl } from "../../db/pg.ts";
+import type { Pool } from "@neondatabase/serverless";
 
 /**
  * Applies pending SQL migrations from db/migrations in filename order,
  * tracked in schema_migration so each file runs exactly once. Guarded by
  * CRON_SECRET; POST applies, GET reports.
  *
- *   curl -X POST -H "Authorization: Bearer $CRON_SECRET" .../api/admin/migrate
+ * Imports are static: the bundler inlines them, while dynamic import paths
+ * survive as literal specifiers that do not exist at runtime.
  */
 export default async function handler(req: any, res: any) {
   const secret = process.env.CRON_SECRET;
@@ -15,14 +18,15 @@ export default async function handler(req: any, res: any) {
     res.status(401).json({ ok: false, error: "unauthorized" });
     return;
   }
-  if (!(process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.POSTGRES_URL_NON_POOLING)) {
-    res.status(503).json({ ok: false, error: "no Postgres connection string (DATABASE_URL / POSTGRES_URL)" });
-    return;
-  }
 
-  const { makePool } = await import("../../db/pg.ts");
-  const pool = makePool();
+  let pool: Pool | null = null;
   try {
+    if (!resolveDatabaseUrl()) {
+      res.status(503).json({ ok: false, error: "no Postgres connection string (DATABASE_URL / POSTGRES_URL)" });
+      return;
+    }
+    pool = makePool();
+
     await pool.query(
       `create table if not exists schema_migration (
          id text primary key,
@@ -54,6 +58,6 @@ export default async function handler(req: any, res: any) {
     console.error("migrate failed", err);
     res.status(500).json({ ok: false, error: err instanceof Error ? err.message : String(err) });
   } finally {
-    await pool.end();
+    if (pool) await pool.end().catch(() => {});
   }
 }

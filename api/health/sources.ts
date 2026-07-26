@@ -1,10 +1,13 @@
+import { makePool, PgDb, resolveDatabaseUrl } from "../../db/pg.ts";
+import type { Pool } from "@neondatabase/serverless";
+
 /**
  * GET /api/health/sources: last successful sync per data source, in the
  * standard read envelope. Reports not-provisioned honestly if the database
  * does not exist yet.
  */
 export default async function handler(_req: any, res: any) {
-  if (!(process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.POSTGRES_URL_NON_POOLING)) {
+  if (!resolveDatabaseUrl()) {
     res.status(503).json({
       ok: false,
       data: null,
@@ -16,9 +19,9 @@ export default async function handler(_req: any, res: any) {
     return;
   }
 
-  const { makePool, PgDb } = await import("../../db/pg.ts");
-  const pool = makePool();
+  let pool: Pool | null = null;
   try {
+    pool = makePool();
     const db = new PgDb(pool);
     const syncs = await db.lastSuccessfulSyncs();
     res.status(200).json({
@@ -40,6 +43,6 @@ export default async function handler(_req: any, res: any) {
       warnings: [err instanceof Error ? err.message : String(err)],
     });
   } finally {
-    await pool.end();
+    if (pool) await pool.end().catch(() => {});
   }
 }

@@ -1,3 +1,9 @@
+import { makePool, PgDb, resolveDatabaseUrl } from "../../db/pg.ts";
+import { BlobStorage } from "../../db/blob.ts";
+import { amfiAdapter, AMFI_URL } from "../../adapters/amfi.ts";
+import { runSync } from "../../db/runner.ts";
+import type { Pool } from "@neondatabase/serverless";
+
 /**
  * Nightly AMFI sync (Vercel cron, see vercel.json), also runnable by hand:
  *
@@ -17,9 +23,8 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const hasDb = !!(process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.POSTGRES_URL_NON_POOLING);
   const missing = [
-    ...(hasDb ? [] : ["a Postgres URL (DATABASE_URL / POSTGRES_URL)"]),
+    ...(resolveDatabaseUrl() ? [] : ["a Postgres URL (DATABASE_URL / POSTGRES_URL)"]),
     ...(process.env.BLOB_READ_WRITE_TOKEN ? [] : ["BLOB_READ_WRITE_TOKEN"]),
   ];
   if (missing.length > 0) {
@@ -34,16 +39,10 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const [{ makePool, PgDb }, { BlobStorage }, { amfiAdapter, AMFI_URL }, { runSync }] = await Promise.all([
-    import("../../db/pg.ts"),
-    import("../../db/blob.ts"),
-    import("../../adapters/amfi.ts"),
-    import("../../db/runner.ts"),
-  ]);
-
-  const pool = makePool();
-  const ports = { db: new PgDb(pool), storage: new BlobStorage(), now: () => new Date() };
+  let pool: Pool | null = null;
   try {
+    pool = makePool();
+    const ports = { db: new PgDb(pool), storage: new BlobStorage(), now: () => new Date() };
     const result = await runSync(amfiAdapter(ports), ports, AMFI_URL);
     res.status(result.status === "success" ? 200 : 502).json({
       ok: result.status === "success",
@@ -53,7 +52,17 @@ export default async function handler(req: any, res: any) {
       confidence: result.status === "success" ? "high" : "stale",
       warnings: result.error ? [result.error] : [],
     });
+  } catch (err) {
+    console.error("sync/amfi failed", err);
+    res.status(500).json({
+      ok: false,
+      data: null,
+      as_of: null,
+      sources: [],
+      confidence: "stale",
+      warnings: [err instanceof Error ? err.message : String(err)],
+    });
   } finally {
-    await pool.end();
+    if (pool) await pool.end().catch(() => {});
   }
 }

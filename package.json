@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.2.0",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "description": "NoBroke — the dating agent for your money. AI-powered financial planning copilot for Gen-Z & millennials.",
   "scripts": {
     "dev": "vite",
