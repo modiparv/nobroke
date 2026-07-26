@@ -159,11 +159,27 @@ export class PgDb {
 // ---- db/blob.ts ----
 
 /** The Blob store's read-write token: the classic name, or any custom-prefix
- *  variant the newer store connections create (<PREFIX>_READ_WRITE_TOKEN). */
+ *  variant the newer store connections create (<PREFIX>_READ_WRITE_TOKEN).
+ *  Values pasted from .env snippets arrive wrapped in quotes or as a whole
+ *  KEY=value line; both are cleaned up rather than rejected. */
 export function resolveBlobToken() {
-  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
-  const key = Object.keys(process.env).find((n) => n.endsWith("_READ_WRITE_TOKEN"));
-  return key ? process.env[key] : null;
+  const raw = process.env.BLOB_READ_WRITE_TOKEN ?? (() => {
+    const key = Object.keys(process.env).find((n) => n.endsWith("_READ_WRITE_TOKEN"));
+    return key ? process.env[key] : null;
+  })();
+  if (!raw) return null;
+  let v = raw.trim();
+  if (/READ_WRITE_TOKEN\s*=/.test(v)) v = v.slice(v.indexOf("=") + 1).trim();
+  v = v.replace(/^["']+|["']+$/g, "").trim();
+  return v || null;
+}
+
+/** Shape of the token for diagnostics: prefix validity and length, never the
+ *  value. The vercel_blob_rw_ prefix is the product's public convention. */
+export function blobTokenShape() {
+  const v = resolveBlobToken();
+  if (!v) return "absent";
+  return `${v.startsWith("vercel_blob_rw_") ? "has" : "does NOT have"} the vercel_blob_rw_ prefix, length ${v.length}`;
 }
 
 export class BlobStorage {

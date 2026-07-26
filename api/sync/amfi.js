@@ -1,4 +1,14 @@
-import { amfiAdapter, AMFI_URL, BlobStorage, makePool, PgDb, resolveBlobToken, resolveDatabaseUrl, runSync } from "../_data.js";
+import {
+  amfiAdapter,
+  AMFI_URL,
+  BlobStorage,
+  blobTokenShape,
+  makePool,
+  PgDb,
+  resolveBlobToken,
+  resolveDatabaseUrl,
+  runSync,
+} from "../_data.js";
 
 /**
  * Nightly AMFI sync (Vercel cron, see vercel.json), also runnable by hand:
@@ -47,13 +57,17 @@ export default async function handler(req, res) {
     pool = makePool();
     const ports = { db: new PgDb(pool), storage: new BlobStorage(blobToken), now: () => new Date() };
     const result = await runSync(amfiAdapter(ports), ports, AMFI_URL);
+    const warnings = result.error ? [result.error] : [];
+    // A Blob failure with a token present is nearly always a polluted paste;
+    // describe the token's shape (never its value) so the fix is obvious.
+    if (result.error && /blob/i.test(result.error)) warnings.push(`blob token: ${blobTokenShape()}`);
     res.status(result.status === "success" ? 200 : 502).json({
       ok: result.status === "success",
       data: { runId: result.runId, ingested: result.ingested, skipped: result.skipped },
       as_of: new Date().toISOString(),
       sources: ["amfi"],
       confidence: result.status === "success" ? "high" : "stale",
-      warnings: result.error ? [result.error] : [],
+      warnings,
     });
   } catch (err) {
     console.error("sync/amfi failed", err);
