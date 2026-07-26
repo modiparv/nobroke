@@ -25,6 +25,36 @@ function setAnswer(field: string, value: string | number) {
 }
 
 /**
+ * Plausibility checks against the answers already given. An implausible
+ * answer is never blocked outright, but it is challenged: the person must
+ * confirm it is genuinely true before the intake moves on. Honest numbers
+ * are the plan's foundation.
+ */
+const CHECKS: Record<string, (v: number, p: Profile) => string | null> = {
+  takeHome: (v) =>
+    v > 0 && v < 5000 ? "A take-home below ₹5,000 a month is unusual. Confirm only if it is accurate." : null,
+  rent: (v, p) =>
+    p.takeHome > 0 && v >= p.takeHome
+      ? "Rent alone equals your entire take-home. Confirm only if that is truly the case."
+      : null,
+  emi: (v, p) =>
+    p.takeHome > 0 && p.rent + v >= p.takeHome
+      ? "Rent and EMIs together exceed your take-home. Confirm only if that is truly the case."
+      : null,
+  monthlySpend: (v, p) => {
+    if (p.takeHome > 0 && p.rent + p.emi + v >= p.takeHome)
+      return "These numbers say you spend more than you earn. A plan built on honest figures works; one built on guesses does not. Confirm only if this is truly the case.";
+    if (v === 0)
+      return "Zero for groceries, bills and transport is rare. Confirm only if someone else genuinely covers all of it.";
+    return null;
+  },
+  investedValue: (v, p) =>
+    p.takeHome > 0 && v > p.takeHome * 600
+      ? "That is a very large portfolio against this income. Confirm only if the value is accurate."
+      : null,
+};
+
+/**
  * A compulsory money question: type the exact amount, then continue. Continue
  * stays disabled until an explicit answer exists (0 typed out counts; an empty
  * field does not), which is what makes the intake honest.
@@ -34,6 +64,7 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
     ? Number((getState().profile as unknown as Record<string, unknown>)[step.field!] ?? 0)
     : Number(getState().onboardingAnswers[step.field!] ?? 0);
   const [raw, setRaw] = useState(prior > 0 ? String(prior) : "");
+  const [challenge, setChallenge] = useState<string | null>(null);
 
   const min = step.min ?? 0;
   const value = raw === "" ? null : Number(raw);
@@ -41,6 +72,13 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
 
   const commit = () => {
     if (!ok) return;
+    const check = CHECKS[step.field!];
+    const message = check ? check(value!, getState().profile) : null;
+    // First press surfaces the challenge; the second, unchanged press confirms.
+    if (message && challenge !== message) {
+      setChallenge(message);
+      return;
+    }
     setAnswer(step.field!, value!);
     onContinue();
   };
@@ -58,7 +96,10 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
           value={raw === "" ? "" : Number(raw).toLocaleString("en-IN")}
           placeholder="0"
           aria-label={step.title}
-          onChange={(e) => setRaw(e.target.value.replace(/[^\d]/g, ""))}
+          onChange={(e) => {
+            setRaw(e.target.value.replace(/[^\d]/g, ""));
+            setChallenge(null);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") commit();
           }}
@@ -68,8 +109,13 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
       {min > 0 && raw !== "" && !ok && (
         <p className="mt-3 text-caption text-muted">Enter at least ₹{min.toLocaleString("en-IN")}.</p>
       )}
+      {challenge && (
+        <p className="mt-5 max-w-[46ch] rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-caption text-text">
+          {challenge}
+        </p>
+      )}
       <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={commit} disabled={!ok}>
-        Continue
+        {challenge ? "Yes, this is right" : "Continue"}
       </button>
     </div>
   );

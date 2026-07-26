@@ -10,7 +10,7 @@ export interface LiveSchemeRow {
   schemeCode: number;
   schemeName: string;
   /** Real trailing returns from official NAV history; null when the scheme
-   *  is too young for the window. History, never a promise. */
+   *  is too young for the window. */
   cagr1y?: number | null;
   cagr3y?: number | null;
   cagr5y?: number | null;

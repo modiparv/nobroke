@@ -4,6 +4,7 @@ import { allocationTotal, bandWeights, computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
 import { btnPrimary, card } from "../ui";
+import AdvisorNote from "./AdvisorNote";
 import AppHeader from "./AppHeader";
 import GoalCard from "./GoalCard";
 import MoneyTab from "./MoneyTab";
@@ -177,6 +178,7 @@ export default function Plan() {
         <div className={`grid gap-4 py-6 ${s.goals.length ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start" : ""}`}>
           {/* Goals: the major pane (60 percent on desktop). */}
           <div className="flex min-w-0 flex-col gap-4">
+            {s.goals.length > 0 && <AdvisorNote />}
             {s.goals.length > 1 && (
               <div className="flex items-center justify-end">
                 <button

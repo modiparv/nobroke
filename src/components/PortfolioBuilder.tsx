@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ASSET_CLASSES, CATEGORY_FILTERS, FUNDS, FUND_MAP, registerFund } from "../lib/funds";
+import { ASSET_CLASSES, FUND_MAP, registerFund } from "../lib/funds";
 import { fundFromLiveScheme, getLiveSchemeDetail, searchLiveSchemes, type LiveSchemeRow } from "../lib/instrumentsApi";
 import { MODEL_PORTFOLIOS } from "../lib/portfolios";
 import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
@@ -14,7 +14,7 @@ const CLASS_ORDER: AssetClassId[] = ["equity", "hybrid", "gold", "debt"];
  * An illustrative spread around the blended return, so we never print a point
  * estimate (spec section 5). These multipliers are a presentation band, NOT a
  * modelled confidence interval; a real p10/p90 needs the Monte Carlo work in a
- * later phase, and the copy says "not guaranteed" for that reason.
+ * later phase; the copy frames every figure as a range or as history.
  */
 const BAND_LOW = 0.7;
 const BAND_HIGH = 1.15;
@@ -44,8 +44,8 @@ export default function PortfolioBuilder() {
   const s = useStore();
   const alloc: Allocation = s.portfolio;
   const [search, setSearch] = useState("");
-  const [cat, setCat] = useState<"all" | AssetClassId>("all");
   const [dragOver, setDragOver] = useState(false);
+  const [riskOpen, setRiskOpen] = useState(false);
 
   // Live universe search (AMFI via /api/instruments), debounced. Failures are
   // silent: the built-in list keeps working without the network.
@@ -135,9 +135,6 @@ export default function PortfolioBuilder() {
   };
   const applyPreset = (key: RiskProfile) => setAlloc(normalizeTo100(MODEL_PORTFOLIOS[key].allocation), key);
 
-  const filtered = FUNDS.filter(
-    (f) => (cat === "all" || f.assetClass === cat) && f.name.toLowerCase().includes(search.toLowerCase()),
-  );
   const holdings = Object.keys(alloc).sort(
     (a, b) => CLASS_ORDER.indexOf(FUND_MAP[a]?.assetClass) - CLASS_ORDER.indexOf(FUND_MAP[b]?.assetClass),
   );
@@ -179,18 +176,35 @@ export default function PortfolioBuilder() {
         </div>
       )}
 
+      {/* Near-term risk: one compact line; the reasoning sits behind a tap so
+          it never crowds the pane. */}
       {nearTermRisk && soonGoal && (
-        <p className="mb-3 rounded-lg border border-ink/15 bg-surface-2 px-2.5 py-1.5 text-xs text-ink">
-          ⚠️ <span className="font-medium">{soonGoal.name}</span> is {soonGoal.horizonYears}{" "}
-          {soonGoal.horizonYears === 1 ? "year" : "years"} away. Too much in stocks for a goal this close. Try a calmer
-          mix.
-        </p>
+        <div className="mb-3">
+          <button
+            onClick={() => setRiskOpen((v) => !v)}
+            aria-expanded={riskOpen}
+            title={`${soonGoal.name} is ${soonGoal.horizonYears} ${soonGoal.horizonYears === 1 ? "year" : "years"} away and this mix leans on stocks.`}
+            className="flex w-full items-center justify-between gap-2 rounded-lg border border-line bg-surface-2 px-2.5 py-1.5 text-left"
+          >
+            <span className="truncate text-xs text-ink">
+              ⚠️ <span className="font-medium">{soonGoal.name}</span> is close. Review the mix.
+            </span>
+            <span className="flex-none text-caption text-muted">{riskOpen ? "Hide" : "Why"}</span>
+          </button>
+          {riskOpen && (
+            <p className="mt-1.5 px-1 text-xs text-muted">
+              {soonGoal.name} is {soonGoal.horizonYears} {soonGoal.horizonYears === 1 ? "year" : "years"} away and this
+              mix leans on stocks, which move sharply over short periods. For money needed soon, we would hold a calmer
+              mix or add a little more each month.
+            </p>
+          )}
+        </div>
       )}
 
       {/* Single column: the builder lives in the 40 percent pane beside the
           goals, so its sections stack. The mix leads; picking funds follows. */}
       <div className="grid gap-5">
-        {/* ---- Funds library (drag source) ---- */}
+        {/* ---- Fund search: the live AMFI universe only ---- */}
         <div className="order-2 min-w-0">
           <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
             <Marker /> Pick your own (optional)
@@ -198,59 +212,23 @@ export default function PortfolioBuilder() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search funds"
+            placeholder="Search any fund, A to Z"
             className="mt-2 h-9 w-full rounded-[10px] border border-line bg-surface px-3 text-sm outline-none focus:border-ink"
           />
-          <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
-            {CATEGORY_FILTERS.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setCat(c.id)}
-                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                  cat === c.id ? "bg-surface-2 text-text" : "border border-line text-muted hover:border-ink/40"
-                }`}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
 
           <div className="no-scrollbar mt-3 flex max-h-[22rem] flex-col gap-1.5 overflow-y-auto pr-0.5">
-            {filtered.map((f) => {
-              const ac = ASSET_CLASSES[f.assetClass];
-              const added = f.id in alloc;
-              return (
-                <div
-                  key={f.id}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", f.id);
-                    e.dataTransfer.effectAllowed = "copy";
-                  }}
-                  onClick={() => (added ? removeFund(f.id) : addFund(f.id))}
-                  className={`flex cursor-grab select-none items-center gap-2 rounded-lg border bg-surface px-2.5 py-1.5 transition hover:border-brand active:cursor-grabbing ${
-                    added ? "border-brand" : "border-line"
-                  }`}
-                >
-                  <span className="h-6 w-1 flex-none rounded-full" style={{ background: ac.color }} />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-support font-medium leading-tight">{f.name}</div>
-                    <div className="truncate text-caption text-muted">{ac.label}</div>
-                  </div>
-                  <span className={`flex-none rounded-full px-2 py-0.5 text-index font-medium uppercase tracking-wide ${added ? "bg-brand text-on-accent" : "border border-line text-muted"}`}>
-                    {added ? "Added" : "Add"}
-                  </span>
-                </div>
-              );
-            })}
-            {filtered.length === 0 && liveRows.length === 0 && !liveBusy && (
-              <p className="py-6 text-center text-sm text-muted">No funds match “{search}”.</p>
+            {search.trim().length < 3 && !liveBusy && liveRows.length === 0 && (
+              <p className="py-4 text-center text-caption text-muted">
+                Type 3 or more letters to search every AMFI-listed scheme.
+              </p>
+            )}
+            {search.trim().length >= 3 && !liveBusy && liveRows.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted">No scheme matches “{search}”.</p>
             )}
 
             {(liveBusy || liveRows.length > 0) && (
-              <div className="mt-2">
-                <span className={sectionLabel}>Live universe · AMFI</span>
-                {liveBusy && <p className="mt-1.5 text-caption text-muted">Searching every scheme…</p>}
+              <div>
+                {liveBusy && <p className="mt-1 text-caption text-muted">Searching every scheme…</p>}
                 <div className="mt-1.5 flex flex-col gap-1.5">
                   {liveRows.map((row) => {
                     const id = `live_${row.schemeCode}`;
@@ -281,10 +259,7 @@ export default function PortfolioBuilder() {
                     );
                   })}
                 </div>
-                <p className="mt-1.5 text-caption text-text-3">
-                  Returns are past performance from official NAV history, not a promise. Projections use category
-                  estimates.
-                </p>
+                <p className="mt-1.5 text-caption text-text-3">Actual past performance, from official NAV records.</p>
               </div>
             )}
           </div>
@@ -352,7 +327,7 @@ export default function PortfolioBuilder() {
             <div className="mt-4 rounded-xl border border-line bg-surface-2 px-3.5 py-3">
               <p className="text-support text-ink">
                 Historically <span className="num">{formatPct(band.low, 0)}</span> to{" "}
-                <span className="num">{formatPct(band.high, 0)}</span> a year. Not guaranteed.
+                <span className="num">{formatPct(band.high, 0)}</span> a year for a mix like this.
               </p>
               <div className="mt-2 space-y-1">
                 {[3, 5, 10].map((n) => (
