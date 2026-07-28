@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from "react";
 import type { Allocation, ChatMessage, Holding, PlanGoal, PlanInputs, Profile, RiskProfile } from "./lib/types";
 import { GOAL_MAP } from "./lib/goals";
-import { autoAllocation } from "./lib/portfolios";
+import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios";
 import { adjustedTarget, emptyProfile, suggestedSip } from "./lib/profile";
+import { assessRiskAppetite, capProfile } from "./lib/risk";
 import { askGroq } from "./lib/groq";
 import { FUND_MAP } from "./lib/funds";
 import { computePlan, blendedReturn, requiredCorpus, requiredSip } from "./lib/finance";
@@ -20,6 +21,9 @@ export interface AppState {
   inflation: number;
   /** Where the inflation assumption came from; a user's explicit choice is never overwritten. */
   inflationSource: "default" | "macro" | "user";
+  /** 0..100. Assessed from the intake, adjustable by hand; caps every mix recommendation. */
+  riskAppetite: number;
+  riskAppetiteSource: "assessed" | "user";
   monthlySip: number;
   currentSavings: number;
   /** Monthly take-home income from the intake; editable later in Money. */
@@ -63,6 +67,8 @@ const defaults: AppState = {
   profile: emptyProfile(),
   inflation: 0.06,
   inflationSource: "default",
+  riskAppetite: 50,
+  riskAppetiteSource: "assessed",
   monthlySip: 25000,
   currentSavings: 0,
   monthlyIncome: 0,
@@ -250,7 +256,10 @@ function buildPlanGoal(goalId: string, profile: Profile, horizonOverride?: numbe
     goals' corpus-weighted time horizon — bigger / longer goals pull the single mix
     toward equity, shorter ones toward debt — then flag any near-term mismatch in
     the UI. This keeps the user on ONE simple mix instead of a basket per goal. */
-export function recommendedPortfolio(goals: PlanGoal[]): { allocation: Allocation; profile: RiskProfile } {
+export function recommendedPortfolio(
+  goals: PlanGoal[],
+  riskAppetite = 50,
+): { allocation: Allocation; profile: RiskProfile } {
   if (goals.length === 0) return { allocation: {}, profile: "balanced" };
   let weight = 0;
   let weightedYears = 0;
@@ -260,8 +269,9 @@ export function recommendedPortfolio(goals: PlanGoal[]): { allocation: Allocatio
     weightedYears += w * g.horizonYears;
   }
   const horizon = weight > 0 ? weightedYears / weight : goals[0].horizonYears;
-  const auto = autoAllocation(horizon);
-  return { allocation: { ...auto.allocation }, profile: auto.profile };
+  // Horizon suggests the mix; the person's risk appetite caps it.
+  const profile = capProfile(autoAllocation(horizon).profile, riskAppetite);
+  return { allocation: { ...MODEL_PORTFOLIOS[profile].allocation }, profile };
 }
 
 // ---- Navigation ----
@@ -298,13 +308,22 @@ export const actions = {
     );
     const monthlySip = suggestedSip(p);
     const order = orderByTenure(goals);
-    const { allocation: portfolio, profile: portfolioProfile } = recommendedPortfolio(goals);
+    const riskAppetite = assessRiskAppetite({
+      profile: p,
+      goals,
+      monthlyIncome: p.takeHome,
+      monthlyExpenses: p.rent + p.emi + p.monthlySpend,
+      currentSavings: p.cashOnHand,
+    });
+    const { allocation: portfolio, profile: portfolioProfile } = recommendedPortfolio(goals, riskAppetite);
     set({
       goals,
       currentGoalId: goals[0].id,
       goalOrder: order,
       goalShares: recommendShares(goals, order, monthlySip, state.inflation, portfolio),
       goalOrderCustom: false,
+      riskAppetite,
+      riskAppetiteSource: "assessed",
       monthlySip,
       monthlyIncome: p.takeHome,
       monthlyExpenses: p.rent + p.emi + p.monthlySpend,
@@ -337,10 +356,19 @@ export const actions = {
     const goals = selected.map((id, i) => buildPlanGoal(id, profile, i === 0 ? 7 : undefined, true));
     const monthlySip = suggestedSip(profile);
     const order = orderByTenure(goals);
-    const { allocation: portfolio, profile: portfolioProfile } = recommendedPortfolio(goals);
+    const riskAppetite = assessRiskAppetite({
+      profile,
+      goals,
+      monthlyIncome: profile.takeHome,
+      monthlyExpenses: profile.rent + profile.emi + profile.monthlySpend,
+      currentSavings: profile.cashOnHand,
+    });
+    const { allocation: portfolio, profile: portfolioProfile } = recommendedPortfolio(goals, riskAppetite);
     set({
       profile,
       selectedGoalIds: selected,
+      riskAppetite,
+      riskAppetiteSource: "assessed",
       goals,
       currentGoalId: goals[0].id,
       goalOrder: order,
@@ -370,9 +398,26 @@ export const actions = {
       auto-re-recommending a mix from the goals' horizon. */
   setPortfolio: (portfolio: Allocation, portfolioProfile: RiskProfile | null) =>
     set({ portfolio, portfolioProfile, portfolioCustom: true }),
+  /** The user owns the dial. Recommendations respect it immediately; a mix
+      the user built by hand is left alone. */
+  setRiskAppetite: (v: number) => {
+    const riskAppetite = Math.max(0, Math.min(100, Math.round(v)));
+    if (state.portfolioCustom || state.goals.length === 0) {
+      set({ riskAppetite, riskAppetiteSource: "user" });
+      return;
+    }
+    const rec = recommendedPortfolio(state.goals, riskAppetite);
+    set({
+      riskAppetite,
+      riskAppetiteSource: "user",
+      portfolio: rec.allocation,
+      portfolioProfile: rec.profile,
+    });
+  },
+
   /** Re-tune the single mix to the goals' blended horizon (the ✨ advisor pick). */
   recommendPortfolio: () => {
-    const { allocation, profile } = recommendedPortfolio(state.goals);
+    const { allocation, profile } = recommendedPortfolio(state.goals, state.riskAppetite);
     set({ portfolio: allocation, portfolioProfile: profile, portfolioCustom: false });
   },
 
@@ -386,7 +431,7 @@ export const actions = {
     const order = state.goalOrderCustom ? [...state.goalOrder, goal.id] : orderByTenure(goals);
     // A new goal can shift the goals' blended horizon, so re-tune the shared
     // portfolio too — unless the user has hand-customized it.
-    const rec = recommendedPortfolio(goals);
+    const rec = recommendedPortfolio(goals, state.riskAppetite);
     const portfolio = state.portfolioCustom ? state.portfolio : rec.allocation;
     const portfolioProfile = state.portfolioCustom ? state.portfolioProfile : rec.profile;
     set({
@@ -495,7 +540,7 @@ export const actions = {
     }
     const currentGoalId = state.currentGoalId === id ? goals[0]?.id ?? "" : state.currentGoalId;
     // Re-tune the shared mix to whatever goals remain (unless hand-customized).
-    const rec = recommendedPortfolio(goals);
+    const rec = recommendedPortfolio(goals, state.riskAppetite);
     const keep = state.portfolioCustom || goals.length === 0;
     const portfolio = keep ? state.portfolio : rec.allocation;
     const portfolioProfile = keep ? state.portfolioProfile : rec.profile;

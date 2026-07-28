@@ -6,6 +6,7 @@ import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
 import { formatINR, formatPct } from "../lib/format";
 import type { Allocation, AssetClassId, RiskProfile } from "../lib/types";
 import { actions, recommendedPortfolio, useStore } from "../store";
+import RiskMeter from "./RiskMeter";
 import { sectionLabel } from "../ui";
 
 const CLASS_ORDER: AssetClassId[] = ["equity", "hybrid", "gold", "debt"];
@@ -158,7 +159,7 @@ export default function PortfolioBuilder() {
   const equityHeavy = total > 0 && equityShare > 0.7 && bands.debt / Math.max(total, 1) < 0.1;
 
   // ---- Advisor overlay: a mix matched to the goals' blended horizon ----
-  const rec = recommendedPortfolio(s.goals);
+  const rec = recommendedPortfolio(s.goals, s.riskAppetite);
   const recLabel = MODEL_PORTFOLIOS[rec.profile].label;
   const matchesRec = s.portfolioProfile === rec.profile;
   const soonGoal = s.goals.length ? [...s.goals].sort((a, b) => a.horizonYears - b.horizonYears)[0] : undefined;
@@ -174,6 +175,7 @@ export default function PortfolioBuilder() {
 
   return (
     <div>
+      <RiskMeter />
 
       {/* Advisor pick — match the single mix to the goals' blended horizon */}
       {s.goals.length > 0 && !matchesRec && (
