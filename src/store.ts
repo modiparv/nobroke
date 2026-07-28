@@ -18,6 +18,8 @@ export interface AppState {
   selectedGoalIds: string[];
   profile: Profile;
   inflation: number;
+  /** Where the inflation assumption came from; a user's explicit choice is never overwritten. */
+  inflationSource: "default" | "macro" | "user";
   monthlySip: number;
   currentSavings: number;
   /** Monthly take-home income from the intake; editable later in Money. */
@@ -53,13 +55,14 @@ export interface AppState {
   chatTyping: boolean;
 }
 
-let state: AppState = {
+const defaults: AppState = {
   screen: "landing",
   onboardingStepIndex: 0,
   onboardingAnswers: {},
   selectedGoalIds: [],
   profile: emptyProfile(),
   inflation: 0.06,
+  inflationSource: "default",
   monthlySip: 25000,
   currentSavings: 0,
   monthlyIncome: 0,
@@ -80,12 +83,49 @@ let state: AppState = {
   chatTyping: false,
 };
 
+/**
+ * Persistence: the plan survives a refresh. Everything except the chat thread
+ * is saved to localStorage a moment after each change; a version key means a
+ * future shape change degrades to a clean start, never a crash.
+ */
+const STORAGE_KEY = "nobroke_state_v1";
+
+function loadPersisted(): Partial<AppState> | null {
+  try {
+    if (typeof localStorage === "undefined") return null;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { v?: number; state?: Partial<AppState> };
+    if (parsed?.v !== 1 || typeof parsed.state !== "object" || parsed.state === null) return null;
+    return parsed.state;
+  } catch {
+    return null;
+  }
+}
+
+let state: AppState = { ...defaults, ...loadPersisted(), chatOpen: false, chat: [], chatTyping: false };
+
+let saveTimer: ReturnType<typeof setTimeout> | undefined;
+function persist() {
+  if (typeof localStorage === "undefined") return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      const { chat: _c, chatOpen: _o, chatTyping: _t, ...rest } = state;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, state: rest }));
+    } catch {
+      // Storage full or blocked: the app still works, it just will not survive a refresh.
+    }
+  }, 300);
+}
+
 const listeners = new Set<() => void>();
 function emit() {
   for (const l of listeners) l();
 }
 function set(patch: Partial<AppState>) {
   state = { ...state, ...patch };
+  persist();
   emit();
 }
 
@@ -371,7 +411,15 @@ export const actions = {
   setSavings: (v: number) => set({ currentSavings: v }),
   setIncome: (v: number) => set({ monthlyIncome: Math.max(0, Math.round(v)) }),
   setExpenses: (v: number) => set({ monthlyExpenses: Math.max(0, Math.round(v)) }),
-  setInflation: (v: number) => set({ inflation: v }),
+  setInflation: (v: number) => set({ inflation: v, inflationSource: "user" }),
+
+  /** Live CPI from the macro feed becomes the planning default, but never
+      tramples an inflation rate the user set by hand. */
+  applyMacroInflation: (annualPct: number) => {
+    if (state.inflationSource === "user") return;
+    if (!(annualPct > 0) || annualPct > 25) return;
+    set({ inflation: Math.round(annualPct * 10) / 1000, inflationSource: "macro" });
+  },
 
   // ---- Goal-based waterfall: target year, priority, money split ----
   setGoalTarget: (id: string, targetToday: number) =>

@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NoBroke</title>
+    <script>
+      // Paint the right theme before first render: dark marketing, light app.
+      try {
+        var s = JSON.parse(localStorage.getItem("nobroke_state_v1"));
+        document.documentElement.dataset.theme =
+          s && s.state && s.state.screen && s.state.screen !== "landing" ? "light" : "dark";
+      } catch (e) {}
+    </script>
     <meta
       name="description"
       content="NoBroke is the dating agent for your money — an AI-powered financial roadmap for young Indians. Plan goals, build a portfolio, and ask NoBroke AI anything."
