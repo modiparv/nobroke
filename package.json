@@ -11,7 +11,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test \"src/wealth/**/*.test.ts\" \"db/**/*.test.ts\" \"adapters/**/*.test.ts\""
+    "test": "node --experimental-strip-types --test \"src/wealth/**/*.test.ts\" \"src/lib/**/*.test.ts\" \"db/**/*.test.ts\" \"adapters/**/*.test.ts\""
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",

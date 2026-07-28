@@ -6,6 +6,13 @@ import type { AssetClassId, Fund } from "./types";
  * working from its built-in fund list, so the builder never breaks offline.
  */
 
+export interface FundScore {
+  score: number;
+  components: { consistency: number; downside: number; riskAdjusted: number; track: number };
+  monthsCovered: number;
+  grade: "Strong" | "Solid" | "Mixed" | "Weak";
+}
+
 export interface LiveSchemeRow {
   schemeCode: number;
   schemeName: string;
@@ -14,6 +21,8 @@ export interface LiveSchemeRow {
   cagr1y?: number | null;
   cagr3y?: number | null;
   cagr5y?: number | null;
+  /** The NoBroke Score, computed transparently from the same history. */
+  score?: FundScore | null;
 }
 
 export interface LiveSchemeDetail {
@@ -26,6 +35,7 @@ export interface LiveSchemeDetail {
   cagr1y: number | null;
   cagr3y: number | null;
   cagr5y: number | null;
+  score: FundScore | null;
 }
 
 export async function searchLiveSchemes(q: string): Promise<LiveSchemeRow[]> {

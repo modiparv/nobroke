@@ -1,4 +1,5 @@
 import { makePool, resolveDatabaseUrl } from "./_data.js";
+import { scoreFromSeries } from "./_scoring.js";
 
 /**
  * Instrument search and detail for the app's mix builder.
@@ -99,6 +100,7 @@ async function schemeDetail(code) {
   const body = await r.json();
   const history = body.data ?? [];
   const latest = history[0];
+  const points = history.map((h) => ({ t: parseNavDate(h.date), nav: parseFloat(h.nav) }));
   return {
     code: String(code),
     name: body.meta?.scheme_name ?? "",
@@ -109,6 +111,7 @@ async function schemeDetail(code) {
     cagr1y: trailingCagr(history, 1),
     cagr3y: trailingCagr(history, 3),
     cagr5y: trailingCagr(history, 5),
+    score: scoreFromSeries(points),
   };
 }
 
