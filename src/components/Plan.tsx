@@ -3,7 +3,7 @@ import { GOALS } from "../lib/goals";
 import { allocationTotal, bandWeights, computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
-import { btnPrimary, card } from "../ui";
+import { btnPrimary, card, sectionLabel } from "../ui";
 import AdvisorNote from "./AdvisorNote";
 import AppHeader from "./AppHeader";
 import GoalCard from "./GoalCard";
@@ -179,16 +179,6 @@ export default function Plan() {
           {/* Goals: the major pane (60 percent on desktop). */}
           <div className="flex min-w-0 flex-col gap-4">
             {s.goals.length > 0 && <AdvisorNote />}
-            {s.goals.length > 1 && (
-              <div className="flex items-center justify-end">
-                <button
-                  onClick={actions.recommendGoalSplit}
-                  className="rounded-full border border-line px-3.5 py-2 text-support text-text transition hover:border-line-2"
-                >
-                  Use recommended split
-                </button>
-              </div>
-            )}
 
             {s.goals.length === 0 ? (
               <div className={`${card} py-10 text-center`}>
@@ -199,10 +189,22 @@ export default function Plan() {
                 </button>
               </div>
             ) : (
-              <ul
-                className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface"
-                aria-label="Your goals"
-              >
+              <section className="overflow-hidden rounded-card border border-line bg-surface">
+                {/* The card's own header carries the split action: no floating
+                    rows spending vertical space outside it. */}
+                <div className="flex items-center justify-between gap-3 border-b border-line px-3 py-2.5 sm:px-4">
+                  <span className={sectionLabel}>Goals · priority order</span>
+                  {s.goals.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={actions.recommendGoalSplit}
+                      className="text-support font-medium text-accent transition hover:text-accent-hi"
+                    >
+                      Use recommended split
+                    </button>
+                  )}
+                </div>
+                <ul className="divide-y divide-line" aria-label="Your goals">
                 {ordered.map((g, i) => (
                   <GoalCard
                     key={g.id}
@@ -230,7 +232,8 @@ export default function Plan() {
                     }}
                   />
                 ))}
-              </ul>
+                </ul>
+              </section>
             )}
           </div>
 

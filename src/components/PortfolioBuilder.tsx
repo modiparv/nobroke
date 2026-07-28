@@ -6,6 +6,7 @@ import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
 import { formatINR, formatPct } from "../lib/format";
 import type { Allocation, AssetClassId, RiskProfile } from "../lib/types";
 import { actions, recommendedPortfolio, useStore } from "../store";
+import { appetiteCeiling } from "../lib/risk";
 import RiskMeter from "./RiskMeter";
 import { sectionLabel } from "../ui";
 
@@ -91,7 +92,8 @@ export default function PortfolioBuilder() {
 
   const addLive = async (row: LiveSchemeRow) => {
     const id = `live_${row.schemeCode}`;
-    if (id in alloc) return;
+    // Guard rapid double-clicks and clicks while another add is in flight.
+    if (id in alloc || addingCode != null) return;
     setAddingCode(row.schemeCode);
     const detail = await getLiveSchemeDetail(row.schemeCode);
     setAddingCode(null);
@@ -386,18 +388,26 @@ export default function PortfolioBuilder() {
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(["steady", "balanced", "bold"] as RiskProfile[]).map((key) => {
                 const active = s.portfolioProfile === key;
+                const order: RiskProfile[] = ["steady", "balanced", "bold"];
+                const beyond = order.indexOf(key) > order.indexOf(appetiteCeiling(s.riskAppetite));
                 return (
                   <button
                     key={key}
+                    type="button"
                     onClick={() => applyPreset(key)}
                     className={`rounded-control border px-2 py-2 text-center transition ${
                       active ? "border-ink bg-surface-2 text-text" : "border-line hover:border-ink/40 hover:bg-surface-2/40"
                     }`}
                   >
                     <div className="text-xs font-medium">{MODEL_PORTFOLIOS[key].label}</div>
-                    <div className={`mt-0.5 text-index leading-tight ${active ? "text-on-accent/70" : "text-muted"}`}>
+                    <div className={`mt-0.5 text-index leading-tight ${active ? "text-text-2" : "text-muted"}`}>
                       {MODEL_PORTFOLIOS[key].tagline}
                     </div>
+                    {beyond && (
+                      <div className="mt-1 text-index uppercase leading-tight tracking-wide text-cau">
+                        Beyond appetite
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -406,8 +416,8 @@ export default function PortfolioBuilder() {
               <p className="mt-2 text-center text-caption text-muted">Tap one to fill your mix.</p>
             )}
             <p className="mt-2 text-caption text-text-3">
-              Mixes are matched to your goals' timelines. The funds inside are yours to choose, ranked by real
-              performance in the search above.
+              Your risk appetite caps what we recommend; any mix stays yours to choose. The funds inside are ranked by
+              score in the search above.
             </p>
           </div>
 

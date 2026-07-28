@@ -144,7 +144,7 @@ export default function CopilotBar() {
             type="submit"
             disabled={!text.trim() || s.chatTyping}
             aria-label="Send"
-            className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-brand text-base text-on-accent transition hover:bg-brand-deep disabled:opacity-40"
+            className="grid h-8 w-8 flex-none place-items-center rounded-control bg-brand text-base text-on-accent transition hover:bg-brand-deep disabled:opacity-40"
           >
             ↑
           </button>
