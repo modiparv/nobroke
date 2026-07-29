@@ -16,15 +16,33 @@ const FEATURES = [
   { n: "04", title: "Copilot", body: "Ask anything. Change anything. Plain words." },
 ];
 
-/** Tier names walk the arc of wealth in the old stories: Arth, the foundation;
- *  Akshaya, the vessel that never empties; Meru, the golden mountain. */
+/**
+ * Tier names walk the arc of wealth in the old stories: Arth, the foundation;
+ * Akshaya, the vessel that never empties; Meru, the golden mountain.
+ *
+ * Pricing strategy, merged from three playbooks:
+ *   wealth management  human access anchors the top; no AUM percentage, ever
+ *   financial planning flat transparent fees, the fee-only model
+ *   copilots           freemium with honest usage gates, not crippled tools
+ * The gate that scales with seriousness is the number of goals; the top tier
+ * sells the whole-life view (the Lifetime Balance Sheet, every assumption
+ * inspectable) plus a named human. Early cohort keeps their price for life.
+ */
 const TIERS = [
   {
     name: "Arth",
     tagline: "The foundation",
     price: "Free",
     period: "",
-    features: ["Goal planning with live fund universe", "One portfolio for every goal", "Copilot essentials", "Wealth monitor"],
+    annual: "",
+    gate: "2 goals",
+    popular: false,
+    features: [
+      "Full planning for 2 goals",
+      "One portfolio, live fund universe",
+      "NoBroke Score on every fund",
+      "Risk profile and copilot essentials",
+    ],
     cta: "start" as const,
   },
   {
@@ -32,7 +50,15 @@ const TIERS = [
     tagline: "The vessel that never empties",
     price: "₹299",
     period: "/month",
-    features: ["Everything in Arth", "Statement import and reconciliation", "Advisor nudges and macro insights", "Priority copilot"],
+    annual: "₹2,999 a year (2 months free)",
+    gate: "Unlimited goals",
+    popular: true,
+    features: [
+      "Everything in Arth, unlimited goals",
+      "Statement import and reconciliation",
+      "Portfolio x-ray and deeper nudges",
+      "Priority copilot",
+    ],
     cta: "soon" as const,
   },
   {
@@ -40,7 +66,15 @@ const TIERS = [
     tagline: "The golden mountain",
     price: "₹999",
     period: "/month",
-    features: ["Everything in Akshaya", "Household accounts", "Tax lens on every holding", "Quarterly review with an advisor"],
+    annual: "₹9,999 a year (2 months free)",
+    gate: "Your whole household",
+    popular: false,
+    features: [
+      "Everything in Akshaya, household-wide",
+      "Lifetime Balance Sheet, every calculation shown",
+      "Tax lens on every holding",
+      "A named human wealth manager, 1:1 reviews",
+    ],
     cta: "soon" as const,
   },
 ];
@@ -105,15 +139,35 @@ export default function Landing() {
         <section id="pricing" className="border-t border-line py-14 sm:py-20">
           <span className="text-eyebrow uppercase text-text-3">Pricing</span>
           <h2 className="mt-3 text-2xl font-medium tracking-[-0.02em] sm:text-3xl">Three tiers. One promise.</h2>
+          <p className="mt-3 max-w-2xl text-body text-text-2">
+            No percentage of your assets. No commissions from funds. A flat fee for judgement, so our incentive is your
+            outcome, nothing else.
+          </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             {TIERS.map((t) => (
-              <div key={t.name} className="flex flex-col rounded-card border border-line bg-surface p-5">
-                <h3 className="text-section font-medium">{t.name}</h3>
+              <div
+                key={t.name}
+                className={`relative flex flex-col rounded-card border bg-surface p-5 ${
+                  t.popular ? "border-text" : "border-line"
+                }`}
+              >
+                {t.popular && (
+                  <span className="absolute -top-2.5 left-5 rounded-full bg-accent px-2.5 py-0.5 text-index font-medium uppercase tracking-wide text-on-accent">
+                    Most chosen
+                  </span>
+                )}
+                <div className="flex items-baseline justify-between gap-2">
+                  <h3 className="text-section font-medium">{t.name}</h3>
+                  <span className="rounded-full bg-surface-2 px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
+                    {t.gate}
+                  </span>
+                </div>
                 <p className="mt-0.5 text-caption text-text-3">{t.tagline}</p>
                 <p className="num mt-4 text-2xl font-medium">
                   {t.price}
                   {t.period && <span className="text-support font-normal text-text-3">{t.period}</span>}
                 </p>
+                {t.annual && <p className="num mt-0.5 text-caption text-text-3">{t.annual}</p>}
                 <ul className="mt-4 flex-1 space-y-2">
                   {t.features.map((f) => (
                     <li key={f} className="flex gap-2 text-support text-text-2">
@@ -135,7 +189,7 @@ export default function Landing() {
             ))}
           </div>
           <p className="mt-4 text-caption text-text-3">
-            Indicative pricing for early access. Tier contents will be finalised with the first cohort.
+            Indicative pricing for early access. Founding members keep their price for life.
           </p>
         </section>
 
