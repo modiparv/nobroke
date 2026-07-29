@@ -1,10 +1,20 @@
 import { useEffect, useState } from "react";
-import { blendedReturn, projectionSeries } from "../lib/finance";
+import { blendedReturn, computePlan, projectionSeries } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { fetchMacro, type MacroData } from "../lib/macroApi";
-import { actions, holdingsTotal, totalCapital, useStore } from "../store";
+import {
+  actions,
+  goalMonthly,
+  goalShareFraction,
+  goalsByPriority,
+  holdingsTotal,
+  planInputsForGoal,
+  totalCapital,
+  useStore,
+} from "../store";
 import { card, sectionLabel } from "../ui";
 import Aggregation from "./Aggregation";
+import GoalsChart from "./GoalsChart";
 import Holdings from "./Holdings";
 import MoneyInput from "./MoneyInput";
 
@@ -112,11 +122,12 @@ export default function MoneyTab() {
             <div className="mt-1 flex items-baseline justify-between">
               <span className="text-caption text-text-3">Today</span>
               <span className="text-caption text-text-2">
-                About <span className="num text-text">{formatINR(projected)}</span> in {YEARS_AHEAD} years at this pace. Not
-                guaranteed.
+                About <span className="num text-text">{formatINR(projected)}</span> in {YEARS_AHEAD} years at this pace.
               </span>
             </div>
           </section>
+
+          <GoalsChart />
 
           {/* Breakdown: real categories only. */}
           {breakdown.length > 0 && (
@@ -134,6 +145,41 @@ export default function MoneyTab() {
                     </div>
                   </li>
                 ))}
+              </ul>
+            </section>
+          )}
+
+          {/* The split by goal: the same shares, saved amounts and monthly
+              figures the Plan tab shows, so the two tabs can never disagree. */}
+          {s.goals.length > 0 && (
+            <section className={card}>
+              <span className={sectionLabel}>Money by goal</span>
+              <ul className="mt-1 divide-y divide-line">
+                {goalsByPriority(s).map((g) => {
+                  const share = goalShareFraction(s, g.id);
+                  const onTrack = computePlan(planInputsForGoal(s, g)).onTrack;
+                  return (
+                    <li key={g.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-support font-medium text-text">{g.name}</span>
+                          <span
+                            className={`flex-none rounded-full px-1.5 py-px text-index uppercase tracking-wide ${
+                              onTrack ? "bg-pos-bg text-pos" : "bg-cau-bg text-cau"
+                            }`}
+                          >
+                            {onTrack ? "On track" : "Short"}
+                          </span>
+                        </div>
+                        <span className="num text-caption text-text-3">{Math.round(share * 100)}% of the pool</span>
+                      </div>
+                      <div className="flex-none text-right">
+                        <div className="num text-support font-medium">{formatINR(totalCapital(s) * share)}</div>
+                        <div className="num text-caption text-text-3">{formatINR(goalMonthly(s, g.id))}/mo</div>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           )}
