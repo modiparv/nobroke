@@ -10,10 +10,10 @@ import Logo from "./Logo";
 export default function AppHeader() {
   const s = useStore();
 
+  // Near-opaque bar: content must never ghost through it over the ink band.
+  // The marketing page keeps its own translucent header; up here legibility
+  // beats atmosphere.
   return (
-    {/* Near-opaque: content must never ghost through the bar over the ink
-        band. The marketing page keeps its own translucent header; up here
-        legibility beats atmosphere. */}
     <header className="sticky top-0 z-30 border-b border-line/60 bg-bg/95">
       <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-3 px-4 sm:px-6">
         <Logo />
