@@ -86,6 +86,7 @@ const TOOLS = ["Tax centre", "Portfolio x-ray", "Cost check", "Nominee audit", "
 
 export default function MoneyTab() {
   const s = useStore();
+  const [view, setView] = useState<"location" | "goal">("location");
   const invested = holdingsTotal(s);
   const total = totalCapital(s);
 
@@ -114,10 +115,15 @@ export default function MoneyTab() {
     <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
       <div className="grid gap-4 py-6 lg:grid-cols-[1.55fr_1fr] lg:gap-6">
         <div className="flex flex-col gap-4">
-          {/* Tracking: where the money stands and where the pace leads. */}
+          {/* 1. What do I have: one primary number, its split, its path. */}
           <section className={card}>
             <span className={sectionLabel}>Net worth</span>
             <div className="num mt-1.5 text-hero font-medium">{formatINR(total)}</div>
+            <div className="num mt-1 flex flex-wrap gap-x-4 text-caption text-text-2">
+              <span>Cash {formatINR(s.currentSavings)}</span>
+              <span>Invested {formatINR(invested)}</span>
+              <span>{formatINR(s.monthlySip)}/mo going in</span>
+            </div>
             <WealthPath series={series} />
             <div className="mt-1 flex items-baseline justify-between">
               <span className="text-caption text-text-3">Today</span>
@@ -127,60 +133,75 @@ export default function MoneyTab() {
             </div>
           </section>
 
+          {/* 2. Where is it going: every goal's trajectory. */}
           <GoalsChart />
 
-          {/* Breakdown: real categories only. */}
-          {breakdown.length > 0 && (
+          {/* 3. Where does it sit: one card, two lenses. */}
+          {(breakdown.length > 0 || s.goals.length > 0) && (
             <section className={card}>
-              <span className={sectionLabel}>Where it sits</span>
-              <ul className="mt-3 flex flex-col gap-3">
-                {breakdown.map(([label, v]) => (
-                  <li key={label}>
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-support text-text">{label}</span>
-                      <span className="num text-support font-medium">{formatINR(v)}</span>
-                    </div>
-                    <div className="mt-1.5 h-[3px] w-full overflow-hidden rounded-[2px] bg-surface-2">
-                      <div className="h-full rounded-[2px] bg-text" style={{ width: `${(v / total) * 100}%` }} />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+              <div className="flex items-center justify-between gap-3">
+                <span className={sectionLabel}>Breakdown</span>
+                <div className="flex items-center gap-0.5 rounded-full bg-surface-2 p-0.5">
+                  {(["location", "goal"] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setView(v)}
+                      className={`inline-flex h-6 items-center rounded-full px-2.5 text-caption transition ${
+                        view === v ? "bg-surface text-text" : "text-text-2 hover:text-text"
+                      }`}
+                    >
+                      {v === "location" ? "By location" : "By goal"}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          {/* The split by goal: the same shares, saved amounts and monthly
-              figures the Plan tab shows, so the two tabs can never disagree. */}
-          {s.goals.length > 0 && (
-            <section className={card}>
-              <span className={sectionLabel}>Money by goal</span>
-              <ul className="mt-1 divide-y divide-line">
-                {goalsByPriority(s).map((g) => {
-                  const share = goalShareFraction(s, g.id);
-                  const onTrack = computePlan(planInputsForGoal(s, g)).onTrack;
-                  return (
-                    <li key={g.id} className="flex items-center justify-between gap-3 py-2.5">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate text-support font-medium text-text">{g.name}</span>
-                          <span
-                            className={`flex-none rounded-full px-1.5 py-px text-index uppercase tracking-wide ${
-                              onTrack ? "bg-pos-bg text-pos" : "bg-cau-bg text-cau"
-                            }`}
-                          >
-                            {onTrack ? "On track" : "Short"}
-                          </span>
-                        </div>
-                        <span className="num text-caption text-text-3">{Math.round(share * 100)}% of the pool</span>
+              {view === "location" ? (
+                <ul className="mt-3 flex flex-col gap-3">
+                  {breakdown.map(([label, v]) => (
+                    <li key={label}>
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="text-support text-text">{label}</span>
+                        <span className="num text-support font-medium">{formatINR(v)}</span>
                       </div>
-                      <div className="flex-none text-right">
-                        <div className="num text-support font-medium">{formatINR(totalCapital(s) * share)}</div>
-                        <div className="num text-caption text-text-3">{formatINR(goalMonthly(s, g.id))}/mo</div>
+                      <div className="mt-1.5 h-[3px] w-full overflow-hidden rounded-[2px] bg-surface-2">
+                        <div className="h-full rounded-[2px] bg-text" style={{ width: `${(v / total) * 100}%` }} />
                       </div>
                     </li>
-                  );
-                })}
-              </ul>
+                  ))}
+                  {breakdown.length === 0 && <p className="text-caption text-text-3">Add cash or holdings to see this.</p>}
+                </ul>
+              ) : (
+                <ul className="mt-1 divide-y divide-line">
+                  {goalsByPriority(s).map((g) => {
+                    const share = goalShareFraction(s, g.id);
+                    const onTrack = computePlan(planInputsForGoal(s, g)).onTrack;
+                    return (
+                      <li key={g.id} className="flex items-center justify-between gap-3 py-2.5">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-support font-medium text-text">{g.name}</span>
+                            <span
+                              className={`flex-none rounded-full px-1.5 py-px text-index uppercase tracking-wide ${
+                                onTrack ? "bg-pos-bg text-pos" : "bg-cau-bg text-cau"
+                              }`}
+                            >
+                              {onTrack ? "On track" : "Short"}
+                            </span>
+                          </div>
+                          <span className="num text-caption text-text-3">{Math.round(share * 100)}% of the pool</span>
+                        </div>
+                        <div className="flex-none text-right">
+                          <div className="num text-support font-medium">{formatINR(totalCapital(s) * share)}</div>
+                          <div className="num text-caption text-text-3">{formatINR(goalMonthly(s, g.id))}/mo</div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                  {s.goals.length === 0 && <p className="py-2 text-caption text-text-3">Add a goal to see this.</p>}
+                </ul>
+              )}
             </section>
           )}
 
@@ -191,6 +212,8 @@ export default function MoneyTab() {
 
         <aside className="flex flex-col gap-4">
           <section className={card}>
+            <span className={sectionLabel}>Your numbers</span>
+            <div className="mt-3" />
             <MoneyInput label="Monthly income" value={s.monthlyIncome} onChange={actions.setIncome} step={5000} min={0} max={10000000} compact />
             <div className="mt-4 border-t border-line pt-4">
               <MoneyInput label="Monthly spend" value={s.monthlyExpenses} onChange={actions.setExpenses} step={5000} min={0} max={10000000} compact />
@@ -214,25 +237,26 @@ export default function MoneyTab() {
               ))}
           </section>
 
-          <section className={card}>
-            <Aggregation />
-          </section>
-
           <MacroCard />
 
-          {/* Wealth tools land with the wealth engine phases. Listed, not faked. */}
+          {/* Everything not yet live sits in ONE card: connections to come
+              plus the wealth tools landing with the engine phases. Listed,
+              never faked. */}
           <section className={card}>
-            <span className={sectionLabel}>Wealth tools</span>
-            <ul className="mt-1 divide-y divide-line">
-              {TOOLS.map((t) => (
-                <li key={t} className="flex items-center justify-between gap-3 py-2.5">
-                  <span className="text-support text-text">{t}</span>
-                  <span className="flex-none rounded-full bg-surface-2 px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
-                    Soon
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <Aggregation />
+            <div className="mt-4 border-t border-line pt-3">
+              <span className={sectionLabel}>Wealth tools</span>
+              <ul className="mt-1 divide-y divide-line">
+                {TOOLS.map((t) => (
+                  <li key={t} className="flex items-center justify-between gap-3 py-2.5">
+                    <span className="text-support text-text">{t}</span>
+                    <span className="flex-none rounded-full bg-surface-2 px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
+                      Soon
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </section>
         </aside>
       </div>

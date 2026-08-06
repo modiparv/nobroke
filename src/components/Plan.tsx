@@ -138,7 +138,7 @@ export default function Plan() {
           the total-saved figure (spec section 4). Everything below is white
           cards on the pale page. */}
       <section className="bg-band">
-        <div className="mx-auto flex max-w-page flex-col gap-5 px-4 py-7 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-9">
+        <div className="mx-auto flex max-w-page flex-col gap-4 px-4 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-7">
           <div>
             <span className="text-eyebrow uppercase text-on-band-2">Total saved</span>
             <HeroAmount value={totalCapital(s)} />
@@ -175,7 +175,7 @@ export default function Plan() {
 
       {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
       <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
-        <div className={`grid gap-4 py-6 ${s.goals.length ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start" : ""}`}>
+        <div className={`grid gap-4 py-5 ${s.goals.length ? "lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)] lg:items-start" : ""}`}>
           {/* Goals: the major pane (60 percent on desktop). */}
           <div className="flex min-w-0 flex-col gap-4">
             {s.goals.length > 0 && <AdvisorNote />}
@@ -240,10 +240,10 @@ export default function Plan() {
           {/* Investment mix: the 40 percent pane, always open beside the goals. */}
           {s.goals.length > 0 && (
             <section className="min-w-0 rounded-card border border-line bg-surface">
-              <div className="border-b border-line px-4 py-3.5">
+              <div className="border-b border-line px-4 py-3">
                 <span className="text-support text-text">{mixLabel(s.portfolio)}</span>
               </div>
-              <div className="p-4 sm:p-5">
+              <div className="p-3.5 sm:p-4">
                 <PortfolioBuilder />
               </div>
             </section>

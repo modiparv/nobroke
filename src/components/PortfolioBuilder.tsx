@@ -221,9 +221,9 @@ export default function PortfolioBuilder() {
         </div>
       )}
 
-      {/* Single column: the builder lives in the 40 percent pane beside the
-          goals, so its sections stack. The mix leads; picking funds follows. */}
-      <div className="grid gap-5">
+      {/* Single column: the builder lives in the side pane beside the goals,
+          so its sections stack. The mix leads; picking funds follows. */}
+      <div className="grid gap-4">
         {/* ---- Fund search: the live AMFI universe only ---- */}
         <div className="order-2 min-w-0">
           <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
@@ -305,7 +305,7 @@ export default function PortfolioBuilder() {
 
         {/* ---- Basket (drop zone) ---- */}
         <div
-          className={`order-1 min-w-0 rounded-card border bg-surface p-4 transition ${dragOver ? "border-brand ring-2 ring-brand/40" : "border-line"}`}
+          className={`order-1 min-w-0 rounded-card border bg-surface p-3.5 transition ${dragOver ? "border-brand ring-2 ring-brand/40" : "border-line"}`}
           onDragOver={(e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";

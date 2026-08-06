@@ -18,7 +18,7 @@ export default function RiskMeter() {
   const active = riskBandIndex(v);
 
   return (
-    <div className="mb-4 rounded-control bg-surface-2 px-3 py-2.5">
+    <div className="mb-3 rounded-control bg-surface-2 px-3 py-2">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-eyebrow uppercase text-text-3">Risk appetite</span>
         <span className="text-support font-medium">{riskBandLabel(v)}</span>

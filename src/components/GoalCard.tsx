@@ -86,7 +86,7 @@ export default function GoalCard({
       }}
       className={`transition ${isOver ? "bg-accent-tint" : ""} ${isDragging ? "opacity-50" : ""}`}
     >
-      <div className="flex items-start gap-2.5 px-3 py-3.5 sm:gap-3 sm:px-4">
+      <div className="flex items-start gap-2.5 px-3 py-3 sm:gap-3 sm:px-4">
         {/* The index doubles as the priority marker and the drag affordance. */}
         <span
           draggable
