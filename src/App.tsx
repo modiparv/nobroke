@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { actions, useStore } from "./store";
 import { fetchMacro } from "./lib/macroApi";
+import { me } from "./lib/authApi";
 import Landing from "./components/Landing";
 import Onboarding from "./components/Onboarding";
 import Plan from "./components/Plan";
@@ -21,6 +22,13 @@ export default function App() {
     void fetchMacro().then((m) => {
       const cpi = m?.indicators.find((i) => i.key === "cpi_inflation");
       if (cpi) actions.applyMacroInflation(cpi.value);
+    });
+  }, []);
+
+  // A surviving session signs the person back in and pulls their plan.
+  useEffect(() => {
+    void me().then((user) => {
+      if (user) void actions.completeAuth(user);
     });
   }, []);
 

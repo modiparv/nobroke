@@ -9,6 +9,7 @@ import { FUND_MAP } from "./lib/funds";
 import { computePlan, blendedReturn, requiredCorpus, requiredSip } from "./lib/finance";
 import { formatINR } from "./lib/format";
 import { parseCommand, type Command } from "./lib/command";
+import { deleteAccount as apiDeleteAccount, loadPlan, logout as apiLogout, savePlan, type AuthUser } from "./lib/authApi";
 
 export type Screen = "landing" | "onboarding" | "plan";
 
@@ -57,6 +58,8 @@ export interface AppState {
   chatOpen: boolean;
   chat: ChatMessage[];
   chatTyping: boolean;
+  /** Signed-in account, if any. The plan syncs to the server while set. */
+  user: AuthUser | null;
 }
 
 const defaults: AppState = {
@@ -87,6 +90,7 @@ const defaults: AppState = {
   chatOpen: false,
   chat: [],
   chatTyping: false,
+  user: null,
 };
 
 /**
@@ -111,18 +115,34 @@ function loadPersisted(): Partial<AppState> | null {
 
 let state: AppState = { ...defaults, ...loadPersisted(), chatOpen: false, chat: [], chatTyping: false };
 
+/** The plan as a plain blob: everything except the chat thread and the
+ *  account itself. Shared by localStorage and the server copy. */
+function planBlob(): Record<string, unknown> {
+  const { chat: _c, chatOpen: _o, chatTyping: _t, user: _u, ...rest } = state;
+  return rest;
+}
+
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
+let serverTimer: ReturnType<typeof setTimeout> | undefined;
 function persist() {
-  if (typeof localStorage === "undefined") return;
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try {
-      const { chat: _c, chatOpen: _o, chatTyping: _t, ...rest } = state;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, state: rest }));
-    } catch {
-      // Storage full or blocked: the app still works, it just will not survive a refresh.
-    }
-  }, 300);
+  if (typeof localStorage !== "undefined") {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try {
+        const { chat: _c, chatOpen: _o, chatTyping: _t, ...rest } = state;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, state: rest }));
+      } catch {
+        // Storage full or blocked: the app still works, it just will not survive a refresh.
+      }
+    }, 300);
+  }
+  // Signed in: the server copy follows along, a beat behind.
+  if (state.user) {
+    clearTimeout(serverTimer);
+    serverTimer = setTimeout(() => {
+      void savePlan(planBlob());
+    }, 1500);
+  }
 }
 
 const listeners = new Set<() => void>();
@@ -279,6 +299,37 @@ export const actions = {
   goLanding: () => set({ screen: "landing" }),
   goPlan: () => set({ screen: "plan" }),
   setTab: (tab: AppState["tab"]) => set({ tab }),
+
+  // ---- Account ----
+  /** After register/login (or a session found at boot): adopt the server copy
+      of the plan when one exists; otherwise the local plan becomes it. */
+  completeAuth: async (user: AuthUser) => {
+    set({ user });
+    const server = await loadPlan();
+    if (server && typeof server === "object") {
+      set({ ...(server as Partial<AppState>), user, chatOpen: false, chat: [], chatTyping: false });
+    } else if (state.goals.length > 0 || state.currentSavings > 0) {
+      void savePlan(planBlob());
+    }
+  },
+
+  signOut: async () => {
+    await apiLogout();
+    // The device keeps its local copy; only the account link is dropped.
+    set({ user: null });
+  },
+
+  deleteAccount: async () => {
+    const r = await apiDeleteAccount();
+    if (!r.ok) return false;
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Storage unavailable: the reset below still runs.
+    }
+    set({ ...defaults, user: null });
+    return true;
+  },
 
   startOnboarding: () =>
     set({ screen: "onboarding", onboardingStepIndex: 0, onboardingAnswers: {}, selectedGoalIds: [], profile: emptyProfile() }),
