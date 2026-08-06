@@ -33,6 +33,11 @@ export default async function handler(req, res) {
       [email, hashPassword(password)],
     );
     if (inserted.rows.length === 0) {
+      // Known tradeoff: a distinct 409 lets a caller probe whether an email is
+      // registered. Without an email-verification pipeline there is no clean
+      // way to hide it, and it is acceptable at early-access scale. Closing it
+      // properly needs request rate limiting plus verification-based signup,
+      // tracked for post-MVP. Do not treat this as fixed.
       res.status(409).json({ ok: false, error: "An account with this email already exists. Sign in instead." });
       return;
     }

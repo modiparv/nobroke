@@ -52,14 +52,27 @@ export async function me(): Promise<AuthUser | null> {
   }
 }
 
-export async function loadPlan(): Promise<Record<string, unknown> | null> {
+/**
+ * Loading the account plan has three outcomes the caller must tell apart, so
+ * a transient failure is never mistaken for "the account has no plan":
+ *   ok     the server returned a stored plan
+ *   empty  the account exists but has no plan yet
+ *   error  network or server failure; state unknown
+ */
+export type PlanLoad =
+  | { status: "ok"; state: Record<string, unknown> }
+  | { status: "empty" }
+  | { status: "error" };
+
+export async function loadPlan(): Promise<PlanLoad> {
   try {
     const r = await fetch("/api/plan");
-    if (!r.ok) return null;
+    if (!r.ok) return { status: "error" };
     const body = (await r.json()) as { ok: boolean; state?: Record<string, unknown> | null };
-    return body.ok ? (body.state ?? null) : null;
+    if (!body.ok) return { status: "error" };
+    return body.state ? { status: "ok", state: body.state } : { status: "empty" };
   } catch {
-    return null;
+    return { status: "error" };
   }
 }
 
@@ -72,5 +85,19 @@ export async function savePlan(state: Record<string, unknown>): Promise<void> {
     });
   } catch {
     // Offline: localStorage still has it; the next change retries.
+  }
+}
+
+/** A save that survives the page unloading (pagehide/tab close). */
+export function savePlanBeacon(state: Record<string, unknown>): void {
+  try {
+    void fetch("/api/plan", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+      keepalive: true,
+    });
+  } catch {
+    // Nothing more to do as the page goes away.
   }
 }

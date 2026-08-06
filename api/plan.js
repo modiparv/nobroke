@@ -31,13 +31,18 @@ export default async function handler(req, res) {
         return;
       }
       const serialized = JSON.stringify(state);
-      if (serialized.length > MAX_STATE_BYTES) {
+      if (Buffer.byteLength(serialized, "utf8") > MAX_STATE_BYTES) {
         res.status(413).json({ ok: false, error: "state too large" });
         return;
       }
+      // Recency guard: an incoming blob only wins if it is at least as new as
+      // the stored one, so a stale device (or a defaults blob from a race)
+      // can never overwrite a newer plan.
       await pool.query(
         `insert into user_plan (user_id, state, updated_at) values ($1, $2::jsonb, now())
-         on conflict (user_id) do update set state = excluded.state, updated_at = now()`,
+         on conflict (user_id) do update set state = excluded.state, updated_at = now()
+         where coalesce((user_plan.state->>'planUpdatedAt')::bigint, 0)
+             <= coalesce((excluded.state->>'planUpdatedAt')::bigint, 0)`,
         [userId, serialized],
       );
       res.status(200).json({ ok: true });

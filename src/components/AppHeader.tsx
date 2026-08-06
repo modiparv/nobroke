@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { actions, useStore } from "../store";
 import AuthSheet from "./AuthSheet";
 import Logo from "./Logo";
@@ -10,6 +10,14 @@ export default function AppHeader() {
   const s = useStore();
   const [showAuth, setShowAuth] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Tell the app an overlay is open so the copilot bar yields; both the auth
+  // sheet and the account menu live inside this header's stacking context and
+  // would otherwise sit under the copilot.
+  useEffect(() => {
+    actions.setModalOpen(showAuth || menuOpen);
+    return () => actions.setModalOpen(false);
+  }, [showAuth, menuOpen]);
 
   // Near-opaque bar: content must never ghost through it over the ink band.
   return (

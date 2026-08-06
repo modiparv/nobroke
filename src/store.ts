@@ -9,7 +9,14 @@ import { FUND_MAP } from "./lib/funds";
 import { computePlan, blendedReturn, requiredCorpus, requiredSip } from "./lib/finance";
 import { formatINR } from "./lib/format";
 import { parseCommand, type Command } from "./lib/command";
-import { deleteAccount as apiDeleteAccount, loadPlan, logout as apiLogout, savePlan, type AuthUser } from "./lib/authApi";
+import {
+  deleteAccount as apiDeleteAccount,
+  loadPlan,
+  logout as apiLogout,
+  savePlan,
+  savePlanBeacon,
+  type AuthUser,
+} from "./lib/authApi";
 
 export type Screen = "landing" | "onboarding" | "plan";
 
@@ -60,7 +67,42 @@ export interface AppState {
   chatTyping: boolean;
   /** Signed-in account, if any. The plan syncs to the server while set. */
   user: AuthUser | null;
+  /** Monotonic stamp (ms) bumped whenever plan data changes. It is the
+      recency token both sides reconcile on, so no stale copy overwrites a
+      newer one. */
+  planUpdatedAt: number;
+  /** True while a full-screen overlay (auth sheet, account menu) is open, so
+      the copilot bar can step out of its way. Never persisted. */
+  modalOpen: boolean;
 }
+
+/** The durable financial plan: exactly the fields that sync to an account.
+    Navigation (screen, tab, onboarding), chat and the account itself are
+    deliberately excluded, so adopting a server copy can never teleport a
+    user mid-onboarding or revert a screen. */
+const PLAN_KEYS = [
+  "profile",
+  "inflation",
+  "inflationSource",
+  "riskAppetite",
+  "riskAppetiteSource",
+  "monthlySip",
+  "currentSavings",
+  "monthlyIncome",
+  "monthlyExpenses",
+  "goals",
+  "currentGoalId",
+  "goalShares",
+  "goalOrder",
+  "goalOrderCustom",
+  "goalSharesCustom",
+  "portfolio",
+  "portfolioProfile",
+  "portfolioCustom",
+  "externalHoldings",
+  "selectedGoalIds",
+] as const;
+const PLAN_KEY_SET = new Set<string>(PLAN_KEYS);
 
 const defaults: AppState = {
   screen: "landing",
@@ -91,6 +133,8 @@ const defaults: AppState = {
   chat: [],
   chatTyping: false,
   user: null,
+  planUpdatedAt: 0,
+  modalOpen: false,
 };
 
 /**
@@ -113,13 +157,61 @@ function loadPersisted(): Partial<AppState> | null {
   }
 }
 
-let state: AppState = { ...defaults, ...loadPersisted(), chatOpen: false, chat: [], chatTyping: false };
+let state: AppState = { ...defaults, ...loadPersisted(), chatOpen: false, chat: [], chatTyping: false, modalOpen: false };
 
-/** The plan as a plain blob: everything except the chat thread and the
- *  account itself. Shared by localStorage and the server copy. */
-function planBlob(): Record<string, unknown> {
-  const { chat: _c, chatOpen: _o, chatTyping: _t, user: _u, ...rest } = state;
+const nowMs = () => Date.now();
+
+/** Only push to the server once we have reconciled with it. Until then a
+    local edit stays local, so a fresh device can never overwrite the
+    account's real plan with defaults before it has even been read. */
+let syncReady = false;
+
+/** What persists to localStorage: everything except chat and the transient
+    modal flag. Keeps `user` so a reload remembers the session to re-validate. */
+function localBlob(): Record<string, unknown> {
+  const { chat: _c, chatOpen: _o, chatTyping: _t, modalOpen: _m, ...rest } = state;
   return rest;
+}
+
+/** What syncs to an account: the plan fields plus their recency stamp. */
+function planBlob(): Record<string, unknown> {
+  const out: Record<string, unknown> = { planUpdatedAt: state.planUpdatedAt };
+  for (const k of PLAN_KEYS) out[k] = (state as unknown as Record<string, unknown>)[k];
+  return out;
+}
+
+/** Take only well-typed, known plan keys from an untrusted server blob; a
+    malformed value is skipped (the current value stands) rather than crashing
+    a render. */
+function coercePlan(raw: unknown): Partial<AppState> {
+  if (!raw || typeof raw !== "object") return {};
+  const r = raw as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  const isObj = (v: unknown) => !!v && typeof v === "object" && !Array.isArray(v);
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+  const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+  const bool = (v: unknown) => (typeof v === "boolean" ? v : undefined);
+
+  if (isObj(r.profile)) out.profile = r.profile;
+  if (isObj(r.portfolio)) out.portfolio = r.portfolio;
+  if (isObj(r.goalShares)) out.goalShares = r.goalShares;
+  if (Array.isArray(r.goals)) out.goals = r.goals;
+  if (Array.isArray(r.goalOrder)) out.goalOrder = r.goalOrder;
+  if (Array.isArray(r.externalHoldings)) out.externalHoldings = r.externalHoldings;
+  if (Array.isArray(r.selectedGoalIds)) out.selectedGoalIds = r.selectedGoalIds;
+  for (const k of ["inflation", "riskAppetite", "monthlySip", "currentSavings", "monthlyIncome", "monthlyExpenses"]) {
+    const v = num(r[k]);
+    if (v !== undefined) out[k] = v;
+  }
+  for (const k of ["inflationSource", "riskAppetiteSource", "currentGoalId", "portfolioProfile"]) {
+    const v = str(r[k]);
+    if (v !== undefined) out[k] = v;
+  }
+  for (const k of ["goalOrderCustom", "goalSharesCustom", "portfolioCustom"]) {
+    const v = bool(r[k]);
+    if (v !== undefined) out[k] = v;
+  }
+  return out;
 }
 
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -129,15 +221,14 @@ function persist() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       try {
-        const { chat: _c, chatOpen: _o, chatTyping: _t, ...rest } = state;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, state: rest }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, state: localBlob() }));
       } catch {
         // Storage full or blocked: the app still works, it just will not survive a refresh.
       }
     }, 300);
   }
-  // Signed in: the server copy follows along, a beat behind.
-  if (state.user) {
+  // Signed in AND reconciled: the server copy follows along, a beat behind.
+  if (state.user && syncReady) {
     clearTimeout(serverTimer);
     serverTimer = setTimeout(() => {
       void savePlan(planBlob());
@@ -150,7 +241,14 @@ function emit() {
   for (const l of listeners) l();
 }
 function set(patch: Partial<AppState>) {
-  state = { ...state, ...patch };
+  // A change to any plan field bumps the recency stamp, unless the caller
+  // sets it explicitly (adoption preserves the server's stamp).
+  const touchesPlan = Object.keys(patch).some((k) => PLAN_KEY_SET.has(k));
+  const stamped =
+    touchesPlan && (patch as Record<string, unknown>).planUpdatedAt === undefined
+      ? { ...patch, planUpdatedAt: nowMs() }
+      : patch;
+  state = { ...state, ...stamped };
   persist();
   emit();
 }
@@ -301,34 +399,74 @@ export const actions = {
   setTab: (tab: AppState["tab"]) => set({ tab }),
 
   // ---- Account ----
-  /** After register/login (or a session found at boot): adopt the server copy
-      of the plan when one exists; otherwise the local plan becomes it. */
+  /** After register/login (or a session found at boot): reconcile the local
+      and server plans by recency. Newer wins; a transient read failure blocks
+      all sync this session rather than risk overwriting the server. */
   completeAuth: async (user: AuthUser) => {
+    syncReady = false;
     set({ user });
-    const server = await loadPlan();
-    if (server && typeof server === "object") {
-      set({ ...(server as Partial<AppState>), user, chatOpen: false, chat: [], chatTyping: false });
-    } else if (state.goals.length > 0 || state.currentSavings > 0) {
-      void savePlan(planBlob());
+
+    const result = await loadPlan();
+    if (result.status === "error") {
+      // Could not read the account plan: leave sync OFF so a local edit can
+      // never clobber a server plan we failed to see. The app still works.
+      return;
     }
+
+    if (result.status === "ok") {
+      const serverRev = Number((result.state as Record<string, unknown>).planUpdatedAt) || 0;
+      if (serverRev >= state.planUpdatedAt) {
+        set({ ...coercePlan(result.state), planUpdatedAt: serverRev, user });
+        syncReady = true;
+        return;
+      }
+    }
+    // Server empty, or local strictly newer: local is the source of truth.
+    syncReady = true;
+    if (state.planUpdatedAt > 0) void savePlan(planBlob());
   },
 
-  signOut: async () => {
-    await apiLogout();
-    // The device keeps its local copy; only the account link is dropped.
+  /** A dead/expired session found at boot: drop the signed-in identity but
+      keep the local plan so the person can keep working or re-sign-in. */
+  clearStaleUser: () => {
+    syncReady = false;
     set({ user: null });
+  },
+
+  setModalOpen: (open: boolean) => set({ modalOpen: open }),
+
+  signOut: async () => {
+    // Flush the last edit while the cookie is still valid, then drop the
+    // whole local plan: the next person on this device starts clean, so one
+    // account's data can never seed another's.
+    if (syncReady && state.user) await savePlan(planBlob());
+    await apiLogout();
+    syncReady = false;
+    set({ ...defaults });
   },
 
   deleteAccount: async () => {
     const r = await apiDeleteAccount();
     if (!r.ok) return false;
+    syncReady = false;
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
       // Storage unavailable: the reset below still runs.
     }
-    set({ ...defaults, user: null });
+    set({ ...defaults });
     return true;
+  },
+
+  /** Best-effort write on tab close: localStorage synchronously, the server
+      via a keepalive request that outlives the page. */
+  flushNow: () => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, state: localBlob() }));
+    } catch {
+      // Storage unavailable.
+    }
+    if (syncReady && state.user) savePlanBeacon(planBlob());
   },
 
   startOnboarding: () =>
