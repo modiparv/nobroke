@@ -264,7 +264,7 @@ export default function PortfolioBuilder() {
                         onClick={() => (added ? removeFund(id) : void addLive(row))}
                         title={scoreTitle}
                         className={`flex cursor-pointer select-none items-center gap-2 rounded-control border px-2.5 py-2 transition ${
-                          added ? "border-brand bg-surface" : "border-transparent bg-surface-2/50 hover:bg-surface-2"
+                          added ? "border-accent bg-surface" : "border-transparent bg-surface-2/50 hover:bg-surface-2"
                         }`}
                       >
                         <span className="min-w-0 flex-1">
@@ -305,7 +305,7 @@ export default function PortfolioBuilder() {
 
         {/* ---- Basket (drop zone) ---- */}
         <div
-          className={`order-1 min-w-0 rounded-card border bg-surface p-3.5 transition ${dragOver ? "border-brand ring-2 ring-brand/40" : "border-line"}`}
+          className={`order-1 min-w-0 rounded-card border bg-surface p-3.5 transition ${dragOver ? "border-accent ring-2 ring-accent/40" : "border-line"}`}
           onDragOver={(e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";

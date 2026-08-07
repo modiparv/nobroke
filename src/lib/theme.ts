@@ -94,9 +94,13 @@ export function useThemePref(): ThemePref {
   );
 }
 
-/** Stamp on load and follow the OS while the preference is System. */
+/** Stamp on load and follow the OS while the preference is System.
+    Idempotent: StrictMode double-mounts must not stack listeners. */
+let inited = false;
 export function initTheme() {
   applyTheme();
+  if (inited) return;
+  inited = true;
   if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
       if (pref === "system") applyTheme();

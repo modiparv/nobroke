@@ -318,7 +318,7 @@ export default function Onboarding() {
                     key={g.id}
                     onClick={() => actions.toggleGoal(g.id)}
                     className={`flex flex-col gap-1 rounded-card border p-4 text-left transition ${
-                      sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-brand"
+                      sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-accent"
                     }`}
                   >
                     <span className="text-sm font-medium">{g.name}</span>
@@ -354,7 +354,7 @@ export default function Onboarding() {
                       window.setTimeout(next, 200);
                     }}
                     className={`flex flex-col gap-1 rounded-card border p-5 text-left transition ${
-                      sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-brand"
+                      sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-accent"
                     }`}
                   >
                     <span className="text-base font-medium">{opt.label}</span>

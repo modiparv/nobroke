@@ -93,7 +93,10 @@
   --accent-text: 92 130 255;
   --accent-fill: 46 91 255;
   --accent-hi: 125 155 255;
-  --accent-fill-hi: 74 117 232;
+  /* Fill hover DARKENS (like light) rather than lightening: the warm
+     off-white label must keep AA on the hovered fill, and any lighter blue
+     fails it. */
+  --accent-fill-hi: 38 78 217;
   --accent-tint: 22 33 63;
   --on-accent: 245 243 240;
   --band: 17 27 49;
