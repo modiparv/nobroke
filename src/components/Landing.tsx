@@ -3,6 +3,7 @@ import { actions, getState, useStore } from "../store";
 import { btnGhost, btnPrimary } from "../ui";
 import AuthSheet from "./AuthSheet";
 import Logo from "./Logo";
+import SupportPill from "./SupportPill";
 
 /**
  * Landing, repositioned on the premium wealth-management idea: expert-grade
@@ -81,6 +82,40 @@ const TIERS = [
   },
 ];
 
+/**
+ * The hero graphic is the product's own arithmetic, not an illustration:
+ * ₹25,000 a month for 8 years at a conservative return is what the curve and
+ * every number here actually compute to. The projected figure is the
+ * brightest thing in the hero, which is the whole hierarchy in one card.
+ */
+function HeroProjection() {
+  return (
+    <div className="rounded-card border border-line bg-surface p-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-eyebrow uppercase text-text-3">A goal, projected</span>
+        <span className="text-caption text-text-2">Home down payment · 2034</span>
+      </div>
+      <p className="num mt-3 text-hero font-medium">₹37.0L</p>
+      <p className="mt-0.5 text-caption text-text-2">projected by 2034, at ₹25,000 a month</p>
+      <svg viewBox="0 0 320 110" className="mt-4 w-full" role="img" aria-label="Projected value curving above the amount put in">
+        <path d="M0 104 C 90 96, 180 76, 320 22 L 320 110 L 0 110 Z" className="fill-accent/10" />
+        <path d="M0 106 C 100 100, 210 88, 320 62" className="stroke-text-2" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
+        <path d="M0 104 C 90 96, 180 76, 320 22" className="stroke-accent" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        <circle cx="320" cy="22" r="4" className="fill-accent" />
+      </svg>
+      <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-line pt-3">
+        <span className="text-caption text-text-2">
+          Put in <span className="num font-medium text-text">₹24.0L</span>
+        </span>
+        <span className="text-caption text-text-2">
+          Growth <span className="num font-medium text-text">₹13.0L</span>
+        </span>
+        <span className="text-index uppercase text-text-3">Illustrative</span>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   const s = useStore();
   const [showAuth, setShowAuth] = useState(false);
@@ -126,7 +161,8 @@ export default function Landing() {
       {showAuth && <AuthSheet initialMode="login" onClose={() => setShowAuth(false)} onAuthed={afterAuth} />}
 
       <main className="mx-auto max-w-page px-4 sm:px-6">
-        <section className="max-w-3xl py-20 sm:py-28">
+        <section className="grid items-center gap-10 py-20 sm:py-28 lg:grid-cols-[1fr_400px] lg:gap-16">
+          <div className="max-w-3xl">
           <span className="text-eyebrow uppercase text-text-3">Wealth, minus the noise</span>
           <h1 className="mt-4 text-4xl font-medium leading-[1.05] tracking-[-0.025em] text-display sm:text-6xl">
             We won't let you go broke.
@@ -151,6 +187,8 @@ export default function Landing() {
             )}
           </div>
           <p className="mt-5 text-caption text-text-2">2-minute setup · No jargon · Cancel anytime</p>
+          </div>
+          <HeroProjection />
         </section>
 
         <section className="border-t border-line">
@@ -273,6 +311,8 @@ export default function Landing() {
           advice.
         </p>
       </footer>
+
+      <SupportPill />
     </div>
   );
 }

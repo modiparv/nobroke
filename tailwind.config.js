@@ -12,6 +12,7 @@ export default {
       colors: {
         bg: channel("--bg"),
         surface: channel("--surface"),
+        sidebar: channel("--sidebar"),
         "surface-2": channel("--surface-2"),
         line: channel("--line"),
         "line-2": channel("--line-2"),

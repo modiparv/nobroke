@@ -11,17 +11,20 @@ export default function PasswordField({
   autoComplete,
   placeholder,
   className,
+  id,
 }: {
   value: string;
   onChange: (v: string) => void;
   autoComplete: string;
   placeholder: string;
   className: string;
+  id?: string;
 }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
       <input
+        id={id}
         type={show ? "text" : "password"}
         autoComplete={autoComplete}
         value={value}

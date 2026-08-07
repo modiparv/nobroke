@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { credentialError, login, register, type AuthUser } from "../lib/authApi";
 import { actions, getState } from "../store";
-import { btnPrimary } from "../ui";
+import { btnIntake } from "../ui";
 import PasswordField from "./PasswordField";
 
 /**
@@ -67,7 +67,7 @@ export default function AuthSheet({
   // primary button disabled until the group validates: the affordance is
   // "not yet", never an error after the fact.
   const field =
-    "h-14 w-full rounded-control border border-line bg-surface px-4 text-base outline-none transition focus:border-accent";
+    "h-14 w-full rounded-2xl border border-line bg-surface px-4 text-base outline-none transition focus:border-text focus:ring-1 focus:ring-text";
   const invalid = credentialError(email, password, mode === "register") != null;
 
   return (
@@ -91,28 +91,39 @@ export default function AuthSheet({
             void submit();
           }}
         >
-          <input
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@email.com"
-            aria-label="Email"
-            className={field}
-          />
-          <PasswordField
-            value={password}
-            onChange={setPassword}
-            autoComplete={mode === "register" ? "new-password" : "current-password"}
-            placeholder={mode === "register" ? "Password (8+ characters)" : "Password"}
-            className={field}
-          />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="as-email" className="text-caption font-medium text-text-2">
+              Email
+            </label>
+            <input
+              id="as-email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@email.com"
+              className={field}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="as-password" className="text-caption font-medium text-text-2">
+              Password
+            </label>
+            <PasswordField
+              id="as-password"
+              value={password}
+              onChange={setPassword}
+              autoComplete={mode === "register" ? "new-password" : "current-password"}
+              placeholder={mode === "register" ? "Password (8+ characters)" : "Password"}
+              className={field}
+            />
+          </div>
           {error && (
             <p role="alert" aria-live="polite" className="rounded-control bg-neg-bg px-3 py-2 text-support text-neg">
               {error}
             </p>
           )}
-          <button type="submit" disabled={busy || invalid} className={`${btnPrimary} w-full`}>
+          <button type="submit" disabled={busy || invalid} className={`${btnIntake} w-full`}>
             {busy ? "One moment…" : mode === "register" ? "Create account" : "Sign in"}
           </button>
         </form>

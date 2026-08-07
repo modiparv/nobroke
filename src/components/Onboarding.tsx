@@ -4,7 +4,8 @@ import { GOALS } from "../lib/goals";
 import { credentialError, login, register } from "../lib/authApi";
 import type { Profile } from "../lib/types";
 import { actions, getState, useStore } from "../store";
-import { btnPrimary } from "../ui";
+import { btnIntake } from "../ui";
+import SupportPill from "./SupportPill";
 import Logo from "./Logo";
 import PasswordField from "./PasswordField";
 
@@ -29,7 +30,7 @@ function AccountStep({ step }: { step: Step }) {
       <div className="fade-up mx-auto flex w-full max-w-sm flex-col items-center text-center">
         <h1 className="text-3xl font-serif font-normal tracking-[-0.01em] text-display sm:text-4xl">Your plan is ready.</h1>
         <p className="mt-3 text-muted">Signed in as {s.user.email}. We will save it to your account.</p>
-        <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={() => actions.finishOnboarding()}>
+        <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
           {step.cta}
         </button>
       </div>
@@ -84,7 +85,7 @@ function AccountStep({ step }: { step: Step }) {
   // Same affordance as AuthSheet: 56px fields, hints in placeholders, and
   // the button disabled until the group validates instead of erroring after.
   const field =
-    "h-14 w-full rounded-control border border-line bg-surface px-4 text-base outline-none transition focus:border-accent";
+    "h-14 w-full rounded-2xl border border-line bg-surface px-4 text-base outline-none transition focus:border-text focus:ring-1 focus:ring-text";
   const invalid = credentialError(email, password, mode === "register") != null;
 
   return (
@@ -99,28 +100,39 @@ function AccountStep({ step }: { step: Step }) {
           void submit();
         }}
       >
-        <input
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="name@email.com"
-          aria-label="Email"
-          className={field}
-        />
-        <PasswordField
-          value={password}
-          onChange={setPassword}
-          autoComplete={mode === "register" ? "new-password" : "current-password"}
-          placeholder={mode === "register" ? "Create a password (8+ characters)" : "Password"}
-          className={field}
-        />
+        <div className="flex flex-col gap-1.5 text-left">
+          <label htmlFor="ob-email" className="text-caption font-medium text-text-2">
+            Email
+          </label>
+          <input
+            id="ob-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@email.com"
+            className={field}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5 text-left">
+          <label htmlFor="ob-password" className="text-caption font-medium text-text-2">
+            Password
+          </label>
+          <PasswordField
+            id="ob-password"
+            value={password}
+            onChange={setPassword}
+            autoComplete={mode === "register" ? "new-password" : "current-password"}
+            placeholder={mode === "register" ? "Create a password (8+ characters)" : "Password"}
+            className={field}
+          />
+        </div>
         {error && (
           <p role="alert" aria-live="polite" className="rounded-control bg-neg-bg px-3 py-2 text-support text-neg">
             {error}
           </p>
         )}
-        <button type="submit" disabled={busy || invalid} className={`${btnPrimary} w-full`}>
+        <button type="submit" disabled={busy || invalid} className={`${btnIntake} w-full`}>
           {busy ? "One moment…" : mode === "register" ? "Create account and see plan" : "Sign in and see plan"}
         </button>
       </form>
@@ -256,7 +268,7 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
           {challenge}
         </p>
       )}
-      <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={commit} disabled={!ok}>
+      <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={commit} disabled={!ok}>
         {challenge ? "Yes, this is right" : "Continue"}
       </button>
     </div>
@@ -280,34 +292,29 @@ const STAGES = [
 function StageRail({ current, allDone }: { current: number; allDone: boolean }) {
   return (
     <nav aria-label="Intake sections">
-      <ol className="flex flex-col gap-1">
-        {STAGES.map((st) => {
+      <ol className="flex flex-col">
+        {STAGES.map((st, idx) => {
           const state = allDone || st.n < current ? "done" : st.n === current ? "active" : "todo";
           return (
-            <li key={st.n} className={`rounded-control px-3 py-2.5 ${state === "active" ? "bg-surface" : ""}`}>
-              <div className="flex items-center gap-2.5">
-                <span
-                  aria-hidden
-                  className={`num flex h-5 w-5 flex-none items-center justify-center rounded-full border text-index ${
-                    state === "done"
-                      ? "border-transparent bg-surface-2 text-text-2"
-                      : state === "active"
-                        ? "border-text text-text"
-                        : "border-line text-text-3"
-                  }`}
-                >
-                  {state === "done" ? "✓" : st.n}
-                </span>
-                <span
-                  className={`text-support font-medium ${
-                    state === "active" ? "text-text" : state === "done" ? "text-text-2" : "text-text-3"
-                  }`}
-                >
-                  {st.label}
-                </span>
-                {state === "done" && <span className="sr-only">(completed)</span>}
-              </div>
-              {state === "active" && <p className="mt-1 pl-[30px] text-caption text-text-2">{st.desc}</p>}
+            <li key={st.n} className="relative pb-7 pl-6 last:pb-0">
+              {idx < STAGES.length - 1 && (
+                <span aria-hidden className="absolute bottom-1 left-[5px] top-4 w-px bg-line-2" />
+              )}
+              <span
+                aria-hidden
+                className={`absolute left-0 top-[5px] h-[11px] w-[11px] rounded-full ${
+                  state === "active" ? "bg-text" : state === "done" ? "bg-text-2" : "border border-line-2"
+                }`}
+              />
+              <p
+                className={`text-support font-medium ${
+                  state === "active" ? "text-text" : state === "done" ? "text-display" : "text-text-2"
+                }`}
+              >
+                {st.label}
+                {state === "done" && <span className="sr-only"> (completed)</span>}
+              </p>
+              {state === "active" && <p className="mt-1 text-caption text-text-2">{st.desc}</p>}
             </li>
           );
         })}
@@ -325,44 +332,54 @@ export default function Onboarding() {
   const progress = step.kind === "account" ? 100 : step.stage <= 0 ? 0 : (step.stage / TOTAL_STAGES) * 100;
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-5 pb-10 pt-5 sm:px-8">
-      <div className="flex items-center justify-between gap-3 pb-4">
-        <button
-          className="w-16 px-1 py-1.5 text-left text-sm font-medium text-muted hover:text-ink"
-          style={{ visibility: i > 0 && step.kind !== "account" ? "visible" : "hidden" }}
-          onClick={() => actions.setStep(i - 1)}
-        >
-          ← Back
-        </button>
-        <Logo />
-        {/* Spacer keeps the logo centred. There is deliberately no skip: the
-            intake is the plan's foundation, so every question is answered. */}
-        <span className="w-16" aria-hidden="true" />
-      </div>
-
-      {/* On small screens the rail collapses to the progress bar. */}
-      <div className="mb-2 flex items-center gap-3 lg:hidden">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-          <div className="h-full rounded-full bg-brand-deep transition-all duration-300" style={{ width: `${progress}%` }} />
+    <div className="flex min-h-screen">
+      {/* The journey lives in its own column, on its own ground: every
+          section visible from the first screen, ticked off as it completes. */}
+      <aside className="hidden w-72 flex-none flex-col justify-between border-r border-line bg-sidebar px-7 pb-6 pt-6 lg:flex">
+        <div>
+          <Logo />
+          <div className="mt-12">
+            <StageRail current={step.stage} allDone={step.kind === "account"} />
+          </div>
         </div>
-        {step.stage > 0 && (
-          <span className="whitespace-nowrap text-xs font-medium text-muted">
-            {step.stageLabel} · {step.stage} of {TOTAL_STAGES}
+        {s.user && <p className="truncate text-caption text-text-2">Signed in as {s.user.email}</p>}
+      </aside>
+
+      <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-1 flex-col px-5 pb-10 pt-5 sm:px-8">
+        <div className="flex items-center justify-between gap-3 pb-4">
+          <button
+            className="w-16 px-1 py-1.5 text-left text-sm font-medium text-muted hover:text-ink"
+            style={{ visibility: i > 0 && step.kind !== "account" ? "visible" : "hidden" }}
+            onClick={() => actions.setStep(i - 1)}
+          >
+            ← Back
+          </button>
+          <span className="lg:hidden">
+            <Logo />
           </span>
-        )}
-      </div>
+          {/* Spacer keeps the logo centred. There is deliberately no skip: the
+              intake is the plan's foundation, so every question is answered. */}
+          <span className="w-16" aria-hidden="true" />
+        </div>
 
-      <div className="flex flex-1 items-stretch gap-12">
-        <aside className="hidden w-60 flex-none pt-14 lg:block">
-          <StageRail current={step.stage} allDone={step.kind === "account"} />
-        </aside>
+        {/* On small screens the rail collapses to the progress bar. */}
+        <div className="mb-2 flex items-center gap-3 lg:hidden">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+            <div className="h-full rounded-full bg-brand-deep transition-all duration-300" style={{ width: `${progress}%` }} />
+          </div>
+          {step.stage > 0 && (
+            <span className="whitespace-nowrap text-xs font-medium text-muted">
+              {step.stageLabel} · {step.stage} of {TOTAL_STAGES}
+            </span>
+          )}
+        </div>
 
-        <div className="flex min-w-0 flex-1 items-center">
+        <div className="flex flex-1 items-center">
         {step.kind === "intro" && (
           <div className="fade-up flex w-full flex-col items-center text-center">
             <h1 className="max-w-[16ch] text-3xl font-serif font-normal tracking-[-0.01em] text-display sm:text-4xl">{step.title}</h1>
             <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
-            <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={next}>
+            <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={next}>
               {step.cta}
             </button>
           </div>
@@ -391,7 +408,7 @@ export default function Onboarding() {
             </div>
             <div className="mt-6 flex items-center justify-between">
               <span className="text-sm font-medium text-muted">{s.selectedGoalIds.length}/3 picked</span>
-              <button className={btnPrimary} disabled={s.selectedGoalIds.length === 0} onClick={next}>
+              <button className={`${btnIntake} px-10`} disabled={s.selectedGoalIds.length === 0} onClick={next}>
                 Continue
               </button>
             </div>
@@ -433,6 +450,8 @@ export default function Onboarding() {
           {step.kind === "account" && <AccountStep step={step} />}
         </div>
       </div>
+
+      <SupportPill />
     </div>
   );
 }
