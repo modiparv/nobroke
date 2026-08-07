@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Palette. Monochrome, black-first: #000 page, greys #525252 / #8C8C8C /
+ * #B7B7B7 / #E8E8E8, white as the one interactive tone. A light variant ships
+ * behind data-theme="light", but black is the default per the brand call.
+ *
+ * Values are raw "R G B" channels so Tailwind opacity modifiers keep working.
+ *
+ * Status cannot be carried by hue in monochrome, so it is carried by fill
+ * weight: the state that needs attention is the BRIGHTEST thing on the dark
+ * screen (white chip, black text) and a healthy state recedes to a quiet chip.
+ * Numbers are never coloured.
+ */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  /* Elevation is the whole game in mono dark: page #000, cards #121212,
+     hero band #1C1C1C, raised fills #242424. Same hue, four depths. */
+  --bg: 0 0 0;
+  --surface: 18 18 18;
+  --surface-2: 36 36 36;
+  --line: 51 51 51;
+  --line-2: 92 92 92;
+  --text: 237 237 237;
+  --text-2: 183 183 183;
+  --text-3: 140 140 140;
+  --accent: 255 255 255;
+  --accent-hi: 224 224 224;
+  --accent-tint: 36 36 36;
+  --on-accent: 0 0 0;
+  --band: 28 28 28;
+  --on-band: 255 255 255;
+  --on-band-2: 183 183 183;
+  --on-band-3: 140 140 140;
+  --pos: 200 200 200;
+  --pos-bg: 42 42 42;
+  --cau: 17 17 17;
+  --cau-bg: 232 232 232;
+  --neg: 0 0 0;
+  --neg-bg: 255 255 255;
+  /* Logo mark: brand constants, not part of the mono ramp. The falling and
+     rising strokes keep their own colours in both themes. */
+  --logo-fall: #f2f5fa;
+  --logo-rise: #5c82ff;
+  --ink-800: rgb(var(--text));
+}
+
+/* The working surfaces: private-bank light. Ink navy on paper, one signal
+   blue reserved for interactive elements, quiet slate secondaries, and true
+   semantic status colours. The dark palette above stays for the marketing
+   surface. */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: 246 248 252;
+  --surface: 255 255 255;
+  --surface-2: 238 242 248;
+  --line: 227 233 242;
+  --line-2: 191 202 218;
+  --text: 11 27 51;
+  --text-2: 71 85 112;
+  --text-3: 122 135 158;
+  --accent: 46 91 255;
+  --accent-hi: 26 68 217;
+  --accent-tint: 234 240 255;
+  --on-accent: 255 255 255;
+  --band: 11 27 51;
+  --on-band: 255 255 255;
+  --on-band-2: 178 191 214;
+  --on-band-3: 128 143 170;
+  --pos: 14 122 90;
+  --pos-bg: 230 244 239;
+  --cau: 158 100 8;
+  --cau-bg: 250 240 224;
+  --neg: 179 38 30;
+  --neg-bg: 249 232 231;
+  --logo-fall: #0b1b33;
+  --logo-rise: #2e5bff;
+  --ink-800: rgb(var(--text));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+}
+
+body {
+  @apply bg-bg text-text font-sans antialiased;
+  margin: 0;
+  font-size: 14px;
+  /* A stray wide popover must never put the page into sideways scroll. */
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Two weights only, 400 and 500. Headings are not bold, and they track
+   tight: crispness lives in the letterfit. */
+h1,
+h2,
+h3 {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* Inverted selection: the sharpest detail a mono palette can offer. */
+::selection {
+  background: rgb(var(--text));
+  color: rgb(var(--bg));
+}
+
+::placeholder {
+  color: rgb(var(--text-3));
+}
+
+/* Every number in the product. Tabular figures stop digits jittering as values
+   change, and lining figures keep them aligned against uppercase labels. */
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.01em;
+}
+
+input[type="range"] {
+  accent-color: rgb(var(--accent));
+  height: 4px;
+  cursor: pointer;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ---------- Animations ---------- */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+.fade-up { animation: fadeUp 0.32s ease both; }
+.live-dot { animation: blink 1.4s ease-in-out infinite; }
+.typing-dot { animation: typing 1.2s infinite ease-in-out; }
+
+/* Copilot command bar. Focus is carried by the border alone: no shadow, no glow. */
+.copilot-bar {
+  transition: border-color 0.2s ease;
+}
+.copilot-bar:focus-within {
+  border-color: rgb(var(--accent));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel-slide { animation: slideIn 0.3s ease both; }
+}

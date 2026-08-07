@@ -1,23 +1,40 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>NoBroke — Plan any goal. Watch your money grow.</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NoBroke</title>
+    <script>
+      // Paint the right theme before first render: dark marketing, light app.
+      try {
+        var s = JSON.parse(localStorage.getItem("nobroke_state_v1"));
+        document.documentElement.dataset.theme =
+          s && s.state && s.state.screen && s.state.screen !== "landing" ? "light" : "dark";
+      } catch (e) {}
+    </script>
     <meta
       name="description"
-      content="NoBroke is an AI-powered financial planning & wealth-management copilot. Set a goal, build a portfolio by dragging assets, and see corpus projections, XIRR, and goal timelines update in real time."
+      content="NoBroke is wealth management for people who are still building. Track everything you own, plan every goal, and grow it all in one portfolio."
     />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="/logo-mark.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#0B1B33" />
+    <meta property="og:title" content="NoBroke" />
+    <meta property="og:description" content="Track everything you own, plan every goal, and grow it all in one simple portfolio." />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='sans-serif'%3E%E2%97%86%3C/text%3E%3C/svg%3E"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap"
+      rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div id="app">
-      <noscript>NoBroke needs JavaScript enabled to run the interactive planner.</noscript>
-    </div>
-    <script type="module" src="./dist/main.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

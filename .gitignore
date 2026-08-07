@@ -1,9 +1,22 @@
-# dependencies (none required to run — see README)
 node_modules/
+dist/
+dist-ssr/
+*.local
+
+# env / secrets — never commit
+.env
+.env.*
+!.env.example
 
 # logs / os
 *.log
+npm-debug.log*
 .DS_Store
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
 
 # local verification artifacts
 /screenshots/

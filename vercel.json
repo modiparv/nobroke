@@ -1,7 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "",
-  "installCommand": "",
-  "outputDirectory": ".",
-  "cleanUrls": true
+  "framework": "vite",
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "crons": [
+    {
+      "path": "/api/sync/amfi",
+      "schedule": "45 17 * * *"
+    }
+  ],
+  "functions": {
+    "api/admin/migrate.js": {
+      "includeFiles": "db/migrations/**"
+    }
+  }
 }
