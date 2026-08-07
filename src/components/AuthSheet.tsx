@@ -63,8 +63,12 @@ export default function AuthSheet({
     onClose();
   };
 
+  // 56px fields with the format hint living in the placeholder, and the
+  // primary button disabled until the group validates: the affordance is
+  // "not yet", never an error after the fact.
   const field =
-    "h-10 w-full rounded-control border border-line bg-surface px-3 text-sm outline-none transition focus:border-accent";
+    "h-14 w-full rounded-control border border-line bg-surface px-4 text-base outline-none transition focus:border-accent";
+  const invalid = credentialError(email, password, mode === "register") != null;
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4">
@@ -72,7 +76,7 @@ export default function AuthSheet({
       <div className="relative w-full max-w-sm rounded-card border border-line bg-surface p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-section font-medium">{mode === "register" ? "Create your account" : "Welcome back"}</h2>
+            <h2 className="text-section font-medium text-display">{mode === "register" ? "Create your account" : "Welcome back"}</h2>
             <p className="mt-0.5 text-caption text-text-2">Your plan follows you to any device.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="px-1 text-text-2 transition hover:text-text">
@@ -92,7 +96,7 @@ export default function AuthSheet({
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            placeholder="name@email.com"
             aria-label="Email"
             className={field}
           />
@@ -108,7 +112,7 @@ export default function AuthSheet({
               {error}
             </p>
           )}
-          <button type="submit" disabled={busy} className={`${btnPrimary} w-full`}>
+          <button type="submit" disabled={busy || invalid} className={`${btnPrimary} w-full`}>
             {busy ? "One moment…" : mode === "register" ? "Create account" : "Sign in"}
           </button>
         </form>

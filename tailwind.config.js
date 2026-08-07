@@ -16,6 +16,9 @@ export default {
         line: channel("--line"),
         "line-2": channel("--line-2"),
         text: channel("--text"),
+        // Display copy (headlines, section copy, prose) sits DIMMER than
+        // values: the number is always the brightest thing on screen.
+        display: channel("--text-display"),
         "text-2": channel("--text-2"),
         "text-3": channel("--text-3"),
         // The accent splits in dark mode: `accent` is the on-surface accent
@@ -61,6 +64,9 @@ export default {
       fontFamily: {
         // Inter reads as finance rather than friendly-app (spec 8b).
         sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        // Question screens only: a serif heading makes the intake read as a
+        // conversation rather than data entry. Never for numbers.
+        serif: ["ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       fontSize: {

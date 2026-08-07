@@ -128,7 +128,7 @@ export default function Landing() {
       <main className="mx-auto max-w-page px-4 sm:px-6">
         <section className="max-w-3xl py-20 sm:py-28">
           <span className="text-eyebrow uppercase text-text-3">Wealth, minus the noise</span>
-          <h1 className="mt-4 text-4xl font-medium leading-[1.05] tracking-[-0.025em] sm:text-6xl">
+          <h1 className="mt-4 text-4xl font-medium leading-[1.05] tracking-[-0.025em] text-display sm:text-6xl">
             We won't let you go broke.
           </h1>
           <p className="mt-5 max-w-xl text-body text-text-2 sm:text-base">
@@ -167,9 +167,39 @@ export default function Landing() {
           </ul>
         </section>
 
+        {/* The division of labour, stated plainly: the person stays pilot in
+            command, the product is the instrument panel. Monochrome on purpose
+            — this is a promise, not a feature, so nothing here glows. */}
+        <section className="border-t border-line py-14 sm:py-20">
+          <span className="text-eyebrow uppercase text-text-3">Pilot in command</span>
+          <h2 className="mt-3 max-w-xl text-2xl font-medium tracking-[-0.02em] text-display sm:text-3xl">
+            Your judgment, carried by numbers that never sleep.
+          </h2>
+          <div className="mt-8 max-w-3xl">
+            <div className="grid grid-cols-2 gap-6 border-b border-line pb-3 sm:gap-10">
+              <span className="text-eyebrow uppercase text-text-3">You</span>
+              <span className="text-eyebrow uppercase text-text-3">NoBroke</span>
+            </div>
+            {(
+              [
+                ["Decide what actually matters", "Watches every holding, every day"],
+                ["Know what you can live with", "Finds the fees and tax you leak"],
+                ["Choose when to act", "Runs the numbers before you commit"],
+                ["Hold the context no statement shows", "Remembers every decision, and why"],
+              ] as const
+            ).map(([you, us]) => (
+              <div key={you} className="grid grid-cols-2 gap-6 border-b border-line py-4 sm:gap-10">
+                <p className="text-body text-display">{you}</p>
+                <p className="text-body text-display">{us}</p>
+              </div>
+            ))}
+            <p className="pt-6 text-center text-section font-medium">A plan you understand.</p>
+          </div>
+        </section>
+
         <section id="pricing" className="border-t border-line py-14 sm:py-20">
           <span className="text-eyebrow uppercase text-text-3">Pricing</span>
-          <h2 className="mt-3 text-2xl font-medium tracking-[-0.02em] sm:text-3xl">Three tiers. One promise.</h2>
+          <h2 className="mt-3 text-2xl font-medium tracking-[-0.02em] text-display sm:text-3xl">Three tiers. One promise.</h2>
           <p className="mt-3 max-w-2xl text-body text-text-2">
             No percentage of your assets. No commissions from funds. A flat fee for judgement, so our incentive is your
             outcome, nothing else.

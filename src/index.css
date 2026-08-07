@@ -7,13 +7,16 @@
  * (a boot script in index.html stamps data-theme before first paint, and the
  * account menu offers System / Light / Dark).
  *
- * Light: private-bank paper. Ink navy on warm off-white, one signal blue for
- * everything interactive. The warmth lives ONLY in the neutrals.
+ * Warm neutrals in BOTH themes: page, surfaces, hairlines and text all sit a
+ * few degrees warm of neutral. The brand navy survives only where it is the
+ * brand — the band, the logo, one chart series — not as the text colour.
+ * Never pure #000 or pure #FFF anywhere.
  *
- * Dark: NEUTRAL near-black surfaces — never warm-tinted, warm darks go muddy.
- * The family resemblance with light comes from the warm off-white text, and
- * nothing else. The hero keeps the brand navy: against the near-black page it
- * reads as lifted rather than sunk. Never pure #000 or pure #FFF.
+ * Text hierarchy inverts the obvious order: display copy (headlines, section
+ * copy, prose) uses --text-display and sits DIMMER than --text (values, row
+ * titles, anything numeric). The number is always the brightest thing on
+ * screen. Brightness order, both themes:
+ *   --text > --text-display > --text-2 > --text-3
  *
  * The accent splits in dark: --accent-text (#5C82FF) for links, icons, chart
  * fills and anything reading ON a dark surface; --accent-fill (#2E5BFF) for
@@ -31,20 +34,21 @@
  */
 :root {
   color-scheme: light;
-  --bg: 247 246 243;
+  --bg: 247 246 245;
   --surface: 255 255 255;
-  --surface-2: 238 242 248;
-  --line: 232 229 224;
-  --line-2: 191 202 218;
-  --text: 11 27 51;
-  --text-2: 71 85 112;
+  --surface-2: 239 237 233;
+  --line: 224 220 214;
+  --line-2: 201 196 188;
+  --text: 23 22 20;
+  --text-display: 87 83 78;
+  --text-2: 110 105 99;
   --text-3: 138 131 120;
   --accent-text: 46 91 255;
   --accent-fill: 46 91 255;
   --accent-hi: 26 68 217;
   --accent-fill-hi: 26 68 217;
   --accent-tint: 234 240 255;
-  --on-accent: 247 246 243;
+  --on-accent: 247 246 245;
   --band: 11 27 51;
   --on-band: 245 243 240;
   --on-band-2: 178 191 214;
@@ -65,7 +69,7 @@
   --risk-3: #7396e8;
   --risk-4: #4a75e8;
   --risk-5: #2e5bff;
-  --risk-unfilled: #e2e8f2;
+  --risk-unfilled: #e7e5e0;
   /* Categorical series for the goals chart, in draw order. */
   --chart-1: #2e5bff;
   --chart-2: #0e7a5a;
@@ -82,14 +86,15 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg: 10 10 12;
-  --surface: 19 19 22;
-  --surface-2: 27 27 32;
-  --line: 38 38 44;
-  --line-2: 53 53 61;
-  --text: 245 243 240;
-  --text-2: 155 150 143;
-  --text-3: 99 96 92;
+  --bg: 10 10 11;
+  --surface: 19 18 17;
+  --surface-2: 27 26 24;
+  --line: 36 34 31;
+  --line-2: 50 47 43;
+  --text: 233 229 224;
+  --text-display: 168 163 156;
+  --text-2: 138 133 126;
+  --text-3: 95 91 85;
   --accent-text: 92 130 255;
   --accent-fill: 46 91 255;
   --accent-hi: 125 155 255;
@@ -117,14 +122,14 @@
   --risk-3: #3e64c4;
   --risk-4: #4d73e1;
   --risk-5: #5c82ff;
-  --risk-unfilled: #1b1b20;
+  --risk-unfilled: #1b1a18;
   --chart-1: #5c82ff;
   --chart-2: #34c88e;
   --chart-3: #e0a23c;
-  --chart-4: #f5f3f0;
+  --chart-4: #e9e5e0;
   --chart-5: #9b968f;
   --chart-6: #f0736a;
-  --logo-fall: #f5f3f0;
+  --logo-fall: #e9e5e0;
   --logo-rise: #5c82ff;
   --ink-800: rgb(var(--text));
 }
