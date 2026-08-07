@@ -294,7 +294,7 @@ export default function PortfolioBuilder() {
                     );
                   })}
                 </div>
-                <p className="mt-1.5 text-caption text-text-3">
+                <p className="mt-1.5 text-caption text-text-2">
                   Ranked by NoBroke Score: consistency, downside behaviour, risk-adjusted return and track record,
                   computed from official NAV history. Hover a fund for its breakdown.
                 </p>
@@ -375,14 +375,14 @@ export default function PortfolioBuilder() {
                     <div className="num text-caption font-medium leading-tight text-ink">
                       {formatINR(100000 * Math.pow(1 + band.low, n))}
                     </div>
-                    <div className="num text-index leading-tight text-text-3">
+                    <div className="num text-index leading-tight text-text-2">
                       to {formatINR(100000 * Math.pow(1 + band.high, n))}
                     </div>
                     <div className="mt-0.5 text-index uppercase tracking-wide text-text-3">{n}y</div>
                   </div>
                 ))}
               </div>
-              <p className="mt-1.5 text-index text-text-3">On ₹1 lakh, if the future rhymes with the past.</p>
+              <p className="mt-1.5 text-index text-text-2">On ₹1 lakh, if the future rhymes with the past.</p>
             </div>
           )}
 
@@ -421,7 +421,7 @@ export default function PortfolioBuilder() {
             {total === 0 && (
               <p className="mt-2 text-center text-caption text-muted">Tap one to fill your mix.</p>
             )}
-            <p className="mt-2 text-caption text-text-3">Capped by your risk appetite. Any mix stays your choice.</p>
+            <p className="mt-2 text-caption text-text-2">Capped by your risk appetite. Any mix stays your choice.</p>
           </div>
 
           {equityHeavy && (

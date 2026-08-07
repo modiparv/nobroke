@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { actions, getState, useStore } from "./store";
 import { fetchMacro } from "./lib/macroApi";
 import { me } from "./lib/authApi";
+import { initTheme } from "./lib/theme";
 import Landing from "./components/Landing";
 import Onboarding from "./components/Onboarding";
 import Plan from "./components/Plan";
@@ -10,11 +11,12 @@ import CopilotBar from "./components/CopilotBar";
 export default function App() {
   const s = useStore();
 
-  // The marketing surface is dark and editorial; the working surfaces are
-  // light and professional. One attribute flip, both palettes prebuilt.
+  // Theme follows the person's preference (System by default), not the
+  // screen. The boot script stamped it before paint; this keeps it live,
+  // including OS scheme changes while on System.
   useEffect(() => {
-    document.documentElement.dataset.theme = s.screen === "landing" ? "dark" : "light";
-  }, [s.screen]);
+    initTheme();
+  }, []);
 
   // Live CPI becomes the planning inflation default (never overriding a
   // hand-set rate). One fetch per session, silent on failure.

@@ -58,9 +58,9 @@ export default function AuthSheet({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-section font-medium">{mode === "register" ? "Create your account" : "Welcome back"}</h2>
-            <p className="mt-0.5 text-caption text-text-3">Your plan follows you to any device.</p>
+            <p className="mt-0.5 text-caption text-text-2">Your plan follows you to any device.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="px-1 text-text-3 transition hover:text-text">
+          <button type="button" onClick={onClose} aria-label="Close" className="px-1 text-text-2 transition hover:text-text">
             ✕
           </button>
         </div>
@@ -109,7 +109,7 @@ export default function AuthSheet({
           >
             {mode === "register" ? "Have an account? Sign in" : "New here? Create an account"}
           </button>
-          {mode === "login" && <span className="text-caption text-text-3">Forgot it? Message us.</span>}
+          {mode === "login" && <span className="text-caption text-text-2">Forgot it? Message us.</span>}
         </div>
       </div>
     </div>

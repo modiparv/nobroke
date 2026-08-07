@@ -36,12 +36,12 @@ function MacroCard() {
             <span className="num text-support font-medium">
               {i.value}
               {i.unit}
-              <span className="ml-1.5 text-caption font-normal text-text-3">{i.as_of}</span>
+              <span className="ml-1.5 text-caption font-normal text-text-2">{i.as_of}</span>
             </span>
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-caption text-text-3">
+      <p className="mt-2 text-caption text-text-2">
         {[...new Set(macro.indicators.map((i) => i.source))].join(" · ")}. Inflation here sets your plan's default.
       </p>
     </section>
@@ -170,7 +170,7 @@ export default function MoneyTab() {
                       </div>
                     </li>
                   ))}
-                  {breakdown.length === 0 && <p className="text-caption text-text-3">Add cash or holdings to see this.</p>}
+                  {breakdown.length === 0 && <p className="text-caption text-text-2">Add cash or holdings to see this.</p>}
                 </ul>
               ) : (
                 <ul className="mt-1 divide-y divide-line">
@@ -190,16 +190,16 @@ export default function MoneyTab() {
                               {onTrack ? "On track" : "Short"}
                             </span>
                           </div>
-                          <span className="num text-caption text-text-3">{Math.round(share * 100)}% of the pool</span>
+                          <span className="num text-caption text-text-2">{Math.round(share * 100)}% of the pool</span>
                         </div>
                         <div className="flex-none text-right">
                           <div className="num text-support font-medium">{formatINR(totalCapital(s) * share)}</div>
-                          <div className="num text-caption text-text-3">{formatINR(goalMonthly(s, g.id))}/mo</div>
+                          <div className="num text-caption text-text-2">{formatINR(goalMonthly(s, g.id))}/mo</div>
                         </div>
                       </li>
                     );
                   })}
-                  {s.goals.length === 0 && <p className="py-2 text-caption text-text-3">Add a goal to see this.</p>}
+                  {s.goals.length === 0 && <p className="py-2 text-caption text-text-2">Add a goal to see this.</p>}
                 </ul>
               )}
             </section>
@@ -230,7 +230,7 @@ export default function MoneyTab() {
                   You invest more than what is left after spending. Worth a look.
                 </p>
               ) : (
-                <p className="mt-3 text-caption text-text-3">
+                <p className="mt-3 text-caption text-text-2">
                   {formatINR(Math.max(0, s.monthlyIncome - s.monthlyExpenses))} left after spending. You put{" "}
                   {formatINR(s.monthlySip)} of it to work.
                 </p>
@@ -261,7 +261,7 @@ export default function MoneyTab() {
         </aside>
       </div>
 
-      <p className="pb-2 text-center text-caption text-text-3">Projections are illustrative and not investment advice.</p>
+      <p className="pb-2 text-center text-caption text-text-2">Projections are illustrative and not investment advice.</p>
     </div>
   );
 }

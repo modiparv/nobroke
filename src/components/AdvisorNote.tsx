@@ -69,7 +69,7 @@ export default function AdvisorNote() {
         <button
           onClick={() => setDismissed((d) => [...d, note.id])}
           aria-label="Dismiss note"
-          className="px-1 text-text-3 transition hover:text-text"
+          className="px-1 text-text-2 transition hover:text-text"
         >
           ✕
         </button>

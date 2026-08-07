@@ -119,7 +119,7 @@ function AccountStep({ step }: { step: Step }) {
         <button
           type="button"
           onClick={() => actions.finishOnboarding()}
-          className="text-caption text-text-3 transition hover:text-text-2"
+          className="text-caption text-text-2 transition hover:text-text"
         >
           Skip for now, just show my plan
         </button>

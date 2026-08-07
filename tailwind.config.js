@@ -18,8 +18,14 @@ export default {
         text: channel("--text"),
         "text-2": channel("--text-2"),
         "text-3": channel("--text-3"),
-        accent: channel("--accent"),
+        // The accent splits in dark mode: `accent` is the on-surface accent
+        // (links, icons, chart fills), `accent-fill` is for button backgrounds
+        // only, so the light label passes contrast. In light both resolve to
+        // the same blue.
+        accent: channel("--accent-text"),
         "accent-hi": channel("--accent-hi"),
+        "accent-fill": channel("--accent-fill"),
+        "accent-fill-hi": channel("--accent-fill-hi"),
         "accent-tint": channel("--accent-tint"),
         "on-accent": channel("--on-accent"),
         band: channel("--band"),
@@ -34,17 +40,20 @@ export default {
         "neg-bg": channel("--neg-bg"),
 
         // Aliases kept so existing markup swaps palette without a rewrite.
+        // `brand` is only ever used as a button/control fill, so it maps to
+        // the fill side of the split; the asset-class colours are chart fills,
+        // so they map to the on-surface side.
         ink: channel("--text"),
         muted: channel("--text-2"),
         paper: channel("--bg"),
         positive: channel("--pos"),
         brand: {
-          DEFAULT: channel("--accent"),
-          deep: channel("--accent-hi"),
-          dark: channel("--accent-hi"),
+          DEFAULT: channel("--accent-fill"),
+          deep: channel("--accent-fill-hi"),
+          dark: channel("--accent-fill-hi"),
           mint: channel("--accent-tint"),
         },
-        equity: channel("--accent"),
+        equity: channel("--accent-text"),
         debt: channel("--text-2"),
         gold: channel("--cau"),
         hybrid: channel("--accent-hi"),

@@ -33,7 +33,7 @@ function mixLabel(alloc: Record<string, number>): string {
 
 function Pill({ label, onClick, accent, onBand }: { label: string; onClick: () => void; accent?: boolean; onBand?: boolean }) {
   const tone = accent
-    ? "bg-accent text-on-accent hover:bg-accent-hi"
+    ? "bg-accent-fill text-on-accent hover:bg-accent-fill-hi"
     : onBand
       ? "border border-on-band/30 text-on-band hover:border-on-band/60"
       : "border border-line text-text hover:border-line-2";
@@ -124,15 +124,9 @@ export default function Plan() {
     <div className="min-h-screen bg-bg">
       <AppHeader />
 
-      {/* The hero band. A soft diagonal navy gradient with a faint accent glow
-          gives the total-saved figure depth without shouting. */}
-      <section
-        style={{
-          backgroundColor: "#0B1B33",
-          backgroundImage:
-            "radial-gradient(120% 140% at 100% 0%, rgba(46,91,255,0.18) 0%, rgba(46,91,255,0) 45%), linear-gradient(120deg, #0A192F 0%, #0E2140 60%, #12284C 100%)",
-        }}
-      >
+      {/* The hero band. Brand navy from the theme tokens: sunk into the light
+          page, lifted above the dark one. */}
+      <section className="hero-band">
         <div className="mx-auto flex max-w-page flex-col gap-4 px-4 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-7">
           <div>
             <span className="text-eyebrow uppercase text-on-band-2">Total saved</span>
@@ -245,7 +239,7 @@ export default function Plan() {
           )}
         </div>
 
-        <p className="pb-2 text-center text-caption text-text-3">
+        <p className="pb-2 text-center text-caption text-text-2">
           Projections are illustrative and not investment advice.
         </p>
       </div>

@@ -150,7 +150,7 @@ export default function Landing() {
               </>
             )}
           </div>
-          <p className="mt-5 text-caption text-text-3">2-minute setup · No jargon · Cancel anytime</p>
+          <p className="mt-5 text-caption text-text-2">2-minute setup · No jargon · Cancel anytime</p>
         </section>
 
         <section className="border-t border-line">
@@ -183,7 +183,7 @@ export default function Landing() {
                 }`}
               >
                 {t.popular && (
-                  <span className="absolute -top-2.5 left-5 rounded-full bg-accent px-2.5 py-0.5 text-index font-medium uppercase tracking-wide text-on-accent">
+                  <span className="absolute -top-2.5 left-5 rounded-full bg-accent-fill px-2.5 py-0.5 text-index font-medium uppercase tracking-wide text-on-accent">
                     Most chosen
                   </span>
                 )}
@@ -193,12 +193,12 @@ export default function Landing() {
                     {t.gate}
                   </span>
                 </div>
-                <p className="mt-0.5 text-caption text-text-3">{t.tagline}</p>
+                <p className="mt-0.5 text-caption text-text-2">{t.tagline}</p>
                 <p className="num mt-4 text-2xl font-medium">
                   {t.price}
-                  {t.period && <span className="text-support font-normal text-text-3">{t.period}</span>}
+                  {t.period && <span className="text-support font-normal text-text-2">{t.period}</span>}
                 </p>
-                {t.annual && <p className="num mt-0.5 text-caption text-text-3">{t.annual}</p>}
+                {t.annual && <p className="num mt-0.5 text-caption text-text-2">{t.annual}</p>}
                 <ul className="mt-4 flex-1 space-y-2">
                   {t.features.map((f) => (
                     <li key={f} className="flex gap-2 text-support text-text-2">
@@ -212,26 +212,23 @@ export default function Landing() {
                     Start free
                   </button>
                 ) : (
-                  <span className="mt-5 inline-flex h-10 w-full items-center justify-center rounded-control border border-line text-support text-text-3">
+                  <span className="mt-5 inline-flex h-10 w-full items-center justify-center rounded-control border border-line text-support text-text-2">
                     Early access soon
                   </span>
                 )}
               </div>
             ))}
           </div>
-          <p className="mt-4 text-caption text-text-3">
+          <p className="mt-4 text-caption text-text-2">
             Indicative pricing for early access. Founding members keep their price for life.
           </p>
         </section>
 
         <section className="py-14 sm:py-20">
-          <div
-            className="rounded-screen px-6 py-14 text-center text-white sm:py-20"
-            style={{ background: "linear-gradient(135deg,#000000,#525252)" }}
-          >
+          <div className="hero-band rounded-screen px-6 py-14 text-center text-on-band sm:py-20">
             <h2 className="text-2xl font-medium tracking-[-0.02em] sm:text-4xl">Start with what you have.</h2>
             <button
-              className="mt-7 inline-flex items-center justify-center rounded-control bg-white px-6 py-3 text-sm font-medium text-black transition hover:bg-text-2"
+              className="mt-7 inline-flex items-center justify-center rounded-control bg-accent-fill px-6 py-3 text-sm font-medium text-on-accent transition hover:bg-accent-fill-hi"
               onClick={actions.startOnboarding}
             >
               Start now
@@ -241,7 +238,7 @@ export default function Landing() {
       </main>
 
       <footer className="mx-auto max-w-page px-4 pb-10 sm:px-6">
-        <p className="mx-auto max-w-2xl text-center text-caption text-text-3">
+        <p className="mx-auto max-w-2xl text-center text-caption text-text-2">
           NoBroke is an early prototype. Projections are illustrative, use simplified assumptions, and are not investment
           advice.
         </p>

@@ -36,7 +36,7 @@ export default function PasswordField({
         aria-label={show ? "Hide password" : "Show password"}
         aria-pressed={show}
         tabIndex={-1}
-        className="absolute inset-y-0 right-0 grid w-11 place-items-center text-text-3 transition hover:text-text"
+        className="absolute inset-y-0 right-0 grid w-11 place-items-center text-text-2 transition hover:text-text"
       >
         {show ? (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">

@@ -1,7 +1,41 @@
 import { useEffect, useState } from "react";
 import { actions, useStore } from "../store";
+import { setThemePref, useThemePref, type ThemePref } from "../lib/theme";
 import AuthSheet from "./AuthSheet";
 import Logo from "./Logo";
+
+const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+];
+
+/** Three-state theme control inside the account menu. The choice is a device
+    preference: it persists locally and never syncs to the account. */
+function ThemeRow() {
+  const pref = useThemePref();
+  return (
+    <div className="px-3 py-2">
+      <span className="text-eyebrow uppercase text-text-3">Theme</span>
+      <div className="mt-1.5 flex gap-0.5 rounded-control bg-surface-2 p-0.5" role="radiogroup" aria-label="Theme">
+        {THEME_OPTIONS.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={pref === o.value}
+            onClick={() => setThemePref(o.value)}
+            className={`h-7 flex-1 rounded-[7px] text-caption transition ${
+              pref === o.value ? "bg-surface font-medium text-text" : "text-text-2 hover:text-text"
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /**
  * App nav: logo, the Plan / Money toggle, account, and New plan.
@@ -33,7 +67,7 @@ export default function AppHeader() {
               onClick={() => actions.setTab(t)}
               aria-current={s.tab === t ? "page" : undefined}
               className={`inline-flex h-7 items-center rounded-full px-3 text-support capitalize transition sm:px-3.5 ${
-                s.tab === t ? "bg-accent text-on-accent" : "text-text-2 hover:text-text"
+                s.tab === t ? "bg-accent-fill text-on-accent" : "text-text-2 hover:text-text"
               }`}
             >
               {t}
@@ -56,7 +90,7 @@ export default function AppHeader() {
                 onClick={() => setMenuOpen((o) => !o)}
                 aria-label="Account menu"
                 aria-expanded={menuOpen}
-                className="grid h-8 w-8 place-items-center rounded-full bg-accent text-caption font-medium uppercase text-on-accent"
+                className="grid h-8 w-8 place-items-center rounded-full bg-accent-fill text-caption font-medium uppercase text-on-accent"
               >
                 {s.user.email[0]}
               </button>
@@ -64,7 +98,8 @@ export default function AppHeader() {
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
                   <div className="absolute right-0 top-[calc(100%+8px)] z-20 w-60 rounded-card border border-line bg-surface p-1.5">
-                    <p className="truncate px-3 py-2 text-caption text-text-3">{s.user.email}</p>
+                    <p className="truncate px-3 py-2 text-caption text-text-2">{s.user.email}</p>
+                    <ThemeRow />
                     <button
                       type="button"
                       onClick={() => {
@@ -95,7 +130,7 @@ export default function AppHeader() {
             <button
               type="button"
               onClick={() => setShowAuth(true)}
-              className="inline-flex h-8 items-center rounded-full bg-accent px-3 text-support font-medium text-on-accent transition hover:bg-accent-hi sm:px-3.5"
+              className="inline-flex h-8 items-center rounded-full bg-accent-fill px-3 text-support font-medium text-on-accent transition hover:bg-accent-fill-hi sm:px-3.5"
             >
               Sign in
             </button>

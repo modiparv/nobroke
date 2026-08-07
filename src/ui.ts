@@ -1,5 +1,5 @@
 export const btnPrimary =
-  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-control bg-accent px-5 text-support font-medium text-on-accent transition hover:bg-accent-hi active:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed";
+  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-control bg-accent-fill px-5 text-support font-medium text-on-accent transition hover:bg-accent-fill-hi active:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed";
 
 export const btnGhost =
   "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-control border border-line px-4 text-support font-medium text-text transition hover:border-line-2 hover:bg-surface";

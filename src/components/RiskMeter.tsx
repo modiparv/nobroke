@@ -10,10 +10,11 @@ import { actions, useStore } from "../store";
  * One hue, five steps of intensity, filled up to the selection: higher risk
  * reads as MORE COMMITTED, never as more dangerous. A chosen preference is
  * not an error, so the danger ramp (red/amber) is reserved for loss and
- * error states elsewhere and never appears here.
+ * error states elsewhere and never appears here. The steps resolve through
+ * theme tokens, so light and dark each get their own ramp.
  */
-const RAMP = ["#C9D6F5", "#A3BBF0", "#7396E8", "#4A75E8", "#2E5BFF"];
-const UNFILLED = "#E2E8F2";
+const RAMP = ["var(--risk-1)", "var(--risk-2)", "var(--risk-3)", "var(--risk-4)", "var(--risk-5)"];
+const UNFILLED = "var(--risk-unfilled)";
 
 export default function RiskMeter() {
   const s = useStore();
@@ -56,7 +57,7 @@ export default function RiskMeter() {
         />
       </div>
 
-      <p className="mt-1 text-caption text-text-3">
+      <p className="mt-1 text-caption text-text-2">
         {s.riskAppetiteSource === "assessed"
           ? "Assessed from your income, cover, dependants and timelines. Slide it if it feels wrong."
           : "Set by you. Recommendations stay within it."}
