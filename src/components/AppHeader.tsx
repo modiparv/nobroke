@@ -103,7 +103,7 @@ export default function AppHeader() {
         </div>
       </div>
 
-      {showAuth && <AuthSheet onClose={() => setShowAuth(false)} />}
+      {showAuth && <AuthSheet initialMode="login" onClose={() => setShowAuth(false)} />}
     </header>
   );
 }

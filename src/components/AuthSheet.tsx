@@ -2,6 +2,7 @@ import { useState } from "react";
 import { credentialError, login, register, type AuthUser } from "../lib/authApi";
 import { actions } from "../store";
 import { btnPrimary } from "../ui";
+import PasswordField from "./PasswordField";
 
 /**
  * Sign in / create account, as one small sheet. Password reset is manual
@@ -41,7 +42,8 @@ export default function AuthSheet({
       setError(r.error ?? "Something went wrong. Try again.");
       return;
     }
-    await actions.completeAuth(r.user);
+    // Signing in wants the account's plan; registering seeds the new account.
+    await actions.completeAuth(r.user, { preferServer: mode === "login" });
     onAuthed?.(r.user);
     onClose();
   };
@@ -79,13 +81,11 @@ export default function AuthSheet({
             aria-label="Email"
             className={field}
           />
-          <input
-            type="password"
-            autoComplete={mode === "register" ? "new-password" : "current-password"}
+          <PasswordField
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={setPassword}
+            autoComplete={mode === "register" ? "new-password" : "current-password"}
             placeholder={mode === "register" ? "Password (8+ characters)" : "Password"}
-            aria-label="Password"
             className={field}
           />
           {error && (

@@ -6,6 +6,7 @@ import type { Profile } from "../lib/types";
 import { actions, getState, useStore } from "../store";
 import { btnPrimary } from "../ui";
 import Logo from "./Logo";
+import PasswordField from "./PasswordField";
 
 /**
  * The commitment moment: the intake is done, so this is when someone is most
@@ -14,11 +15,26 @@ import Logo from "./Logo";
  * intake if that account has none yet); skipping just shows the plan locally.
  */
 function AccountStep({ step }: { step: Step }) {
+  const s = useStore();
   const [mode, setMode] = useState<"register" | "login">("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Already signed in (they signed in earlier, or chose "New plan"): no auth
+  // form, just save this plan to their account and show it.
+  if (s.user) {
+    return (
+      <div className="fade-up mx-auto flex w-full max-w-sm flex-col items-center text-center">
+        <h1 className="text-3xl font-medium tracking-tight sm:text-4xl">Your plan is ready.</h1>
+        <p className="mt-3 text-muted">Signed in as {s.user.email}. We will save it to your account.</p>
+        <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={() => actions.finishOnboarding()}>
+          {step.cta}
+        </button>
+      </div>
+    );
+  }
 
   const submit = async () => {
     if (busy) return;
@@ -40,9 +56,9 @@ function AccountStep({ step }: { step: Step }) {
       actions.finishOnboarding();
       void actions.completeAuth(r.user);
     } else {
-      // Existing account: adopt its saved plan; fall back to this intake only
+      // Existing account: its saved plan wins; fall back to this intake only
       // if the account has none yet.
-      await actions.completeAuth(r.user);
+      await actions.completeAuth(r.user, { preferServer: true });
       if (getState().goals.length === 0) actions.finishOnboarding();
       else actions.goPlan();
     }
@@ -72,13 +88,11 @@ function AccountStep({ step }: { step: Step }) {
           aria-label="Email"
           className={field}
         />
-        <input
-          type="password"
-          autoComplete={mode === "register" ? "new-password" : "current-password"}
+        <PasswordField
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={setPassword}
+          autoComplete={mode === "register" ? "new-password" : "current-password"}
           placeholder={mode === "register" ? "Create a password (8+ characters)" : "Password"}
-          aria-label="Password"
           className={field}
         />
         {error && (

@@ -399,29 +399,33 @@ export const actions = {
   setTab: (tab: AppState["tab"]) => set({ tab }),
 
   // ---- Account ----
-  /** After register/login (or a session found at boot): reconcile the local
-      and server plans by recency. Newer wins; a transient read failure blocks
-      all sync this session rather than risk overwriting the server. */
-  completeAuth: async (user: AuthUser) => {
+  /**
+   * After register/login (or a session found at boot): reconcile the local
+   * and server plans, then keep them in sync.
+   *
+   * preferServer is set for an explicit sign-in: the person is asking for
+   * their account, so its saved plan wins outright and any anonymous scratch
+   * work on this device is discarded, even if that local edit is technically
+   * newer. Registration and silent session-restore instead reconcile by
+   * recency, which is what multi-device sync needs. A transient read failure
+   * blocks sync for the session rather than risk overwriting the server.
+   */
+  completeAuth: async (user: AuthUser, opts: { preferServer?: boolean } = {}) => {
     syncReady = false;
     set({ user });
 
     const result = await loadPlan();
-    if (result.status === "error") {
-      // Could not read the account plan: leave sync OFF so a local edit can
-      // never clobber a server plan we failed to see. The app still works.
-      return;
-    }
+    if (result.status === "error") return;
 
     if (result.status === "ok") {
       const serverRev = Number((result.state as Record<string, unknown>).planUpdatedAt) || 0;
-      if (serverRev >= state.planUpdatedAt) {
+      if (opts.preferServer || serverRev >= state.planUpdatedAt) {
         set({ ...coercePlan(result.state), planUpdatedAt: serverRev, user });
         syncReady = true;
         return;
       }
     }
-    // Server empty, or local strictly newer: local is the source of truth.
+    // Server empty, or local newer on a non-explicit path: local is the truth.
     syncReady = true;
     if (state.planUpdatedAt > 0) void savePlan(planBlob());
   },
