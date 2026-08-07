@@ -33,7 +33,7 @@ export default function Logo({ size = 24, variant = "lockup" }: { size?: number;
           style={{
             fontWeight: 500,
             letterSpacing: "-0.03em",
-            color: "var(--ink-800)",
+            color: "var(--logo-fall)",
             fontSize: Math.round(size * 0.66),
             lineHeight: 1,
           }}

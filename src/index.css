@@ -10,7 +10,8 @@
  * Warm neutrals in BOTH themes: page, surfaces, hairlines and text all sit a
  * few degrees warm of neutral. The brand navy survives only where it is the
  * brand — the band, the logo, one chart series — not as the text colour.
- * Never pure #000 or pure #FFF anywhere.
+ * Never pure #000 as text on light, never pure #FFF as text on dark; the one
+ * deliberate #FFF is the light surface (cards on warm paper).
  *
  * Text hierarchy inverts the obvious order: display copy (headlines, section
  * copy, prose) uses --text-display and sits DIMMER than --text (values, row
@@ -81,7 +82,6 @@
      own colours in both themes. */
   --logo-fall: #0b1b33;
   --logo-rise: #2e5bff;
-  --ink-800: rgb(var(--text));
 }
 
 [data-theme="dark"] {
@@ -131,7 +131,6 @@
   --chart-6: #f0736a;
   --logo-fall: #e9e5e0;
   --logo-rise: #5c82ff;
-  --ink-800: rgb(var(--text));
 }
 
 html {
