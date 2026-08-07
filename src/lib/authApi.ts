@@ -58,14 +58,25 @@ export function deleteAccount(): Promise<AuthResponse> {
   return post("/api/auth/delete");
 }
 
-export async function me(): Promise<AuthUser | null> {
+/**
+ * Session probe with three outcomes the caller must tell apart, so a server
+ * blip or an offline boot is never mistaken for a dead session:
+ *   ok        the cookie maps to a live session
+ *   unauthed  the server answered and the session is truly dead (401)
+ *   error     network or server failure; state unknown, keep the identity
+ */
+export type SessionProbe = { status: "ok"; user: AuthUser } | { status: "unauthed" } | { status: "error" };
+
+export async function me(): Promise<SessionProbe> {
   try {
     const r = await fetch("/api/auth/me");
-    if (!r.ok) return null;
+    if (r.status === 401) return { status: "unauthed" };
+    if (!r.ok) return { status: "error" };
     const body = (await r.json()) as { ok: boolean; user?: AuthUser | null };
-    return body.ok && body.user ? body.user : null;
+    if (body.ok && body.user) return { status: "ok", user: body.user };
+    return { status: "unauthed" };
   } catch {
-    return null;
+    return { status: "error" };
   }
 }
 

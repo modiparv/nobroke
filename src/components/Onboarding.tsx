@@ -45,7 +45,15 @@ function AccountStep({ step }: { step: Step }) {
     }
     setBusy(true);
     setError(null);
-    const r = mode === "register" ? await register(email, password) : await login(email, password);
+    // A retry after "signed in but plan not loaded" skips the credential round
+    // trip: the session already exists (re-registering would even be rejected).
+    const existing = getState().user;
+    const r =
+      existing && existing.email.toLowerCase() === email.trim().toLowerCase()
+        ? { ok: true as const, user: existing }
+        : mode === "register"
+          ? await register(email, password)
+          : await login(email, password);
     if (!r.ok || !r.user) {
       setBusy(false);
       setError(r.error ?? "Something went wrong. Try again.");
@@ -53,12 +61,21 @@ function AccountStep({ step }: { step: Step }) {
     }
     if (mode === "register") {
       // Build the plan from the intake, then push it to the fresh account.
+      // If the seed save cannot happen right now, the plan still shows locally
+      // and revalidateSession pushes it once the connection heals.
       actions.finishOnboarding();
       void actions.completeAuth(r.user);
     } else {
       // Existing account: its saved plan wins; fall back to this intake only
-      // if the account has none yet.
-      await actions.completeAuth(r.user, { preferServer: true });
+      // if the account has none yet. If the plan cannot be READ, do not guess
+      // — deciding from local state here is exactly how someone's real plan
+      // gets shadowed by a fresh intake.
+      const synced = await actions.completeAuth(r.user, { preferServer: true });
+      if (synced !== "ok") {
+        setBusy(false);
+        setError("You're signed in, but your saved plan couldn't be loaded. Check your connection and try again.");
+        return;
+      }
       if (getState().goals.length === 0) actions.finishOnboarding();
       else actions.goPlan();
     }

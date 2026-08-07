@@ -56,8 +56,14 @@ let pref: ThemePref = loadPref();
 const listeners = new Set<() => void>();
 
 function applyTheme() {
-  if (typeof document !== "undefined") {
-    document.documentElement.dataset.theme = resolveTheme(pref);
+  if (typeof document === "undefined") return;
+  document.documentElement.dataset.theme = resolveTheme(pref);
+  // Keep the browser chrome on the page colour — sourced from the live token,
+  // so index.css stays the single palette authority. Both media-keyed metas
+  // are overwritten, which is what lets an explicit choice beat the OS one.
+  const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+  if (bg) {
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", `rgb(${bg})`));
   }
 }
 

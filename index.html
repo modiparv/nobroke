@@ -25,7 +25,11 @@
     <link rel="icon" type="image/svg+xml" href="/logo-mark.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#0B1B33" />
+    <!-- Pre-JS fallback only: applyTheme() re-syncs these from the live
+         --bg token, so an explicit in-app theme choice also recolours the
+         browser chrome. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F6F3" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0A0A0C" />
     <meta property="og:title" content="NoBroke" />
     <meta property="og:description" content="Track everything you own, plan every goal, and grow it all in one simple portfolio." />
     <meta property="og:image" content="/og-image.png" />

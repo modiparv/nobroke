@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { credentialError, login, register, type AuthUser } from "../lib/authApi";
-import { actions } from "../store";
+import { actions, getState } from "../store";
 import { btnPrimary } from "../ui";
 import PasswordField from "./PasswordField";
 
@@ -36,14 +36,29 @@ export default function AuthSheet({
     }
     setBusy(true);
     setError(null);
-    const r = mode === "register" ? await register(email, password) : await login(email, password);
+    // A retry after "signed in but plan not loaded" skips the credential round
+    // trip: the session already exists (re-registering would even be rejected).
+    const existing = getState().user;
+    const r =
+      existing && existing.email.toLowerCase() === email.trim().toLowerCase()
+        ? { ok: true as const, user: existing }
+        : mode === "register"
+          ? await register(email, password)
+          : await login(email, password);
     if (!r.ok || !r.user) {
       setBusy(false);
       setError(r.error ?? "Something went wrong. Try again.");
       return;
     }
     // Signing in wants the account's plan; registering seeds the new account.
-    await actions.completeAuth(r.user, { preferServer: mode === "login" });
+    // If the plan cannot be read, say so and stay open — closing here would
+    // silently show the wrong plan under the account's name.
+    const synced = await actions.completeAuth(r.user, { preferServer: mode === "login" });
+    if (synced !== "ok") {
+      setBusy(false);
+      setError("You're signed in, but your saved plan couldn't be loaded. Check your connection and try again.");
+      return;
+    }
     onAuthed?.(r.user);
     onClose();
   };
