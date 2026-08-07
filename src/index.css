@@ -48,20 +48,21 @@
   --ink-800: rgb(var(--text));
 }
 
-/* The working surfaces: private-bank light. Ink navy on paper, one signal
-   blue reserved for interactive elements, quiet slate secondaries, and true
-   semantic status colours. The dark palette above stays for the marketing
-   surface. */
+/* The working surfaces: private-bank light. Ink navy on warm paper, one
+   signal blue reserved for interactive elements, and true semantic status
+   colours. The warmth lives ONLY in the neutrals (page, hairlines, muted
+   ink) — ink and accent stay cool, and no second accent exists anywhere.
+   The dark palette above stays for the marketing surface. */
 [data-theme="light"] {
   color-scheme: light;
-  --bg: 246 248 252;
+  --bg: 247 246 243;
   --surface: 255 255 255;
   --surface-2: 238 242 248;
-  --line: 227 233 242;
+  --line: 232 229 224;
   --line-2: 191 202 218;
   --text: 11 27 51;
   --text-2: 71 85 112;
-  --text-3: 122 135 158;
+  --text-3: 138 131 120;
   --accent: 46 91 255;
   --accent-hi: 26 68 217;
   --accent-tint: 234 240 255;

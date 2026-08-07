@@ -45,8 +45,12 @@ export default function CopilotBar() {
   };
   const hasThread = s.chatOpen && (s.chat.length > 0 || s.chatTyping);
 
+  // Sticky, not fixed: the bar rides the bottom of the viewport while you
+  // scroll, but at the end of the page it settles into its own flow slot —
+  // combined with the 88px bottom padding on each tab's content, nothing can
+  // ever sit underneath it at any scroll position.
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
+    <div className="pointer-events-none sticky bottom-0 z-40 w-full">
       <div className="pointer-events-auto mx-auto max-w-3xl px-4 pb-3 sm:px-6 sm:pb-4">
         {/* Conversation — opens upward above the bar */}
         {hasThread && (

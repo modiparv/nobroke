@@ -7,10 +7,13 @@ import { actions, useStore } from "../store";
  * (a real range input drives it, so keyboard and screen readers work), and
  * every mix recommendation respects it as a ceiling.
  *
- * The gauge colours are fixed semantics (calm green to hot red), not theme
- * tones: risk reads the same in both palettes.
+ * One hue, five steps of intensity, filled up to the selection: higher risk
+ * reads as MORE COMMITTED, never as more dangerous. A chosen preference is
+ * not an error, so the danger ramp (red/amber) is reserved for loss and
+ * error states elsewhere and never appears here.
  */
-const SEGMENTS = ["#0E7A5A", "#63A355", "#D9A406", "#D96830", "#B3261E"];
+const RAMP = ["#C9D6F5", "#A3BBF0", "#7396E8", "#4A75E8", "#2E5BFF"];
+const UNFILLED = "#E2E8F2";
 
 export default function RiskMeter() {
   const s = useStore();
@@ -26,11 +29,11 @@ export default function RiskMeter() {
 
       <div className="relative mt-2.5 pb-3">
         <div className="flex h-2.5 gap-1" aria-hidden>
-          {SEGMENTS.map((c, i) => (
+          {RAMP.map((c, i) => (
             <div
               key={c}
-              className="flex-1 rounded-full transition-opacity"
-              style={{ background: c, opacity: i === active ? 1 : 0.35 }}
+              className="flex-1 rounded-full transition-colors"
+              style={{ background: i <= active ? c : UNFILLED }}
             />
           ))}
         </div>
