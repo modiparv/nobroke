@@ -360,23 +360,29 @@ export default function PortfolioBuilder() {
             </div>
           )}
 
-          {/* Ranges, never point estimates (section 5). */}
+          {/* Ranges, never point estimates (section 5): compact and glanceable. */}
           {total > 0 && (
             <div className="mt-4 rounded-control bg-surface-2 px-3.5 py-3">
-              <p className="text-support text-ink">
-                Historically <span className="num">{formatPct(band.low, 0)}</span> to{" "}
-                <span className="num">{formatPct(band.high, 0)}</span> a year for a mix like this.
-              </p>
-              <div className="mt-2 space-y-1">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-eyebrow uppercase text-text-3">A year, historically</span>
+                <span className="num text-row font-medium text-ink">
+                  {formatPct(band.low, 0)}–{formatPct(band.high, 0)}
+                </span>
+              </div>
+              <div className="mt-2.5 grid grid-cols-3 gap-1.5">
                 {[3, 5, 10].map((n) => (
-                  <p key={n} className="flex items-baseline justify-between gap-3 text-support text-muted">
-                    <span>₹1 lakh in {n} years</span>
-                    <span className="num">
-                      {formatINR(100000 * Math.pow(1 + band.low, n))} to {formatINR(100000 * Math.pow(1 + band.high, n))}
-                    </span>
-                  </p>
+                  <div key={n} className="rounded-lg bg-surface px-1.5 py-1.5 text-center">
+                    <div className="num text-caption font-medium leading-tight text-ink">
+                      {formatINR(100000 * Math.pow(1 + band.low, n))}
+                    </div>
+                    <div className="num text-index leading-tight text-text-3">
+                      to {formatINR(100000 * Math.pow(1 + band.high, n))}
+                    </div>
+                    <div className="mt-0.5 text-index uppercase tracking-wide text-text-3">{n}y</div>
+                  </div>
                 ))}
               </div>
+              <p className="mt-1.5 text-index text-text-3">On ₹1 lakh, if the future rhymes with the past.</p>
             </div>
           )}
 
@@ -415,10 +421,7 @@ export default function PortfolioBuilder() {
             {total === 0 && (
               <p className="mt-2 text-center text-caption text-muted">Tap one to fill your mix.</p>
             )}
-            <p className="mt-2 text-caption text-text-3">
-              Your risk appetite caps what we recommend; any mix stays yours to choose. The funds inside are ranked by
-              score in the search above.
-            </p>
+            <p className="mt-2 text-caption text-text-3">Capped by your risk appetite. Any mix stays your choice.</p>
           </div>
 
           {equityHeavy && (

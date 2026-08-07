@@ -12,21 +12,11 @@ import PortfolioBuilder from "./PortfolioBuilder";
 
 const inrDigits = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 
-/**
- * Hero figure. The trailing group is dimmed only when it carries information:
- * a faded run of zeros reads as a rendering fault, not as emphasis (spec 8).
- */
+/** Hero figure, one clean weight and colour. */
 function HeroAmount({ value }: { value: number }) {
-  const digits = inrDigits.format(Math.max(0, Math.round(value)));
-  const cut = digits.lastIndexOf(",");
-  const head = cut >= 0 ? digits.slice(0, cut + 1) : digits;
-  const tail = cut >= 0 ? digits.slice(cut + 1) : "";
-  const dim = tail !== "" && !/^0+$/.test(tail);
-
   return (
-    <div className="num mt-1.5 text-hero font-medium text-on-band">
-      ₹{dim ? head : digits}
-      {dim && <span className="text-on-band-3">{tail}</span>}
+    <div className="num mt-1.5 text-hero font-medium tracking-[-0.02em] text-on-band">
+      ₹{inrDigits.format(Math.max(0, Math.round(value)))}
     </div>
   );
 }
@@ -134,10 +124,15 @@ export default function Plan() {
     <div className="min-h-screen bg-bg">
       <AppHeader />
 
-      {/* The one dark surface on this screen: a full-bleed ink band carrying
-          the total-saved figure (spec section 4). Everything below is white
-          cards on the pale page. */}
-      <section className="bg-band">
+      {/* The hero band. A soft diagonal navy gradient with a faint accent glow
+          gives the total-saved figure depth without shouting. */}
+      <section
+        style={{
+          backgroundColor: "#0B1B33",
+          backgroundImage:
+            "radial-gradient(120% 140% at 100% 0%, rgba(46,91,255,0.18) 0%, rgba(46,91,255,0) 45%), linear-gradient(120deg, #0A192F 0%, #0E2140 60%, #12284C 100%)",
+        }}
+      >
         <div className="mx-auto flex max-w-page flex-col gap-4 px-4 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-7">
           <div>
             <span className="text-eyebrow uppercase text-on-band-2">Total saved</span>
@@ -148,8 +143,8 @@ export default function Plan() {
                 : "Add a goal to start your plan"}
             </p>
 
-            {/* The breakup, in the band itself: no separate card below. */}
-            <dl className="mt-4 flex flex-wrap gap-x-7 gap-y-2">
+            {/* The breakup, inline in the band on a hairline divider. */}
+            <dl className="mt-4 flex flex-wrap items-stretch gap-x-6 gap-y-2 border-t border-on-band/10 pt-3">
               {[
                 { label: "Cash", v: s.currentSavings },
                 { label: "Invested", v: holdingsTotal(s) },
