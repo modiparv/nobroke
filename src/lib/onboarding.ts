@@ -1,4 +1,4 @@
-export type StepKind = "intro" | "goals" | "single" | "money" | "outro";
+export type StepKind = "intro" | "goals" | "single" | "money" | "account";
 
 export interface StepOption {
   value: string;
@@ -183,13 +183,12 @@ export const STEPS: Step[] = [
   },
 
   {
-    id: "building",
-    kind: "outro",
+    id: "account",
+    kind: "account",
     stage: 0,
     stageLabel: "",
-    title: "Your plan is ready.",
-    subtitle:
-      "Goals sized to your city and timeline, funded in priority order, with a monthly amount matched to what your income can actually spare.",
+    title: "Your plan is ready. Save it.",
+    subtitle: "Create an account so your plan is waiting on every device, then see it.",
     cta: "See my plan",
   },
 ];

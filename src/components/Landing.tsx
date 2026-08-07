@@ -1,5 +1,7 @@
-import { actions } from "../store";
+import { useState } from "react";
+import { actions, getState } from "../store";
 import { btnGhost, btnPrimary } from "../ui";
+import AuthSheet from "./AuthSheet";
 import Logo from "./Logo";
 
 /**
@@ -80,6 +82,15 @@ const TIERS = [
 ];
 
 export default function Landing() {
+  const [showAuth, setShowAuth] = useState(false);
+
+  // A returning sign-in lands on the saved plan; someone with an account but
+  // no plan yet is sent into the intake.
+  const afterAuth = () => {
+    if (getState().goals.length > 0) actions.goPlan();
+    else actions.startOnboarding();
+  };
+
   return (
     <div className="min-h-screen bg-bg">
       <header className="sticky top-0 z-30 bg-bg/40">
@@ -92,8 +103,8 @@ export default function Landing() {
             >
               Pricing
             </a>
-            <button className={`${btnGhost} px-3.5 py-2`} onClick={actions.startDemo}>
-              See the demo
+            <button className={`${btnGhost} px-3.5 py-2`} onClick={() => setShowAuth(true)}>
+              Sign in
             </button>
             <button className={`${btnPrimary} px-3.5 py-2`} onClick={actions.startOnboarding}>
               Start
@@ -101,6 +112,8 @@ export default function Landing() {
           </div>
         </div>
       </header>
+
+      {showAuth && <AuthSheet initialMode="login" onClose={() => setShowAuth(false)} onAuthed={afterAuth} />}
 
       <main className="mx-auto max-w-page px-4 sm:px-6">
         <section className="max-w-3xl py-20 sm:py-28">
@@ -115,8 +128,8 @@ export default function Landing() {
             <button className={btnPrimary} onClick={actions.startOnboarding}>
               Start free
             </button>
-            <button className={btnGhost} onClick={actions.startDemo}>
-              See the demo
+            <button className={btnGhost} onClick={() => setShowAuth(true)}>
+              Sign in
             </button>
           </div>
           <p className="mt-5 text-caption text-text-3">2-minute setup · No jargon · Cancel anytime</p>

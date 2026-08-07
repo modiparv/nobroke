@@ -1,15 +1,24 @@
 import { useState } from "react";
-import { login, register } from "../lib/authApi";
+import { login, register, type AuthUser } from "../lib/authApi";
 import { actions } from "../store";
 import { btnPrimary } from "../ui";
 
 /**
  * Sign in / create account, as one small sheet. Password reset is manual
  * during early access (there is no email pipeline yet), and the copy says
- * so instead of pretending.
+ * so instead of pretending. onAuthed fires after the plan has been
+ * reconciled, so the caller can navigate to the right screen.
  */
-export default function AuthSheet({ onClose }: { onClose: () => void }) {
-  const [mode, setMode] = useState<"login" | "register">("register");
+export default function AuthSheet({
+  onClose,
+  onAuthed,
+  initialMode = "register",
+}: {
+  onClose: () => void;
+  onAuthed?: (user: AuthUser) => void;
+  initialMode?: "login" | "register";
+}) {
+  const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -20,12 +29,13 @@ export default function AuthSheet({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     const r = mode === "register" ? await register(email, password) : await login(email, password);
-    setBusy(false);
     if (!r.ok || !r.user) {
+      setBusy(false);
       setError(r.error ?? "Something went wrong. Try again.");
       return;
     }
-    void actions.completeAuth(r.user);
+    await actions.completeAuth(r.user);
+    onAuthed?.(r.user);
     onClose();
   };
 

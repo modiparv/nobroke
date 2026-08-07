@@ -1,10 +1,109 @@
 import { useState } from "react";
 import { STEPS, TOTAL_STAGES, type Step } from "../lib/onboarding";
 import { GOALS } from "../lib/goals";
+import { login, register } from "../lib/authApi";
 import type { Profile } from "../lib/types";
 import { actions, getState, useStore } from "../store";
 import { btnPrimary } from "../ui";
 import Logo from "./Logo";
+
+/**
+ * The commitment moment: the intake is done, so this is when someone is most
+ * willing to create an account. Signing up builds the plan and saves it to
+ * the new account; signing in adopts an existing account's plan (or uses this
+ * intake if that account has none yet); skipping just shows the plan locally.
+ */
+function AccountStep({ step }: { step: Step }) {
+  const [mode, setMode] = useState<"register" | "login">("register");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    const r = mode === "register" ? await register(email, password) : await login(email, password);
+    if (!r.ok || !r.user) {
+      setBusy(false);
+      setError(r.error ?? "Something went wrong. Try again.");
+      return;
+    }
+    if (mode === "register") {
+      // Build the plan from the intake, then push it to the fresh account.
+      actions.finishOnboarding();
+      void actions.completeAuth(r.user);
+    } else {
+      // Existing account: adopt its saved plan; fall back to this intake only
+      // if the account has none yet.
+      await actions.completeAuth(r.user);
+      if (getState().goals.length === 0) actions.finishOnboarding();
+      else actions.goPlan();
+    }
+  };
+
+  const field =
+    "h-11 w-full rounded-control border border-line bg-surface px-3 text-base outline-none transition focus:border-accent";
+
+  return (
+    <div className="fade-up mx-auto flex w-full max-w-sm flex-col items-center text-center">
+      <h1 className="text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
+      <p className="mt-3 text-muted">{step.subtitle}</p>
+
+      <form
+        className="mt-7 flex w-full flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submit();
+        }}
+      >
+        <input
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          aria-label="Email"
+          className={field}
+        />
+        <input
+          type="password"
+          autoComplete={mode === "register" ? "new-password" : "current-password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={mode === "register" ? "Create a password (8+ characters)" : "Password"}
+          aria-label="Password"
+          className={field}
+        />
+        {error && <p className="text-caption text-neg">{error}</p>}
+        <button type="submit" disabled={busy || !email || !password} className={`${btnPrimary} w-full`}>
+          {busy ? "One moment…" : mode === "register" ? "Create account and see plan" : "Sign in and see plan"}
+        </button>
+      </form>
+
+      <div className="mt-4 flex flex-col items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setMode(mode === "register" ? "login" : "register");
+            setError(null);
+          }}
+          className="text-support text-accent transition hover:text-accent-hi"
+        >
+          {mode === "register" ? "Already have an account? Sign in" : "New here? Create an account"}
+        </button>
+        <button
+          type="button"
+          onClick={() => actions.finishOnboarding()}
+          className="text-caption text-text-3 transition hover:text-text-2"
+        >
+          Skip for now, just show my plan
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const PROFILE_FIELDS = new Set([
   "cityTier",
@@ -127,14 +226,14 @@ export default function Onboarding() {
   const step = STEPS[i];
   const next = () => actions.setStep(i + 1);
 
-  const progress = step.kind === "outro" ? 100 : step.stage <= 0 ? 0 : (step.stage / TOTAL_STAGES) * 100;
+  const progress = step.kind === "account" ? 100 : step.stage <= 0 ? 0 : (step.stage / TOTAL_STAGES) * 100;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-5 pb-10 pt-5 sm:px-8">
       <div className="flex items-center justify-between gap-3 pb-4">
         <button
           className="w-16 px-1 py-1.5 text-left text-sm font-medium text-muted hover:text-ink"
-          style={{ visibility: i > 0 && step.kind !== "outro" ? "visible" : "hidden" }}
+          style={{ visibility: i > 0 && step.kind !== "account" ? "visible" : "hidden" }}
           onClick={() => actions.setStep(i - 1)}
         >
           ← Back
@@ -229,15 +328,7 @@ export default function Onboarding() {
 
         {step.kind === "money" && <MoneyStep key={step.id} step={step} onContinue={next} />}
 
-        {step.kind === "outro" && (
-          <div className="fade-up flex w-full flex-col items-center text-center">
-            <h1 className="max-w-[18ch] text-3xl font-medium tracking-tight sm:text-4xl">{step.title}</h1>
-            <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
-            <button className={`${btnPrimary} mt-8 min-w-[180px]`} onClick={actions.finishOnboarding}>
-              {step.cta}
-            </button>
-          </div>
-        )}
+        {step.kind === "account" && <AccountStep step={step} />}
       </div>
     </div>
   );
