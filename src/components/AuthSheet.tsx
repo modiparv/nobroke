@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { login, register, type AuthUser } from "../lib/authApi";
+import { credentialError, login, register, type AuthUser } from "../lib/authApi";
 import { actions } from "../store";
 import { btnPrimary } from "../ui";
 
@@ -26,6 +26,13 @@ export default function AuthSheet({
 
   const submit = async () => {
     if (busy) return;
+    // Instant client-side checks first: no network round trip for a blank or
+    // malformed field.
+    const invalid = credentialError(email, password, mode === "register");
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     setBusy(true);
     setError(null);
     const r = mode === "register" ? await register(email, password) : await login(email, password);
@@ -81,8 +88,12 @@ export default function AuthSheet({
             aria-label="Password"
             className={field}
           />
-          {error && <p className="text-caption text-neg">{error}</p>}
-          <button type="submit" disabled={busy || !email || !password} className={`${btnPrimary} w-full`}>
+          {error && (
+            <p role="alert" aria-live="polite" className="rounded-control bg-neg-bg px-3 py-2 text-support text-neg">
+              {error}
+            </p>
+          )}
+          <button type="submit" disabled={busy} className={`${btnPrimary} w-full`}>
             {busy ? "One moment…" : mode === "register" ? "Create account" : "Sign in"}
           </button>
         </form>

@@ -6,6 +6,23 @@ export interface AuthUser {
   email: string;
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/**
+ * Instant, specific validation for the sign-in / sign-up forms, so every bad
+ * input gets a clear message before any network call. Register enforces the
+ * 8-character minimum; login only needs a non-empty password (existing
+ * accounts already meet the rule).
+ */
+export function credentialError(email: string, password: string, isRegister: boolean): string | null {
+  const e = email.trim();
+  if (!e) return "Enter your email address.";
+  if (!EMAIL_RE.test(e)) return "That email does not look right. Check the format.";
+  if (!password) return isRegister ? "Create a password." : "Enter your password.";
+  if (isRegister && password.length < 8) return "Password needs at least 8 characters.";
+  return null;
+}
+
 interface AuthResponse {
   ok: boolean;
   user?: AuthUser;

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { STEPS, TOTAL_STAGES, type Step } from "../lib/onboarding";
 import { GOALS } from "../lib/goals";
-import { login, register } from "../lib/authApi";
+import { credentialError, login, register } from "../lib/authApi";
 import type { Profile } from "../lib/types";
 import { actions, getState, useStore } from "../store";
 import { btnPrimary } from "../ui";
@@ -22,6 +22,11 @@ function AccountStep({ step }: { step: Step }) {
 
   const submit = async () => {
     if (busy) return;
+    const invalid = credentialError(email, password, mode === "register");
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     setBusy(true);
     setError(null);
     const r = mode === "register" ? await register(email, password) : await login(email, password);
@@ -76,8 +81,12 @@ function AccountStep({ step }: { step: Step }) {
           aria-label="Password"
           className={field}
         />
-        {error && <p className="text-caption text-neg">{error}</p>}
-        <button type="submit" disabled={busy || !email || !password} className={`${btnPrimary} w-full`}>
+        {error && (
+          <p role="alert" aria-live="polite" className="rounded-control bg-neg-bg px-3 py-2 text-support text-neg">
+            {error}
+          </p>
+        )}
+        <button type="submit" disabled={busy} className={`${btnPrimary} w-full`}>
           {busy ? "One moment…" : mode === "register" ? "Create account and see plan" : "Sign in and see plan"}
         </button>
       </form>
