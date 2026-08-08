@@ -13,14 +13,14 @@ import SupportPill from "./SupportPill";
  */
 
 /** Set to the founder's LinkedIn URL to light up the footer link. */
-const FOUNDER_LINKEDIN = "";
+const FOUNDER_LINKEDIN = "https://www.linkedin.com/in/parv-modi-3008p/";
 
 const OFFERINGS = [
   {
     n: "01",
     title: "See everything you own",
     paras: [
-      "Cash, mutual funds, FDs, gold, EPF. One clean view of your wealth, in rupees, today.",
+      "Cash, mutual funds, FDs, gold, EPF. One clean view of your wealth, today.",
       "Each holding takes seconds to add, and the totals update live. No accounts to link. No money to move.",
     ],
   },
@@ -51,28 +51,12 @@ const OFFERINGS = [
 ];
 
 /**
- * Tier names walk the arc of wealth in the old stories: Arth, the foundation;
- * Akshaya, the vessel that never empties; Meru, the golden mountain. The gate
- * that scales with seriousness is the number of goals; the top tier sells the
- * whole-life view plus a named human.
+ * Tier names walk the arc of wealth in the old stories: Akshaya, the vessel
+ * that never empties; Meru, the golden mountain. The gate that scales with
+ * seriousness is the number of goals; the top tier sells the whole-life view
+ * plus a named human.
  */
 const TIERS = [
-  {
-    name: "Arth",
-    tagline: "The foundation",
-    price: "Free",
-    period: "",
-    annual: "",
-    gate: "2 goals",
-    popular: false,
-    features: [
-      "Full planning for 2 goals",
-      "One portfolio, live fund universe",
-      "NoBroke Score on every fund",
-      "Risk profile and copilot essentials",
-    ],
-    cta: "start" as const,
-  },
   {
     name: "Akshaya",
     tagline: "The vessel that never empties",
@@ -82,7 +66,7 @@ const TIERS = [
     gate: "Unlimited goals",
     popular: true,
     features: [
-      "Everything in Arth, unlimited goals",
+      "Full planning, unlimited goals",
       "Statement import and reconciliation",
       "Portfolio x-ray and deeper nudges",
       "Priority copilot",
@@ -210,10 +194,9 @@ function HeroProjection() {
         projected by 2034, at <span className="num">₹25,000</span> a month
       </p>
       <svg viewBox="0 0 320 110" className="mt-4 w-full" role="img" aria-label="Projected value curving above the amount put in">
-        <path d="M0 104 C 90 96, 180 76, 320 22 L 320 110 L 0 110 Z" className="fill-accent/10" />
         <path d="M0 106 C 100 100, 210 88, 320 62" className="stroke-text-2" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
-        <path d="M0 104 C 90 96, 180 76, 320 22" className="stroke-accent" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        <circle cx="320" cy="22" r="4" className="fill-accent" />
+        <path d="M0 104 C 90 96, 180 76, 320 22" className="stroke-text" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+        <circle cx="320" cy="22" r="4" className="fill-text" />
       </svg>
       <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-text-3/30 pt-3">
         <span className="text-caption text-text-2">
@@ -224,30 +207,6 @@ function HeroProjection() {
         </span>
         <span className="text-index uppercase text-text-3">Illustrative</span>
       </div>
-    </div>
-  );
-}
-
-/**
- * One exchange the command layer genuinely parses ("by 2032" → setYears),
- * with the product's verbatim reply. The footer states what recomputes.
- */
-function CopilotExchange() {
-  return (
-    <div className="mt-6 w-full max-w-md rounded-card border border-line bg-surface p-4">
-      <p className="text-caption text-text-2">You</p>
-      <p className="mt-1 text-row">
-        First home by <span className="num">2032</span>, not <span className="num">2036</span>.
-      </p>
-      <div className="mt-4 border-t border-line pt-4">
-        <p className="text-caption text-text-2">NoBroke</p>
-        <p className="mt-1 text-row">
-          Set First Home to <span className="num font-medium">6 years</span> away.
-        </p>
-      </div>
-      <p className="mt-4 border-t border-line pt-3 text-caption text-text-2">
-        The plan recomputes on the spot: the monthly each goal needs, the projection, the gap.
-      </p>
     </div>
   );
 }
@@ -327,13 +286,13 @@ export default function Landing() {
       <section className={container}>
         <div className="grid items-center gap-10 py-16 sm:py-24 lg:grid-cols-[1fr_400px] lg:gap-16">
           <div className="max-w-3xl">
-            <span className="text-eyebrow uppercase text-text-3">Wealth, in plain words</span>
-            <h1 className="mt-4 font-serif text-4xl font-normal leading-[1.08] tracking-[-0.015em] text-display sm:text-5xl">
+            <span className="text-eyebrow uppercase text-text-3">Wealth, minus the noise</span>
+            <h1 className="mt-4 font-serif text-4xl font-normal leading-[1.08] tracking-[-0.015em] text-display sm:text-6xl">
               We won't let you go broke.
             </h1>
             <p className="mt-5 max-w-xl text-body text-text-2 sm:text-base">
-              Financial planning &amp; wealth management that unites the best of Human and Artificial Intelligence for
-              your life's most important decisions.
+              Financial planning &amp; wealth management for the Bharat that has goals to reach, but no one to plan
+              them with.
             </p>
             <div className="mt-8 flex flex-wrap gap-2.5">
               {signedIn ? (
@@ -364,17 +323,16 @@ export default function Landing() {
             {OFFERINGS.map((o) => (
               <article key={o.n}>
                 <span className="num text-support text-text-3">{o.n}</span>
-                <h3 className="mt-3 font-serif text-2xl font-normal tracking-[-0.01em] text-display sm:text-3xl">
+                <h3 className="mt-3 font-serif text-3xl font-normal tracking-[-0.01em] text-display sm:text-4xl">
                   {o.title}
                 </h3>
                 <div className="mt-4 flex max-w-xl flex-col gap-3">
                   {o.paras.map((p) => (
-                    <p key={p} className="text-body leading-relaxed text-text-2">
+                    <p key={p} className="text-base leading-relaxed text-text-2">
                       {p}
                     </p>
                   ))}
                 </div>
-                {o.n === "04" && <CopilotExchange />}
               </article>
             ))}
           </div>
@@ -385,15 +343,15 @@ export default function Landing() {
       <section className="bg-night">
         <div className={`${container} py-16 sm:py-24`}>
           <Reveal>
-            <h2 className="mx-auto max-w-2xl text-center font-serif text-3xl font-normal leading-[1.15] tracking-[-0.01em] text-on-night-2 sm:text-4xl">
-              Human judgment, combined with the precision of technology.
+            <h2 className="mx-auto max-w-2xl text-center text-3xl font-medium leading-[1.15] tracking-[-0.02em] text-on-night-2 sm:text-4xl">
+              Human judgment, combined with the precision of AI.
             </h2>
-            <div className="mt-14 grid items-center gap-10 lg:grid-cols-[1fr_360px_1fr] lg:gap-8">
+            <div className="mt-14 grid items-center gap-10 border border-on-night-3/40 p-6 sm:p-10 lg:grid-cols-[1fr_360px_1fr] lg:gap-8">
               <div>
                 <span className="text-support font-medium text-on-night">Human Judgment</span>
                 <ul className="mt-4">
                   {HUMAN_ROWS.map((r) => (
-                    <li key={r} className="border-b border-on-night-3/40 py-3.5 text-body text-on-night-2">
+                    <li key={r} className="border-b border-on-night-3/40 py-3.5 text-base text-on-night-2">
                       {r}
                     </li>
                   ))}
@@ -420,7 +378,7 @@ export default function Landing() {
                 <circle cx="130" cy="120" r="104" fill="none" stroke="rgb(var(--on-night-3))" strokeWidth="1" />
                 <circle cx="230" cy="120" r="104" fill="none" stroke="rgb(var(--on-night-3))" strokeWidth="1" />
                 <text x="180" y="112" textAnchor="middle" fill="rgb(var(--on-night))" fontSize="15" fontWeight="500">
-                  Wealth
+                  Goal
                 </text>
                 <text x="180" y="132" textAnchor="middle" fill="rgb(var(--on-night))" fontSize="15" fontWeight="500">
                   Intelligence
@@ -431,7 +389,7 @@ export default function Landing() {
                 <span className="text-support font-medium text-on-night">NoBroke AI</span>
                 <ul className="mt-4">
                   {AI_ROWS.map((r) => (
-                    <li key={r} className="border-b border-on-night-3/40 py-3.5 text-body text-on-night-2">
+                    <li key={r} className="border-b border-on-night-3/40 py-3.5 text-base text-on-night-2">
                       {r}
                     </li>
                   ))}
@@ -470,13 +428,10 @@ export default function Landing() {
           <div className="text-center">
             <span className="text-eyebrow uppercase text-text-3">Pricing</span>
             <h2 className="mt-3 font-serif text-3xl font-normal tracking-[-0.01em] text-display sm:text-4xl">
-              Three tiers. One promise.
+              Two tiers. One promise.
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-body text-text-2">
-              No percentage of your assets. No commissions from funds.
-            </p>
           </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:grid-cols-2">
             {TIERS.map((t) => (
               <div
                 key={t.name}
@@ -511,15 +466,9 @@ export default function Landing() {
                     </li>
                   ))}
                 </ul>
-                {t.cta === "start" ? (
-                  <button className={`${btnInk} mt-5 w-full`} onClick={actions.startOnboarding}>
-                    Start free
-                  </button>
-                ) : (
-                  <span className="mt-5 inline-flex h-10 w-full items-center justify-center rounded-control border border-line text-support text-text-2">
-                    Early access soon
-                  </span>
-                )}
+                <span className="mt-5 inline-flex h-10 w-full items-center justify-center rounded-control border border-line text-support text-text-2">
+                  Early access soon
+                </span>
               </div>
             ))}
           </div>
@@ -548,14 +497,14 @@ export default function Landing() {
           <div className="grid gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-20">
             <div>
               <Logo />
-              <p className="mt-3 max-w-xs text-caption text-text-2">Wealth, in plain words. Built in India.</p>
+              <p className="mt-3 max-w-xs text-caption text-text-2">Wealth, minus the noise. Built in Bharat.</p>
             </div>
             <div>
               <span className="text-eyebrow uppercase text-text-3">Product</span>
               <ul className="mt-3 space-y-2 text-support">
                 <li>
                   <button onClick={actions.startOnboarding} className="text-text-2 transition hover:text-text">
-                    Start free
+                    Start
                   </button>
                 </li>
                 <li>
