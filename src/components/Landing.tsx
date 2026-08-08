@@ -24,7 +24,7 @@ const OFFERINGS = [
     title: "See everything you own",
     paras: [
       "Cash, mutual funds, FDs, gold, EPF — one clean view of your wealth, in rupees, today.",
-      "Add it in plain words, or import a CAS statement. No accounts to link. No money to move.",
+      "Each holding takes seconds to add, and the totals update live. No accounts to link. No money to move.",
     ],
   },
   {
@@ -47,8 +47,8 @@ const OFFERINGS = [
     n: "04",
     title: "Ask. It runs the numbers.",
     paras: [
-      "The copilot knows your whole plan — every goal, every holding, every assumption. Move money between goals, test a bigger SIP, ask why a fund scores low.",
-      "Answers come from your plan's own arithmetic, computed before anything changes. Nothing moves until you say so.",
+      "Change the plan in plain words — the monthly, a target, a horizon — and it happens on the spot, every number recomputed.",
+      "Anything else you ask is answered against the goal in front of you: its target, monthly, projection and mix.",
     ],
   },
 ];
@@ -130,7 +130,7 @@ function HeroProjection() {
         <span className="text-caption text-text-2">Home down payment · 2034</span>
       </div>
       <p className="num mt-3 text-hero font-medium">₹37.0L</p>
-      <p className="mt-0.5 text-caption text-text-2">projected by 2034, at ₹25,000 a month</p>
+      <p className="mt-0.5 text-caption text-text-2">projected by 2034, at <span className="num">₹25,000</span> a month</p>
       <svg viewBox="0 0 320 110" className="mt-4 w-full" role="img" aria-label="Projected value curving above the amount put in">
         <path d="M0 104 C 90 96, 180 76, 320 22 L 320 110 L 0 110 Z" className="fill-accent/10" />
         <path d="M0 106 C 100 100, 210 88, 320 62" className="stroke-text-2" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
@@ -151,22 +151,26 @@ function HeroProjection() {
 }
 
 /**
- * The copilot, shown as one honest exchange: a plain-words instruction and
- * the recomputed consequence. This is the product's real behaviour, not a
- * chat theatre mockup.
+ * One exchange the command layer genuinely parses ("by 2032" → setYears),
+ * with the product's verbatim reply. The footer states what recomputes —
+ * nothing here is theatre.
  */
 function CopilotExchange() {
   return (
     <div className="mt-10 w-full max-w-md rounded-card border border-line bg-surface p-4">
       <p className="text-caption text-text-2">You</p>
-      <p className="mt-1 text-row">Move ₹5,000 a month from the Goa trip to the emergency fund.</p>
+      <p className="mt-1 text-row">
+        First home by <span className="num">2032</span>, not <span className="num">2036</span>.
+      </p>
       <div className="mt-4 border-t border-line pt-4">
         <p className="text-caption text-text-2">NoBroke</p>
         <p className="mt-1 text-row">
-          Done. Emergency fund reaches 6 months of expenses by <span className="num font-medium">Mar 2027</span> —
-          five months earlier. The Goa trip moves to <span className="num font-medium">Nov 2027</span>.
+          Set First Home to <span className="num font-medium">6 years</span> away.
         </p>
       </div>
+      <p className="mt-4 border-t border-line pt-3 text-caption text-text-2">
+        The plan recomputes on the spot — the monthly each goal needs, the projection, the gap.
+      </p>
     </div>
   );
 }
@@ -337,7 +341,7 @@ export default function Landing() {
             >
               <defs>
                 <pattern id="venn-hatch" width="5" height="8" patternUnits="userSpaceOnUse">
-                  <line x1="2.5" y1="0" x2="2.5" y2="8" className="stroke-text-3" strokeWidth="1" opacity="0.4" />
+                  <line x1="2.5" y1="0" x2="2.5" y2="8" className="stroke-text-3" strokeWidth="1" opacity="0.6" />
                 </pattern>
                 <clipPath id="venn-left">
                   <circle cx="130" cy="120" r="104" />
