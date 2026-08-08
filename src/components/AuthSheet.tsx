@@ -139,7 +139,7 @@ export default function AuthSheet({
           >
             {mode === "register" ? "Have an account? Sign in" : "New here? Create an account"}
           </button>
-          {mode === "login" && <span className="text-caption text-text-2">Forgot it? Message us.</span>}
+          {mode === "login" && <span className="text-caption text-text-2">Password reset coming soon.</span>}
         </div>
       </div>
     </div>

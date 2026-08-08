@@ -34,6 +34,21 @@ export default function CopilotBar() {
   const [text, setText] = useState("");
   const [focused, setFocused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // "/" focuses the copilot from anywhere on the plan, unless the person is
+  // already typing somewhere.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = document.activeElement as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      e.preventDefault();
+      inputRef.current?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -108,6 +123,7 @@ export default function CopilotBar() {
             className="flex items-center gap-1.5 border-t border-line p-2.5"
           >
             <input
+              ref={inputRef}
               autoFocus
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -161,6 +177,7 @@ export default function CopilotBar() {
                 ✨
               </span>
               <input
+                ref={inputRef}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onFocus={() => {

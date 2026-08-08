@@ -5,7 +5,7 @@ import { formatINR } from "../lib/format";
 import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
 import { btnPrimary, card, sectionLabel } from "../ui";
 import AdvisorNote from "./AdvisorNote";
-import MacroCard from "./MacroCard";
+import MacroStrip from "./MacroStrip";
 import AppHeader from "./AppHeader";
 import GoalCard from "./GoalCard";
 import MoneyTab from "./MoneyTab";
@@ -141,13 +141,26 @@ export default function Plan() {
             {/* The breakup, inline in the band on a hairline divider. */}
             <dl className="mt-3 flex flex-wrap items-stretch gap-x-6 gap-y-2 border-t border-on-night-3/40 pt-2.5">
               {[
-                { label: "Cash", v: s.currentSavings },
-                { label: "Invested", v: holdingsTotal(s) },
-                { label: "Monthly", v: s.monthlySip },
-              ].map(({ label, v }) => (
+                { label: "Cash", text: formatINR(s.currentSavings) },
+                { label: "Invested", text: formatINR(holdingsTotal(s)) },
+                { label: "Monthly", text: formatINR(s.monthlySip) },
+                // Months of expenses the cash covers: the Protect layer as a
+                // number, same arithmetic as the advisor note.
+                ...(s.monthlyExpenses > 0
+                  ? [
+                      {
+                        label: "Cover",
+                        text:
+                          s.currentSavings / s.monthlyExpenses >= 12
+                            ? "12+ mo"
+                            : `${(s.currentSavings / s.monthlyExpenses).toFixed(1)} mo`,
+                      },
+                    ]
+                  : []),
+              ].map(({ label, text }) => (
                 <div key={label}>
                   <dt className="text-eyebrow uppercase text-on-night-3">{label}</dt>
-                  <dd className="num mt-0.5 text-support font-medium text-on-night">{formatINR(v)}</dd>
+                  <dd className="num mt-0.5 text-support font-medium text-on-night">{text}</dd>
                 </div>
               ))}
             </dl>
@@ -228,20 +241,18 @@ export default function Plan() {
           </div>
 
           {/* Investment mix: the 40 percent pane, always open beside the goals.
-              The macro backdrop rides below it: the numbers behind the plan's
-              assumptions, in the pane where the assumptions live. */}
+              The macro numbers ride its footer as one quiet line: they are the
+              assumptions' backdrop, not a card of their own. */}
           {s.goals.length > 0 && (
-            <div className="flex min-w-0 flex-col gap-4">
-              <section className="rounded-card border border-line bg-surface">
-                <div className="border-b border-line px-4 py-3">
-                  <span className="text-support text-text">{mixLabel(s.portfolio)}</span>
-                </div>
-                <div className="p-3.5 sm:p-4">
-                  <PortfolioBuilder />
-                </div>
-              </section>
-              <MacroCard />
-            </div>
+            <section className="min-w-0 rounded-card border border-line bg-surface">
+              <div className="border-b border-line px-4 py-3">
+                <span className="text-support text-text">{mixLabel(s.portfolio)}</span>
+              </div>
+              <div className="p-3.5 sm:p-4">
+                <PortfolioBuilder />
+              </div>
+              <MacroStrip />
+            </section>
           )}
         </div>
 
