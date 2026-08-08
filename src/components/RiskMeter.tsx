@@ -21,7 +21,14 @@ export default function RiskMeter() {
   const active = riskBandIndex(v);
 
   return (
-    <div className="mb-3 rounded-control bg-surface-2 px-3 py-2">
+    <div
+      className="mb-3 rounded-control bg-surface-2 px-3 py-2"
+      title={
+        s.riskAppetiteSource === "assessed"
+          ? "Assessed from your income, cover, dependants and timelines. Slide it if it feels wrong."
+          : "Set by you. Recommendations stay within it."
+      }
+    >
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-eyebrow uppercase text-text-3">Risk appetite</span>
         <span className="text-support font-medium">{riskBandLabel(v)}</span>
@@ -56,11 +63,6 @@ export default function RiskMeter() {
         />
       </div>
 
-      <p className="mt-1 text-caption text-text-2">
-        {s.riskAppetiteSource === "assessed"
-          ? "Assessed from your income, cover, dependants and timelines. Slide it if it feels wrong."
-          : "Set by you. Recommendations stay within it."}
-      </p>
     </div>
   );
 }

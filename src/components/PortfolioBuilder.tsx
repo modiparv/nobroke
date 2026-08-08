@@ -421,7 +421,6 @@ export default function PortfolioBuilder() {
             {total === 0 && (
               <p className="mt-2 text-center text-caption text-muted">Tap one to fill your mix.</p>
             )}
-            <p className="mt-2 text-caption text-text-2">Capped by your risk appetite. Any mix stays your choice.</p>
           </div>
 
           {equityHeavy && (

@@ -28,7 +28,7 @@ function AccountStep({ step }: { step: Step }) {
   if (s.user) {
     return (
       <div className="fade-up mx-auto flex w-full max-w-sm flex-col items-center text-center">
-        <h1 className="text-3xl font-serif font-normal tracking-[-0.01em] text-display sm:text-4xl">Your plan is ready.</h1>
+        <h1 className="text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">Your plan is ready.</h1>
         <p className="mt-3 text-muted">Signed in as {s.user.email}. We will save it to your account.</p>
         <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
           {step.cta}
@@ -90,7 +90,7 @@ function AccountStep({ step }: { step: Step }) {
 
   return (
     <div className="fade-up mx-auto flex w-full max-w-sm flex-col items-center text-center">
-      <h1 className="text-3xl font-serif font-normal tracking-[-0.01em] text-display sm:text-4xl">{step.title}</h1>
+      <h1 className="text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
       <p className="mt-3 text-muted">{step.subtitle}</p>
 
       <form
@@ -239,10 +239,10 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
 
   return (
     <div className="fade-up flex w-full flex-col items-center text-center">
-      <h1 className="max-w-[22ch] text-3xl font-serif font-normal tracking-[-0.01em] text-display sm:text-4xl">{step.title}</h1>
+      <h1 className="max-w-[22ch] text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
       {step.subtitle && <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
       <div className="mt-8 flex w-full max-w-sm items-center justify-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
-        <span className="text-3xl font-medium text-muted">₹</span>
+        <span className="text-2xl font-medium text-muted">₹</span>
         <input
           autoFocus
           type="text"
@@ -257,7 +257,7 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
           onKeyDown={(e) => {
             if (e.key === "Enter") commit();
           }}
-          className="num w-full bg-transparent text-center text-4xl font-medium tracking-tight outline-none sm:text-5xl"
+          className="num w-full bg-transparent text-center text-3xl font-medium tracking-tight outline-none sm:text-4xl"
         />
       </div>
       {min > 0 && raw !== "" && !ok && (
@@ -368,19 +368,23 @@ export default function Onboarding() {
 
       <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-1 flex-col px-5 pb-10 pt-5 sm:px-8">
         <div className="flex items-center justify-between gap-3 pb-4">
+          {/* Step 0 with an existing plan offers the way back out: "New plan"
+              from the app must never trap someone in the intake. */}
           <button
-            className="w-16 px-1 py-1.5 text-left text-sm font-medium text-muted hover:text-ink"
-            style={{ visibility: i > 0 && step.kind !== "account" ? "visible" : "hidden" }}
-            onClick={() => actions.setStep(i - 1)}
+            className="w-20 px-1 py-1.5 text-left text-sm font-medium text-muted hover:text-ink"
+            style={{
+              visibility: (i > 0 && step.kind !== "account") || (i === 0 && s.goals.length > 0) ? "visible" : "hidden",
+            }}
+            onClick={() => (i > 0 ? actions.setStep(i - 1) : actions.goPlan())}
           >
-            ← Back
+            {i > 0 ? "← Back" : "← My plan"}
           </button>
           <span className="lg:hidden">
             <Logo />
           </span>
           {/* Spacer keeps the logo centred. There is deliberately no skip: the
               intake is the plan's foundation, so every question is answered. */}
-          <span className="w-16" aria-hidden="true" />
+          <span className="w-20" aria-hidden="true" />
         </div>
 
         {/* On small screens the rail collapses to the progress bar. */}
@@ -398,7 +402,7 @@ export default function Onboarding() {
         <div className="flex flex-1 items-center">
         {step.kind === "intro" && (
           <div className="fade-up flex w-full flex-col items-center text-center">
-            <h1 className="max-w-[16ch] text-3xl font-serif font-normal tracking-[-0.01em] text-display sm:text-4xl">{step.title}</h1>
+            <h1 className="max-w-[16ch] text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
             <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
             <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={next}>
               {step.cta}
@@ -408,7 +412,7 @@ export default function Onboarding() {
 
         {step.kind === "goals" && (
           <div className="fade-up w-full">
-            <h1 className="text-3xl font-serif font-normal tracking-[-0.01em] text-display sm:text-4xl">{step.title}</h1>
+            <h1 className="text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
             <p className="mt-3 text-muted">{step.subtitle}</p>
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {GOALS.map((g) => {
@@ -438,7 +442,7 @@ export default function Onboarding() {
 
         {step.kind === "single" && (
           <div className="fade-up w-full">
-            <h1 className="text-3xl font-serif font-normal tracking-[-0.01em] text-display sm:text-4xl">{step.title}</h1>
+            <h1 className="text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
             {step.subtitle && <p className="mt-3 text-muted">{step.subtitle}</p>}
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {step.options!.map((opt) => {
@@ -468,7 +472,7 @@ export default function Onboarding() {
 
           {step.kind === "connect" && (
             <div className="fade-up w-full">
-              <h1 className="text-3xl font-serif font-normal tracking-[-0.01em] text-display sm:text-4xl">{step.title}</h1>
+              <h1 className="text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
               <p className="mt-3 text-muted">{step.subtitle}</p>
               <div className="mt-6 flex flex-col gap-3">
                 {CONNECT_SOURCES.map((c) => (
