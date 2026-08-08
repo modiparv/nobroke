@@ -3,8 +3,8 @@ import type { Allocation, ChatMessage, Holding, PlanGoal, PlanInputs, Profile, R
 import { GOAL_MAP } from "./lib/goals";
 import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios";
 import { adjustedTarget, emptyProfile, suggestedSip } from "./lib/profile";
-import { assessRiskAppetite, capProfile } from "./lib/risk";
-import { askGroq } from "./lib/groq";
+import { assessRiskAppetite, capProfile, riskBandLabel } from "./lib/risk";
+import { askGroq, type AiAction } from "./lib/groq";
 import { FUND_MAP } from "./lib/funds";
 import { computePlan, blendedReturn, requiredCorpus, requiredSip } from "./lib/finance";
 import { formatINR } from "./lib/format";
@@ -415,10 +415,15 @@ export const actions = {
     syncReady = false;
     set({ user });
 
-    // One immediate retry: a cold serverless function or a blip should not
-    // decide the outcome of a sign-in.
+    // A cold serverless function or a paused database must not decide the
+    // outcome of a sign-in: retry the read with a little patience, since a
+    // sleeping Postgres typically wakes within a couple of seconds.
     let result = await loadPlan();
-    if (result.status === "error") result = await loadPlan();
+    for (const delayMs of [1200, 2500]) {
+      if (result.status !== "error") break;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      result = await loadPlan();
+    }
     // Still unknown: report it instead of pretending. The caller surfaces the
     // failure (or revalidateSession heals it later); sync stays off so local
     // work can never overwrite an unread account plan.
@@ -780,7 +785,15 @@ export const actions = {
     const planData = buildPlanData(state);
     set({ chat: history, chatTyping: true });
     void askGroq(history, planData).then((reply) => {
-      set({ chat: [...getState().chat, { role: "ai", text: reply }], chatTyping: false });
+      // The model may PROPOSE a plan action; only the deterministic engine
+      // applies it, after re-validating, and its verbatim confirmation is
+      // what the person reads.
+      let msg = reply.text ?? "";
+      if (reply.action) {
+        const cmd = actionToCommand(reply.action);
+        msg = cmd ? runCommand(cmd) : "I couldn't apply that safely. Try saying it with the goal and the amount.";
+      }
+      set({ chat: [...getState().chat, { role: "ai", text: msg || "Something went wrong. Try again." }], chatTyping: false });
     });
   },
 
@@ -803,6 +816,40 @@ export const actions = {
 
 function ensureGoal(id: string) {
   if (!state.goals.some((g) => g.id === id)) actions.addGoal(id);
+}
+
+/** Re-validate an AI-proposed action into a Command, or reject it. The model
+    is natural-language understanding only; every bound is enforced here. */
+function actionToCommand(a: AiAction): Command | null {
+  const needsGoal = a.kind === "addGoal" || a.kind === "removeGoal" || a.kind === "setTarget" || a.kind === "setYears";
+  const goal = needsGoal ? GOAL_MAP[a.goalId ?? ""] : undefined;
+  if (needsGoal && !goal) return null;
+  const amount = Math.round(Number(a.amount));
+  const years = Math.round(Number(a.years));
+  switch (a.kind) {
+    case "addGoal":
+      return { kind: "addGoal", goalId: goal!.id, name: goal!.name };
+    case "removeGoal":
+      return { kind: "removeGoal", goalId: goal!.id, name: goal!.name };
+    case "setTarget":
+      if (!Number.isFinite(amount) || amount <= 0 || amount > 1_000_000_000) return null;
+      return { kind: "setTarget", goalId: goal!.id, name: goal!.name, amount };
+    case "setYears":
+      if (!Number.isFinite(years) || years < 1 || years > 60) return null;
+      return { kind: "setYears", goalId: goal!.id, name: goal!.name, years };
+    case "setPool":
+      if (!Number.isFinite(amount) || amount <= 0 || amount > 1_000_000_000) return null;
+      return { kind: "setPool", amount };
+    case "setCash":
+      if (!Number.isFinite(amount) || amount < 0 || amount > 1_000_000_000) return null;
+      return { kind: "setCash", amount };
+    case "autoSplit":
+      return { kind: "autoSplit" };
+    case "recommendPortfolio":
+      return { kind: "recommendPortfolio" };
+    default:
+      return null;
+  }
 }
 
 /** Execute a parsed copilot command and return a short, friendly confirmation. */
@@ -845,27 +892,40 @@ function runCommand(cmd: Command): string {
   }
 }
 
-/** Compact plan JSON injected into the AI's system prompt on the dashboard. */
+/** The WHOLE plan as compact JSON for the AI's system prompt: every goal with
+    its numbers, the money totals, risk, mix and holdings. The model must never
+    need a number that isn't here. */
 function buildPlanData(s: AppState): unknown | null {
-  const g = currentGoal(s);
-  if (s.screen !== "plan" || !g) return null;
-  const r = computePlan(toPlanInputs(s));
+  if (s.goals.length === 0) return null;
+  const goals = goalsByPriority(s).map((g) => {
+    const r = computePlan(planInputsForGoal(s, g));
+    return {
+      name: g.name,
+      targetTodayINR: g.targetToday,
+      horizonYears: g.horizonYears,
+      monthlySipINR: Math.round(goalMonthly(s, g.id)),
+      projectedCorpusINR: Math.round(r.projectedCorpus),
+      requiredCorpusINR: Math.round(r.requiredCorpus),
+      gapINR: Math.round(r.gap),
+      onTrack: r.onTrack,
+      isCurrent: g.id === s.currentGoalId,
+    };
+  });
   const allocationPct: Record<string, number> = {};
   for (const [id, w] of Object.entries(s.portfolio)) allocationPct[FUND_MAP[id]?.name ?? id] = w;
+  const cur = currentGoal(s);
+  const curPlan = cur ? computePlan(toPlanInputs(s)) : null;
   return {
-    goal: g.name,
-    targetTodayINR: g.targetToday,
-    horizonYears: g.horizonYears,
-    monthlySipINR: Math.round(goalMonthly(s, g.id)),
+    goals,
     monthlyPoolINR: s.monthlySip,
-    currentSavingsINR: Math.round(totalCapital(s) * goalShareFraction(s, g.id)),
+    cashINR: s.currentSavings,
+    investedINR: Math.round(holdingsTotal(s)),
+    totalINR: Math.round(totalCapital(s)),
+    monthsOfCover: s.monthlyExpenses > 0 ? Math.round((s.currentSavings / s.monthlyExpenses) * 10) / 10 : null,
+    riskAppetite: riskBandLabel(s.riskAppetite),
     inflationPct: Math.round(s.inflation * 100),
-    projectedCorpusINR: Math.round(r.projectedCorpus),
-    requiredCorpusINR: Math.round(r.requiredCorpus),
-    gapINR: Math.round(r.gap),
-    onTrack: r.onTrack,
-    expectedReturnPct: Math.round(r.blendedReturn * 1000) / 10,
+    expectedReturnPct: curPlan ? Math.round(curPlan.blendedReturn * 1000) / 10 : null,
     allocationPct,
-    otherGoals: s.goals.filter((x) => x.id !== g.id).map((x) => x.name),
+    holdings: s.externalHoldings.slice(0, 20).map((h) => ({ name: h.name, type: h.type, amountINR: h.amount })),
   };
 }

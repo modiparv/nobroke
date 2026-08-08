@@ -3,20 +3,18 @@
 @tailwind utilities;
 
 /**
- * Palette. Two themes from one token set, defaulting to the system scheme
- * (a boot script in index.html stamps data-theme before first paint, and the
- * account menu offers System / Light / Dark).
+ * Palette. ONE theme: warm light, with near-black night sections carrying the
+ * dark accents (the theme picker and the dark block were removed by request).
  *
- * Warm neutrals in BOTH themes: page, surfaces, hairlines and text all sit a
- * few degrees warm of neutral. The brand navy survives only where it is the
- * brand — the band, the logo, one chart series — not as the text colour.
- * Never pure #000 as text on light, never pure #FFF as text on dark; the one
- * deliberate #FFF is the light surface (cards on warm paper).
+ * Warm neutrals throughout: page, surfaces, hairlines and text all sit a few
+ * degrees warm of neutral. The brand navy survives only where it is the brand
+ * — the logo, one chart series — not as the text colour. Never pure #000 as
+ * text; the one deliberate #FFF is the surface (cards on warm paper).
  *
  * Text hierarchy inverts the obvious order: display copy (headlines, section
  * copy, prose) uses --text-display and sits DIMMER than --text (values, row
  * titles, anything numeric). The number is always the brightest thing on
- * screen. Brightness order, both themes:
+ * screen. Brightness order:
  *   --text > --text-display > --text-2 > --text-3
  *
  * Fills are INK: filled controls invert the page (near-black on light,
@@ -92,57 +90,6 @@
   --on-night-3: 95 91 85;
 }
 
-[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: 10 10 11;
-  --surface: 19 18 17;
-  --sidebar: 26 25 23;
-  --surface-2: 27 26 24;
-  --line: 36 34 31;
-  --line-2: 50 47 43;
-  --text: 233 229 224;
-  --text-display: 168 163 156;
-  --text-2: 138 133 126;
-  --text-3: 95 91 85;
-  --accent-text: 92 130 255;
-  --accent-fill: 233 229 224;
-  --accent-hi: 125 155 255;
-  --accent-fill-hi: 200 196 190;
-  --accent-tint: 33 32 30;
-  --on-accent: 10 10 11;
-  --band: 17 27 49;
-  --on-band: 245 243 240;
-  --on-band-2: 178 191 214;
-  --on-band-3: 128 143 170;
-  --pos: 52 200 142;
-  --pos-bg: 23 43 38;
-  --cau: 224 162 60;
-  --cau-bg: 48 39 27;
-  --neg: 240 115 106;
-  --neg-bg: 46 31 32;
-  /* Same navy, inverted role: lifted above the near-black page. */
-  --hero: linear-gradient(135deg, #111b31, #0d1524);
-  --hero-line: #1e2c45;
-  --risk-1: #3dbd7d;
-  --risk-2: #a5c255;
-  --risk-3: #e5b84a;
-  --risk-4: #ee8e55;
-  --risk-5: #f0736a;
-  --risk-unfilled: #1b1a18;
-  --chart-1: #5c82ff;
-  --chart-2: #34c88e;
-  --chart-3: #e0a23c;
-  --chart-4: #e9e5e0;
-  --chart-5: #9b968f;
-  --chart-6: #f0736a;
-  --logo-fall: #e9e5e0;
-  --logo-rise: #5c82ff;
-  --whatsapp: #25d366;
-  --night: 19 18 17;
-  --on-night: 233 229 224;
-  --on-night-2: 155 150 143;
-  --on-night-3: 95 91 85;
-}
 
 html {
   scroll-behavior: smooth;

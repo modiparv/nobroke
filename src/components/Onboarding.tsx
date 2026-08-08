@@ -49,18 +49,33 @@ function AccountStep({ step }: { step: Step }) {
     // A retry after "signed in but plan not loaded" skips the credential round
     // trip: the session already exists (re-registering would even be rejected).
     const existing = getState().user;
-    const r =
+    let r =
       existing && existing.email.toLowerCase() === email.trim().toLowerCase()
         ? { ok: true as const, user: existing }
         : mode === "register"
           ? await register(email, password)
           : await login(email, password);
+    // A returning user often types correct credentials into the register
+    // form. "Email already exists" with these credentials means they meant to
+    // sign in - try that before showing anyone an error.
+    let usedLogin = mode === "login";
+    if (mode === "register" && !r.ok && r.status === 409) {
+      const asLogin = await login(email, password);
+      if (asLogin.ok && asLogin.user) {
+        r = asLogin;
+        usedLogin = true;
+      } else {
+        setBusy(false);
+        setError("An account with this email already exists, but this password doesn't match it. Sign in with the password you created earlier.");
+        return;
+      }
+    }
     if (!r.ok || !r.user) {
       setBusy(false);
       setError(r.error ?? "Something went wrong. Try again.");
       return;
     }
-    if (mode === "register") {
+    if (!usedLogin) {
       // Build the plan from the intake, then push it to the fresh account.
       // If the seed save cannot happen right now, the plan still shows locally
       // and revalidateSession pushes it once the connection heals.

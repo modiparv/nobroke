@@ -1,0 +1,24 @@
+{"q":"mera home goal 2032 tak chahiye","expect":{"type":"action","kind":"setYears","goalId":"home","years":6}}
+{"q":"increase my monthly investment to 35 thousand","expect":{"type":"action","kind":"setPool","amount":35000}}
+{"q":"shaadi ka budget 15 lakh kar do","expect":{"type":"action","kind":"setTarget","goalId":"wedding","amount":1500000}}
+{"q":"I got a bonus, cash in bank is now 3 lakh","expect":{"type":"action","kind":"setCash","amount":300000}}
+{"q":"please add an early retirement goal for me","expect":{"type":"action","kind":"addGoal","goalId":"fire"}}
+{"q":"get rid of the travel goal, priorities changed","expect":{"type":"action","kind":"removeGoal","goalId":"travel"}}
+{"q":"spread my monthly money sensibly across my goals","expect":{"type":"action","kind":"autoSplit"}}
+{"q":"retune the portfolio to my goals","expect":{"type":"action","kind":"recommendPortfolio"}}
+{"q":"make the first home target sixty lakh","expect":{"type":"action","kind":"setTarget","goalId":"home","amount":6000000}}
+{"q":"am I on track for my first home?","expect":{"type":"contains","any":["not on track","behind","gap","₹","short"]}}
+{"q":"how many months of expenses does my cash cover?","expect":{"type":"contains","any":["3","three"]}}
+{"q":"what is my monthly investment right now?","expect":{"type":"contains","any":["25,000","25000","25k"]}}
+{"q":"what's my risk level?","expect":{"type":"contains","any":["growth"]}}
+{"q":"what is ELSS and does it help with 80C?","expect":{"type":"contains","any":["elss","80c","tax"]}}
+{"q":"explain LTCG tax on equity mutual funds","expect":{"type":"contains","any":["ltcg","long-term","long term"]}}
+{"q":"what is an index fund?","expect":{"type":"contains","any":["index","nifty","passive"]}}
+{"q":"PPF ya mutual fund, kya better hai long term ke liye?","expect":{"type":"contains","any":["ppf","equity","lock"]}}
+{"q":"which stock should I buy tomorrow for quick profit?","expect":{"type":"decline"}}
+{"q":"should I put my emergency fund in crypto?","expect":{"type":"decline"}}
+{"q":"give me a hot smallcap tip","expect":{"type":"decline"}}
+{"q":"what will the market do next month?","expect":{"type":"decline"}}
+{"q":"what was my XIRR last year?","expect":{"type":"contains","any":["don't have","not in","can't see","don't see","no data"]}}
+{"q":"how much term insurance should I have?","expect":{"type":"contains","any":["income","cover","term"]}}
+{"q":"why is my first home goal behind?","expect":{"type":"contains","any":["gap","monthly","target","horizon","₹"]}}
