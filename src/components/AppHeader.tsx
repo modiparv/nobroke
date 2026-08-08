@@ -1,41 +1,7 @@
 import { useEffect, useState } from "react";
 import { actions, useStore } from "../store";
-import { setThemePref, useThemePref, type ThemePref } from "../lib/theme";
 import AuthSheet from "./AuthSheet";
 import Logo from "./Logo";
-
-const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
-  { value: "system", label: "System" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-];
-
-/** Three-state theme control inside the account menu. The choice is a device
-    preference: it persists locally and never syncs to the account. */
-function ThemeRow() {
-  const pref = useThemePref();
-  return (
-    <div className="px-3 py-2">
-      <span className="text-eyebrow uppercase text-text-3">Theme</span>
-      <div className="mt-1.5 flex gap-0.5 rounded-control bg-surface-2 p-0.5" role="radiogroup" aria-label="Theme">
-        {THEME_OPTIONS.map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={pref === o.value}
-            onClick={() => setThemePref(o.value)}
-            className={`h-7 flex-1 rounded-[7px] text-caption transition ${
-              pref === o.value ? "bg-surface font-medium text-text" : "text-text-2 hover:text-text"
-            }`}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /**
  * App nav: logo, the Plan / Money toggle, account, and New plan.
@@ -99,7 +65,6 @@ export default function AppHeader() {
                   <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
                   <div className="absolute right-0 top-[calc(100%+8px)] z-20 w-60 rounded-card border border-line bg-surface p-1.5">
                     <p className="truncate px-3 py-2 text-caption text-text-2">{s.user.email}</p>
-                    <ThemeRow />
                     <button
                       type="button"
                       onClick={() => {

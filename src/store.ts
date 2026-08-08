@@ -415,10 +415,15 @@ export const actions = {
     syncReady = false;
     set({ user });
 
-    // One immediate retry: a cold serverless function or a blip should not
-    // decide the outcome of a sign-in.
+    // A cold serverless function or a paused database must not decide the
+    // outcome of a sign-in: retry the read with a little patience, since a
+    // sleeping Postgres typically wakes within a couple of seconds.
     let result = await loadPlan();
-    if (result.status === "error") result = await loadPlan();
+    for (const delayMs of [1200, 2500]) {
+      if (result.status !== "error") break;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      result = await loadPlan();
+    }
     // Still unknown: report it instead of pretending. The caller surfaces the
     // failure (or revalidateSession heals it later); sync stays off so local
     // work can never overwrite an unread account plan.

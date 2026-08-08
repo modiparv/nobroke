@@ -27,6 +27,8 @@ interface AuthResponse {
   ok: boolean;
   user?: AuthUser;
   error?: string;
+  /** HTTP status, so callers can tell "email taken" (409) apart from other failures. */
+  status?: number;
 }
 
 async function post(path: string, body?: unknown): Promise<AuthResponse> {
@@ -36,7 +38,8 @@ async function post(path: string, body?: unknown): Promise<AuthResponse> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body ?? {}),
     });
-    return (await r.json()) as AuthResponse;
+    const data = (await r.json()) as AuthResponse;
+    return { ...data, status: r.status };
   } catch {
     return { ok: false, error: "Network error. Try again." };
   }
