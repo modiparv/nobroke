@@ -144,7 +144,7 @@ function AccountStep({ step }: { step: Step }) {
             setMode(mode === "register" ? "login" : "register");
             setError(null);
           }}
-          className="text-support text-accent transition hover:text-accent-hi"
+          className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
         >
           {mode === "register" ? "Already have an account? Sign in" : "New here? Create an account"}
         </button>
@@ -305,13 +305,13 @@ function StageRail({ current, allDone }: { current: number; allDone: boolean }) 
         {STAGES.map((st, idx) => {
           const state = allDone || st.n < current ? "done" : st.n === current ? "active" : "todo";
           return (
-            <li key={st.n} className="relative pb-7 pl-6 last:pb-0">
+            <li key={st.n} className="relative pb-8 pl-5 last:pb-0">
               {idx < STAGES.length - 1 && (
-                <span aria-hidden className="absolute bottom-1 left-[5px] top-4 w-px bg-line-2" />
+                <span aria-hidden className="absolute bottom-2 left-[3px] top-4 w-px bg-line-2" />
               )}
               <span
                 aria-hidden
-                className={`absolute left-0 top-[5px] h-[11px] w-[11px] rounded-full ${
+                className={`absolute left-0 top-[6px] h-[7px] w-[7px] rounded-full ${
                   state === "active" ? "bg-text" : state === "done" ? "bg-text-2" : "border border-line-2"
                 }`}
               />
@@ -351,7 +351,19 @@ export default function Onboarding() {
             <StageRail current={step.stage} allDone={step.kind === "account"} />
           </div>
         </div>
-        {s.user && <p className="truncate text-caption text-text-2">Signed in as {s.user.email}</p>}
+        {s.user && (
+          <button
+            type="button"
+            onClick={() => void actions.signOut()}
+            className="flex items-center gap-2 text-support text-text-2 transition hover:text-text"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <path d="M16 17l5-5-5-5M21 12H9" />
+            </svg>
+            Log out of account
+          </button>
+        )}
       </aside>
 
       <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-1 flex-col px-5 pb-10 pt-5 sm:px-8">

@@ -5,6 +5,7 @@ import { formatINR } from "../lib/format";
 import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
 import { btnPrimary, card, sectionLabel } from "../ui";
 import AdvisorNote from "./AdvisorNote";
+import MacroCard from "./MacroCard";
 import AppHeader from "./AppHeader";
 import GoalCard from "./GoalCard";
 import MoneyTab from "./MoneyTab";
@@ -15,7 +16,7 @@ const inrDigits = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 /** Hero figure, one clean weight and colour. */
 function HeroAmount({ value }: { value: number }) {
   return (
-    <div className="num mt-1.5 text-hero font-medium tracking-[-0.02em] text-on-band">
+    <div className="num mt-1 text-2xl font-medium tracking-[-0.02em] text-on-night sm:text-3xl">
       ₹{inrDigits.format(Math.max(0, Math.round(value)))}
     </div>
   );
@@ -33,9 +34,9 @@ function mixLabel(alloc: Record<string, number>): string {
 
 function Pill({ label, onClick, accent, onBand }: { label: string; onClick: () => void; accent?: boolean; onBand?: boolean }) {
   const tone = accent
-    ? "bg-accent-fill text-on-accent hover:bg-accent-fill-hi"
+    ? "bg-on-night text-night hover:opacity-85"
     : onBand
-      ? "border border-on-band/30 text-on-band hover:border-on-band/60"
+      ? "border border-on-night-3/60 text-on-night hover:border-on-night-2"
       : "border border-line text-text hover:border-line-2";
   return (
     <button onClick={onClick} className={`inline-flex h-9 items-center rounded-full px-3.5 text-support transition ${tone}`}>
@@ -124,29 +125,29 @@ export default function Plan() {
     <div className="min-h-screen bg-bg">
       <AppHeader />
 
-      {/* The hero band. Brand navy from the theme tokens: sunk into the light
-          page, lifted above the dark one. */}
-      <section className="hero-band">
-        <div className="mx-auto flex max-w-page flex-col gap-4 px-4 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-7">
+      {/* The overview band: night ground, same palette as the landing. Kept
+          shallow so the goals surface above the fold. */}
+      <section className="bg-night">
+        <div className="mx-auto flex max-w-page flex-col gap-3 px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-5">
           <div>
-            <span className="text-eyebrow uppercase text-on-band-2">Total saved</span>
+            <span className="text-eyebrow uppercase text-on-night-2">Total saved</span>
             <HeroAmount value={totalCapital(s)} />
-            <p className="mt-2 text-body text-on-band-2">
+            <p className="mt-1 text-support text-on-night-2">
               {s.goals.length
                 ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track`
                 : "Add a goal to start your plan"}
             </p>
 
             {/* The breakup, inline in the band on a hairline divider. */}
-            <dl className="mt-4 flex flex-wrap items-stretch gap-x-6 gap-y-2 border-t border-on-band/10 pt-3">
+            <dl className="mt-3 flex flex-wrap items-stretch gap-x-6 gap-y-2 border-t border-on-night-3/40 pt-2.5">
               {[
                 { label: "Cash", v: s.currentSavings },
                 { label: "Invested", v: holdingsTotal(s) },
                 { label: "Monthly", v: s.monthlySip },
               ].map(({ label, v }) => (
                 <div key={label}>
-                  <dt className="text-eyebrow uppercase text-on-band-3">{label}</dt>
-                  <dd className="num mt-0.5 text-row font-medium text-on-band">{formatINR(v)}</dd>
+                  <dt className="text-eyebrow uppercase text-on-night-3">{label}</dt>
+                  <dd className="num mt-0.5 text-support font-medium text-on-night">{formatINR(v)}</dd>
                 </div>
               ))}
             </dl>
@@ -187,7 +188,7 @@ export default function Plan() {
                     <button
                       type="button"
                       onClick={actions.recommendGoalSplit}
-                      className="text-support font-medium text-accent transition hover:text-accent-hi"
+                      className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
                     >
                       Use recommended split
                     </button>
@@ -226,16 +227,21 @@ export default function Plan() {
             )}
           </div>
 
-          {/* Investment mix: the 40 percent pane, always open beside the goals. */}
+          {/* Investment mix: the 40 percent pane, always open beside the goals.
+              The macro backdrop rides below it: the numbers behind the plan's
+              assumptions, in the pane where the assumptions live. */}
           {s.goals.length > 0 && (
-            <section className="min-w-0 rounded-card border border-line bg-surface">
-              <div className="border-b border-line px-4 py-3">
-                <span className="text-support text-text">{mixLabel(s.portfolio)}</span>
-              </div>
-              <div className="p-3.5 sm:p-4">
-                <PortfolioBuilder />
-              </div>
-            </section>
+            <div className="flex min-w-0 flex-col gap-4">
+              <section className="rounded-card border border-line bg-surface">
+                <div className="border-b border-line px-4 py-3">
+                  <span className="text-support text-text">{mixLabel(s.portfolio)}</span>
+                </div>
+                <div className="p-3.5 sm:p-4">
+                  <PortfolioBuilder />
+                </div>
+              </section>
+              <MacroCard />
+            </div>
           )}
         </div>
 

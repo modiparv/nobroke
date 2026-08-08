@@ -7,7 +7,7 @@ import { useSyncExternalStore } from "react";
  * chart or a progress fill follows light and dark without a second palette.
  */
 export const C = {
-  brand: "rgb(var(--accent-text))",
+  brand: "rgb(var(--text))",
   brandDeep: "rgb(var(--accent-hi))",
   positive: "rgb(var(--pos))",
   ink: "rgb(var(--text))",

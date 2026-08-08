@@ -79,7 +79,7 @@ export default function Holdings() {
       {/* Add-investment modal */}
       {open && (
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Add an investment">
-          <div className="absolute inset-0 bg-band/40" onClick={() => setOpen(false)} />
+          <div className="absolute inset-0 bg-night/50" onClick={() => setOpen(false)} />
           <div className="absolute left-1/2 top-1/2 max-h-[90vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-line bg-surface p-5">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-lg font-medium tracking-tight text-display">Add an investment</h3>

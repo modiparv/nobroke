@@ -7,11 +7,10 @@ import { actions, useStore } from "../store";
  * (a real range input drives it, so keyboard and screen readers work), and
  * every mix recommendation respects it as a ceiling.
  *
- * One hue, five steps of intensity, filled up to the selection: higher risk
- * reads as MORE COMMITTED, never as more dangerous. A chosen preference is
- * not an error, so the danger ramp (red/amber) is reserved for loss and
- * error states elsewhere and never appears here. The steps resolve through
- * theme tokens, so light and dark each get their own ramp.
+ * The familiar green-to-red arc, filled up to the selection: calm at one
+ * end, bold at the other, the reading every Indian investor already knows.
+ * The steps resolve through theme tokens, so light and dark each get their
+ * own ramp.
  */
 const RAMP = ["var(--risk-1)", "var(--risk-2)", "var(--risk-3)", "var(--risk-4)", "var(--risk-5)"];
 const UNFILLED = "var(--risk-unfilled)";

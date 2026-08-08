@@ -186,26 +186,26 @@ function HeroProjection() {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-eyebrow uppercase text-text-3">A goal, projected</span>
-        <span className="text-caption text-text-2">Home down payment · 2034</span>
+        <span className="text-eyebrow uppercase text-on-night-3">A goal, projected</span>
+        <span className="text-caption text-on-night-2">Home down payment · 2034</span>
       </div>
-      <p className="num mt-3 text-hero font-medium">₹37.0L</p>
-      <p className="mt-0.5 text-caption text-text-2">
+      <p className="num mt-3 text-hero font-medium text-on-night">₹37.0L</p>
+      <p className="mt-0.5 text-caption text-on-night-2">
         projected by 2034, at <span className="num">₹25,000</span> a month
       </p>
       <svg viewBox="0 0 320 110" className="mt-4 w-full" role="img" aria-label="Projected value curving above the amount put in">
-        <path d="M0 106 C 100 100, 210 88, 320 62" className="stroke-text-2" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
-        <path d="M0 104 C 90 96, 180 76, 320 22" className="stroke-text" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-        <circle cx="320" cy="22" r="4" className="fill-text" />
+        <path d="M0 106 C 100 100, 210 88, 320 62" className="stroke-on-night-2" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
+        <path d="M0 104 C 90 96, 180 76, 320 22" className="stroke-on-night" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+        <circle cx="320" cy="22" r="4" className="fill-on-night" />
       </svg>
-      <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-text-3/30 pt-3">
-        <span className="text-caption text-text-2">
-          Put in <span className="num font-medium text-text">₹24.0L</span>
+      <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-on-night-3/40 pt-3">
+        <span className="text-caption text-on-night-2">
+          Put in <span className="num font-medium text-on-night">₹24.0L</span>
         </span>
-        <span className="text-caption text-text-2">
-          Growth <span className="num font-medium text-text">₹13.0L</span>
+        <span className="text-caption text-on-night-2">
+          Growth <span className="num font-medium text-on-night">₹13.0L</span>
         </span>
-        <span className="text-index uppercase text-text-3">Illustrative</span>
+        <span className="text-index uppercase text-on-night-3">Illustrative</span>
       </div>
     </div>
   );
@@ -274,7 +274,7 @@ export default function Landing() {
                 Login
               </button>
               <button className={btnInk} onClick={actions.startOnboarding}>
-                Join
+                Join the waitlist
               </button>
             </div>
           )}
@@ -302,7 +302,7 @@ export default function Landing() {
               ) : (
                 <>
                   <button className={btnInkLg} onClick={actions.startOnboarding}>
-                    Join
+                    Join the waitlist
                   </button>
                   <button className={`${btnGhost} h-12 px-6`} onClick={() => setShowAuth(true)}>
                     Login
@@ -311,7 +311,7 @@ export default function Landing() {
               )}
             </div>
           </div>
-          <div className="rounded-screen bg-accent-tint p-6 sm:p-8">
+          <div className="rounded-screen bg-night p-6 sm:p-8">
             <HeroProjection />
           </div>
         </div>
@@ -319,9 +319,14 @@ export default function Landing() {
 
       <section className={container}>
         <Reveal className="border-t border-line py-14 sm:py-20">
-          <div className="grid gap-x-12 gap-y-14 sm:grid-cols-2">
-            {OFFERINGS.map((o) => (
-              <article key={o.n}>
+          <div className="grid border border-line sm:grid-cols-2">
+            {OFFERINGS.map((o, idx) => (
+              <article
+                key={o.n}
+                className={`p-7 max-sm:border-b max-sm:border-line max-sm:last:border-b-0 sm:p-9 ${
+                  idx % 2 === 0 ? "sm:border-r sm:border-line" : ""
+                } ${idx < 2 ? "sm:border-b sm:border-line" : ""}`}
+              >
                 <span className="num text-support text-text-3">{o.n}</span>
                 <h3 className="mt-3 font-serif text-3xl font-normal tracking-[-0.01em] text-display sm:text-4xl">
                   {o.title}

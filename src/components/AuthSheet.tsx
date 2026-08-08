@@ -72,7 +72,7 @@ export default function AuthSheet({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4">
-      <div className="absolute inset-0 bg-band/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-night/50" onClick={onClose} />
       <div className="relative w-full max-w-sm rounded-card border border-line bg-surface p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -135,7 +135,7 @@ export default function AuthSheet({
               setMode(mode === "register" ? "login" : "register");
               setError(null);
             }}
-            className="text-caption text-accent transition hover:text-accent-hi"
+            className="text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
           >
             {mode === "register" ? "Have an account? Sign in" : "New here? Create an account"}
           </button>
