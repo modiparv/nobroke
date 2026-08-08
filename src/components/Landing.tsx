@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { actions, getState, useStore } from "../store";
 import { btnGhost, btnPrimary } from "../ui";
 import AuthSheet from "./AuthSheet";
@@ -12,11 +12,45 @@ import SupportPill from "./SupportPill";
  * it is the product's strongest honest promise (the Money tab).
  */
 
-const FEATURES = [
-  { n: "01", title: "Wealth monitor", body: "Everything you own in one place. Cash, funds, FDs, gold." },
-  { n: "02", title: "Goal planning", body: "Each goal gets a target, a date and a monthly amount." },
-  { n: "03", title: "One portfolio", body: "A single mix funds every goal." },
-  { n: "04", title: "Copilot", body: "Ask anything. Change anything. Plain words." },
+/**
+ * The offerings, one per screen of air. Serif display headlines set dimmer
+ * than the page's numbers, generous whitespace, a numbered eyebrow — the
+ * pacing of an editorial, not a feature grid. Copy describes only what the
+ * product does today.
+ */
+const OFFERINGS = [
+  {
+    n: "01",
+    title: "See everything you own",
+    paras: [
+      "Cash, mutual funds, FDs, gold, EPF — one clean view of your wealth, in rupees, today.",
+      "Add it in plain words, or import a CAS statement. No accounts to link. No money to move.",
+    ],
+  },
+  {
+    n: "02",
+    title: "A plan built from real numbers",
+    paras: [
+      "Five short sections: income, spending, what you hold, your context, your goals. Every answer shapes the plan, so none can be skipped.",
+      "The plan shows its work — every assumption inspectable, every projection explained.",
+    ],
+  },
+  {
+    n: "03",
+    title: "One portfolio funds every goal",
+    paras: [
+      "Not a bucket per dream. A single mix, matched to the risk you can actually live with, carries the house, the wedding, the retirement together.",
+      "Each goal gets a target, a date, and the monthly amount it truly needs.",
+    ],
+  },
+  {
+    n: "04",
+    title: "Ask. It runs the numbers.",
+    paras: [
+      "The copilot knows your whole plan — every goal, every holding, every assumption. Move money between goals, test a bigger SIP, ask why a fund scores low.",
+      "Answers come from your plan's own arithmetic, computed before anything changes. Nothing moves until you say so.",
+    ],
+  },
 ];
 
 /**
@@ -116,10 +150,48 @@ function HeroProjection() {
   );
 }
 
+/**
+ * The copilot, shown as one honest exchange: a plain-words instruction and
+ * the recomputed consequence. This is the product's real behaviour, not a
+ * chat theatre mockup.
+ */
+function CopilotExchange() {
+  return (
+    <div className="mt-10 w-full max-w-md rounded-card border border-line bg-surface p-4">
+      <p className="text-caption text-text-2">You</p>
+      <p className="mt-1 text-row">Move ₹5,000 a month from the Goa trip to the emergency fund.</p>
+      <div className="mt-4 border-t border-line pt-4">
+        <p className="text-caption text-text-2">NoBroke</p>
+        <p className="mt-1 text-row">
+          Done. Emergency fund reaches 6 months of expenses by <span className="num font-medium">Mar 2027</span> —
+          five months earlier. The Goa trip moves to <span className="num font-medium">Nov 2027</span>.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   const s = useStore();
   const [showAuth, setShowAuth] = useState(false);
   const signedIn = !!s.user;
+
+  // Which offering owns the viewport, for the right-edge dash rail.
+  const [activeSeg, setActiveSeg] = useState(0);
+  const segRefs = useRef<Array<HTMLElement | null>>([]);
+  useEffect(() => {
+    const els = segRefs.current.filter((el): el is HTMLElement => el != null);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActiveSeg(els.indexOf(entry.target as HTMLElement));
+        }
+      },
+      { rootMargin: "-45% 0px -45% 0px" },
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
   // A returning sign-in lands on the saved plan; someone with an account but
   // no plan yet is sent into the intake.
@@ -127,6 +199,11 @@ export default function Landing() {
     if (getState().goals.length > 0) actions.goPlan();
     else actions.startOnboarding();
   };
+
+  // Decade's header CTA is near-black, not brand blue: monochrome interactive,
+  // inverting cleanly in dark. The hero keeps the one accent primary.
+  const btnInk =
+    "inline-flex h-10 items-center justify-center whitespace-nowrap rounded-control bg-text px-4 text-support font-medium text-bg transition hover:opacity-85";
 
   return (
     <div className="min-h-screen bg-bg">
@@ -141,7 +218,7 @@ export default function Landing() {
               Pricing
             </a>
             {signedIn ? (
-              <button className={`${btnPrimary} px-3.5 py-2`} onClick={afterAuth}>
+              <button className={btnInk} onClick={afterAuth}>
                 Go to my plan
               </button>
             ) : (
@@ -149,7 +226,7 @@ export default function Landing() {
                 <button className={`${btnGhost} px-3.5 py-2`} onClick={() => setShowAuth(true)}>
                   Sign in
                 </button>
-                <button className={`${btnPrimary} px-3.5 py-2`} onClick={actions.startOnboarding}>
+                <button className={btnInk} onClick={actions.startOnboarding}>
                   Start
                 </button>
               </>
@@ -191,18 +268,40 @@ export default function Landing() {
           <HeroProjection />
         </section>
 
-        <section className="border-t border-line">
-          <ul className="divide-y divide-line">
-            {FEATURES.map((f) => (
-              <li key={f.n} className="-mx-3 flex items-baseline gap-5 rounded-card px-3 py-6 transition-colors hover:bg-surface/60 sm:gap-8 sm:py-8">
-                <span className="num text-index tracking-[0.06em] text-text-3">{f.n}</span>
-                <div className="grid flex-1 gap-1 sm:grid-cols-[240px_1fr] sm:gap-8">
-                  <h3 className="text-section font-medium">{f.title}</h3>
-                  <p className="text-body text-text-2">{f.body}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+        <section className="relative border-t border-line">
+          {/* Right-edge dash rail: where you are in the four offerings. */}
+          <div aria-hidden className="pointer-events-none absolute bottom-0 right-0 top-0 hidden w-6 lg:block">
+            <div className="sticky top-[40vh] flex flex-col items-center gap-2">
+              {OFFERINGS.map((o, idx) => (
+                <span
+                  key={o.n}
+                  className={`w-px transition-all duration-300 ${idx === activeSeg ? "h-6 bg-text" : "h-3 bg-line-2"}`}
+                />
+              ))}
+            </div>
+          </div>
+          {OFFERINGS.map((o, idx) => (
+            <article
+              key={o.n}
+              ref={(el) => {
+                segRefs.current[idx] = el;
+              }}
+              className={`flex min-h-[65vh] flex-col justify-center py-16 ${idx > 0 ? "border-t border-line" : ""}`}
+            >
+              <span className="num text-support text-text-3">{o.n}</span>
+              <h3 className="mt-4 max-w-2xl font-serif text-5xl font-normal leading-[1.05] tracking-[-0.015em] text-display sm:text-6xl">
+                {o.title}
+              </h3>
+              <div className="mt-6 flex max-w-xl flex-col gap-4">
+                {o.paras.map((p) => (
+                  <p key={p} className="text-base leading-relaxed text-text-2">
+                    {p}
+                  </p>
+                ))}
+              </div>
+              {o.n === "04" && <CopilotExchange />}
+            </article>
+          ))}
         </section>
 
         {/* The division of labour, stated plainly: the person stays pilot in
@@ -213,25 +312,65 @@ export default function Landing() {
           <h2 className="mt-3 max-w-xl text-2xl font-medium tracking-[-0.02em] text-display sm:text-3xl">
             Your judgment, carried by numbers that never sleep.
           </h2>
-          <div className="mt-8 max-w-3xl">
-            <div className="grid grid-cols-2 gap-6 border-b border-line pb-3 sm:gap-10">
+          <div className="mt-12 grid items-center gap-10 lg:grid-cols-[1fr_360px_1fr] lg:gap-8">
+            <div>
               <span className="text-eyebrow uppercase text-text-3">You</span>
-              <span className="text-eyebrow uppercase text-text-3">NoBroke</span>
+              <ul className="mt-3">
+                {[
+                  "Decide what actually matters",
+                  "Know what you can live with",
+                  "Choose when to act",
+                  "Hold the context no statement shows",
+                ].map((r) => (
+                  <li key={r} className="border-b border-line py-3.5 text-body text-display">
+                    {r}
+                  </li>
+                ))}
+              </ul>
             </div>
-            {(
-              [
-                ["Decide what actually matters", "Watches every holding, every day"],
-                ["Know what you can live with", "Finds the fees and tax you leak"],
-                ["Choose when to act", "Runs the numbers before you commit"],
-                ["Hold the context no statement shows", "Remembers every decision, and why"],
-              ] as const
-            ).map(([you, us]) => (
-              <div key={you} className="grid grid-cols-2 gap-6 border-b border-line py-4 sm:gap-10">
-                <p className="text-body text-display">{you}</p>
-                <p className="text-body text-display">{us}</p>
-              </div>
-            ))}
-            <p className="pt-6 text-center text-section font-medium">A plan you understand.</p>
+
+            <svg
+              viewBox="0 0 360 240"
+              className="mx-auto w-full max-w-[340px]"
+              role="img"
+              aria-label="Two overlapping circles — your judgment and NoBroke's numbers — meeting in a plan you understand"
+            >
+              <defs>
+                <pattern id="venn-hatch" width="5" height="8" patternUnits="userSpaceOnUse">
+                  <line x1="2.5" y1="0" x2="2.5" y2="8" className="stroke-text-3" strokeWidth="1" opacity="0.4" />
+                </pattern>
+                <clipPath id="venn-left">
+                  <circle cx="130" cy="120" r="104" />
+                </clipPath>
+              </defs>
+              <g clipPath="url(#venn-left)">
+                <circle cx="230" cy="120" r="104" fill="url(#venn-hatch)" />
+              </g>
+              <circle cx="130" cy="120" r="104" fill="none" className="stroke-line-2" strokeWidth="1" />
+              <circle cx="230" cy="120" r="104" fill="none" className="stroke-line-2" strokeWidth="1" />
+              <text x="180" y="112" textAnchor="middle" className="fill-text" fontSize="15" fontWeight="500">
+                A plan you
+              </text>
+              <text x="180" y="132" textAnchor="middle" className="fill-text" fontSize="15" fontWeight="500">
+                understand.
+              </text>
+            </svg>
+
+            <div className="lg:text-right">
+              <span className="text-eyebrow uppercase text-text-3">NoBroke</span>
+              <ul className="mt-3">
+                {[
+                  "Watches every holding, every day",
+                  "Finds the fees and tax you leak",
+                  "Runs the numbers before you commit",
+                  "Remembers every decision, and why",
+                ].map((r) => (
+                  <li key={r} className="border-b border-line py-3.5 text-body text-display">
+                    {r}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
 
