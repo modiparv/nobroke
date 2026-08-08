@@ -116,6 +116,76 @@ const TIERS = [
   },
 ];
 
+/** Stacked safety-net chip, goal arc, rising line: quiet monochrome line art
+ *  for the layer cards, drawn from tokens so both themes carry it. */
+const LAYERS = [
+  {
+    title: "Protect",
+    body: "The plan starts with a safety net — months of expenses within reach before anything is locked away — and a risk appetite you set yourself, never guessed.",
+    art: (
+      <div className="relative" aria-hidden>
+        <div className="absolute -bottom-4 left-1/2 h-10 w-40 -translate-x-1/2 rounded-xl border border-line bg-surface" />
+        <div className="absolute -bottom-2 left-1/2 h-10 w-44 -translate-x-1/2 rounded-xl border border-line bg-surface" />
+        <div className="relative flex h-11 w-48 items-center justify-center gap-2 rounded-xl border border-line bg-surface">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-text-2">
+            <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
+          </svg>
+          <span className="text-index uppercase tracking-[0.13em] text-text-2">Safety net</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "Plan",
+    body: "Every goal gets a target in today's money, a date, and the monthly it truly needs. Inflation is priced in; trade-offs show the moment you make them.",
+    art: (
+      <div className="flex flex-col items-center gap-1" aria-hidden>
+        <span className="text-index uppercase tracking-[0.13em] text-text-3">Goals</span>
+        <svg viewBox="0 0 200 78" className="w-44 text-text-2">
+          <path d="M22 74 A 78 78 0 0 1 178 74" fill="none" stroke="rgb(var(--line-2))" strokeDasharray="3 4" />
+          <g fill="rgb(var(--surface))" stroke="rgb(var(--line-2))">
+            <circle cx="46" cy="45" r="13" />
+            <circle cx="100" cy="20" r="13" />
+            <circle cx="154" cy="45" r="13" />
+          </g>
+          <g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M41 49v-5l5-4 5 4v5h-10z" />
+            <path d="M100 25c-1.4-2.2-5-1.9-5 .8 0 2 2.9 3.7 5 5.2 2.1-1.5 5-3.2 5-5.2 0-2.7-3.6-3-5-.8z" />
+            <path d="M148 44l6-3 6 3-6 3-6-3zM158 46v4" />
+          </g>
+        </svg>
+      </div>
+    ),
+  },
+  {
+    title: "Prosper",
+    body: "One portfolio carries every goal, tuned to your horizon and risk. Projections show the arithmetic — expected return, the gap, what changes if you wait.",
+    art: (
+      <svg viewBox="0 0 220 120" className="w-52" aria-hidden>
+        <g stroke="rgb(var(--line))" strokeWidth="1">
+          <line x1="10" y1="10" x2="10" y2="110" />
+          <line x1="60" y1="10" x2="60" y2="110" />
+          <line x1="110" y1="10" x2="110" y2="110" />
+          <line x1="160" y1="10" x2="160" y2="110" />
+          <line x1="210" y1="10" x2="210" y2="110" />
+          <line x1="10" y1="35" x2="210" y2="35" />
+          <line x1="10" y1="60" x2="210" y2="60" />
+          <line x1="10" y1="85" x2="210" y2="85" />
+          <line x1="10" y1="110" x2="210" y2="110" />
+        </g>
+        <polyline
+          points="10,105 30,98 50,100 70,88 90,90 110,78 130,72 150,60 170,50 190,35 210,18"
+          fill="none"
+          stroke="rgb(var(--text-2))"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <circle cx="210" cy="18" r="3.5" fill="rgb(var(--text))" />
+      </svg>
+    ),
+  },
+];
+
 /**
  * The hero graphic is the product's own arithmetic, not an illustration:
  * ₹25,000 a month for 8 years at a conservative return is what the curve and
@@ -211,8 +281,8 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <header className="sticky top-0 z-30 bg-bg/40">
-        <div className="mx-auto flex h-14 max-w-page items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-3 z-30 px-3 sm:px-4">
+        <div className="mx-auto flex h-14 max-w-page items-center justify-between rounded-full border border-line bg-surface px-4 sm:px-5">
           <Logo />
           <div className="flex items-center gap-2">
             <a
@@ -245,7 +315,7 @@ export default function Landing() {
         <section className="grid items-center gap-10 py-20 sm:py-28 lg:grid-cols-[1fr_400px] lg:gap-16">
           <div className="max-w-3xl">
           <span className="text-eyebrow uppercase text-text-3">Wealth, minus the noise</span>
-          <h1 className="mt-4 text-4xl font-medium leading-[1.05] tracking-[-0.025em] text-display sm:text-6xl">
+          <h1 className="mt-4 font-serif text-4xl font-normal leading-[1.08] tracking-[-0.015em] text-display sm:text-6xl">
             We won't let you go broke.
           </h1>
           <p className="mt-5 max-w-xl text-body text-text-2 sm:text-base">
@@ -269,7 +339,9 @@ export default function Landing() {
           </div>
           <p className="mt-5 text-caption text-text-2">2-minute setup · No jargon · Cancel anytime</p>
           </div>
-          <HeroProjection />
+          <div className="rounded-screen bg-accent-tint p-5 sm:p-7">
+            <HeroProjection />
+          </div>
         </section>
 
         <section className="relative border-t border-line">
@@ -378,6 +450,28 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* The three layers: how the product thinks, in the order it thinks it.
+            Copy is scoped to shipped behaviour; the art is monochrome line
+            work, since nothing here is interactive. */}
+        <section className="border-t border-line py-14 sm:py-20">
+          <span className="text-eyebrow uppercase text-text-3">The three layers</span>
+          <h2 className="mt-3 font-serif text-3xl font-normal tracking-[-0.01em] text-display sm:text-4xl">
+            Protect. Plan. Prosper.
+          </h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            {LAYERS.map((l, idx) => (
+              <div key={l.title} className="overflow-hidden rounded-card border border-line bg-surface">
+                <div className="flex h-44 items-center justify-center border-b border-line">{l.art}</div>
+                <div className="p-5">
+                  <span className="num text-index uppercase tracking-[0.13em] text-text-3">Layer {idx + 1}</span>
+                  <h3 className="mt-2 text-section font-medium">{l.title}</h3>
+                  <p className="mt-2 text-support text-text-2">{l.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section id="pricing" className="border-t border-line py-14 sm:py-20">
           <span className="text-eyebrow uppercase text-text-3">Pricing</span>
           <h2 className="mt-3 text-2xl font-medium tracking-[-0.02em] text-display sm:text-3xl">Three tiers. One promise.</h2>
@@ -448,11 +542,44 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer className="mx-auto max-w-page px-4 pb-10 sm:px-6">
-        <p className="mx-auto max-w-2xl text-center text-caption text-text-2">
-          NoBroke is an early prototype. Projections are illustrative, use simplified assumptions, and are not investment
-          advice.
-        </p>
+      <footer className="border-t border-line">
+        <div className="mx-auto max-w-page px-4 py-12 sm:px-6">
+          <div className="grid gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-20">
+            <div>
+              <Logo />
+              <p className="mt-3 max-w-xs text-caption text-text-2">
+                Wealth, minus the noise. Built in India. A flat fee for judgement — never a percentage of your assets.
+              </p>
+            </div>
+            <div>
+              <span className="text-eyebrow uppercase text-text-3">Product</span>
+              <ul className="mt-3 space-y-2 text-support">
+                <li>
+                  <button onClick={actions.startOnboarding} className="text-text-2 transition hover:text-text">
+                    Start free
+                  </button>
+                </li>
+                <li>
+                  <a href="#pricing" className="text-text-2 transition hover:text-text">
+                    Pricing
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <span className="text-eyebrow uppercase text-text-3">Early access</span>
+              <ul className="mt-3 space-y-2 text-support">
+                <li className="text-text-2">Founding members keep their price for life.</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-10 border-t border-line pt-6">
+            <p className="max-w-2xl text-caption text-text-3">
+              NoBroke is an early prototype and is not a SEBI-registered investment adviser. Projections are
+              illustrative, use simplified assumptions, and are not investment advice.
+            </p>
+          </div>
+        </div>
       </footer>
 
       <SupportPill />
