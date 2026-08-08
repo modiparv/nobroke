@@ -121,12 +121,12 @@ const TIERS = [
 const LAYERS = [
   {
     title: "Protect",
-    body: "The plan starts with a safety net — months of expenses within reach before anything is locked away — and a risk appetite you set yourself, never guessed.",
+    body: "A cushion check before anything else: if cash covers less than three months of expenses, the plan says so plainly. Risk appetite is read from your answers — then handed to you, one slide to change.",
     art: (
       <div className="relative" aria-hidden>
-        <div className="absolute -bottom-4 left-1/2 h-10 w-40 -translate-x-1/2 rounded-xl border border-line bg-surface" />
-        <div className="absolute -bottom-2 left-1/2 h-10 w-44 -translate-x-1/2 rounded-xl border border-line bg-surface" />
-        <div className="relative flex h-11 w-48 items-center justify-center gap-2 rounded-xl border border-line bg-surface">
+        <div className="absolute -bottom-4 left-1/2 h-10 w-40 -translate-x-1/2 rounded-xl border border-line-2 bg-surface" />
+        <div className="absolute -bottom-2 left-1/2 h-10 w-44 -translate-x-1/2 rounded-xl border border-line-2 bg-surface" />
+        <div className="relative flex h-11 w-48 items-center justify-center gap-2 rounded-xl border border-line-2 bg-surface">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-text-2">
             <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
           </svg>
@@ -142,8 +142,8 @@ const LAYERS = [
       <div className="flex flex-col items-center gap-1" aria-hidden>
         <span className="text-index uppercase tracking-[0.13em] text-text-3">Goals</span>
         <svg viewBox="0 0 200 78" className="w-44 text-text-2">
-          <path d="M22 74 A 78 78 0 0 1 178 74" fill="none" stroke="rgb(var(--line-2))" strokeDasharray="3 4" />
-          <g fill="rgb(var(--surface))" stroke="rgb(var(--line-2))">
+          <path d="M22 74 A 78 78 0 0 1 178 74" fill="none" stroke="rgb(var(--text-3))" strokeDasharray="3 4" />
+          <g fill="rgb(var(--surface))" stroke="rgb(var(--text-3))">
             <circle cx="46" cy="45" r="13" />
             <circle cx="100" cy="20" r="13" />
             <circle cx="154" cy="45" r="13" />
@@ -162,7 +162,7 @@ const LAYERS = [
     body: "One portfolio carries every goal, tuned to your horizon and risk. Projections show the arithmetic — expected return, the gap, what changes if you wait.",
     art: (
       <svg viewBox="0 0 220 120" className="w-52" aria-hidden>
-        <g stroke="rgb(var(--line))" strokeWidth="1">
+        <g stroke="rgb(var(--line-2))" strokeWidth="1">
           <line x1="10" y1="10" x2="10" y2="110" />
           <line x1="60" y1="10" x2="60" y2="110" />
           <line x1="110" y1="10" x2="110" y2="110" />
@@ -194,7 +194,7 @@ const LAYERS = [
  */
 function HeroProjection() {
   return (
-    <div className="rounded-card border border-line bg-surface p-5">
+    <div>
       <div className="flex items-baseline justify-between gap-3">
         <span className="text-eyebrow uppercase text-text-3">A goal, projected</span>
         <span className="text-caption text-text-2">Home down payment · 2034</span>
@@ -207,7 +207,7 @@ function HeroProjection() {
         <path d="M0 104 C 90 96, 180 76, 320 22" className="stroke-accent" strokeWidth="2.5" fill="none" strokeLinecap="round" />
         <circle cx="320" cy="22" r="4" className="fill-accent" />
       </svg>
-      <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-line pt-3">
+      <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-text-3/30 pt-3">
         <span className="text-caption text-text-2">
           Put in <span className="num font-medium text-text">₹24.0L</span>
         </span>
@@ -282,7 +282,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-bg">
       <header className="sticky top-3 z-30 px-3 sm:px-4">
-        <div className="mx-auto flex h-14 max-w-page items-center justify-between rounded-full border border-line bg-surface px-4 sm:px-5">
+        <div className="mx-auto flex h-14 max-w-page items-center justify-between rounded-full border border-line-2 bg-sidebar px-4 sm:px-5">
           <Logo />
           <div className="flex items-center gap-2">
             <a
@@ -339,7 +339,7 @@ export default function Landing() {
           </div>
           <p className="mt-5 text-caption text-text-2">2-minute setup · No jargon · Cancel anytime</p>
           </div>
-          <div className="rounded-screen bg-accent-tint p-5 sm:p-7">
+          <div className="rounded-screen bg-accent-tint p-6 sm:p-8">
             <HeroProjection />
           </div>
         </section>
@@ -351,7 +351,7 @@ export default function Landing() {
               {OFFERINGS.map((o, idx) => (
                 <span
                   key={o.n}
-                  className={`w-px transition-all duration-300 ${idx === activeSeg ? "h-6 bg-text" : "h-3 bg-line-2"}`}
+                  className={`w-px transition-all duration-300 ${idx === activeSeg ? "h-6 bg-text" : "h-3 bg-text-3"}`}
                 />
               ))}
             </div>
@@ -488,7 +488,7 @@ export default function Landing() {
                 }`}
               >
                 {t.popular && (
-                  <span className="absolute -top-2.5 left-5 rounded-full bg-accent-fill px-2.5 py-0.5 text-index font-medium uppercase tracking-wide text-on-accent">
+                  <span className="absolute -top-2.5 left-5 rounded-full bg-text px-2.5 py-0.5 text-index font-medium uppercase tracking-wide text-bg">
                     Most chosen
                   </span>
                 )}
@@ -574,7 +574,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="mt-10 border-t border-line pt-6">
-            <p className="max-w-2xl text-caption text-text-3">
+            <p className="max-w-2xl text-caption text-text-2">
               NoBroke is an early prototype and is not a SEBI-registered investment adviser. Projections are
               illustrative, use simplified assumptions, and are not investment advice.
             </p>
