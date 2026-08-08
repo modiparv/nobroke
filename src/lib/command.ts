@@ -55,9 +55,18 @@ const POOL_CONTEXT = /\b(invest|investing|sip|per month|a month|monthly|each mon
 const CASH_CONTEXT = /\b(savings?|cash|in the bank|in bank|saved|i have|i've got|sitting|lump\s?sum|corpus)\b/;
 const TARGET_CONTEXT = /\b(target|cost|costs?|worth|need|needs|needed|budget|goal amount|amount|to|=)\b/;
 
+/** Interrogatives that mark a QUESTION, which must never mutate the plan —
+    "explain the safety net goal" or "should I rebalance?" go to the AI.
+    Polite-command openers ("can you add…", "please add…") stay commands. */
+const QUESTION_START = /^(what|why|how|when|which|where|who|is|are|am|do|does|did|should|could|would|can|will|explain|tell me)\b/;
+const POLITE_COMMAND = /^(can you|could you|would you|will you|please)\b/;
+
 export function parseCommand(raw: string, now = new Date().getFullYear()): Command | null {
   const text = raw.toLowerCase().trim();
   if (!text) return null;
+
+  // Questions are answered, never executed.
+  if ((QUESTION_START.test(text) || text.endsWith("?")) && !POLITE_COMMAND.test(text)) return null;
 
   const goal = findGoal(text);
   const amount = parseAmountINR(text);

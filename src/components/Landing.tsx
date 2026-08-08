@@ -45,7 +45,7 @@ const OFFERINGS = [
     title: "Ask. It runs the numbers.",
     paras: [
       "Change the plan in plain words: the monthly, a target, a horizon. It happens on the spot, every number recomputed.",
-      "Anything else you ask is answered against the goal in front of you: its target, monthly, projection and mix.",
+      "Anything else you ask is answered against your whole plan: every goal, target, monthly, projection and mix.",
     ],
   },
 ];
