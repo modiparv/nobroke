@@ -3,71 +3,55 @@
 @tailwind utilities;
 
 /**
- * Palette. Monochrome, black-first: #000 page, greys #525252 / #8C8C8C /
- * #B7B7B7 / #E8E8E8, white as the one interactive tone. A light variant ships
- * behind data-theme="light", but black is the default per the brand call.
+ * Palette. Two themes from one token set, defaulting to the system scheme
+ * (a boot script in index.html stamps data-theme before first paint, and the
+ * account menu offers System / Light / Dark).
  *
- * Values are raw "R G B" channels so Tailwind opacity modifiers keep working.
+ * Warm neutrals in BOTH themes: page, surfaces, hairlines and text all sit a
+ * few degrees warm of neutral. The brand navy survives only where it is the
+ * brand — the band, the logo, one chart series — not as the text colour.
+ * Never pure #000 as text on light, never pure #FFF as text on dark; the one
+ * deliberate #FFF is the light surface (cards on warm paper).
  *
- * Status cannot be carried by hue in monochrome, so it is carried by fill
- * weight: the state that needs attention is the BRIGHTEST thing on the dark
- * screen (white chip, black text) and a healthy state recedes to a quiet chip.
- * Numbers are never coloured.
+ * Text hierarchy inverts the obvious order: display copy (headlines, section
+ * copy, prose) uses --text-display and sits DIMMER than --text (values, row
+ * titles, anything numeric). The number is always the brightest thing on
+ * screen. Brightness order, both themes:
+ *   --text > --text-display > --text-2 > --text-3
+ *
+ * Fills are INK: filled controls invert the page (near-black on light,
+ * warm-white on dark) via --accent-fill/--on-accent, the Decade move. The
+ * blue survives only as chart colour (--accent-text feeds the categorical
+ * chart palette and the logo's rising stroke), never as UI chrome.
+ *
+ * --text-3 sits near 3:1 in both themes and is decoration only: index marks,
+ * eyebrow labels, axis ticks. Never a value, a status, or anything
+ * interactive.
+ *
+ * Values are raw "R G B" channels so Tailwind opacity modifiers keep working;
+ * gradients and single-purpose colours (hero, risk ramp, charts, logo) are
+ * whole values.
  */
-:root,
-[data-theme="dark"] {
-  color-scheme: dark;
-  /* Elevation is the whole game in mono dark: page #000, cards #121212,
-     hero band #1C1C1C, raised fills #242424. Same hue, four depths. */
-  --bg: 0 0 0;
-  --surface: 18 18 18;
-  --surface-2: 36 36 36;
-  --line: 51 51 51;
-  --line-2: 92 92 92;
-  --text: 237 237 237;
-  --text-2: 183 183 183;
-  --text-3: 140 140 140;
-  --accent: 255 255 255;
-  --accent-hi: 224 224 224;
-  --accent-tint: 36 36 36;
-  --on-accent: 0 0 0;
-  --band: 28 28 28;
-  --on-band: 255 255 255;
-  --on-band-2: 183 183 183;
-  --on-band-3: 140 140 140;
-  --pos: 200 200 200;
-  --pos-bg: 42 42 42;
-  --cau: 17 17 17;
-  --cau-bg: 232 232 232;
-  --neg: 0 0 0;
-  --neg-bg: 255 255 255;
-  /* Logo mark: brand constants, not part of the mono ramp. The falling and
-     rising strokes keep their own colours in both themes. */
-  --logo-fall: #f2f5fa;
-  --logo-rise: #5c82ff;
-  --ink-800: rgb(var(--text));
-}
-
-/* The working surfaces: private-bank light. Ink navy on paper, one signal
-   blue reserved for interactive elements, quiet slate secondaries, and true
-   semantic status colours. The dark palette above stays for the marketing
-   surface. */
-[data-theme="light"] {
+:root {
   color-scheme: light;
-  --bg: 246 248 252;
+  --bg: 247 246 245;
   --surface: 255 255 255;
-  --surface-2: 238 242 248;
-  --line: 227 233 242;
-  --line-2: 191 202 218;
-  --text: 11 27 51;
-  --text-2: 71 85 112;
-  --text-3: 122 135 158;
-  --accent: 46 91 255;
+  --sidebar: 229 227 224;
+  --surface-2: 239 237 233;
+  --line: 224 220 214;
+  --line-2: 201 196 188;
+  --text: 23 22 20;
+  --text-display: 87 83 78;
+  --text-2: 103 99 92;
+  --text-3: 138 131 120;
+  --accent-text: 46 91 255;
+  --accent-fill: 23 22 20;
   --accent-hi: 26 68 217;
-  --accent-tint: 234 240 255;
-  --on-accent: 255 255 255;
+  --accent-fill-hi: 60 57 52;
+  --accent-tint: 237 235 231;
+  --on-accent: 247 246 245;
   --band: 11 27 51;
-  --on-band: 255 255 255;
+  --on-band: 245 243 240;
   --on-band-2: 178 191 214;
   --on-band-3: 128 143 170;
   --pos: 14 122 90;
@@ -76,9 +60,88 @@
   --cau-bg: 250 240 224;
   --neg: 179 38 30;
   --neg-bg: 249 232 231;
+  /* The hero band: brand navy, sunk into the light page. */
+  --hero: radial-gradient(120% 140% at 100% 0%, rgba(46, 91, 255, 0.18) 0%, rgba(46, 91, 255, 0) 45%),
+    linear-gradient(120deg, #0a192f 0%, #0e2140 60%, #12284c 100%);
+  --hero-line: transparent;
+  /* Risk appetite ramp: the familiar green-to-red arc, calm to bold. */
+  --risk-1: #2f9e5b;
+  --risk-2: #8fae3b;
+  --risk-3: #d9a521;
+  --risk-4: #e07b39;
+  --risk-5: #d64545;
+  --risk-unfilled: #e7e5e0;
+  /* Categorical series for the goals chart, in draw order. */
+  --chart-1: #2e5bff;
+  --chart-2: #0e7a5a;
+  --chart-3: #9e6408;
+  --chart-4: #0b1b33;
+  --chart-5: #8a8378;
+  --chart-6: #b3261e;
+  /* Logo mark: brand constants. The falling and rising strokes keep their
+     own colours in both themes. */
   --logo-fall: #0b1b33;
   --logo-rise: #2e5bff;
-  --ink-800: rgb(var(--text));
+  /* Third-party brand constant (WhatsApp glyph), same in both themes. */
+  --whatsapp: #25d366;
+  /* Night sections: near-black marketing grounds that stay dark in BOTH
+     themes (the Decade move). on-night mirrors the dark theme's text scale. */
+  --night: 23 22 20;
+  --on-night: 233 229 224;
+  --on-night-2: 155 150 143;
+  --on-night-3: 95 91 85;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: 10 10 11;
+  --surface: 19 18 17;
+  --sidebar: 26 25 23;
+  --surface-2: 27 26 24;
+  --line: 36 34 31;
+  --line-2: 50 47 43;
+  --text: 233 229 224;
+  --text-display: 168 163 156;
+  --text-2: 138 133 126;
+  --text-3: 95 91 85;
+  --accent-text: 92 130 255;
+  --accent-fill: 233 229 224;
+  --accent-hi: 125 155 255;
+  --accent-fill-hi: 200 196 190;
+  --accent-tint: 33 32 30;
+  --on-accent: 10 10 11;
+  --band: 17 27 49;
+  --on-band: 245 243 240;
+  --on-band-2: 178 191 214;
+  --on-band-3: 128 143 170;
+  --pos: 52 200 142;
+  --pos-bg: 23 43 38;
+  --cau: 224 162 60;
+  --cau-bg: 48 39 27;
+  --neg: 240 115 106;
+  --neg-bg: 46 31 32;
+  /* Same navy, inverted role: lifted above the near-black page. */
+  --hero: linear-gradient(135deg, #111b31, #0d1524);
+  --hero-line: #1e2c45;
+  --risk-1: #3dbd7d;
+  --risk-2: #a5c255;
+  --risk-3: #e5b84a;
+  --risk-4: #ee8e55;
+  --risk-5: #f0736a;
+  --risk-unfilled: #1b1a18;
+  --chart-1: #5c82ff;
+  --chart-2: #34c88e;
+  --chart-3: #e0a23c;
+  --chart-4: #e9e5e0;
+  --chart-5: #9b968f;
+  --chart-6: #f0736a;
+  --logo-fall: #e9e5e0;
+  --logo-rise: #5c82ff;
+  --whatsapp: #25d366;
+  --night: 19 18 17;
+  --on-night: 233 229 224;
+  --on-night-2: 155 150 143;
+  --on-night-3: 95 91 85;
 }
 
 html {
@@ -86,7 +149,7 @@ html {
 }
 
 :focus-visible {
-  outline: 2px solid rgb(var(--accent));
+  outline: 2px solid rgb(var(--text));
   outline-offset: 2px;
 }
 
@@ -109,14 +172,16 @@ h3 {
   letter-spacing: -0.02em;
 }
 
-/* Inverted selection: the sharpest detail a mono palette can offer. */
+/* Inverted selection: ink and paper swap. */
 ::selection {
   background: rgb(var(--text));
   color: rgb(var(--bg));
 }
 
+/* Placeholders sit in an interactive control, so they use the readable muted
+   step, not the decorative one. */
 ::placeholder {
-  color: rgb(var(--text-3));
+  color: rgb(var(--text-2));
 }
 
 /* Every number in the product. Tabular figures stop digits jittering as values
@@ -126,8 +191,16 @@ h3 {
   letter-spacing: -0.01em;
 }
 
+/* The hero band. Brand navy in both themes: sunk into the light page,
+   lifted above the dark one. Same colour, inverted role. */
+.hero-band {
+  background-color: rgb(var(--band));
+  background-image: var(--hero);
+  border-bottom: 1px solid var(--hero-line);
+}
+
 input[type="range"] {
-  accent-color: rgb(var(--accent));
+  accent-color: rgb(var(--text));
   height: 4px;
   cursor: pointer;
 }
@@ -159,6 +232,15 @@ input[type="range"] {
 }
 
 .fade-up { animation: fadeUp 0.32s ease both; }
+
+/* Scroll reveal: sections drift in once. Motion-reduced users see content
+   immediately with no transition. */
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.is-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
 .live-dot { animation: blink 1.4s ease-in-out infinite; }
 .typing-dot { animation: typing 1.2s infinite ease-in-out; }
 
@@ -167,7 +249,7 @@ input[type="range"] {
   transition: border-color 0.2s ease;
 }
 .copilot-bar:focus-within {
-  border-color: rgb(var(--accent));
+  border-color: rgb(var(--text));
 }
 
 @media (prefers-reduced-motion: no-preference) {

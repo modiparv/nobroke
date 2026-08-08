@@ -12,17 +12,31 @@ export default {
       colors: {
         bg: channel("--bg"),
         surface: channel("--surface"),
+        sidebar: channel("--sidebar"),
         "surface-2": channel("--surface-2"),
         line: channel("--line"),
         "line-2": channel("--line-2"),
         text: channel("--text"),
+        // Display copy (headlines, section copy, prose) sits DIMMER than
+        // values: the number is always the brightest thing on screen.
+        display: channel("--text-display"),
         "text-2": channel("--text-2"),
         "text-3": channel("--text-3"),
-        accent: channel("--accent"),
+        // The accent splits in dark mode: `accent` is the on-surface accent
+        // (links, icons, chart fills), `accent-fill` is for button backgrounds
+        // only, so the light label passes contrast. In light both resolve to
+        // the same blue.
+        accent: channel("--accent-text"),
         "accent-hi": channel("--accent-hi"),
+        "accent-fill": channel("--accent-fill"),
+        "accent-fill-hi": channel("--accent-fill-hi"),
         "accent-tint": channel("--accent-tint"),
         "on-accent": channel("--on-accent"),
         band: channel("--band"),
+        night: channel("--night"),
+        "on-night": channel("--on-night"),
+        "on-night-2": channel("--on-night-2"),
+        "on-night-3": channel("--on-night-3"),
         "on-band": channel("--on-band"),
         "on-band-2": channel("--on-band-2"),
         "on-band-3": channel("--on-band-3"),
@@ -34,17 +48,20 @@ export default {
         "neg-bg": channel("--neg-bg"),
 
         // Aliases kept so existing markup swaps palette without a rewrite.
+        // `brand` is only ever used as a button/control fill, so it maps to
+        // the fill side of the split; the asset-class colours are chart fills,
+        // so they map to the on-surface side.
         ink: channel("--text"),
         muted: channel("--text-2"),
         paper: channel("--bg"),
         positive: channel("--pos"),
         brand: {
-          DEFAULT: channel("--accent"),
-          deep: channel("--accent-hi"),
-          dark: channel("--accent-hi"),
+          DEFAULT: channel("--accent-fill"),
+          deep: channel("--accent-fill-hi"),
+          dark: channel("--accent-fill-hi"),
           mint: channel("--accent-tint"),
         },
-        equity: channel("--accent"),
+        equity: channel("--accent-text"),
         debt: channel("--text-2"),
         gold: channel("--cau"),
         hybrid: channel("--accent-hi"),
@@ -52,6 +69,9 @@ export default {
       fontFamily: {
         // Inter reads as finance rather than friendly-app (spec 8b).
         sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        // Question screens only: a serif heading makes the intake read as a
+        // conversation rather than data entry. Never for numbers.
+        serif: ["ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       fontSize: {

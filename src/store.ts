@@ -13,6 +13,7 @@ import {
   deleteAccount as apiDeleteAccount,
   loadPlan,
   logout as apiLogout,
+  me,
   savePlan,
   savePlanBeacon,
   type AuthUser,
@@ -399,31 +400,55 @@ export const actions = {
   setTab: (tab: AppState["tab"]) => set({ tab }),
 
   // ---- Account ----
-  /** After register/login (or a session found at boot): reconcile the local
-      and server plans by recency. Newer wins; a transient read failure blocks
-      all sync this session rather than risk overwriting the server. */
-  completeAuth: async (user: AuthUser) => {
+  /**
+   * After register/login (or a session found at boot): reconcile the local
+   * and server plans, then keep them in sync.
+   *
+   * preferServer is set for an explicit sign-in: the person is asking for
+   * their account, so its saved plan wins outright and any anonymous scratch
+   * work on this device is discarded, even if that local edit is technically
+   * newer. Registration and silent session-restore instead reconcile by
+   * recency, which is what multi-device sync needs. A transient read failure
+   * blocks sync for the session rather than risk overwriting the server.
+   */
+  completeAuth: async (user: AuthUser, opts: { preferServer?: boolean } = {}): Promise<"ok" | "sync-failed"> => {
     syncReady = false;
     set({ user });
 
-    const result = await loadPlan();
-    if (result.status === "error") {
-      // Could not read the account plan: leave sync OFF so a local edit can
-      // never clobber a server plan we failed to see. The app still works.
-      return;
-    }
+    // One immediate retry: a cold serverless function or a blip should not
+    // decide the outcome of a sign-in.
+    let result = await loadPlan();
+    if (result.status === "error") result = await loadPlan();
+    // Still unknown: report it instead of pretending. The caller surfaces the
+    // failure (or revalidateSession heals it later); sync stays off so local
+    // work can never overwrite an unread account plan.
+    if (result.status === "error") return "sync-failed";
 
     if (result.status === "ok") {
       const serverRev = Number((result.state as Record<string, unknown>).planUpdatedAt) || 0;
-      if (serverRev >= state.planUpdatedAt) {
+      if (opts.preferServer || serverRev >= state.planUpdatedAt) {
         set({ ...coercePlan(result.state), planUpdatedAt: serverRev, user });
         syncReady = true;
-        return;
+        return "ok";
       }
     }
-    // Server empty, or local strictly newer: local is the source of truth.
+    // Server empty, or local newer on a non-explicit path: local is the truth.
     syncReady = true;
     if (state.planUpdatedAt > 0) void savePlan(planBlob());
+    return "ok";
+  },
+
+  /**
+   * Heal a half-open session: signed in but never reconciled (a boot-time
+   * probe or plan load failed). Called on online/focus signals; a no-op when
+   * everything is already healthy, so it costs nothing in the common case.
+   */
+  revalidateSession: async () => {
+    if (!state.user || syncReady) return;
+    const probe = await me();
+    if (probe.status === "ok") void actions.completeAuth(probe.user);
+    else if (probe.status === "unauthed") actions.clearStaleUser();
+    // error: state still unknown — keep the identity, try on the next signal.
   },
 
   /** A dead/expired session found at boot: drop the signed-in identity but

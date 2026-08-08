@@ -6,6 +6,23 @@ export interface AuthUser {
   email: string;
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/**
+ * Instant, specific validation for the sign-in / sign-up forms, so every bad
+ * input gets a clear message before any network call. Register enforces the
+ * 8-character minimum; login only needs a non-empty password (existing
+ * accounts already meet the rule).
+ */
+export function credentialError(email: string, password: string, isRegister: boolean): string | null {
+  const e = email.trim();
+  if (!e) return "Enter your email address.";
+  if (!EMAIL_RE.test(e)) return "That email does not look right. Check the format.";
+  if (!password) return isRegister ? "Create a password." : "Enter your password.";
+  if (isRegister && password.length < 8) return "Password needs at least 8 characters.";
+  return null;
+}
+
 interface AuthResponse {
   ok: boolean;
   user?: AuthUser;
@@ -41,14 +58,25 @@ export function deleteAccount(): Promise<AuthResponse> {
   return post("/api/auth/delete");
 }
 
-export async function me(): Promise<AuthUser | null> {
+/**
+ * Session probe with three outcomes the caller must tell apart, so a server
+ * blip or an offline boot is never mistaken for a dead session:
+ *   ok        the cookie maps to a live session
+ *   unauthed  the server answered and the session is truly dead (401)
+ *   error     network or server failure; state unknown, keep the identity
+ */
+export type SessionProbe = { status: "ok"; user: AuthUser } | { status: "unauthed" } | { status: "error" };
+
+export async function me(): Promise<SessionProbe> {
   try {
     const r = await fetch("/api/auth/me");
-    if (!r.ok) return null;
+    if (r.status === 401) return { status: "unauthed" };
+    if (!r.ok) return { status: "error" };
     const body = (await r.json()) as { ok: boolean; user?: AuthUser | null };
-    return body.ok && body.user ? body.user : null;
+    if (body.ok && body.user) return { status: "ok", user: body.user };
+    return { status: "unauthed" };
   } catch {
-    return null;
+    return { status: "error" };
   }
 }
 

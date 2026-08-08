@@ -11,7 +11,9 @@ import { sectionLabel } from "../ui";
  * its date, so the gap between line-end and circle IS the story.
  */
 
-const PALETTE = ["#2E5BFF", "#0E7A5A", "#9E6408", "#0B1B33", "#7A879E", "#B3261E"];
+// Series colours resolve through theme tokens so the chart reads correctly
+// on both the paper and the near-black surface.
+const PALETTE = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)"];
 
 const W = 640;
 const H = 300;
@@ -49,7 +51,7 @@ export default function GoalsChart() {
     <section className="rounded-card border border-line bg-surface p-4 sm:p-5">
       <div className="flex items-baseline justify-between gap-3">
         <span className={sectionLabel}>Goal trajectories</span>
-        <span className="text-caption text-text-3">At today's pace</span>
+        <span className="text-caption text-text-2">At today's pace</span>
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="Projected path of every goal">
@@ -107,7 +109,7 @@ export default function GoalsChart() {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-caption text-text-3">
+      <p className="mt-2 text-caption text-text-2">
         Lines follow each goal's share of your money at the mix's historical pace. Hollow circles mark what each goal
         needs by its date.
       </p>

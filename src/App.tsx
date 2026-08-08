@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { actions, getState, useStore } from "./store";
 import { fetchMacro } from "./lib/macroApi";
 import { me } from "./lib/authApi";
+import { initTheme } from "./lib/theme";
 import Landing from "./components/Landing";
 import Onboarding from "./components/Onboarding";
 import Plan from "./components/Plan";
@@ -10,11 +11,12 @@ import CopilotBar from "./components/CopilotBar";
 export default function App() {
   const s = useStore();
 
-  // The marketing surface is dark and editorial; the working surfaces are
-  // light and professional. One attribute flip, both palettes prebuilt.
+  // Theme follows the person's preference (System by default), not the
+  // screen. The boot script stamped it before paint; this keeps it live,
+  // including OS scheme changes while on System.
   useEffect(() => {
-    document.documentElement.dataset.theme = s.screen === "landing" ? "dark" : "light";
-  }, [s.screen]);
+    initTheme();
+  }, []);
 
   // Live CPI becomes the planning inflation default (never overriding a
   // hand-set rate). One fetch per session, silent on failure.
@@ -25,13 +27,22 @@ export default function App() {
     });
   }, []);
 
-  // A surviving session signs the person back in and pulls their plan; a dead
-  // one drops the stale signed-in identity instead of pretending forever.
+  // A surviving session signs the person back in and pulls their plan; a
+  // truly dead one (401) drops the stale identity. A network or server
+  // failure is neither: the identity stays, and online/focus signals retry
+  // the reconciliation until it lands.
   useEffect(() => {
-    void me().then((user) => {
-      if (user) void actions.completeAuth(user);
-      else if (getState().user) actions.clearStaleUser();
+    void me().then((probe) => {
+      if (probe.status === "ok") void actions.completeAuth(probe.user);
+      else if (probe.status === "unauthed" && getState().user) actions.clearStaleUser();
     });
+    const heal = () => void actions.revalidateSession();
+    window.addEventListener("online", heal);
+    window.addEventListener("focus", heal);
+    return () => {
+      window.removeEventListener("online", heal);
+      window.removeEventListener("focus", heal);
+    };
   }, []);
 
   // Best-effort save when the tab goes away, so the last edit is not lost.

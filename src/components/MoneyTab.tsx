@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { blendedReturn, computePlan, projectionSeries } from "../lib/finance";
 import { formatINR } from "../lib/format";
-import { fetchMacro, type MacroData } from "../lib/macroApi";
 import {
   actions,
   goalMonthly,
@@ -13,40 +12,9 @@ import {
   useStore,
 } from "../store";
 import { card, sectionLabel } from "../ui";
-import Aggregation from "./Aggregation";
 import GoalsChart from "./GoalsChart";
 import Holdings from "./Holdings";
 import MoneyInput from "./MoneyInput";
-
-/** The macro backdrop: four numbers an advisor keeps on the desk, each with
- *  its own source and vintage. Renders nothing until data exists. */
-function MacroCard() {
-  const [macro, setMacro] = useState<MacroData | null>(null);
-  useEffect(() => {
-    void fetchMacro().then(setMacro);
-  }, []);
-  if (!macro) return null;
-  return (
-    <section className={card}>
-      <span className={sectionLabel}>Macro backdrop</span>
-      <ul className="mt-1 divide-y divide-line">
-        {macro.indicators.map((i) => (
-          <li key={i.key} className="flex items-baseline justify-between gap-3 py-2">
-            <span className="text-support text-text">{i.label}</span>
-            <span className="num text-support font-medium">
-              {i.value}
-              {i.unit}
-              <span className="ml-1.5 text-caption font-normal text-text-3">{i.as_of}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-caption text-text-3">
-        {[...new Set(macro.indicators.map((i) => i.source))].join(" · ")}. Inflation here sets your plan's default.
-      </p>
-    </section>
-  );
-}
 
 /**
  * Money: the wealth management tab.
@@ -170,7 +138,7 @@ export default function MoneyTab() {
                       </div>
                     </li>
                   ))}
-                  {breakdown.length === 0 && <p className="text-caption text-text-3">Add cash or holdings to see this.</p>}
+                  {breakdown.length === 0 && <p className="text-caption text-text-2">Add cash or holdings to see this.</p>}
                 </ul>
               ) : (
                 <ul className="mt-1 divide-y divide-line">
@@ -190,16 +158,16 @@ export default function MoneyTab() {
                               {onTrack ? "On track" : "Short"}
                             </span>
                           </div>
-                          <span className="num text-caption text-text-3">{Math.round(share * 100)}% of the pool</span>
+                          <span className="num text-caption text-text-2">{Math.round(share * 100)}% of the pool</span>
                         </div>
                         <div className="flex-none text-right">
                           <div className="num text-support font-medium">{formatINR(totalCapital(s) * share)}</div>
-                          <div className="num text-caption text-text-3">{formatINR(goalMonthly(s, g.id))}/mo</div>
+                          <div className="num text-caption text-text-2">{formatINR(goalMonthly(s, g.id))}/mo</div>
                         </div>
                       </li>
                     );
                   })}
-                  {s.goals.length === 0 && <p className="py-2 text-caption text-text-3">Add a goal to see this.</p>}
+                  {s.goals.length === 0 && <p className="py-2 text-caption text-text-2">Add a goal to see this.</p>}
                 </ul>
               )}
             </section>
@@ -230,21 +198,17 @@ export default function MoneyTab() {
                   You invest more than what is left after spending. Worth a look.
                 </p>
               ) : (
-                <p className="mt-3 text-caption text-text-3">
+                <p className="mt-3 text-caption text-text-2">
                   {formatINR(Math.max(0, s.monthlyIncome - s.monthlyExpenses))} left after spending. You put{" "}
                   {formatINR(s.monthlySip)} of it to work.
                 </p>
               ))}
           </section>
 
-          <MacroCard />
-
-          {/* Everything not yet live sits in ONE card: connections to come
-              plus the wealth tools landing with the engine phases. Listed,
-              never faked. */}
+          {/* Everything not yet live sits in ONE card. Listed, never faked.
+              Account connections now live in the intake's connect step. */}
           <section className={card}>
-            <Aggregation />
-            <div className="mt-4 border-t border-line pt-3">
+            <div>
               <span className={sectionLabel}>Wealth tools</span>
               <ul className="mt-1 divide-y divide-line">
                 {TOOLS.map((t) => (
@@ -261,7 +225,7 @@ export default function MoneyTab() {
         </aside>
       </div>
 
-      <p className="pb-2 text-center text-caption text-text-3">Projections are illustrative and not investment advice.</p>
+      <p className="pb-2 text-center text-caption text-text-2">Projections are illustrative and not investment advice.</p>
     </div>
   );
 }

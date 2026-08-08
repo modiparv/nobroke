@@ -7,10 +7,13 @@ import { actions, useStore } from "../store";
  * (a real range input drives it, so keyboard and screen readers work), and
  * every mix recommendation respects it as a ceiling.
  *
- * The gauge colours are fixed semantics (calm green to hot red), not theme
- * tones: risk reads the same in both palettes.
+ * The familiar green-to-red arc, filled up to the selection: calm at one
+ * end, bold at the other, the reading every Indian investor already knows.
+ * The steps resolve through theme tokens, so light and dark each get their
+ * own ramp.
  */
-const SEGMENTS = ["#0E7A5A", "#63A355", "#D9A406", "#D96830", "#B3261E"];
+const RAMP = ["var(--risk-1)", "var(--risk-2)", "var(--risk-3)", "var(--risk-4)", "var(--risk-5)"];
+const UNFILLED = "var(--risk-unfilled)";
 
 export default function RiskMeter() {
   const s = useStore();
@@ -18,7 +21,14 @@ export default function RiskMeter() {
   const active = riskBandIndex(v);
 
   return (
-    <div className="mb-3 rounded-control bg-surface-2 px-3 py-2">
+    <div
+      className="mb-3 rounded-control bg-surface-2 px-3 py-2"
+      title={
+        s.riskAppetiteSource === "assessed"
+          ? "Assessed from your income, cover, dependants and timelines. Slide it if it feels wrong."
+          : "Set by you. Recommendations stay within it."
+      }
+    >
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-eyebrow uppercase text-text-3">Risk appetite</span>
         <span className="text-support font-medium">{riskBandLabel(v)}</span>
@@ -26,11 +36,11 @@ export default function RiskMeter() {
 
       <div className="relative mt-2.5 pb-3">
         <div className="flex h-2.5 gap-1" aria-hidden>
-          {SEGMENTS.map((c, i) => (
+          {RAMP.map((c, i) => (
             <div
               key={c}
-              className="flex-1 rounded-full transition-opacity"
-              style={{ background: c, opacity: i === active ? 1 : 0.35 }}
+              className="flex-1 rounded-full transition-colors"
+              style={{ background: i <= active ? c : UNFILLED }}
             />
           ))}
         </div>
@@ -53,11 +63,6 @@ export default function RiskMeter() {
         />
       </div>
 
-      <p className="mt-1 text-caption text-text-3">
-        {s.riskAppetiteSource === "assessed"
-          ? "Assessed from your income, cover, dependants and timelines. Slide it if it feels wrong."
-          : "Set by you. Recommendations stay within it."}
-      </p>
     </div>
   );
 }

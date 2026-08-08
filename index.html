@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NoBroke</title>
     <script>
-      // Paint the right theme before first render: dark marketing, light app.
+      // Paint the right theme before first render: the saved choice, else the
+      // system scheme. Mirrors src/lib/theme.ts, which owns theming after boot.
       try {
-        var s = JSON.parse(localStorage.getItem("nobroke_state_v1"));
-        document.documentElement.dataset.theme =
-          s && s.state && s.state.screen && s.state.screen !== "landing" ? "light" : "dark";
-      } catch (e) {}
+        var t = localStorage.getItem("nobroke_theme_v1");
+        if (t !== "light" && t !== "dark") {
+          t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.dataset.theme = t;
+      } catch (e) {
+        document.documentElement.dataset.theme = "light";
+      }
     </script>
     <meta
       name="description"
@@ -20,7 +25,11 @@
     <link rel="icon" type="image/svg+xml" href="/logo-mark.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#0B1B33" />
+    <!-- Pre-JS fallback only: applyTheme() re-syncs these from the live
+         --bg token, so an explicit in-app theme choice also recolours the
+         browser chrome. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F6F5" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0A0A0B" />
     <meta property="og:title" content="NoBroke" />
     <meta property="og:description" content="Track everything you own, plan every goal, and grow it all in one simple portfolio." />
     <meta property="og:image" content="/og-image.png" />
