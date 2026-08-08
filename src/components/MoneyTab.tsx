@@ -13,7 +13,6 @@ import {
   useStore,
 } from "../store";
 import { card, sectionLabel } from "../ui";
-import Aggregation from "./Aggregation";
 import GoalsChart from "./GoalsChart";
 import Holdings from "./Holdings";
 import MoneyInput from "./MoneyInput";
@@ -239,12 +238,10 @@ export default function MoneyTab() {
 
           <MacroCard />
 
-          {/* Everything not yet live sits in ONE card: connections to come
-              plus the wealth tools landing with the engine phases. Listed,
-              never faked. */}
+          {/* Everything not yet live sits in ONE card. Listed, never faked.
+              Account connections now live in the intake's connect step. */}
           <section className={card}>
-            <Aggregation />
-            <div className="mt-4 border-t border-line pt-3">
+            <div>
               <span className={sectionLabel}>Wealth tools</span>
               <ul className="mt-1 divide-y divide-line">
                 {TOOLS.map((t) => (

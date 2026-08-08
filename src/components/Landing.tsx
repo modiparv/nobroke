@@ -1,29 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { actions, getState, useStore } from "../store";
-import { btnGhost, btnPrimary } from "../ui";
+import { btnGhost } from "../ui";
 import AuthSheet from "./AuthSheet";
 import Logo from "./Logo";
 import SupportPill from "./SupportPill";
 
 /**
- * Landing, repositioned on the premium wealth-management idea: expert-grade
- * care, previously reserved for the wealthy, for people who are still building.
- * Dark, editorial, numbers-led, minimal copy. The wealth monitor leads because
- * it is the product's strongest honest promise (the Money tab).
+ * Landing, in the Decade register: near-monochrome, serif display set dimmer
+ * than the numbers, black night sections that stay black in both themes, and
+ * copy in short plain sentences. Every claim is scoped to what the product
+ * does today.
  */
 
-/**
- * The offerings, one per screen of air. Serif display headlines set dimmer
- * than the page's numbers, generous whitespace, a numbered eyebrow — the
- * pacing of an editorial, not a feature grid. Copy describes only what the
- * product does today.
- */
+/** Set to the founder's LinkedIn URL to light up the footer link. */
+const FOUNDER_LINKEDIN = "";
+
 const OFFERINGS = [
   {
     n: "01",
     title: "See everything you own",
     paras: [
-      "Cash, mutual funds, FDs, gold, EPF — one clean view of your wealth, in rupees, today.",
+      "Cash, mutual funds, FDs, gold, EPF. One clean view of your wealth, in rupees, today.",
       "Each holding takes seconds to add, and the totals update live. No accounts to link. No money to move.",
     ],
   },
@@ -32,14 +29,14 @@ const OFFERINGS = [
     title: "A plan built from real numbers",
     paras: [
       "Five short sections: income, spending, what you hold, your context, your goals. Every answer shapes the plan, so none can be skipped.",
-      "The plan shows its work — every assumption inspectable, every projection explained.",
+      "The plan shows its work. Every assumption inspectable, every projection explained.",
     ],
   },
   {
     n: "03",
     title: "One portfolio funds every goal",
     paras: [
-      "Not a bucket per dream. A single mix, matched to the risk you can actually live with, carries the house, the wedding, the retirement together.",
+      "Not a bucket per dream. A single mix, matched to the risk you can actually live with, carries the house, the wedding and the retirement together.",
       "Each goal gets a target, a date, and the monthly amount it truly needs.",
     ],
   },
@@ -47,7 +44,7 @@ const OFFERINGS = [
     n: "04",
     title: "Ask. It runs the numbers.",
     paras: [
-      "Change the plan in plain words — the monthly, a target, a horizon — and it happens on the spot, every number recomputed.",
+      "Change the plan in plain words: the monthly, a target, a horizon. It happens on the spot, every number recomputed.",
       "Anything else you ask is answered against the goal in front of you: its target, monthly, projection and mix.",
     ],
   },
@@ -55,15 +52,9 @@ const OFFERINGS = [
 
 /**
  * Tier names walk the arc of wealth in the old stories: Arth, the foundation;
- * Akshaya, the vessel that never empties; Meru, the golden mountain.
- *
- * Pricing strategy, merged from three playbooks:
- *   wealth management  human access anchors the top; no AUM percentage, ever
- *   financial planning flat transparent fees, the fee-only model
- *   copilots           freemium with honest usage gates, not crippled tools
- * The gate that scales with seriousness is the number of goals; the top tier
- * sells the whole-life view (the Lifetime Balance Sheet, every assumption
- * inspectable) plus a named human. Early cohort keeps their price for life.
+ * Akshaya, the vessel that never empties; Meru, the golden mountain. The gate
+ * that scales with seriousness is the number of goals; the top tier sells the
+ * whole-life view plus a named human.
  */
 const TIERS = [
   {
@@ -121,7 +112,7 @@ const TIERS = [
 const LAYERS = [
   {
     title: "Protect",
-    body: "A cushion check before anything else: if cash covers less than three months of expenses, the plan says so plainly. Risk appetite is read from your answers — then handed to you, one slide to change.",
+    body: "A cushion check before anything else: if cash covers less than three months of expenses, the plan says so plainly. Risk appetite is read from your answers, then handed to you. One slide to change.",
     art: (
       <div className="relative" aria-hidden>
         <div className="absolute -bottom-4 left-1/2 h-10 w-40 -translate-x-1/2 rounded-xl border border-line-2 bg-surface" />
@@ -137,7 +128,7 @@ const LAYERS = [
   },
   {
     title: "Plan",
-    body: "Every goal gets a target in today's money, a date, and the monthly it truly needs. Inflation is priced in; trade-offs show the moment you make them.",
+    body: "Every goal gets a target in today's money, a date, and the monthly it truly needs. Inflation is priced in. Trade-offs show the moment you make them.",
     art: (
       <div className="flex flex-col items-center gap-1" aria-hidden>
         <span className="text-index uppercase tracking-[0.13em] text-text-3">Goals</span>
@@ -159,7 +150,7 @@ const LAYERS = [
   },
   {
     title: "Prosper",
-    body: "One portfolio carries every goal, tuned to your horizon and risk. Projections show the arithmetic — expected return, the gap, what changes if you wait.",
+    body: "One portfolio carries every goal, tuned to your horizon and risk. Projections show the arithmetic: expected return, the gap, what changes if you wait.",
     art: (
       <svg viewBox="0 0 220 120" className="w-52" aria-hidden>
         <g stroke="rgb(var(--line-2))" strokeWidth="1">
@@ -186,6 +177,21 @@ const LAYERS = [
   },
 ];
 
+/** The division of labour, in Decade's two-list form. The AI column states
+ *  only what the engine truly does. */
+const HUMAN_ROWS = [
+  "Chooses the goals that matter",
+  "Sets the risk you can live with",
+  "Sees the life behind the numbers",
+  "Makes the final call, always",
+];
+const AI_ROWS = [
+  "Recomputes every number in seconds",
+  "Prices inflation into every target",
+  "Keeps the portfolio matched to your risk",
+  "Answers from your plan, instantly",
+];
+
 /**
  * The hero graphic is the product's own arithmetic, not an illustration:
  * ₹25,000 a month for 8 years at a conservative return is what the curve and
@@ -200,7 +206,9 @@ function HeroProjection() {
         <span className="text-caption text-text-2">Home down payment · 2034</span>
       </div>
       <p className="num mt-3 text-hero font-medium">₹37.0L</p>
-      <p className="mt-0.5 text-caption text-text-2">projected by 2034, at <span className="num">₹25,000</span> a month</p>
+      <p className="mt-0.5 text-caption text-text-2">
+        projected by 2034, at <span className="num">₹25,000</span> a month
+      </p>
       <svg viewBox="0 0 320 110" className="mt-4 w-full" role="img" aria-label="Projected value curving above the amount put in">
         <path d="M0 104 C 90 96, 180 76, 320 22 L 320 110 L 0 110 Z" className="fill-accent/10" />
         <path d="M0 106 C 100 100, 210 88, 320 62" className="stroke-text-2" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
@@ -222,12 +230,11 @@ function HeroProjection() {
 
 /**
  * One exchange the command layer genuinely parses ("by 2032" → setYears),
- * with the product's verbatim reply. The footer states what recomputes —
- * nothing here is theatre.
+ * with the product's verbatim reply. The footer states what recomputes.
  */
 function CopilotExchange() {
   return (
-    <div className="mt-10 w-full max-w-md rounded-card border border-line bg-surface p-4">
+    <div className="mt-6 w-full max-w-md rounded-card border border-line bg-surface p-4">
       <p className="text-caption text-text-2">You</p>
       <p className="mt-1 text-row">
         First home by <span className="num">2032</span>, not <span className="num">2036</span>.
@@ -239,8 +246,35 @@ function CopilotExchange() {
         </p>
       </div>
       <p className="mt-4 border-t border-line pt-3 text-caption text-text-2">
-        The plan recomputes on the spot — the monthly each goal needs, the projection, the gap.
+        The plan recomputes on the spot: the monthly each goal needs, the projection, the gap.
       </p>
+    </div>
+  );
+}
+
+/** Once-per-element scroll reveal. Motion-reduced users see content
+ *  immediately (handled in CSS). */
+function Reveal({ children, className = "" }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.12 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className={`reveal ${inView ? "is-in" : ""} ${className}`}>
+      {children}
     </div>
   );
 }
@@ -250,23 +284,6 @@ export default function Landing() {
   const [showAuth, setShowAuth] = useState(false);
   const signedIn = !!s.user;
 
-  // Which offering owns the viewport, for the right-edge dash rail.
-  const [activeSeg, setActiveSeg] = useState(0);
-  const segRefs = useRef<Array<HTMLElement | null>>([]);
-  useEffect(() => {
-    const els = segRefs.current.filter((el): el is HTMLElement => el != null);
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setActiveSeg(els.indexOf(entry.target as HTMLElement));
-        }
-      },
-      { rootMargin: "-45% 0px -45% 0px" },
-    );
-    els.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
   // A returning sign-in lands on the saved plan; someone with an account but
   // no plan yet is sent into the intake.
   const afterAuth = () => {
@@ -274,191 +291,166 @@ export default function Landing() {
     else actions.startOnboarding();
   };
 
-  // Decade's header CTA is near-black, not brand blue: monochrome interactive,
-  // inverting cleanly in dark. The hero keeps the one accent primary.
+  // Decade palette: interactive elements are ink, not brand blue. Ink inverts
+  // cleanly per theme; night sections get the fixed warm-white button.
   const btnInk =
     "inline-flex h-10 items-center justify-center whitespace-nowrap rounded-control bg-text px-4 text-support font-medium text-bg transition hover:opacity-85";
+  const btnInkLg =
+    "inline-flex h-12 items-center justify-center whitespace-nowrap rounded-control bg-text px-7 text-sm font-medium text-bg transition hover:opacity-85";
+
+  const container = "mx-auto max-w-page px-4 sm:px-6";
 
   return (
     <div className="min-h-screen bg-bg">
       <header className="sticky top-3 z-30 px-3 sm:px-4">
         <div className="mx-auto flex h-14 max-w-page items-center justify-between rounded-full border border-line-2 bg-sidebar px-4 sm:px-5">
           <Logo />
-          <div className="flex items-center gap-2">
-            <a
-              href="#pricing"
-              className="hidden items-center px-3 text-support text-text-2 transition hover:text-text sm:inline-flex"
-            >
-              Pricing
-            </a>
-            {signedIn ? (
-              <button className={btnInk} onClick={afterAuth}>
-                Go to my plan
+          {signedIn ? (
+            <button className={btnInk} onClick={afterAuth}>
+              Go to my plan
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button className={`${btnGhost} px-3.5 py-2`} onClick={() => setShowAuth(true)}>
+                Login
               </button>
-            ) : (
-              <>
-                <button className={`${btnGhost} px-3.5 py-2`} onClick={() => setShowAuth(true)}>
-                  Sign in
-                </button>
-                <button className={btnInk} onClick={actions.startOnboarding}>
-                  Start
-                </button>
-              </>
-            )}
-          </div>
+              <button className={btnInk} onClick={actions.startOnboarding}>
+                Join
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
       {showAuth && <AuthSheet initialMode="login" onClose={() => setShowAuth(false)} onAuthed={afterAuth} />}
 
-      <main className="mx-auto max-w-page px-4 sm:px-6">
-        <section className="grid items-center gap-10 py-20 sm:py-28 lg:grid-cols-[1fr_400px] lg:gap-16">
+      <section className={container}>
+        <div className="grid items-center gap-10 py-16 sm:py-24 lg:grid-cols-[1fr_400px] lg:gap-16">
           <div className="max-w-3xl">
-          <span className="text-eyebrow uppercase text-text-3">Wealth, minus the noise</span>
-          <h1 className="mt-4 font-serif text-4xl font-normal leading-[1.08] tracking-[-0.015em] text-display sm:text-6xl">
-            We won't let you go broke.
-          </h1>
-          <p className="mt-5 max-w-xl text-body text-text-2 sm:text-base">
-            Track everything you own, plan every goal, and grow it all in one simple portfolio.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-2.5">
-            {signedIn ? (
-              <button className={btnPrimary} onClick={afterAuth}>
-                Go to my plan
-              </button>
-            ) : (
-              <>
-                <button className={btnPrimary} onClick={actions.startOnboarding}>
-                  Start free
+            <span className="text-eyebrow uppercase text-text-3">Wealth, in plain words</span>
+            <h1 className="mt-4 font-serif text-4xl font-normal leading-[1.08] tracking-[-0.015em] text-display sm:text-5xl">
+              We won't let you go broke.
+            </h1>
+            <p className="mt-5 max-w-xl text-body text-text-2 sm:text-base">
+              Financial planning &amp; wealth management that unites the best of Human and Artificial Intelligence for
+              your life's most important decisions.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-2.5">
+              {signedIn ? (
+                <button className={btnInkLg} onClick={afterAuth}>
+                  Go to my plan
                 </button>
-                <button className={btnGhost} onClick={() => setShowAuth(true)}>
-                  Sign in
-                </button>
-              </>
-            )}
-          </div>
-          <p className="mt-5 text-caption text-text-2">2-minute setup · No jargon · Cancel anytime</p>
+              ) : (
+                <>
+                  <button className={btnInkLg} onClick={actions.startOnboarding}>
+                    Join
+                  </button>
+                  <button className={`${btnGhost} h-12 px-6`} onClick={() => setShowAuth(true)}>
+                    Login
+                  </button>
+                </>
+              )}
+            </div>
           </div>
           <div className="rounded-screen bg-accent-tint p-6 sm:p-8">
             <HeroProjection />
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="relative border-t border-line">
-          {/* Right-edge dash rail: where you are in the four offerings. */}
-          <div aria-hidden className="pointer-events-none absolute bottom-0 right-0 top-0 hidden w-6 lg:block">
-            <div className="sticky top-[40vh] flex flex-col items-center gap-2">
-              {OFFERINGS.map((o, idx) => (
-                <span
-                  key={o.n}
-                  className={`w-px transition-all duration-300 ${idx === activeSeg ? "h-6 bg-text" : "h-3 bg-text-3"}`}
-                />
-              ))}
-            </div>
+      <section className={container}>
+        <Reveal className="border-t border-line py-14 sm:py-20">
+          <div className="grid gap-x-12 gap-y-14 sm:grid-cols-2">
+            {OFFERINGS.map((o) => (
+              <article key={o.n}>
+                <span className="num text-support text-text-3">{o.n}</span>
+                <h3 className="mt-3 font-serif text-2xl font-normal tracking-[-0.01em] text-display sm:text-3xl">
+                  {o.title}
+                </h3>
+                <div className="mt-4 flex max-w-xl flex-col gap-3">
+                  {o.paras.map((p) => (
+                    <p key={p} className="text-body leading-relaxed text-text-2">
+                      {p}
+                    </p>
+                  ))}
+                </div>
+                {o.n === "04" && <CopilotExchange />}
+              </article>
+            ))}
           </div>
-          {OFFERINGS.map((o, idx) => (
-            <article
-              key={o.n}
-              ref={(el) => {
-                segRefs.current[idx] = el;
-              }}
-              className={`flex min-h-[65vh] flex-col justify-center py-16 ${idx > 0 ? "border-t border-line" : ""}`}
-            >
-              <span className="num text-support text-text-3">{o.n}</span>
-              <h3 className="mt-4 max-w-2xl font-serif text-5xl font-normal leading-[1.05] tracking-[-0.015em] text-display sm:text-6xl">
-                {o.title}
-              </h3>
-              <div className="mt-6 flex max-w-xl flex-col gap-4">
-                {o.paras.map((p) => (
-                  <p key={p} className="text-base leading-relaxed text-text-2">
-                    {p}
-                  </p>
-                ))}
+        </Reveal>
+      </section>
+
+      {/* Night section: stays near-black in both themes, like Decade's. */}
+      <section className="bg-night">
+        <div className={`${container} py-16 sm:py-24`}>
+          <Reveal>
+            <h2 className="mx-auto max-w-2xl text-center font-serif text-3xl font-normal leading-[1.15] tracking-[-0.01em] text-on-night-2 sm:text-4xl">
+              Human judgment, combined with the precision of technology.
+            </h2>
+            <div className="mt-14 grid items-center gap-10 lg:grid-cols-[1fr_360px_1fr] lg:gap-8">
+              <div>
+                <span className="text-support font-medium text-on-night">Human Judgment</span>
+                <ul className="mt-4">
+                  {HUMAN_ROWS.map((r) => (
+                    <li key={r} className="border-b border-on-night-3/40 py-3.5 text-body text-on-night-2">
+                      {r}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              {o.n === "04" && <CopilotExchange />}
-            </article>
-          ))}
-        </section>
 
-        {/* The division of labour, stated plainly: the person stays pilot in
-            command, the product is the instrument panel. Monochrome on purpose
-            — this is a promise, not a feature, so nothing here glows. */}
-        <section className="border-t border-line py-14 sm:py-20">
-          <span className="text-eyebrow uppercase text-text-3">Pilot in command</span>
-          <h2 className="mt-3 max-w-xl text-2xl font-medium tracking-[-0.02em] text-display sm:text-3xl">
-            Your judgment, carried by numbers that never sleep.
-          </h2>
-          <div className="mt-12 grid items-center gap-10 lg:grid-cols-[1fr_360px_1fr] lg:gap-8">
-            <div>
-              <span className="text-eyebrow uppercase text-text-3">You</span>
-              <ul className="mt-3">
-                {[
-                  "Decide what actually matters",
-                  "Know what you can live with",
-                  "Choose when to act",
-                  "Hold the context no statement shows",
-                ].map((r) => (
-                  <li key={r} className="border-b border-line py-3.5 text-body text-display">
-                    {r}
-                  </li>
-                ))}
-              </ul>
+              <svg
+                viewBox="0 0 360 240"
+                className="mx-auto w-full max-w-[340px]"
+                role="img"
+                aria-label="Two overlapping circles: human judgment and NoBroke AI, meeting in wealth intelligence"
+              >
+                <defs>
+                  <pattern id="venn-hatch" width="5" height="8" patternUnits="userSpaceOnUse">
+                    <line x1="2.5" y1="0" x2="2.5" y2="8" stroke="rgb(var(--on-night-3))" strokeWidth="1" opacity="0.6" />
+                  </pattern>
+                  <clipPath id="venn-left">
+                    <circle cx="130" cy="120" r="104" />
+                  </clipPath>
+                </defs>
+                <g clipPath="url(#venn-left)">
+                  <circle cx="230" cy="120" r="104" fill="url(#venn-hatch)" />
+                </g>
+                <circle cx="130" cy="120" r="104" fill="none" stroke="rgb(var(--on-night-3))" strokeWidth="1" />
+                <circle cx="230" cy="120" r="104" fill="none" stroke="rgb(var(--on-night-3))" strokeWidth="1" />
+                <text x="180" y="112" textAnchor="middle" fill="rgb(var(--on-night))" fontSize="15" fontWeight="500">
+                  Wealth
+                </text>
+                <text x="180" y="132" textAnchor="middle" fill="rgb(var(--on-night))" fontSize="15" fontWeight="500">
+                  Intelligence
+                </text>
+              </svg>
+
+              <div className="lg:text-right">
+                <span className="text-support font-medium text-on-night">NoBroke AI</span>
+                <ul className="mt-4">
+                  {AI_ROWS.map((r) => (
+                    <li key={r} className="border-b border-on-night-3/40 py-3.5 text-body text-on-night-2">
+                      {r}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
+          </Reveal>
+        </div>
+      </section>
 
-            <svg
-              viewBox="0 0 360 240"
-              className="mx-auto w-full max-w-[340px]"
-              role="img"
-              aria-label="Two overlapping circles — your judgment and NoBroke's numbers — meeting in a plan you understand"
-            >
-              <defs>
-                <pattern id="venn-hatch" width="5" height="8" patternUnits="userSpaceOnUse">
-                  <line x1="2.5" y1="0" x2="2.5" y2="8" className="stroke-text-3" strokeWidth="1" opacity="0.6" />
-                </pattern>
-                <clipPath id="venn-left">
-                  <circle cx="130" cy="120" r="104" />
-                </clipPath>
-              </defs>
-              <g clipPath="url(#venn-left)">
-                <circle cx="230" cy="120" r="104" fill="url(#venn-hatch)" />
-              </g>
-              <circle cx="130" cy="120" r="104" fill="none" className="stroke-line-2" strokeWidth="1" />
-              <circle cx="230" cy="120" r="104" fill="none" className="stroke-line-2" strokeWidth="1" />
-              <text x="180" y="112" textAnchor="middle" className="fill-text" fontSize="15" fontWeight="500">
-                A plan you
-              </text>
-              <text x="180" y="132" textAnchor="middle" className="fill-text" fontSize="15" fontWeight="500">
-                understand.
-              </text>
-            </svg>
-
-            <div className="lg:text-right">
-              <span className="text-eyebrow uppercase text-text-3">NoBroke</span>
-              <ul className="mt-3">
-                {[
-                  "Watches every holding, every day",
-                  "Finds the fees and tax you leak",
-                  "Runs the numbers before you commit",
-                  "Remembers every decision, and why",
-                ].map((r) => (
-                  <li key={r} className="border-b border-line py-3.5 text-body text-display">
-                    {r}
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <section className={container}>
+        <Reveal className="py-14 sm:py-20">
+          <div className="text-center">
+            <span className="text-eyebrow uppercase text-text-3">Our philosophy</span>
+            <h2 className="mt-3 font-serif text-3xl font-normal tracking-[-0.01em] text-display sm:text-4xl">
+              We plan in decades, not quarters.
+            </h2>
           </div>
-        </section>
-
-        {/* The three layers: how the product thinks, in the order it thinks it.
-            Copy is scoped to shipped behaviour; the art is monochrome line
-            work, since nothing here is interactive. */}
-        <section className="border-t border-line py-14 sm:py-20">
-          <span className="text-eyebrow uppercase text-text-3">The three layers</span>
-          <h2 className="mt-3 font-serif text-3xl font-normal tracking-[-0.01em] text-display sm:text-4xl">
-            Protect. Plan. Prosper.
-          </h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {LAYERS.map((l, idx) => (
               <div key={l.title} className="overflow-hidden rounded-card border border-line bg-surface">
                 <div className="flex h-44 items-center justify-center border-b border-line">{l.art}</div>
@@ -470,16 +462,21 @@ export default function Landing() {
               </div>
             ))}
           </div>
-        </section>
+        </Reveal>
+      </section>
 
-        <section id="pricing" className="border-t border-line py-14 sm:py-20">
-          <span className="text-eyebrow uppercase text-text-3">Pricing</span>
-          <h2 className="mt-3 text-2xl font-medium tracking-[-0.02em] text-display sm:text-3xl">Three tiers. One promise.</h2>
-          <p className="mt-3 max-w-2xl text-body text-text-2">
-            No percentage of your assets. No commissions from funds. A flat fee for judgement, so our incentive is your
-            outcome, nothing else.
-          </p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <section id="pricing" className={container}>
+        <Reveal className="border-t border-line py-14 sm:py-20">
+          <div className="text-center">
+            <span className="text-eyebrow uppercase text-text-3">Pricing</span>
+            <h2 className="mt-3 font-serif text-3xl font-normal tracking-[-0.01em] text-display sm:text-4xl">
+              Three tiers. One promise.
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-body text-text-2">
+              No percentage of your assets. No commissions from funds.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {TIERS.map((t) => (
               <div
                 key={t.name}
@@ -507,13 +504,15 @@ export default function Landing() {
                 <ul className="mt-4 flex-1 space-y-2">
                   {t.features.map((f) => (
                     <li key={f} className="flex gap-2 text-support text-text-2">
-                      <span aria-hidden className="text-text-3">·</span>
+                      <span aria-hidden className="text-text-3">
+                        ·
+                      </span>
                       {f}
                     </li>
                   ))}
                 </ul>
                 {t.cta === "start" ? (
-                  <button className={`${btnPrimary} mt-5 w-full`} onClick={actions.startOnboarding}>
+                  <button className={`${btnInk} mt-5 w-full`} onClick={actions.startOnboarding}>
                     Start free
                   </button>
                 ) : (
@@ -524,32 +523,32 @@ export default function Landing() {
               </div>
             ))}
           </div>
-          <p className="mt-4 text-caption text-text-2">
-            Indicative pricing for early access. Founding members keep their price for life.
-          </p>
-        </section>
+        </Reveal>
+      </section>
 
-        <section className="py-14 sm:py-20">
-          <div className="hero-band rounded-screen px-6 py-14 text-center text-on-band sm:py-20">
-            <h2 className="text-2xl font-medium tracking-[-0.02em] sm:text-4xl">Start with what you have.</h2>
+      {/* Closing call, on night like Decade's dark closer. */}
+      <section className="bg-night">
+        <div className={`${container} py-16 text-center sm:py-24`}>
+          <Reveal>
+            <h2 className="font-serif text-3xl font-normal tracking-[-0.01em] text-on-night sm:text-4xl">
+              Start with what you have.
+            </h2>
             <button
-              className="mt-7 inline-flex items-center justify-center rounded-control bg-accent-fill px-6 py-3 text-sm font-medium text-on-accent transition hover:bg-accent-fill-hi"
+              className="mt-8 inline-flex h-12 items-center justify-center rounded-control bg-on-night px-8 text-sm font-medium text-night transition hover:opacity-85"
               onClick={actions.startOnboarding}
             >
               Start now
             </button>
-          </div>
-        </section>
-      </main>
+          </Reveal>
+        </div>
+      </section>
 
       <footer className="border-t border-line">
-        <div className="mx-auto max-w-page px-4 py-12 sm:px-6">
+        <div className={`${container} py-12`}>
           <div className="grid gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-20">
             <div>
               <Logo />
-              <p className="mt-3 max-w-xs text-caption text-text-2">
-                Wealth, minus the noise. Built in India. A flat fee for judgement — never a percentage of your assets.
-              </p>
+              <p className="mt-3 max-w-xs text-caption text-text-2">Wealth, in plain words. Built in India.</p>
             </div>
             <div>
               <span className="text-eyebrow uppercase text-text-3">Product</span>
@@ -567,9 +566,21 @@ export default function Landing() {
               </ul>
             </div>
             <div>
-              <span className="text-eyebrow uppercase text-text-3">Early access</span>
+              <span className="text-eyebrow uppercase text-text-3">About</span>
               <ul className="mt-3 space-y-2 text-support">
-                <li className="text-text-2">Founding members keep their price for life.</li>
+                <li className="text-text-2">Parv Modi · Founder</li>
+                {FOUNDER_LINKEDIN && (
+                  <li>
+                    <a
+                      href={FOUNDER_LINKEDIN}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-text-2 transition hover:text-text"
+                    >
+                      LinkedIn
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
           </div>

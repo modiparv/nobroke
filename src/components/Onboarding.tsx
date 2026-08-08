@@ -289,6 +289,15 @@ const STAGES = [
   { n: 5, label: "Goals", desc: "What you are building toward, and when." },
 ];
 
+/** Indian account rails, listed honestly as coming soon. Nothing here fakes
+ *  a connection: the step informs and steps aside. */
+const CONNECT_SOURCES = [
+  { name: "Investment portfolio", via: "CAMS · KFintech" },
+  { name: "Banking and income", via: "Finvu · OneMoney · CAMSFinserv" },
+  { name: "Trading and execution", via: "DhanHQ · HDFC Sec · AngelOne" },
+  { name: "Identity and KYC", via: "NSDL · KRA" },
+];
+
 function StageRail({ current, allDone }: { current: number; allDone: boolean }) {
   return (
     <nav aria-label="Intake sections">
@@ -444,6 +453,29 @@ export default function Onboarding() {
             </div>
           </div>
         )}
+
+          {step.kind === "connect" && (
+            <div className="fade-up w-full">
+              <h1 className="text-3xl font-serif font-normal tracking-[-0.01em] text-display sm:text-4xl">{step.title}</h1>
+              <p className="mt-3 text-muted">{step.subtitle}</p>
+              <div className="mt-6 flex flex-col gap-3">
+                {CONNECT_SOURCES.map((c) => (
+                  <div key={c.name} className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-4">
+                    <div className="min-w-0">
+                      <p className="text-row font-medium">{c.name}</p>
+                      <p className="mt-0.5 text-caption text-text-2">{c.via}</p>
+                    </div>
+                    <span className="flex-none rounded-full border border-line px-2.5 py-1 text-index uppercase tracking-wide text-text-2">
+                      Coming soon
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={next}>
+                Skip for now
+              </button>
+            </div>
+          )}
 
           {step.kind === "money" && <MoneyStep key={step.id} step={step} onContinue={next} />}
 

@@ -85,6 +85,12 @@
   --logo-rise: #2e5bff;
   /* Third-party brand constant (WhatsApp glyph), same in both themes. */
   --whatsapp: #25d366;
+  /* Night sections: near-black marketing grounds that stay dark in BOTH
+     themes (the Decade move). on-night mirrors the dark theme's text scale. */
+  --night: 23 22 20;
+  --on-night: 233 229 224;
+  --on-night-2: 155 150 143;
+  --on-night-3: 95 91 85;
 }
 
 [data-theme="dark"] {
@@ -136,6 +142,10 @@
   --logo-fall: #e9e5e0;
   --logo-rise: #5c82ff;
   --whatsapp: #25d366;
+  --night: 19 18 17;
+  --on-night: 233 229 224;
+  --on-night-2: 155 150 143;
+  --on-night-3: 95 91 85;
 }
 
 html {
@@ -226,6 +236,15 @@ input[type="range"] {
 }
 
 .fade-up { animation: fadeUp 0.32s ease both; }
+
+/* Scroll reveal: sections drift in once. Motion-reduced users see content
+   immediately with no transition. */
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.is-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
 .live-dot { animation: blink 1.4s ease-in-out infinite; }
 .typing-dot { animation: typing 1.2s infinite ease-in-out; }
 

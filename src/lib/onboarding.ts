@@ -1,4 +1,4 @@
-export type StepKind = "intro" | "goals" | "single" | "money" | "account";
+export type StepKind = "intro" | "goals" | "single" | "money" | "account" | "connect";
 
 export interface StepOption {
   value: string;
@@ -110,6 +110,14 @@ export const STEPS: Step[] = [
     field: "investedValue",
     title: "Current value of your investments?",
     subtitle: "Mutual funds, stocks, FDs, gold, EPF. Today's value, best estimate. Enter 0 if you are starting fresh.",
+  },
+  {
+    id: "connect",
+    kind: "connect",
+    stage: 3,
+    stageLabel: "What you hold",
+    title: "Connect your accounts",
+    subtitle: "Auto-import is coming soon. Until then, your manual entries carry the plan just as well.",
   },
 
   // ---- Stage 4: Context ----
