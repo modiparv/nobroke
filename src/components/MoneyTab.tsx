@@ -12,7 +12,6 @@ import {
   useStore,
 } from "../store";
 import { card, sectionLabel } from "../ui";
-import GoalsChart from "./GoalsChart";
 import Holdings from "./Holdings";
 import MoneyInput from "./MoneyInput";
 
@@ -101,10 +100,7 @@ export default function MoneyTab() {
             </div>
           </section>
 
-          {/* 2. Where is it going: every goal's trajectory. */}
-          <GoalsChart />
-
-          {/* 3. Where does it sit: one card, two lenses. */}
+          {/* 2. Where does it sit: one card, two lenses. */}
           {(breakdown.length > 0 || s.goals.length > 0) && (
             <section className={card}>
               <div className="flex items-center justify-between gap-3">

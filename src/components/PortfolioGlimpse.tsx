@@ -1,110 +1,86 @@
-import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
-import { ASSET_CLASSES, FUND_MAP } from "../lib/funds";
+import { useState } from "react";
+import { allocationTotal, bandWeights, blendedReturn, computePlan } from "../lib/finance";
+import { ASSET_CLASSES } from "../lib/funds";
+import { formatINR } from "../lib/format";
 import { mixLabel } from "../lib/portfolios";
-import { actions, useStore } from "../store";
+import { riskBandLabel } from "../lib/risk";
+import { actions, goalShareFraction, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
 import { sectionLabel } from "../ui";
-import RiskMeter from "./RiskMeter";
 
 /**
- * The plan page's read-only window onto the portfolio: risk dial, the mix as
- * a class bar, and a heatmap of the funds. No building here — every path to
- * change something leads to the Portfolio tab, so the plan page stays about
- * goals and the portfolio room stays about the mix.
+ * The plan page's read-only window onto the whole portfolio. Two facts up
+ * top (the mix by class, the risk ceiling with expected return), then one
+ * heatmap of everything you own with two views: by holding (cash and every
+ * instrument, sized by value) and by goal (the same money, split by the
+ * goal it serves). No dials, no building — Manage leads to the Portfolio
+ * tab, holdings tiles lead to Money.
  */
 
 interface Tile {
-  id: string;
+  key: string;
   x: number;
   y: number;
   w: number;
   h: number;
-  weight: number;
 }
 
-/** Slice-and-dice treemap: split the items into two weight-balanced halves,
- *  split the rectangle along its longer axis, recurse. Good aspect ratios for
- *  the handful of funds a mix holds, in a few lines of arithmetic. */
-function layoutTiles(items: { id: string; weight: number }[], x: number, y: number, w: number, h: number): Tile[] {
+interface TreemapItem {
+  key: string;
+  label: string;
+  amount: number;
+  bg: string;
+  ink: string;
+  title: string;
+  onClick?: () => void;
+}
+
+/** Slice-and-dice treemap: split items into two weight-balanced halves,
+ *  split the rectangle along its longer axis, recurse. */
+function layoutTiles(items: { key: string; amount: number }[], x: number, y: number, w: number, h: number): Tile[] {
   if (items.length === 0) return [];
-  if (items.length === 1) return [{ id: items[0].id, x, y, w, h, weight: items[0].weight }];
-  const total = items.reduce((s, i) => s + i.weight, 0);
+  if (items.length === 1) return [{ key: items[0].key, x, y, w, h }];
+  const total = items.reduce((s, i) => s + i.amount, 0);
   let acc = 0;
   let split = 1;
   for (let i = 0; i < items.length - 1; i++) {
-    acc += items[i].weight;
+    acc += items[i].amount;
     split = i + 1;
     if (acc >= total / 2) break;
   }
   const a = items.slice(0, split);
   const b = items.slice(split);
-  const fa = a.reduce((s, i) => s + i.weight, 0) / total;
+  const fa = a.reduce((s, i) => s + i.amount, 0) / total;
   if (w >= h) {
     return [...layoutTiles(a, x, y, w * fa, h), ...layoutTiles(b, x + w * fa, y, w * (1 - fa), h)];
   }
   return [...layoutTiles(a, x, y, w, h * fa), ...layoutTiles(b, x, y + h * fa, w, h * (1 - fa))];
 }
 
-/** Colour bands judged AGAINST THE FUND'S OWN ASSET CLASS, so a liquid fund
- *  at 6% reads as healthy debt, not as failing equity. Thresholds are 5-yr
- *  CAGR floors for steps green..orange; below the last floor is red. */
-const CLASS_BANDS: Record<string, [number, number, number, number]> = {
-  equity: [16, 13, 10, 7],
-  debt: [8, 7, 6, 5],
-  gold: [11, 9, 7, 5],
-  hybrid: [12, 10, 8, 6],
-};
-
-/** 5-yr CAGR → the green-to-red ramp (step index 0..4) relative to the asset
- *  class, or null when the fund is too young to judge. */
-function returnStep(fiveYr: number | undefined, assetClass: string | undefined): number | null {
-  if (fiveYr == null || fiveYr <= 0) return null;
-  const bands = CLASS_BANDS[assetClass ?? ""] ?? CLASS_BANDS.hybrid;
-  for (let i = 0; i < bands.length; i++) if (fiveYr >= bands[i]) return i;
-  return 4;
-}
-
-const STEP_BG = ["var(--risk-1)", "var(--risk-2)", "var(--risk-3)", "var(--risk-4)", "var(--risk-5)"];
-/** Ink carries on every step except deep red, where warm white reads better.
- *  (Ink on the deep green is 5.0:1; warm white there fails at 2.7:1.) */
-const STEP_INK = ["rgb(var(--text))", "rgb(var(--text))", "rgb(var(--text))", "rgb(var(--text))", "rgb(var(--on-night))"];
-
-function MixHeatmap({ alloc, onOpen }: { alloc: Record<string, number>; onOpen: () => void }) {
-  const items = Object.entries(alloc)
-    .filter(([, w]) => w > 0.5)
-    .map(([id, weight]) => ({ id, weight }))
-    .sort((a, b) => b.weight - a.weight);
-  if (items.length === 0) return null;
-  const tiles = layoutTiles(items, 0, 0, 100, 100);
+function Treemap({ items, ariaLabel }: { items: TreemapItem[]; ariaLabel: string }) {
+  const sorted = [...items].filter((i) => i.amount > 0).sort((a, b) => b.amount - a.amount);
+  if (sorted.length === 0) return null;
+  const tiles = layoutTiles(sorted, 0, 0, 100, 100);
+  const byKey = Object.fromEntries(sorted.map((i) => [i.key, i]));
   return (
-    <div
-      className="relative h-40 w-full overflow-hidden rounded-control"
-      role="img"
-      aria-label="Portfolio heatmap: each fund sized by its share of the mix, coloured by its five-year return"
-    >
+    <div className="relative h-44 w-full overflow-hidden rounded-control" role="img" aria-label={ariaLabel}>
       {tiles.map((t) => {
-        const fund = FUND_MAP[t.id];
-        const step = returnStep(fund?.fiveYr, fund?.assetClass);
-        const name = fund?.name ?? t.id;
+        const item = byKey[t.key];
+        const Tag = item.onClick ? "button" : "div";
         return (
           <div
-            key={t.id}
+            key={t.key}
             className="absolute p-[1.5px]"
             style={{ left: `${t.x}%`, top: `${t.y}%`, width: `${t.w}%`, height: `${t.h}%` }}
           >
-            <button
-              type="button"
-              onClick={onOpen}
-              title={`${name} · ${Math.round(t.weight)}% of the mix${fund?.fiveYr ? ` · ${fund.fiveYr}% over 5y` : ""}`}
+            <Tag
+              {...(item.onClick ? { type: "button" as const, onClick: item.onClick } : {})}
+              title={item.title}
               className="flex h-full w-full flex-col items-start justify-between overflow-hidden rounded-[5px] p-1.5 text-left"
-              style={
-                step == null
-                  ? { background: "rgb(var(--surface-2))", color: "rgb(var(--text-2))" }
-                  : { background: STEP_BG[step], color: STEP_INK[step] }
-              }
+              style={{ background: item.bg, color: item.ink }}
             >
-              <span className="max-w-full truncate text-index font-medium leading-tight">{name}</span>
-              <span className="num text-caption font-medium">{Math.round(t.weight)}%</span>
-            </button>
+              <span className="max-w-full truncate text-index font-medium leading-tight">{item.label}</span>
+              <span className="num text-caption font-medium">{formatINR(item.amount)}</span>
+            </Tag>
           </div>
         );
       })}
@@ -112,10 +88,24 @@ function MixHeatmap({ alloc, onOpen }: { alloc: Record<string, number>; onOpen: 
   );
 }
 
+/** Tonal steps per holding category: colour states WHAT it is, never how it
+ *  is doing — manual entries carry no return data, and pretending otherwise
+ *  would be theatre. */
+const CATEGORY_TONE: Record<string, { bg: string; ink: string }> = {
+  Equity: { bg: "rgb(var(--text))", ink: "rgb(var(--on-night))" },
+  Funds: { bg: "rgb(var(--text-display))", ink: "rgb(var(--on-night))" },
+  "Fixed income": { bg: "rgb(var(--text-2))", ink: "rgb(var(--on-night))" },
+  "Gold & Silver": { bg: "rgb(var(--cau))", ink: "rgb(var(--on-night))" },
+  Cash: { bg: "rgb(var(--surface-2))", ink: "rgb(var(--text))" },
+  Other: { bg: "rgb(var(--line-2))", ink: "rgb(var(--text))" },
+};
+
 export default function PortfolioGlimpse() {
   const s = useStore();
+  const [view, setView] = useState<"holdings" | "goals">("holdings");
   const total = allocationTotal(s.portfolio);
   const openPortfolio = () => actions.setTab("portfolio");
+  const openMoney = () => actions.setTab("money");
 
   if (total <= 0) {
     return (
@@ -135,13 +125,57 @@ export default function PortfolioGlimpse() {
   }
 
   const bands = bandWeights(s.portfolio);
-  const scale = total > 0 ? 100 / total : 1;
+  const scale = 100 / total;
   const segs = [
     { label: "Equity", v: bands.equity * scale, color: ASSET_CLASSES.equity.color },
     { label: "Debt", v: bands.debt * scale, color: ASSET_CLASSES.debt.color },
     { label: "Gold", v: bands.gold * scale, color: ASSET_CLASSES.gold.color },
   ].filter((x) => x.v > 0.5);
   const expected = Math.round(blendedReturn(s.portfolio) * 1000) / 10;
+
+  // View 1 — everything you own, in rupees.
+  const holdingItems: TreemapItem[] = [
+    ...(s.currentSavings > 0
+      ? [
+          {
+            key: "cash",
+            label: "Cash",
+            amount: s.currentSavings,
+            ...CATEGORY_TONE.Cash,
+            title: `Cash · ${formatINR(s.currentSavings)} · in the bank`,
+            onClick: openMoney,
+          },
+        ]
+      : []),
+    ...s.externalHoldings
+      .filter((h) => h.amount > 0)
+      .map((h) => {
+        const tone = CATEGORY_TONE[h.category] ?? CATEGORY_TONE.Other;
+        return {
+          key: h.id,
+          label: h.name,
+          amount: h.amount,
+          ...tone,
+          title: `${h.name} · ${formatINR(h.amount)} · ${h.type}`,
+          onClick: openMoney,
+        };
+      }),
+  ];
+
+  // View 2 — the same money, split by the goal it serves.
+  const capital = totalCapital(s);
+  const goalItems: TreemapItem[] = goalsByPriority(s).map((g) => {
+    const amount = capital * goalShareFraction(s, g.id);
+    const onTrack = computePlan(planInputsForGoal(s, g)).onTrack;
+    return {
+      key: g.id,
+      label: g.name,
+      amount,
+      bg: onTrack ? "rgb(var(--pos-bg))" : "rgb(var(--cau-bg))",
+      ink: onTrack ? "rgb(var(--pos))" : "rgb(var(--cau))",
+      title: `${g.name} · ${formatINR(amount)} set aside · ${onTrack ? "on track" : "needs a change"}`,
+    };
+  });
 
   return (
     <section className="min-w-0 rounded-card border border-line bg-surface">
@@ -155,9 +189,7 @@ export default function PortfolioGlimpse() {
         </button>
       </div>
 
-      <div className="p-3.5 sm:p-4">
-        <RiskMeter />
-
+      <div className="p-4">
         {/* The mix, by asset class */}
         <div className="flex h-2.5 overflow-hidden rounded-full" aria-hidden>
           {segs.map((x) => (
@@ -173,19 +205,47 @@ export default function PortfolioGlimpse() {
           ))}
         </p>
 
-        {/* The funds, as a heatmap */}
-        <div className="mt-4">
-          <span className={sectionLabel}>The funds</span>
-          <div className="mt-1.5">
-            <MixHeatmap alloc={s.portfolio} onOpen={openPortfolio} />
-          </div>
-          <p className="mt-1.5 text-caption text-text-2">Sized by share of the mix · coloured by 5-year return, judged against its own asset class</p>
-        </div>
-
-        <p className="mt-3 border-t border-line pt-2.5 text-caption text-text-2">
-          Expected return <span className="num font-medium text-text">~{expected}%</span> a year for this mix.
-          Illustrative, not advice.
+        {/* Two facts, one line: the ceiling and what the mix should earn. */}
+        <p
+          className="mt-2.5 border-t border-line pt-2.5 text-caption text-text-2"
+          title="Set on the Portfolio tab. Every recommendation stays within it."
+        >
+          Risk ceiling <span className="font-medium text-text">{riskBandLabel(s.riskAppetite)}</span>
+          <span className="mx-1 text-text-3">·</span>
+          Expected <span className="num font-medium text-text">~{expected}%</span> a year
         </p>
+
+        {/* The whole portfolio, one map, two views */}
+        <div className="mt-4">
+          <span className={sectionLabel}>Portfolio heatmap</span>
+          <div className="mt-1.5">
+            {view === "holdings" ? (
+              <Treemap items={holdingItems} ariaLabel="Everything you own, each tile sized by its value" />
+            ) : (
+              <Treemap items={goalItems} ariaLabel="Your money split by the goal it serves; green is on track, amber needs a change" />
+            )}
+          </div>
+
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-0.5 rounded-full bg-surface-2 p-0.5">
+              {(["holdings", "goals"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setView(v)}
+                  className={`inline-flex h-6 items-center rounded-full px-2.5 text-caption transition ${
+                    view === v ? "bg-surface text-text" : "text-text-2 hover:text-text"
+                  }`}
+                >
+                  {v === "holdings" ? "What you hold" : "By goal"}
+                </button>
+              ))}
+            </div>
+            <span className="truncate text-caption text-text-2">
+              {view === "holdings" ? "Sized by value" : "Green on track · amber needs a change"}
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -7,6 +7,7 @@ import { btnPrimary, card, sectionLabel } from "../ui";
 import AdvisorNote from "./AdvisorNote";
 import AppHeader from "./AppHeader";
 import GoalCard from "./GoalCard";
+import GoalsChart from "./GoalsChart";
 import MoneyTab from "./MoneyTab";
 import PortfolioGlimpse from "./PortfolioGlimpse";
 import PortfolioTab from "./PortfolioTab";
@@ -243,6 +244,14 @@ export default function Plan() {
               happens in the Portfolio tab; the plan page only looks. */}
           {s.goals.length > 0 && <PortfolioGlimpse />}
         </div>
+
+        {/* Every goal's trajectory, full width beneath the panes: it is goal
+            information, so it lives on the goal page. */}
+        {s.goals.length > 0 && (
+          <div className="pb-4">
+            <GoalsChart />
+          </div>
+        )}
 
         <p className="pb-2 text-center text-caption text-text-2">
           Projections are illustrative and not investment advice.
