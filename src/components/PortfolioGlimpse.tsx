@@ -44,20 +44,29 @@ function layoutTiles(items: { id: string; weight: number }[], x: number, y: numb
   return [...layoutTiles(a, x, y, w, h * fa), ...layoutTiles(b, x, y + h * fa, w, h * (1 - fa))];
 }
 
-/** 5-yr CAGR → the green-to-red ramp (step index 0..4), or null when the
- *  fund is too young to judge. */
-function returnStep(fiveYr: number | undefined): number | null {
+/** Colour bands judged AGAINST THE FUND'S OWN ASSET CLASS, so a liquid fund
+ *  at 6% reads as healthy debt, not as failing equity. Thresholds are 5-yr
+ *  CAGR floors for steps green..orange; below the last floor is red. */
+const CLASS_BANDS: Record<string, [number, number, number, number]> = {
+  equity: [16, 13, 10, 7],
+  debt: [8, 7, 6, 5],
+  gold: [11, 9, 7, 5],
+  hybrid: [12, 10, 8, 6],
+};
+
+/** 5-yr CAGR → the green-to-red ramp (step index 0..4) relative to the asset
+ *  class, or null when the fund is too young to judge. */
+function returnStep(fiveYr: number | undefined, assetClass: string | undefined): number | null {
   if (fiveYr == null || fiveYr <= 0) return null;
-  if (fiveYr >= 16) return 0;
-  if (fiveYr >= 12) return 1;
-  if (fiveYr >= 8) return 2;
-  if (fiveYr >= 4) return 3;
+  const bands = CLASS_BANDS[assetClass ?? ""] ?? CLASS_BANDS.hybrid;
+  for (let i = 0; i < bands.length; i++) if (fiveYr >= bands[i]) return i;
   return 4;
 }
 
 const STEP_BG = ["var(--risk-1)", "var(--risk-2)", "var(--risk-3)", "var(--risk-4)", "var(--risk-5)"];
-/** Dark ink on the light middle steps, warm white on the deep ends. */
-const STEP_INK = ["rgb(var(--on-night))", "rgb(var(--text))", "rgb(var(--text))", "rgb(var(--text))", "rgb(var(--on-night))"];
+/** Ink carries on every step except deep red, where warm white reads better.
+ *  (Ink on the deep green is 5.0:1; warm white there fails at 2.7:1.) */
+const STEP_INK = ["rgb(var(--text))", "rgb(var(--text))", "rgb(var(--text))", "rgb(var(--text))", "rgb(var(--on-night))"];
 
 function MixHeatmap({ alloc, onOpen }: { alloc: Record<string, number>; onOpen: () => void }) {
   const items = Object.entries(alloc)
@@ -74,7 +83,7 @@ function MixHeatmap({ alloc, onOpen }: { alloc: Record<string, number>; onOpen: 
     >
       {tiles.map((t) => {
         const fund = FUND_MAP[t.id];
-        const step = returnStep(fund?.fiveYr);
+        const step = returnStep(fund?.fiveYr, fund?.assetClass);
         const name = fund?.name ?? t.id;
         return (
           <div
@@ -170,7 +179,7 @@ export default function PortfolioGlimpse() {
           <div className="mt-1.5">
             <MixHeatmap alloc={s.portfolio} onOpen={openPortfolio} />
           </div>
-          <p className="mt-1.5 text-caption text-text-2">Sized by share of the mix · coloured by 5-year return</p>
+          <p className="mt-1.5 text-caption text-text-2">Sized by share of the mix · coloured by 5-year return, judged against its own asset class</p>
         </div>
 
         <p className="mt-3 border-t border-line pt-2.5 text-caption text-text-2">
