@@ -47,8 +47,8 @@ export interface AppState {
   goalOrder: string[];
   /** True once the user manually reorders priority (stops auto-sort by tenure). */
   goalOrderCustom: boolean;
-  /** Which surface is showing. Plan is the only screen most users ever see. */
-  tab: "plan" | "money";
+  /** Which surface is showing: the plan, the portfolio room, or money. */
+  tab: "plan" | "portfolio" | "money";
   /**
    * True once the user sets a goal's monthly amount by hand. Balancing the split
    * is otherwise silent and automatic (there is no Auto-balance button), but an

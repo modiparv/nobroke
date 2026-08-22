@@ -27,7 +27,7 @@ export default function AppHeader() {
 
         {/* Segmented control: a filled track, no border, exact heights. */}
         <nav className="flex items-center gap-0.5 rounded-full bg-surface p-0.5" aria-label="Sections">
-          {(["plan", "money"] as const).map((t) => (
+          {(["plan", "portfolio", "money"] as const).map((t) => (
             <button
               key={t}
               onClick={() => actions.setTab(t)}

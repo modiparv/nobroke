@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { GOALS } from "../lib/goals";
-import { allocationTotal, bandWeights, computePlan } from "../lib/finance";
+import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
 import { btnPrimary, card, sectionLabel } from "../ui";
 import AdvisorNote from "./AdvisorNote";
-import MacroStrip from "./MacroStrip";
 import AppHeader from "./AppHeader";
 import GoalCard from "./GoalCard";
 import MoneyTab from "./MoneyTab";
-import PortfolioBuilder from "./PortfolioBuilder";
+import PortfolioGlimpse from "./PortfolioGlimpse";
+import PortfolioTab from "./PortfolioTab";
 
 const inrDigits = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 
@@ -20,16 +20,6 @@ function HeroAmount({ value }: { value: number }) {
       ₹{inrDigits.format(Math.max(0, Math.round(value)))}
     </div>
   );
-}
-
-/** Plain-language description of the one shared mix. Never a percentage here. */
-function mixLabel(alloc: Record<string, number>): string {
-  const total = allocationTotal(alloc);
-  if (total <= 0) return "Not invested yet";
-  const equityShare = bandWeights(alloc).equity / total;
-  if (equityShare >= 0.65) return "Invested in a mostly-stocks mix";
-  if (equityShare <= 0.35) return "Invested in a mostly-bonds mix";
-  return "Invested in a balanced mix";
 }
 
 function Pill({ label, onClick, accent, onBand }: { label: string; onClick: () => void; accent?: boolean; onBand?: boolean }) {
@@ -117,6 +107,15 @@ export default function Plan() {
       <div className="min-h-screen bg-bg">
         <AppHeader />
         <MoneyTab />
+      </div>
+    );
+  }
+
+  if (s.tab === "portfolio") {
+    return (
+      <div className="min-h-screen bg-bg">
+        <AppHeader />
+        <PortfolioTab />
       </div>
     );
   }
@@ -240,20 +239,9 @@ export default function Plan() {
             )}
           </div>
 
-          {/* Investment mix: the 40 percent pane, always open beside the goals.
-              The macro numbers ride its footer as one quiet line: they are the
-              assumptions' backdrop, not a card of their own. */}
-          {s.goals.length > 0 && (
-            <section className="min-w-0 rounded-card border border-line bg-surface">
-              <div className="border-b border-line px-4 py-3">
-                <span className="text-support text-text">{mixLabel(s.portfolio)}</span>
-              </div>
-              <div className="p-3.5 sm:p-4">
-                <PortfolioBuilder />
-              </div>
-              <MacroStrip />
-            </section>
-          )}
+          {/* The portfolio glimpse: read-only beside the goals. Building
+              happens in the Portfolio tab; the plan page only looks. */}
+          {s.goals.length > 0 && <PortfolioGlimpse />}
         </div>
 
         <p className="pb-2 text-center text-caption text-text-2">
