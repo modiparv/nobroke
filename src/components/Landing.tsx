@@ -287,10 +287,10 @@ export default function Landing() {
         <div className="grid items-center gap-10 py-16 sm:py-24 lg:grid-cols-[1fr_400px] lg:gap-16">
           <div className="max-w-3xl">
             <span className="text-eyebrow uppercase text-text-3">Wealth, minus the noise</span>
-            <h1 className="mt-4 font-serif text-4xl font-normal leading-[1.08] tracking-[-0.015em] text-display sm:text-6xl">
+            <h1 className="mt-4 font-serif text-3xl font-normal leading-[1.08] tracking-[-0.015em] text-display sm:text-5xl">
               We won't let you go broke.
             </h1>
-            <p className="mt-5 max-w-xl text-body text-text-2 sm:text-base">
+            <p className="mt-5 max-w-xl text-body text-text-2">
               Financial planning &amp; wealth management for the Bharat that has goals to reach, but no one to plan
               them with.
             </p>
@@ -328,12 +328,12 @@ export default function Landing() {
                 } ${idx < 2 ? "sm:border-b sm:border-line" : ""}`}
               >
                 <span className="num text-support text-text-3">{o.n}</span>
-                <h3 className="mt-3 font-serif text-3xl font-normal tracking-[-0.01em] text-display sm:text-4xl">
+                <h3 className="mt-3 font-serif text-2xl font-normal tracking-[-0.01em] text-display sm:text-3xl">
                   {o.title}
                 </h3>
                 <div className="mt-4 flex max-w-xl flex-col gap-3">
                   {o.paras.map((p) => (
-                    <p key={p} className="text-base leading-relaxed text-text-2">
+                    <p key={p} className="text-[15px] leading-relaxed text-text-2">
                       {p}
                     </p>
                   ))}
@@ -348,7 +348,7 @@ export default function Landing() {
       <section className="bg-night">
         <div className={`${container} py-16 sm:py-24`}>
           <Reveal>
-            <h2 className="mx-auto max-w-2xl text-center text-3xl font-medium leading-[1.15] tracking-[-0.02em] text-on-night-2 sm:text-4xl">
+            <h2 className="mx-auto max-w-2xl text-center text-2xl font-medium leading-[1.15] tracking-[-0.02em] text-on-night-2 sm:text-3xl">
               Human judgment, combined with the precision of AI.
             </h2>
             <div className="mt-14 grid items-center gap-10 border border-on-night-3/40 p-6 sm:p-10 lg:grid-cols-[1fr_360px_1fr] lg:gap-8">
@@ -409,7 +409,7 @@ export default function Landing() {
         <Reveal className="py-14 sm:py-20">
           <div className="text-center">
             <span className="text-eyebrow uppercase text-text-3">Our philosophy</span>
-            <h2 className="mt-3 font-serif text-3xl font-normal tracking-[-0.01em] text-display sm:text-4xl">
+            <h2 className="mt-3 font-serif text-2xl font-normal tracking-[-0.01em] text-display sm:text-3xl">
               We plan in decades, not quarters.
             </h2>
           </div>
@@ -432,7 +432,7 @@ export default function Landing() {
         <Reveal className="border-t border-line py-14 sm:py-20">
           <div className="text-center">
             <span className="text-eyebrow uppercase text-text-3">Pricing</span>
-            <h2 className="mt-3 font-serif text-3xl font-normal tracking-[-0.01em] text-display sm:text-4xl">
+            <h2 className="mt-3 font-serif text-2xl font-normal tracking-[-0.01em] text-display sm:text-3xl">
               Two tiers. One promise.
             </h2>
           </div>
@@ -484,7 +484,7 @@ export default function Landing() {
       <section className="bg-night">
         <div className={`${container} py-16 text-center sm:py-24`}>
           <Reveal>
-            <h2 className="font-serif text-3xl font-normal tracking-[-0.01em] text-on-night sm:text-4xl">
+            <h2 className="font-serif text-2xl font-normal tracking-[-0.01em] text-on-night sm:text-3xl">
               Start with what you have.
             </h2>
             <button

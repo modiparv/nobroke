@@ -75,9 +75,9 @@ export default {
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       fontSize: {
-        hero: ["34px", { lineHeight: "1.05", letterSpacing: "-0.025em" }],
-        headline: ["22px", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
-        section: ["17px", { lineHeight: "1.3", letterSpacing: "-0.015em" }],
+        hero: ["30px", { lineHeight: "1.05", letterSpacing: "-0.025em" }],
+        headline: ["20px", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
+        section: ["16px", { lineHeight: "1.3", letterSpacing: "-0.015em" }],
         row: ["15px", { lineHeight: "1.35", letterSpacing: "-0.005em" }],
         body: ["14px", { lineHeight: "1.5" }],
         support: ["13px", { lineHeight: "1.45" }],
