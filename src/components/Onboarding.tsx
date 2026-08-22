@@ -27,8 +27,8 @@ function AccountStep({ step }: { step: Step }) {
   // form, just save this plan to their account and show it.
   if (s.user) {
     return (
-      <div className="fade-up mx-auto flex w-full max-w-sm flex-col items-center text-center">
-        <h1 className="text-xl font-serif font-normal tracking-[-0.01em] text-display sm:text-2xl">Your plan is ready.</h1>
+      <div className="fade-up w-full max-w-md">
+        <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">Your plan is ready.</h1>
         <p className="mt-3 text-muted">Signed in as {s.user.email}. We will save it to your account.</p>
         <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
           {step.cta}
@@ -104,8 +104,8 @@ function AccountStep({ step }: { step: Step }) {
   const invalid = credentialError(email, password, mode === "register") != null;
 
   return (
-    <div className="fade-up mx-auto flex w-full max-w-sm flex-col items-center text-center">
-      <h1 className="text-xl font-serif font-normal tracking-[-0.01em] text-display sm:text-2xl">{step.title}</h1>
+    <div className="fade-up w-full max-w-md">
+      <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
       <p className="mt-3 text-muted">{step.subtitle}</p>
 
       <form
@@ -152,7 +152,7 @@ function AccountStep({ step }: { step: Step }) {
         </button>
       </form>
 
-      <div className="mt-4 flex flex-col items-center gap-2">
+      <div className="mt-4 flex flex-col items-start gap-2">
         <button
           type="button"
           onClick={() => {
@@ -253,11 +253,11 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
   };
 
   return (
-    <div className="fade-up flex w-full flex-col items-center text-center">
-      <h1 className="max-w-[22ch] text-xl font-serif font-normal tracking-[-0.01em] text-display sm:text-2xl">{step.title}</h1>
-      {step.subtitle && <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
-      <div className="mt-8 flex w-full max-w-sm items-center justify-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
-        <span className="text-xl font-medium text-muted">₹</span>
+    <div className="fade-up w-full max-w-xl">
+      <h1 className="max-w-[22ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
+      {step.subtitle && <p className="mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
+      <div className="mt-8 flex w-full max-w-sm items-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
+        <span className="text-lg font-medium text-muted">₹</span>
         <input
           autoFocus
           type="text"
@@ -272,7 +272,7 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
           onKeyDown={(e) => {
             if (e.key === "Enter") commit();
           }}
-          className="num w-full bg-transparent text-center text-2xl font-medium tracking-tight outline-none sm:text-3xl"
+          className="num w-full bg-transparent text-xl font-medium tracking-tight outline-none sm:text-2xl"
         />
       </div>
       {min > 0 && raw !== "" && !ok && (
@@ -414,11 +414,11 @@ export default function Onboarding() {
           )}
         </div>
 
-        <div className="flex flex-1 items-center">
+        <div className="flex-1 pt-[8vh]">
         {step.kind === "intro" && (
-          <div className="fade-up flex w-full flex-col items-center text-center">
-            <h1 className="max-w-[16ch] text-xl font-serif font-normal tracking-[-0.01em] text-display sm:text-2xl">{step.title}</h1>
-            <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
+          <div className="fade-up w-full max-w-xl">
+            <h1 className="max-w-[16ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
+            <p className="mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
             <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={next}>
               {step.cta}
             </button>
@@ -427,7 +427,7 @@ export default function Onboarding() {
 
         {step.kind === "goals" && (
           <div className="fade-up w-full">
-            <h1 className="text-xl font-serif font-normal tracking-[-0.01em] text-display sm:text-2xl">{step.title}</h1>
+            <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
             <p className="mt-3 text-muted">{step.subtitle}</p>
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {GOALS.map((g) => {
@@ -457,7 +457,7 @@ export default function Onboarding() {
 
         {step.kind === "single" && (
           <div className="fade-up w-full">
-            <h1 className="text-xl font-serif font-normal tracking-[-0.01em] text-display sm:text-2xl">{step.title}</h1>
+            <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
             {step.subtitle && <p className="mt-3 text-muted">{step.subtitle}</p>}
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {step.options!.map((opt) => {
@@ -487,7 +487,7 @@ export default function Onboarding() {
 
           {step.kind === "connect" && (
             <div className="fade-up w-full">
-              <h1 className="text-xl font-serif font-normal tracking-[-0.01em] text-display sm:text-2xl">{step.title}</h1>
+              <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
               <p className="mt-3 text-muted">{step.subtitle}</p>
               <div className="mt-6 flex flex-col gap-3">
                 {CONNECT_SOURCES.map((c) => (

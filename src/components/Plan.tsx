@@ -16,7 +16,7 @@ const inrDigits = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 /** Hero figure, one clean weight and colour. */
 function HeroAmount({ value }: { value: number }) {
   return (
-    <div className="num mt-1 text-xl font-medium tracking-[-0.02em] text-on-night sm:text-2xl">
+    <div className="num mt-1 text-lg font-medium tracking-[-0.02em] text-on-night sm:text-xl">
       ₹{inrDigits.format(Math.max(0, Math.round(value)))}
     </div>
   );
