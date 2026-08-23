@@ -425,29 +425,31 @@ export default function Onboarding() {
           </div>
         )}
 
+        {/* Ten options and a footer, in one frame: compact cards, tight gaps,
+            nothing that forces the page into scroll. */}
         {step.kind === "goals" && (
           <div className="fade-up w-full">
             <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
-            <p className="mt-3 text-muted">{step.subtitle}</p>
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <p className="mt-2 text-muted">{step.subtitle}</p>
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {GOALS.map((g) => {
                 const sel = s.selectedGoalIds.includes(g.id);
                 return (
                   <button
                     key={g.id}
                     onClick={() => actions.toggleGoal(g.id)}
-                    className={`flex flex-col gap-1 rounded-card border p-4 text-left transition ${
+                    className={`flex flex-col gap-0.5 rounded-xl border px-3 py-2.5 text-left transition ${
                       sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-accent"
                     }`}
                   >
-                    <span className="text-sm font-medium">{g.name}</span>
-                    <span className={`text-xs ${sel ? "text-on-accent/70" : "text-muted"}`}>{g.blurb}</span>
+                    <span className="text-support font-medium">{g.name}</span>
+                    <span className={`text-caption ${sel ? "text-on-accent/70" : "text-muted"}`}>{g.blurb}</span>
                   </button>
                 );
               })}
             </div>
-            <div className="mt-6 flex items-center justify-between">
-              <span className="text-sm font-medium text-muted">{s.selectedGoalIds.length}/3 picked</span>
+            <div className="mt-4 flex items-center justify-between">
+              <span className="text-support font-medium text-muted">{s.selectedGoalIds.length}/3 picked</span>
               <button className={`${btnIntake} px-10`} disabled={s.selectedGoalIds.length === 0} onClick={next}>
                 Continue
               </button>

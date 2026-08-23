@@ -1,5 +1,5 @@
 import type { Allocation, PlanInputs, PlanResult, ProjectionPoint } from "./types";
-import { COMPOSITION, FUND_MAP } from "./funds";
+import { COMPOSITION, FUND_MAP } from "./funds.ts";
 
 export function allocationTotal(alloc: Allocation): number {
   return Object.values(alloc).reduce((s, v) => s + (v > 0 ? v : 0), 0);

@@ -6,7 +6,11 @@ import { adjustedTarget, emptyProfile, suggestedSip } from "./lib/profile";
 import { assessRiskAppetite, capProfile, riskBandLabel } from "./lib/risk";
 import { askGroq, type AiAction } from "./lib/groq";
 import { FUND_MAP } from "./lib/funds";
-import { computePlan, blendedReturn, requiredCorpus, requiredSip } from "./lib/finance";
+// Side-effect import: registers the curated instrument catalogue (ETFs,
+// bonds, metals, REIT) into FUND_MAP before any persisted mix or bucket
+// that references those ids is computed.
+import "./lib/bucket";
+import { allocationTotal, computePlan, blendedReturn, requiredCorpus, requiredSip } from "./lib/finance";
 import { formatINR } from "./lib/format";
 import { parseCommand, type Command } from "./lib/command";
 import {
@@ -61,6 +65,11 @@ export interface AppState {
   portfolioProfile: RiskProfile | null;
   /** True once the user hand-edits the portfolio (stops auto re-recommendation). */
   portfolioCustom: boolean;
+  /** The bucket being curated in the studio (instrument id → weight, sums to
+      100). A draft: it touches nothing until applied as the live mix. */
+  bucket: Allocation;
+  /** Which goal the bucket is being built toward; null means the whole plan. */
+  bucketGoalId: string | null;
   /** Existing investments the user adds manually; sum can be applied to current savings. */
   externalHoldings: Holding[];
   chatOpen: boolean;
@@ -100,6 +109,8 @@ const PLAN_KEYS = [
   "portfolio",
   "portfolioProfile",
   "portfolioCustom",
+  "bucket",
+  "bucketGoalId",
   "externalHoldings",
   "selectedGoalIds",
 ] as const;
@@ -129,6 +140,8 @@ const defaults: AppState = {
   portfolio: {},
   portfolioProfile: null,
   portfolioCustom: false,
+  bucket: {},
+  bucketGoalId: null,
   externalHoldings: [],
   chatOpen: false,
   chat: [],
@@ -195,6 +208,8 @@ function coercePlan(raw: unknown): Partial<AppState> {
 
   if (isObj(r.profile)) out.profile = r.profile;
   if (isObj(r.portfolio)) out.portfolio = r.portfolio;
+  if (isObj(r.bucket)) out.bucket = r.bucket;
+  if (r.bucketGoalId === null || typeof r.bucketGoalId === "string") out.bucketGoalId = r.bucketGoalId;
   if (isObj(r.goalShares)) out.goalShares = r.goalShares;
   if (Array.isArray(r.goals)) out.goals = r.goals;
   if (Array.isArray(r.goalOrder)) out.goalOrder = r.goalOrder;
@@ -617,6 +632,17 @@ export const actions = {
       auto-re-recommending a mix from the goals' horizon. */
   setPortfolio: (portfolio: Allocation, portfolioProfile: RiskProfile | null) =>
     set({ portfolio, portfolioProfile, portfolioCustom: true }),
+
+  // ---- The bucket studio (Portfolio tab, right pane) ----
+  /** The draft bucket. Curating it never touches the live mix. */
+  setBucket: (bucket: Allocation) => set({ bucket }),
+  setBucketGoal: (bucketGoalId: string | null) => set({ bucketGoalId }),
+  /** The commitment moment: the curated bucket becomes the live mix every
+      goal grows in. Hand-built, so no preset label and custom = true. */
+  applyBucketAsMix: () => {
+    if (allocationTotal(state.bucket) <= 0) return;
+    set({ portfolio: { ...state.bucket }, portfolioProfile: null, portfolioCustom: true });
+  },
   /** The user owns the dial. Recommendations respect it immediately; a mix
       the user built by hand is left alone. */
   setRiskAppetite: (v: number) => {
