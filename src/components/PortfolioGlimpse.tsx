@@ -282,20 +282,29 @@ export default function PortfolioGlimpse() {
               Manage holdings →
             </button>
           </div>
-          <ul className="mt-2 flex flex-col gap-2.5">
+          {/* One bar, the whole portfolio: each segment a holding, in the same
+              tones as the heatmap. The rows beneath share its colour dots. */}
+          <div className="mt-2.5 flex h-3.5 gap-[2px] overflow-hidden rounded-[5px]" aria-hidden>
+            {listed.map((h) => (
+              <div
+                key={h.key}
+                title={`${h.label} · ${shareOf(h.amount)}%`}
+                style={{ width: `${Math.max(shareOf(h.amount), 1.5)}%`, background: h.bg }}
+              />
+            ))}
+          </div>
+          <ul className="mt-3 flex flex-col gap-2">
             {listed.slice(0, 5).map((h) => (
-              <li key={h.key}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="min-w-0 truncate text-support text-text">{h.label}</span>
-                  <span className="num flex-none text-support text-text-2">
-                    {formatINR(h.amount)}
-                    <span className="mx-1 text-text-3">·</span>
-                    <span className="font-medium text-text">{shareOf(h.amount)}%</span>
-                  </span>
-                </div>
-                <div className="mt-1 h-[3px] w-full overflow-hidden rounded-[2px] bg-surface-2">
-                  <div className="h-full rounded-[2px] bg-text" style={{ width: `${shareOf(h.amount)}%` }} />
-                </div>
+              <li key={h.key} className="flex items-baseline justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="h-2 w-2 flex-none rounded-full" style={{ background: h.bg }} aria-hidden />
+                  <span className="truncate text-support text-text">{h.label}</span>
+                </span>
+                <span className="num flex-none text-support">
+                  <span className="font-medium text-text">{shareOf(h.amount)}%</span>
+                  <span className="mx-1.5 text-text-3">·</span>
+                  <span className="text-text-2">{formatINR(h.amount)}</span>
+                </span>
               </li>
             ))}
           </ul>

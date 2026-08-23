@@ -17,7 +17,7 @@ const inrDigits = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 /** Hero figure, one clean weight and colour. */
 function HeroAmount({ value }: { value: number }) {
   return (
-    <div className="num mt-1 text-lg font-medium tracking-[-0.02em] text-on-night sm:text-xl">
+    <div className="num mt-1 text-2xl font-medium tracking-[-0.02em] text-on-night sm:text-3xl">
       ₹{inrDigits.format(Math.max(0, Math.round(value)))}
     </div>
   );
@@ -136,7 +136,7 @@ export default function Plan() {
           column; on small screens it stacks beneath the stats. */}
       <section className="bg-night">
         <div className="mx-auto grid max-w-page gap-x-10 gap-y-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-stretch">
-          <div className="flex h-full flex-col justify-center">
+          <div className="flex h-full flex-col justify-between gap-5">
             <span className="text-eyebrow uppercase text-on-night-2">Total saved</span>
             <HeroAmount value={totalCapital(s)} />
             <p className="mt-1 text-support text-on-night-2">
@@ -146,7 +146,7 @@ export default function Plan() {
             </p>
 
             {/* The breakup, inline in the band on a hairline divider. */}
-            <dl className="mt-3 flex flex-wrap items-stretch gap-x-6 gap-y-2 border-t border-on-night-3/40 pt-2.5">
+            <dl className="mt-5 flex flex-wrap items-stretch gap-x-6 gap-y-2 border-t border-on-night-3/40 pt-3">
               {[
                 { label: "Cash", text: formatINR(s.currentSavings) },
                 { label: "Invested", text: formatINR(holdingsTotal(s)) },
@@ -172,7 +172,7 @@ export default function Plan() {
               ))}
             </dl>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="mt-5 flex flex-wrap items-center gap-2">
               <Pill label="Add money" onBand onClick={() => actions.setTab("money")} />
               <AddGoal onAdd={addGoal} onBand />
               {firstOffTrack && (
@@ -182,7 +182,7 @@ export default function Plan() {
           </div>
 
           {s.goals.length > 0 && (
-            <div className="min-w-0">
+            <div className="min-w-0 lg:border-l lg:border-on-night-3/40 lg:pl-10">
               <GoalsChart variant="night" />
             </div>
           )}
