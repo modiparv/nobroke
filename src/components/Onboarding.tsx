@@ -30,7 +30,7 @@ function AccountStep({ step }: { step: Step }) {
       <div className="fade-up w-full max-w-md">
         <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">Your plan is ready.</h1>
         <p className="mt-3 text-muted">Signed in as {s.user.email}. We will save it to your account.</p>
-        <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
+        <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
           {step.cta}
         </button>
       </div>
@@ -109,7 +109,7 @@ function AccountStep({ step }: { step: Step }) {
       <p className="mt-3 text-muted">{step.subtitle}</p>
 
       <form
-        className="mt-7 flex w-full flex-col gap-3"
+        className="mt-5 flex w-full flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault();
           void submit();
@@ -256,7 +256,7 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
     <div className="fade-up w-full max-w-xl">
       <h1 className="max-w-[22ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
       {step.subtitle && <p className="mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
-      <div className="mt-8 flex w-full max-w-sm items-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
+      <div className="mt-6 flex w-full max-w-sm items-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
         <span className="text-lg font-medium text-muted">₹</span>
         <input
           autoFocus
@@ -283,7 +283,7 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
           {challenge}
         </p>
       )}
-      <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={commit} disabled={!ok}>
+      <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={commit} disabled={!ok}>
         {challenge ? "Yes, this is right" : "Continue"}
       </button>
     </div>
@@ -414,12 +414,12 @@ export default function Onboarding() {
           )}
         </div>
 
-        <div className="flex-1 pt-[8vh]">
+        <div className="flex-1 pt-5 sm:pt-8">
         {step.kind === "intro" && (
           <div className="fade-up w-full max-w-xl">
             <h1 className="max-w-[16ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
             <p className="mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
-            <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={next}>
+            <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={next}>
               {step.cta}
             </button>
           </div>
@@ -489,7 +489,7 @@ export default function Onboarding() {
             <div className="fade-up w-full">
               <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
               <p className="mt-3 text-muted">{step.subtitle}</p>
-              <div className="mt-6 flex flex-col gap-3">
+              <div className="mt-4 flex flex-col gap-3">
                 {CONNECT_SOURCES.map((c) => (
                   <div key={c.name} className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-4">
                     <div className="min-w-0">
@@ -502,7 +502,7 @@ export default function Onboarding() {
                   </div>
                 ))}
               </div>
-              <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={next}>
+              <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={next}>
                 Skip for now
               </button>
             </div>

@@ -125,10 +125,11 @@ export default function Plan() {
     <div className="min-h-screen bg-bg">
       <AppHeader />
 
-      {/* The overview band: night ground, same palette as the landing. Kept
-          shallow so the goals surface above the fold. */}
+      {/* The overview band: night ground carrying the numbers AND the goal
+          trajectories, Decade-style. The dark chart is the band's second
+          column; on small screens it stacks beneath the stats. */}
       <section className="bg-night">
-        <div className="mx-auto flex max-w-page flex-col gap-3 px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-5">
+        <div className="mx-auto grid max-w-page gap-x-10 gap-y-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-end">
           <div>
             <span className="text-eyebrow uppercase text-on-night-2">Total saved</span>
             <HeroAmount value={totalCapital(s)} />
@@ -164,15 +165,21 @@ export default function Plan() {
                 </div>
               ))}
             </dl>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Pill label="Add money" onBand onClick={() => actions.setTab("money")} />
+              <AddGoal onAdd={addGoal} onBand />
+              {firstOffTrack && (
+                <Pill label={`Fix ${firstOffTrack.name.toLowerCase()}`} accent onClick={() => openGoal(firstOffTrack.id)} />
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Pill label="Add money" onBand onClick={() => actions.setTab("money")} />
-            <AddGoal onAdd={addGoal} onBand />
-            {firstOffTrack && (
-              <Pill label={`Fix ${firstOffTrack.name.toLowerCase()}`} accent onClick={() => openGoal(firstOffTrack.id)} />
-            )}
-          </div>
+          {s.goals.length > 0 && (
+            <div className="min-w-0">
+              <GoalsChart variant="night" />
+            </div>
+          )}
         </div>
       </section>
 
@@ -244,14 +251,6 @@ export default function Plan() {
               happens in the Portfolio tab; the plan page only looks. */}
           {s.goals.length > 0 && <PortfolioGlimpse />}
         </div>
-
-        {/* Every goal's trajectory, full width beneath the panes: it is goal
-            information, so it lives on the goal page. */}
-        {s.goals.length > 0 && (
-          <div className="pb-4">
-            <GoalsChart />
-          </div>
-        )}
 
         <p className="pb-2 text-center text-caption text-text-2">
           Projections are illustrative and not investment advice.

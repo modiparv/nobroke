@@ -15,7 +15,9 @@ import { actions, useStore } from "../store";
 const RAMP = ["var(--risk-1)", "var(--risk-2)", "var(--risk-3)", "var(--risk-4)", "var(--risk-5)"];
 const UNFILLED = "var(--risk-unfilled)";
 
-export default function RiskMeter() {
+/** readOnly: the literal meter without the slider — for the plan page's
+ *  glimpse, where risk is shown but only the Portfolio tab may change it. */
+export default function RiskMeter({ readOnly = false }: { readOnly?: boolean }) {
   const s = useStore();
   const v = s.riskAppetite;
   const active = riskBandIndex(v);
@@ -24,9 +26,11 @@ export default function RiskMeter() {
     <div
       className="mb-3 rounded-control bg-surface-2 px-3 py-2"
       title={
-        s.riskAppetiteSource === "assessed"
-          ? "Assessed from your income, cover, dependants and timelines. Slide it if it feels wrong."
-          : "Set by you. Recommendations stay within it."
+        readOnly
+          ? "Your risk level. Change it on the Portfolio tab."
+          : s.riskAppetiteSource === "assessed"
+            ? "Assessed from your income, cover, dependants and timelines. Slide it if it feels wrong."
+            : "Set by you. Recommendations stay within it."
       }
     >
       <div className="flex items-baseline justify-between gap-2">
@@ -51,16 +55,18 @@ export default function RiskMeter() {
         >
           ▲
         </span>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={5}
-          value={v}
-          onChange={(e) => actions.setRiskAppetite(Number(e.target.value))}
-          aria-label="Risk appetite"
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-        />
+        {!readOnly && (
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={v}
+            onChange={(e) => actions.setRiskAppetite(Number(e.target.value))}
+            aria-label="Risk appetite"
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          />
+        )}
       </div>
 
     </div>

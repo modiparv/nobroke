@@ -76,6 +76,13 @@
   --chart-4: #0b1b33;
   --chart-5: #8a8378;
   --chart-6: #b3261e;
+  /* The same categorical series, tuned for the night band. */
+  --chartn-1: #5c82ff;
+  --chartn-2: #34c88e;
+  --chartn-3: #e0a23c;
+  --chartn-4: #e9e5e0;
+  --chartn-5: #9b968f;
+  --chartn-6: #f0736a;
   /* Logo mark: brand constants. The falling and rising strokes keep their
      own colours in both themes. */
   --logo-fall: #0b1b33;

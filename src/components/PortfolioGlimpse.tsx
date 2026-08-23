@@ -3,9 +3,9 @@ import { allocationTotal, bandWeights, blendedReturn, computePlan } from "../lib
 import { ASSET_CLASSES } from "../lib/funds";
 import { formatINR } from "../lib/format";
 import { mixLabel } from "../lib/portfolios";
-import { riskBandLabel } from "../lib/risk";
 import { actions, goalShareFraction, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
 import { sectionLabel } from "../ui";
+import RiskMeter from "./RiskMeter";
 
 /**
  * The plan page's read-only window onto the whole portfolio. Two facts up
@@ -190,6 +190,9 @@ export default function PortfolioGlimpse() {
       </div>
 
       <div className="p-4">
+        {/* The literal meter, read-only: risk is changed on the Portfolio tab. */}
+        <RiskMeter readOnly />
+
         {/* The mix, by asset class */}
         <div className="flex h-2.5 overflow-hidden rounded-full" aria-hidden>
           {segs.map((x) => (
@@ -205,14 +208,9 @@ export default function PortfolioGlimpse() {
           ))}
         </p>
 
-        {/* Two facts, one line: the ceiling and what the mix should earn. */}
-        <p
-          className="mt-2.5 border-t border-line pt-2.5 text-caption text-text-2"
-          title="Set on the Portfolio tab. Every recommendation stays within it."
-        >
-          Risk ceiling <span className="font-medium text-text">{riskBandLabel(s.riskAppetite)}</span>
-          <span className="mx-1 text-text-3">·</span>
-          Expected <span className="num font-medium text-text">~{expected}%</span> a year
+        <p className="mt-2.5 border-t border-line pt-2.5 text-caption text-text-2">
+          Expected <span className="num font-medium text-text">~{expected}%</span> a year for this mix. Illustrative,
+          not advice.
         </p>
 
         {/* The whole portfolio, one map, two views */}

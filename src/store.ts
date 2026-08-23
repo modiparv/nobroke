@@ -904,6 +904,7 @@ function buildPlanData(s: AppState): unknown | null {
       targetTodayINR: g.targetToday,
       horizonYears: g.horizonYears,
       monthlySipINR: Math.round(goalMonthly(s, g.id)),
+      capitalSetAsideINR: Math.round(totalCapital(s) * goalShareFraction(s, g.id)),
       projectedCorpusINR: Math.round(r.projectedCorpus),
       requiredCorpusINR: Math.round(r.requiredCorpus),
       gapINR: Math.round(r.gap),

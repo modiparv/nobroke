@@ -36,7 +36,7 @@ export function mixLabel(alloc: Allocation): string {
   const total = allocationTotal(alloc);
   if (total <= 0) return "Not invested yet";
   const equityShare = bandWeights(alloc).equity / total;
-  if (equityShare >= 0.65) return "Invested in a mostly-stocks mix";
-  if (equityShare <= 0.35) return "Invested in a mostly-bonds mix";
-  return "Invested in a balanced mix";
+  if (equityShare >= 0.65) return "Mostly-stocks mix";
+  if (equityShare <= 0.35) return "Mostly-bonds mix";
+  return "Balanced mix";
 }
