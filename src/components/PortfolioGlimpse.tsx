@@ -174,8 +174,15 @@ export default function PortfolioGlimpse() {
       bg: onTrack ? "rgb(var(--pos-bg))" : "rgb(var(--cau-bg))",
       ink: onTrack ? "rgb(var(--pos))" : "rgb(var(--cau))",
       title: `${g.name} · ${formatINR(amount)} set aside · ${onTrack ? "on track" : "needs a change"}`,
+      onClick: () => actions.setCurrentGoal(g.id),
     };
   });
+
+  // Highlights: the four numbers a client checks first.
+  const largest = [...holdingItems].sort((a, b) => b.amount - a.amount)[0];
+  const onTrackCount = goalItems.filter((i) => i.bg === "rgb(var(--pos-bg))").length;
+  const shareOf = (amount: number) => (capital > 0 ? Math.round((amount / capital) * 100) : 0);
+  const listed = [...holdingItems].sort((a, b) => b.amount - a.amount);
 
   return (
     <section className="min-w-0 rounded-card border border-line bg-surface">
@@ -190,6 +197,31 @@ export default function PortfolioGlimpse() {
       </div>
 
       <div className="p-4">
+        {/* Highlights: value, pace, weight, progress — the client's first four. */}
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+          <div>
+            <dt className="text-eyebrow uppercase text-text-3">Portfolio value</dt>
+            <dd className="num mt-0.5 text-row font-medium">{formatINR(capital)}</dd>
+          </div>
+          <div>
+            <dt className="text-eyebrow uppercase text-text-3">Expected pace</dt>
+            <dd className="num mt-0.5 text-row font-medium">~{expected}% a year</dd>
+          </div>
+          <div className="min-w-0">
+            <dt className="text-eyebrow uppercase text-text-3">Largest holding</dt>
+            <dd className="mt-0.5 truncate text-row font-medium">
+              {largest ? `${largest.label} · ${shareOf(largest.amount)}%` : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-eyebrow uppercase text-text-3">Goals on track</dt>
+            <dd className="num mt-0.5 text-row font-medium">
+              {onTrackCount} of {goalItems.length}
+            </dd>
+          </div>
+        </dl>
+
+        <div className="mt-4 border-t border-line pt-3.5" />
         {/* The literal meter, read-only: risk is changed on the Portfolio tab. */}
         <RiskMeter readOnly />
 
@@ -208,10 +240,7 @@ export default function PortfolioGlimpse() {
           ))}
         </p>
 
-        <p className="mt-2.5 border-t border-line pt-2.5 text-caption text-text-2">
-          Expected <span className="num font-medium text-text">~{expected}%</span> a year for this mix. Illustrative,
-          not advice.
-        </p>
+
 
         {/* The whole portfolio, one map, two views */}
         <div className="mt-4">
@@ -244,6 +273,40 @@ export default function PortfolioGlimpse() {
             </span>
           </div>
         </div>
+
+        {/* Every holding with its share of the portfolio. */}
+        <div className="mt-4 border-t border-line pt-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className={sectionLabel}>Share of portfolio</span>
+            <button onClick={openMoney} className="text-caption text-text-2 transition hover:text-text">
+              Manage holdings →
+            </button>
+          </div>
+          <ul className="mt-2 flex flex-col gap-2.5">
+            {listed.slice(0, 5).map((h) => (
+              <li key={h.key}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="min-w-0 truncate text-support text-text">{h.label}</span>
+                  <span className="num flex-none text-support text-text-2">
+                    {formatINR(h.amount)}
+                    <span className="mx-1 text-text-3">·</span>
+                    <span className="font-medium text-text">{shareOf(h.amount)}%</span>
+                  </span>
+                </div>
+                <div className="mt-1 h-[3px] w-full overflow-hidden rounded-[2px] bg-surface-2">
+                  <div className="h-full rounded-[2px] bg-text" style={{ width: `${shareOf(h.amount)}%` }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          {listed.length > 5 && (
+            <button onClick={openMoney} className="mt-2 text-caption text-text-2 transition hover:text-text">
+              +{listed.length - 5} more in Money →
+            </button>
+          )}
+        </div>
+
+        <p className="mt-3 border-t border-line pt-2.5 text-caption text-text-2">Illustrative, not advice.</p>
       </div>
     </section>
   );

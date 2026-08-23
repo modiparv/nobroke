@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GOALS } from "../lib/goals";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
@@ -80,6 +80,12 @@ export default function Plan() {
   const ordered = goalsByPriority(s);
 
   const [openId, setOpenId] = useState<string>(() => s.currentGoalId);
+
+  // The glimpse's "By goal" tiles call setCurrentGoal; opening that goal here
+  // is what makes the two panes feel like ONE synced view.
+  useEffect(() => {
+    if (s.currentGoalId) setOpenId(s.currentGoalId);
+  }, [s.currentGoalId]);
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
@@ -129,8 +135,8 @@ export default function Plan() {
           trajectories, Decade-style. The dark chart is the band's second
           column; on small screens it stacks beneath the stats. */}
       <section className="bg-night">
-        <div className="mx-auto grid max-w-page gap-x-10 gap-y-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-end">
-          <div>
+        <div className="mx-auto grid max-w-page gap-x-10 gap-y-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-stretch">
+          <div className="flex h-full flex-col justify-center">
             <span className="text-eyebrow uppercase text-on-night-2">Total saved</span>
             <HeroAmount value={totalCapital(s)} />
             <p className="mt-1 text-support text-on-night-2">
@@ -185,7 +191,7 @@ export default function Plan() {
 
       {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
       <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
-        <div className={`grid gap-4 py-5 ${s.goals.length ? "lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)] lg:items-start" : ""}`}>
+        <div className={`grid gap-4 py-5 ${s.goals.length ? "lg:grid-cols-2 lg:items-start" : ""}`}>
           {/* Goals: the major pane (60 percent on desktop). */}
           <div className="flex min-w-0 flex-col gap-4">
             {s.goals.length > 0 && <AdvisorNote />}
