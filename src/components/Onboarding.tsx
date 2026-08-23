@@ -489,20 +489,23 @@ export default function Onboarding() {
             <div className="fade-up w-full">
               <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
               <p className="mt-3 text-muted">{step.subtitle}</p>
-              <div className="mt-4 flex flex-col gap-3">
-                {CONNECT_SOURCES.map((c) => (
-                  <div key={c.name} className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-4">
+              <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
+                {CONNECT_SOURCES.map((c, idx) => (
+                  <div
+                    key={c.name}
+                    className={`flex items-center justify-between gap-3 px-4 py-2.5 ${idx > 0 ? "border-t border-line" : ""}`}
+                  >
                     <div className="min-w-0">
-                      <p className="text-row font-medium">{c.name}</p>
-                      <p className="mt-0.5 text-caption text-text-2">{c.via}</p>
+                      <p className="truncate text-support font-medium">{c.name}</p>
+                      <p className="truncate text-caption text-text-2">{c.via}</p>
                     </div>
-                    <span className="flex-none rounded-full border border-line px-2.5 py-1 text-index uppercase tracking-wide text-text-2">
-                      Coming soon
+                    <span className="flex-none rounded-full border border-line px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
+                      Soon
                     </span>
                   </div>
                 ))}
               </div>
-              <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={next}>
+              <button className={`${btnIntake} mt-5 w-full max-w-sm`} onClick={next}>
                 Skip for now
               </button>
             </div>
