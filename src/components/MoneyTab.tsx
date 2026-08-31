@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { blendedReturn, computePlan, projectionSeries } from "../lib/finance";
 import { formatINR } from "../lib/format";
+import { categoryCode } from "../lib/holdings";
 import {
   actions,
   goalMonthly,
@@ -126,11 +127,21 @@ export default function MoneyTab() {
                   {breakdown.map(([label, v]) => (
                     <li key={label}>
                       <div className="flex items-baseline justify-between gap-3">
-                        <span className="text-support text-text">{label}</span>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span
+                            className="h-2 w-2 flex-none rounded-full"
+                            style={{ background: categoryCode(label).ink }}
+                            aria-hidden
+                          />
+                          <span className="truncate text-support text-text">{label}</span>
+                        </span>
                         <span className="num text-support font-medium">{formatINR(v)}</span>
                       </div>
                       <div className="mt-1.5 h-[3px] w-full overflow-hidden rounded-[2px] bg-surface-2">
-                        <div className="h-full rounded-[2px] bg-text" style={{ width: `${(v / total) * 100}%` }} />
+                        <div
+                          className="h-full rounded-[2px]"
+                          style={{ width: `${(v / total) * 100}%`, background: categoryCode(label).ink }}
+                        />
                       </div>
                     </li>
                   ))}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { allocationTotal, bandWeights, blendedReturn, computePlan } from "../lib/finance";
 import { ASSET_CLASSES } from "../lib/funds";
 import { formatINR } from "../lib/format";
+import { categoryCode } from "../lib/holdings";
 import { mixLabel } from "../lib/portfolios";
 import { actions, goalShareFraction, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
 import { sectionLabel } from "../ui";
@@ -88,17 +89,10 @@ function Treemap({ items, ariaLabel }: { items: TreemapItem[]; ariaLabel: string
   );
 }
 
-/** Tonal steps per holding category: colour states WHAT it is, never how it
- *  is doing — manual entries carry no return data, and pretending otherwise
- *  would be theatre. */
-const CATEGORY_TONE: Record<string, { bg: string; ink: string }> = {
-  Equity: { bg: "rgb(var(--text))", ink: "rgb(var(--on-night))" },
-  Funds: { bg: "rgb(var(--text-display))", ink: "rgb(var(--on-night))" },
-  "Fixed income": { bg: "rgb(var(--text-2))", ink: "rgb(var(--on-night))" },
-  "Gold & Silver": { bg: "rgb(var(--cau))", ink: "rgb(var(--on-night))" },
-  Cash: { bg: "rgb(var(--surface-2))", ink: "rgb(var(--text))" },
-  Other: { bg: "rgb(var(--line-2))", ink: "rgb(var(--text))" },
-};
+/** The asset-class colour code (lib/holdings, tokens in index.css): tiles
+ *  are the hue's tint with the hue as ink; dots and the share bar use the
+ *  hue itself. Colour states WHAT it is, never how it is doing — manual
+ *  entries carry no return data, and pretending otherwise would be theatre. */
 
 export default function PortfolioGlimpse() {
   const s = useStore();
@@ -141,7 +135,7 @@ export default function PortfolioGlimpse() {
             key: "cash",
             label: "Cash",
             amount: s.currentSavings,
-            ...CATEGORY_TONE.Cash,
+            ...categoryCode("Cash"),
             title: `Cash · ${formatINR(s.currentSavings)} · in the bank`,
             onClick: openMoney,
           },
@@ -150,7 +144,7 @@ export default function PortfolioGlimpse() {
     ...s.externalHoldings
       .filter((h) => h.amount > 0)
       .map((h) => {
-        const tone = CATEGORY_TONE[h.category] ?? CATEGORY_TONE.Other;
+        const tone = categoryCode(h.category);
         return {
           key: h.id,
           label: h.name,
@@ -282,14 +276,14 @@ export default function PortfolioGlimpse() {
               Manage holdings →
             </button>
           </div>
-          {/* One bar, the whole portfolio: each segment a holding, in the same
-              tones as the heatmap. The rows beneath share its colour dots. */}
+          {/* One bar, the whole portfolio: each segment a holding, carrying
+              its class hue at full strength. The rows beneath share the dots. */}
           <div className="mt-2.5 flex h-3.5 gap-[2px] overflow-hidden rounded-[5px]" aria-hidden>
             {listed.map((h) => (
               <div
                 key={h.key}
                 title={`${h.label} · ${shareOf(h.amount)}%`}
-                style={{ width: `${Math.max(shareOf(h.amount), 1.5)}%`, background: h.bg }}
+                style={{ width: `${Math.max(shareOf(h.amount), 1.5)}%`, background: h.ink }}
               />
             ))}
           </div>
@@ -297,7 +291,7 @@ export default function PortfolioGlimpse() {
             {listed.slice(0, 5).map((h) => (
               <li key={h.key} className="flex items-baseline justify-between gap-3">
                 <span className="flex min-w-0 items-center gap-2">
-                  <span className="h-2 w-2 flex-none rounded-full" style={{ background: h.bg }} aria-hidden />
+                  <span className="h-2 w-2 flex-none rounded-full" style={{ background: h.ink }} aria-hidden />
                   <span className="truncate text-support text-text">{h.label}</span>
                 </span>
                 <span className="num flex-none text-support">

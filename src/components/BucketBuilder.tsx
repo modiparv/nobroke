@@ -218,9 +218,15 @@ export default function BucketBuilder() {
                   type="button"
                   onClick={() => add(p.id)}
                   title={p.note}
-                  className="rounded-full border border-line px-2.5 py-1 text-support text-text transition hover:border-ink"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-support text-text transition hover:border-ink"
                 >
-                  + {FUND_MAP[p.id]?.name}
+                  <span
+                    className="h-2 w-2 flex-none rounded-full"
+                    style={{ background: ASSET_CLASSES[FUND_MAP[p.id]?.assetClass ?? "equity"].color }}
+                    aria-hidden
+                  />
+                  {FUND_MAP[p.id]?.name}
+                  <span className="text-text-2">+</span>
                 </button>
               ))}
             </div>
@@ -265,6 +271,11 @@ export default function BucketBuilder() {
                         <span className="text-text-3">
                           <Grip />
                         </span>
+                        <span
+                          className="h-2 w-2 flex-none rounded-full"
+                          style={{ background: ASSET_CLASSES[f.assetClass].color }}
+                          title={ASSET_CLASSES[f.assetClass].label}
+                        />
                         <span className="min-w-0 flex-1 truncate text-support font-medium text-text">{f.name}</span>
                         <span className="hidden flex-none text-caption text-text-2 sm:inline">{item.kind}</span>
                         <span

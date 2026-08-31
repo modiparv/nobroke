@@ -83,6 +83,22 @@
   --chartn-4: #e9e5e0;
   --chartn-5: #9b968f;
   --chartn-6: #f0736a;
+  /* The asset-class colour code: ONE hue per kind of money, spoken everywhere
+     a holding appears — dots, bars, tinted tiles. Stocks are the brand blue,
+     funds the brand navy, bonds the calm green, gold is gold; cash and mixes
+     stay warm-neutral. Hues carry dots and bars (3:1+ on surfaces); tints
+     ground the treemap tiles with the hue as their ink (AA-checked). */
+  --class-equity: var(--chart-1);
+  --class-equity-bg: #eef2ff;
+  --class-funds: var(--chart-4);
+  --class-funds-bg: #e7eaef;
+  --class-debt: var(--chart-2);
+  --class-debt-bg: #e2f1eb;
+  --class-gold: rgb(var(--cau));
+  --class-gold-bg: #f6ecdb;
+  --class-cash: rgb(var(--text-2));
+  --class-cash-bg: #efede9;
+  --class-other: rgb(var(--text-3));
   /* Logo mark: brand constants. The falling and rising strokes keep their
      own colours in both themes. */
   --logo-fall: #0b1b33;
