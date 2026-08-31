@@ -7,7 +7,7 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
   const out: Insight[] = [];
   const weights = normalizedWeights(inputs.allocation);
   if (weights.length === 0) {
-    return [{ tone: "info", icon: "🧺", title: "Pick a mix", message: "Tap a ready-made mix (or add a fund) to see your plan come alive." }];
+    return [{ tone: "info", icon: "🧺", title: "Pick a mix", message: "Pick a mix in the Portfolio tab to see your plan come alive." }];
   }
 
   if (r.onTrack) {
@@ -34,7 +34,7 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
 
   const total = allocationTotal(inputs.allocation);
   if (Math.abs(total - 100) > 0.5) {
-    out.push({ tone: "info", icon: "⚖️", title: `Your mix is ${Math.round(total)}% filled`, message: `We work it out as shares of 100%. A ready-made mix fills it cleanly for you.` });
+    out.push({ tone: "info", icon: "⚖️", title: `Your mix is ${Math.round(total)}% filled`, message: `We work it out as shares of 100%. A ready-made mix in the Portfolio tab fills it cleanly.` });
   }
 
   out.push({ tone: "info", icon: "🔥", title: "Prices rise over time", message: `Your ${formatINR(inputs.targetToday)} goal will cost about ${formatINR(r.requiredCorpus)} in ${formatYears(inputs.horizonYears)}, so we plan for the future price, not today's.` });

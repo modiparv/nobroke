@@ -1,4 +1,5 @@
 import type { Allocation, RiskProfile } from "./types";
+import { allocationTotal, bandWeights } from "./finance";
 
 /** Quick-start templates over funds. Each set of weights sums to 100. */
 export const MODEL_PORTFOLIOS: Record<
@@ -28,4 +29,14 @@ export function autoAllocation(horizonYears: number): { profile: RiskProfile; al
   else if (horizonYears <= 7) profile = "balanced";
   else profile = "bold";
   return { profile, allocation: { ...MODEL_PORTFOLIOS[profile].allocation } };
+}
+
+/** Plain-language description of the one shared mix. Never a percentage here. */
+export function mixLabel(alloc: Allocation): string {
+  const total = allocationTotal(alloc);
+  if (total <= 0) return "Not invested yet";
+  const equityShare = bandWeights(alloc).equity / total;
+  if (equityShare >= 0.65) return "Mostly-stocks mix";
+  if (equityShare <= 0.35) return "Mostly-bonds mix";
+  return "Balanced mix";
 }

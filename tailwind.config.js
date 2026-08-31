@@ -67,20 +67,20 @@ export default {
         hybrid: channel("--accent-hi"),
       },
       fontFamily: {
-        // Inter reads as finance rather than friendly-app (spec 8b).
-        sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        // Manrope: geometric, quiet, reads as modern finance.
+        sans: ["Manrope", "Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
         // Question screens only: a serif heading makes the intake read as a
         // conversation rather than data entry. Never for numbers.
         serif: ["ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       fontSize: {
-        hero: ["34px", { lineHeight: "1.05", letterSpacing: "-0.025em" }],
-        headline: ["22px", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
-        section: ["17px", { lineHeight: "1.3", letterSpacing: "-0.015em" }],
-        row: ["15px", { lineHeight: "1.35", letterSpacing: "-0.005em" }],
-        body: ["14px", { lineHeight: "1.5" }],
-        support: ["13px", { lineHeight: "1.45" }],
+        hero: ["26px", { lineHeight: "1.05", letterSpacing: "-0.025em" }],
+        headline: ["18px", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
+        section: ["15px", { lineHeight: "1.3", letterSpacing: "-0.015em" }],
+        row: ["14px", { lineHeight: "1.35", letterSpacing: "-0.005em" }],
+        body: ["13.5px", { lineHeight: "1.5" }],
+        support: ["12.5px", { lineHeight: "1.45" }],
         caption: ["12px", { lineHeight: "1.4" }],
         eyebrow: ["10px", { lineHeight: "1.2", letterSpacing: "0.13em" }],
         index: ["10px", { lineHeight: "1.2", letterSpacing: "0.06em" }],

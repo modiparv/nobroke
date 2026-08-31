@@ -82,7 +82,7 @@ export default function Holdings() {
           <div className="absolute inset-0 bg-night/50" onClick={() => setOpen(false)} />
           <div className="absolute left-1/2 top-1/2 max-h-[90vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-line bg-surface p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-lg font-medium tracking-tight text-display">Add an investment</h3>
+              <h3 className="text-base font-medium tracking-tight text-display">Add an investment</h3>
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Close"

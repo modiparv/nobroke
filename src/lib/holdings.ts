@@ -26,3 +26,19 @@ export const HOLDING_TYPES: ReadonlyArray<{ id: string; category: string; label:
 export const HOLDING_TYPE_BY_LABEL: Record<string, (typeof HOLDING_TYPES)[number]> = Object.fromEntries(
   HOLDING_TYPES.map((t) => [t.label, t]),
 );
+
+/** The asset-class colour code for holding categories (tokens in index.css):
+    one hue per kind of money. The hue carries dots, bars and meters; the
+    tint grounds treemap tiles with the hue as ink. */
+export const CATEGORY_CODE: Record<string, { bg: string; ink: string }> = {
+  Equity: { bg: "var(--class-equity-bg)", ink: "var(--class-equity)" },
+  Funds: { bg: "var(--class-funds-bg)", ink: "var(--class-funds)" },
+  "Fixed income": { bg: "var(--class-debt-bg)", ink: "var(--class-debt)" },
+  "Gold & Silver": { bg: "var(--class-gold-bg)", ink: "var(--class-gold)" },
+  Cash: { bg: "var(--class-cash-bg)", ink: "var(--class-cash)" },
+  Other: { bg: "var(--class-cash-bg)", ink: "var(--class-cash)" },
+};
+
+export function categoryCode(category: string): { bg: string; ink: string } {
+  return CATEGORY_CODE[category] ?? CATEGORY_CODE.Other;
+}

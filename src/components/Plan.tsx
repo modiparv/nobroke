@@ -1,35 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GOALS } from "../lib/goals";
-import { allocationTotal, bandWeights, computePlan } from "../lib/finance";
+import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
 import { btnPrimary, card, sectionLabel } from "../ui";
 import AdvisorNote from "./AdvisorNote";
-import MacroStrip from "./MacroStrip";
 import AppHeader from "./AppHeader";
 import GoalCard from "./GoalCard";
+import GoalsChart from "./GoalsChart";
 import MoneyTab from "./MoneyTab";
-import PortfolioBuilder from "./PortfolioBuilder";
+import PortfolioGlimpse from "./PortfolioGlimpse";
+import PortfolioTab from "./PortfolioTab";
 
 const inrDigits = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 
 /** Hero figure, one clean weight and colour. */
 function HeroAmount({ value }: { value: number }) {
   return (
-    <div className="num mt-1 text-2xl font-medium tracking-[-0.02em] text-on-night sm:text-3xl">
+    <div className="num mt-1.5 text-3xl font-medium tracking-[-0.02em] text-on-night sm:text-4xl">
       ₹{inrDigits.format(Math.max(0, Math.round(value)))}
     </div>
   );
-}
-
-/** Plain-language description of the one shared mix. Never a percentage here. */
-function mixLabel(alloc: Record<string, number>): string {
-  const total = allocationTotal(alloc);
-  if (total <= 0) return "Not invested yet";
-  const equityShare = bandWeights(alloc).equity / total;
-  if (equityShare >= 0.65) return "Invested in a mostly-stocks mix";
-  if (equityShare <= 0.35) return "Invested in a mostly-bonds mix";
-  return "Invested in a balanced mix";
 }
 
 function Pill({ label, onClick, accent, onBand }: { label: string; onClick: () => void; accent?: boolean; onBand?: boolean }) {
@@ -89,6 +80,12 @@ export default function Plan() {
   const ordered = goalsByPriority(s);
 
   const [openId, setOpenId] = useState<string>(() => s.currentGoalId);
+
+  // The glimpse's "By goal" tiles call setCurrentGoal; opening that goal here
+  // is what makes the two panes feel like ONE synced view.
+  useEffect(() => {
+    if (s.currentGoalId) setOpenId(s.currentGoalId);
+  }, [s.currentGoalId]);
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
@@ -121,25 +118,47 @@ export default function Plan() {
     );
   }
 
+  if (s.tab === "portfolio") {
+    return (
+      <div className="min-h-screen bg-bg">
+        <AppHeader />
+        <PortfolioTab />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-bg">
       <AppHeader />
 
-      {/* The overview band: night ground, same palette as the landing. Kept
-          shallow so the goals surface above the fold. */}
+      {/* The overview band: night ground carrying the numbers AND the goal
+          trajectories, Decade-style. The dark chart is the band's second
+          column; on small screens it stacks beneath the stats. */}
       <section className="bg-night">
-        <div className="mx-auto flex max-w-page flex-col gap-3 px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-5">
-          <div>
-            <span className="text-eyebrow uppercase text-on-night-2">Total saved</span>
-            <HeroAmount value={totalCapital(s)} />
-            <p className="mt-1 text-support text-on-night-2">
-              {s.goals.length
-                ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track`
-                : "Add a goal to start your plan"}
-            </p>
+        <div className="mx-auto grid max-w-page gap-x-10 gap-y-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-stretch">
+          <div className="flex h-full flex-col">
+            <div>
+              <span className="text-eyebrow uppercase text-on-night-2">Total saved</span>
+              <HeroAmount value={totalCapital(s)} />
+              <p className="mt-2 flex items-center gap-2 text-support text-on-night-2">
+                {s.goals.length > 0 && (
+                  <span
+                    aria-hidden
+                    className={`live-dot h-1.5 w-1.5 flex-none rounded-full ${
+                      onTrackCount === s.goals.length ? "bg-positive" : "bg-cau"
+                    }`}
+                  />
+                )}
+                {s.goals.length
+                  ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track`
+                  : "Add a goal to start your plan"}
+              </p>
+            </div>
+
+            <div className="flex-1" />
 
             {/* The breakup, inline in the band on a hairline divider. */}
-            <dl className="mt-3 flex flex-wrap items-stretch gap-x-6 gap-y-2 border-t border-on-night-3/40 pt-2.5">
+            <dl className="flex flex-wrap items-stretch gap-x-6 gap-y-2 border-t border-on-night-3/40 pt-3">
               {[
                 { label: "Cash", text: formatINR(s.currentSavings) },
                 { label: "Invested", text: formatINR(holdingsTotal(s)) },
@@ -164,21 +183,27 @@ export default function Plan() {
                 </div>
               ))}
             </dl>
+
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <Pill label="Add money" onBand onClick={() => actions.setTab("money")} />
+              <AddGoal onAdd={addGoal} onBand />
+              {firstOffTrack && (
+                <Pill label={`Fix ${firstOffTrack.name.toLowerCase()}`} accent onClick={() => openGoal(firstOffTrack.id)} />
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Pill label="Add money" onBand onClick={() => actions.setTab("money")} />
-            <AddGoal onAdd={addGoal} onBand />
-            {firstOffTrack && (
-              <Pill label={`Fix ${firstOffTrack.name.toLowerCase()}`} accent onClick={() => openGoal(firstOffTrack.id)} />
-            )}
-          </div>
+          {s.goals.length > 0 && (
+            <div className="min-w-0 lg:border-l lg:border-on-night-3/40 lg:pl-10">
+              <GoalsChart variant="night" />
+            </div>
+          )}
         </div>
       </section>
 
       {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
       <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
-        <div className={`grid gap-4 py-5 ${s.goals.length ? "lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)] lg:items-start" : ""}`}>
+        <div className={`grid gap-4 py-5 ${s.goals.length ? "lg:grid-cols-2 lg:items-start" : ""}`}>
           {/* Goals: the major pane (60 percent on desktop). */}
           <div className="flex min-w-0 flex-col gap-4">
             {s.goals.length > 0 && <AdvisorNote />}
@@ -240,20 +265,9 @@ export default function Plan() {
             )}
           </div>
 
-          {/* Investment mix: the 40 percent pane, always open beside the goals.
-              The macro numbers ride its footer as one quiet line: they are the
-              assumptions' backdrop, not a card of their own. */}
-          {s.goals.length > 0 && (
-            <section className="min-w-0 rounded-card border border-line bg-surface">
-              <div className="border-b border-line px-4 py-3">
-                <span className="text-support text-text">{mixLabel(s.portfolio)}</span>
-              </div>
-              <div className="p-3.5 sm:p-4">
-                <PortfolioBuilder />
-              </div>
-              <MacroStrip />
-            </section>
-          )}
+          {/* The portfolio glimpse: read-only beside the goals. Building
+              happens in the Portfolio tab; the plan page only looks. */}
+          {s.goals.length > 0 && <PortfolioGlimpse />}
         </div>
 
         <p className="pb-2 text-center text-caption text-text-2">

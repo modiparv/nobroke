@@ -1,10 +1,12 @@
 import type { AssetClass, AssetClassId, Fund } from "./types";
 
+// Colours come from the asset-class code in index.css: one hue per kind of
+// money, so a blue dot means stocks wherever it appears.
 export const ASSET_CLASSES: Record<AssetClassId, AssetClass> = {
-  equity: { id: "equity", label: "Stocks", color: "rgb(var(--text))", blurb: "Owning companies. Grows the most over long periods, but moves around more." },
-  debt: { id: "debt", label: "Bonds", color: "rgb(var(--text-2))", blurb: "Lending for steady, predictable returns. Calmer than stocks." },
-  gold: { id: "gold", label: "Gold", color: "rgb(var(--text-3))", blurb: "A safety cushion that tends to hold value when things wobble." },
-  hybrid: { id: "hybrid", label: "Mix", color: "rgb(var(--line-2))", blurb: "Stocks and bonds blended together in one fund." },
+  equity: { id: "equity", label: "Stocks", color: "var(--class-equity)", blurb: "Owning companies. Grows the most over long periods, but moves around more." },
+  debt: { id: "debt", label: "Bonds", color: "var(--class-debt)", blurb: "Lending for steady, predictable returns. Calmer than stocks." },
+  gold: { id: "gold", label: "Gold", color: "var(--class-gold)", blurb: "A safety cushion that tends to hold value when things wobble." },
+  hybrid: { id: "hybrid", label: "Mix", color: "var(--class-other)", blurb: "Stocks and bonds blended together in one fund." },
 };
 
 /** Illustrative dummy data for Indian funds — planning estimates, not advice. */

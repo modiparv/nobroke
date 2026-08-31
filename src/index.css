@@ -54,7 +54,7 @@
   --on-band-3: 128 143 170;
   --pos: 14 122 90;
   --pos-bg: 230 244 239;
-  --cau: 158 100 8;
+  --cau: 138 87 7;
   --cau-bg: 250 240 224;
   --neg: 179 38 30;
   --neg-bg: 249 232 231;
@@ -76,6 +76,29 @@
   --chart-4: #0b1b33;
   --chart-5: #8a8378;
   --chart-6: #b3261e;
+  /* The same categorical series, tuned for the night band. */
+  --chartn-1: #5c82ff;
+  --chartn-2: #34c88e;
+  --chartn-3: #e0a23c;
+  --chartn-4: #e9e5e0;
+  --chartn-5: #9b968f;
+  --chartn-6: #f0736a;
+  /* The asset-class colour code: ONE hue per kind of money, spoken everywhere
+     a holding appears — dots, bars, tinted tiles. Stocks are the brand blue,
+     funds the brand navy, bonds the calm green, gold is gold; cash and mixes
+     stay warm-neutral. Hues carry dots and bars (3:1+ on surfaces); tints
+     ground the treemap tiles with the hue as their ink (AA-checked). */
+  --class-equity: var(--chart-1);
+  --class-equity-bg: #eef2ff;
+  --class-funds: var(--chart-4);
+  --class-funds-bg: #e7eaef;
+  --class-debt: var(--chart-2);
+  --class-debt-bg: #e2f1eb;
+  --class-gold: rgb(var(--cau));
+  --class-gold-bg: #f6ecdb;
+  --class-cash: rgb(var(--text-2));
+  --class-cash-bg: #efede9;
+  --class-other: rgb(var(--text-3));
   /* Logo mark: brand constants. The falling and rising strokes keep their
      own colours in both themes. */
   --logo-fall: #0b1b33;
@@ -103,7 +126,7 @@ html {
 body {
   @apply bg-bg text-text font-sans antialiased;
   margin: 0;
-  font-size: 14px;
+  font-size: 13.5px;
   /* A stray wide popover must never put the page into sideways scroll. */
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;

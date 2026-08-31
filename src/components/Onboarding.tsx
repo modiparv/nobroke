@@ -27,10 +27,10 @@ function AccountStep({ step }: { step: Step }) {
   // form, just save this plan to their account and show it.
   if (s.user) {
     return (
-      <div className="fade-up mx-auto flex w-full max-w-sm flex-col items-center text-center">
-        <h1 className="text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">Your plan is ready.</h1>
+      <div className="fade-up w-full max-w-md">
+        <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">Your plan is ready.</h1>
         <p className="mt-3 text-muted">Signed in as {s.user.email}. We will save it to your account.</p>
-        <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
+        <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
           {step.cta}
         </button>
       </div>
@@ -104,12 +104,12 @@ function AccountStep({ step }: { step: Step }) {
   const invalid = credentialError(email, password, mode === "register") != null;
 
   return (
-    <div className="fade-up mx-auto flex w-full max-w-sm flex-col items-center text-center">
-      <h1 className="text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
+    <div className="fade-up w-full max-w-md">
+      <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
       <p className="mt-3 text-muted">{step.subtitle}</p>
 
       <form
-        className="mt-7 flex w-full flex-col gap-3"
+        className="mt-5 flex w-full flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault();
           void submit();
@@ -152,7 +152,7 @@ function AccountStep({ step }: { step: Step }) {
         </button>
       </form>
 
-      <div className="mt-4 flex flex-col items-center gap-2">
+      <div className="mt-4 flex flex-col items-start gap-2">
         <button
           type="button"
           onClick={() => {
@@ -253,11 +253,11 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
   };
 
   return (
-    <div className="fade-up flex w-full flex-col items-center text-center">
-      <h1 className="max-w-[22ch] text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
-      {step.subtitle && <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
-      <div className="mt-8 flex w-full max-w-sm items-center justify-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
-        <span className="text-2xl font-medium text-muted">₹</span>
+    <div className="fade-up w-full max-w-xl">
+      <h1 className="max-w-[22ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
+      {step.subtitle && <p className="mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
+      <div className="mt-6 flex w-full max-w-sm items-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
+        <span className="text-lg font-medium text-muted">₹</span>
         <input
           autoFocus
           type="text"
@@ -272,7 +272,7 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
           onKeyDown={(e) => {
             if (e.key === "Enter") commit();
           }}
-          className="num w-full bg-transparent text-center text-3xl font-medium tracking-tight outline-none sm:text-4xl"
+          className="num w-full bg-transparent text-xl font-medium tracking-tight outline-none sm:text-2xl"
         />
       </div>
       {min > 0 && raw !== "" && !ok && (
@@ -283,7 +283,7 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
           {challenge}
         </p>
       )}
-      <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={commit} disabled={!ok}>
+      <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={commit} disabled={!ok}>
         {challenge ? "Yes, this is right" : "Continue"}
       </button>
     </div>
@@ -414,40 +414,42 @@ export default function Onboarding() {
           )}
         </div>
 
-        <div className="flex flex-1 items-center">
+        <div className="flex-1 pt-5 sm:pt-8">
         {step.kind === "intro" && (
-          <div className="fade-up flex w-full flex-col items-center text-center">
-            <h1 className="max-w-[16ch] text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
-            <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
-            <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={next}>
+          <div className="fade-up w-full max-w-xl">
+            <h1 className="max-w-[16ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
+            <p className="mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
+            <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={next}>
               {step.cta}
             </button>
           </div>
         )}
 
+        {/* Ten options and a footer, in one frame: compact cards, tight gaps,
+            nothing that forces the page into scroll. */}
         {step.kind === "goals" && (
           <div className="fade-up w-full">
-            <h1 className="text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
-            <p className="mt-3 text-muted">{step.subtitle}</p>
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
+            <p className="mt-2 text-muted">{step.subtitle}</p>
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {GOALS.map((g) => {
                 const sel = s.selectedGoalIds.includes(g.id);
                 return (
                   <button
                     key={g.id}
                     onClick={() => actions.toggleGoal(g.id)}
-                    className={`flex flex-col gap-1 rounded-card border p-4 text-left transition ${
+                    className={`flex flex-col gap-0.5 rounded-xl border px-3 py-2.5 text-left transition ${
                       sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-accent"
                     }`}
                   >
-                    <span className="text-sm font-medium">{g.name}</span>
-                    <span className={`text-xs ${sel ? "text-on-accent/70" : "text-muted"}`}>{g.blurb}</span>
+                    <span className="text-support font-medium">{g.name}</span>
+                    <span className={`text-caption ${sel ? "text-on-accent/70" : "text-muted"}`}>{g.blurb}</span>
                   </button>
                 );
               })}
             </div>
-            <div className="mt-6 flex items-center justify-between">
-              <span className="text-sm font-medium text-muted">{s.selectedGoalIds.length}/3 picked</span>
+            <div className="mt-4 flex items-center justify-between">
+              <span className="text-support font-medium text-muted">{s.selectedGoalIds.length}/3 picked</span>
               <button className={`${btnIntake} px-10`} disabled={s.selectedGoalIds.length === 0} onClick={next}>
                 Continue
               </button>
@@ -457,7 +459,7 @@ export default function Onboarding() {
 
         {step.kind === "single" && (
           <div className="fade-up w-full">
-            <h1 className="text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
+            <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
             {step.subtitle && <p className="mt-3 text-muted">{step.subtitle}</p>}
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {step.options!.map((opt) => {
@@ -487,22 +489,25 @@ export default function Onboarding() {
 
           {step.kind === "connect" && (
             <div className="fade-up w-full">
-              <h1 className="text-2xl font-serif font-normal tracking-[-0.01em] text-display sm:text-3xl">{step.title}</h1>
+              <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
               <p className="mt-3 text-muted">{step.subtitle}</p>
-              <div className="mt-6 flex flex-col gap-3">
-                {CONNECT_SOURCES.map((c) => (
-                  <div key={c.name} className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-4">
+              <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
+                {CONNECT_SOURCES.map((c, idx) => (
+                  <div
+                    key={c.name}
+                    className={`flex items-center justify-between gap-3 px-4 py-2.5 ${idx > 0 ? "border-t border-line" : ""}`}
+                  >
                     <div className="min-w-0">
-                      <p className="text-row font-medium">{c.name}</p>
-                      <p className="mt-0.5 text-caption text-text-2">{c.via}</p>
+                      <p className="truncate text-support font-medium">{c.name}</p>
+                      <p className="truncate text-caption text-text-2">{c.via}</p>
                     </div>
-                    <span className="flex-none rounded-full border border-line px-2.5 py-1 text-index uppercase tracking-wide text-text-2">
-                      Coming soon
+                    <span className="flex-none rounded-full border border-line px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
+                      Soon
                     </span>
                   </div>
                 ))}
               </div>
-              <button className={`${btnIntake} mt-8 w-full max-w-sm`} onClick={next}>
+              <button className={`${btnIntake} mt-5 w-full max-w-sm`} onClick={next}>
                 Skip for now
               </button>
             </div>
