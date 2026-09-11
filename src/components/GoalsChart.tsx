@@ -22,7 +22,9 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
   const s = useStore();
   const goals = goalsByPriority(s);
   const night = variant === "night";
-  const H = night ? 200 : 300;
+  // One height everywhere: the band chart stands as tall as the card one,
+  // so the trajectories read as a chart, not a strip.
+  const H = 300;
   const palette = night ? NIGHT_PALETTE : PALETTE;
   const tone = night
     ? {

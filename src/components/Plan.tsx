@@ -202,7 +202,7 @@ export default function Plan() {
 
       {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
       <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
-        <div className="mx-auto max-w-3xl py-5">
+        <div className="mx-auto max-w-5xl py-5">
           {/* Goals: the sole pane. */}
           <div className="flex min-w-0 flex-col gap-4">
             {s.goals.length > 0 && <AdvisorNote />}
