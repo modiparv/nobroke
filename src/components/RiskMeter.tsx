@@ -27,7 +27,7 @@ export default function RiskMeter({ readOnly = false }: { readOnly?: boolean }) 
       className="mb-3 rounded-control bg-surface-2 px-3 py-2"
       title={
         readOnly
-          ? "Your risk level. Change it in the portfolio's Build view."
+          ? "Your risk level. Change it on the Portfolio tab."
           : s.riskAppetiteSource === "assessed"
             ? "Assessed from your income, cover, dependants and timelines. Slide it if it feels wrong."
             : "Set by you. Recommendations stay within it."

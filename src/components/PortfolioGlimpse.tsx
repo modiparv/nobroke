@@ -94,53 +94,11 @@ function Treemap({ items, ariaLabel }: { items: TreemapItem[]; ariaLabel: string
  *  hue itself. Colour states WHAT it is, never how it is doing — manual
  *  entries carry no return data, and pretending otherwise would be theatre. */
 
-/** One-line bridge from the goals-only plan page into the portfolio room:
- *  the class split as a thin bar, the plain label, and the way in. */
-export function PortfolioStrip() {
-  const s = useStore();
-  const total = allocationTotal(s.portfolio);
-  const open = () => actions.goPortfolio(total > 0 ? "overview" : "build");
-  const bands = bandWeights(s.portfolio);
-  const scale = total > 0 ? 100 / total : 0;
-  const segs = [
-    { label: "Equity", v: bands.equity * scale, color: ASSET_CLASSES.equity.color },
-    { label: "Debt", v: bands.debt * scale, color: ASSET_CLASSES.debt.color },
-    { label: "Gold", v: bands.gold * scale, color: ASSET_CLASSES.gold.color },
-  ].filter((x) => x.v > 0.5);
-  return (
-    <button
-      type="button"
-      onClick={open}
-      className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 rounded-card border border-line bg-surface px-4 py-3 text-left transition hover:border-line-2"
-    >
-      <span className={sectionLabel}>Portfolio</span>
-      {total > 0 ? (
-        <>
-          <span className="flex h-2 w-36 flex-none overflow-hidden rounded-full bg-line" aria-hidden>
-            {segs.map((sg) => (
-              <span key={sg.label} className="h-full" style={{ width: `${sg.v}%`, background: sg.color }} />
-            ))}
-          </span>
-          <span className="text-support font-medium text-text">{mixLabel(s.portfolio)}</span>
-          <span className="num hidden text-caption text-text-2 sm:inline">
-            {segs.map((sg) => `${sg.label} ${Math.round(sg.v)}%`).join(" · ")}
-          </span>
-        </>
-      ) : (
-        <span className="text-support text-text-2">Not invested yet</span>
-      )}
-      <span className="ml-auto text-support font-medium text-text underline underline-offset-2">
-        {total > 0 ? "View portfolio →" : "Build it →"}
-      </span>
-    </button>
-  );
-}
-
 export default function PortfolioGlimpse() {
   const s = useStore();
   const [view, setView] = useState<"holdings" | "goals">("holdings");
   const total = allocationTotal(s.portfolio);
-  const openPortfolio = () => actions.goPortfolio("build");
+  const openPortfolio = () => actions.setTab("portfolio");
   const openMoney = () => actions.setTab("money");
 
   if (total <= 0) {
@@ -210,11 +168,8 @@ export default function PortfolioGlimpse() {
       bg: onTrack ? "rgb(var(--pos-bg))" : "rgb(var(--cau-bg))",
       ink: onTrack ? "rgb(var(--pos))" : "rgb(var(--cau))",
       title: `${g.name} · ${formatINR(amount)} set aside · ${onTrack ? "on track" : "needs a change"}`,
-      // The plan page is goals-only now, so a goal tile carries you there.
-      onClick: () => {
-        actions.setCurrentGoal(g.id);
-        actions.setTab("plan");
-      },
+      // Selecting a tile opens that goal's workbench beside this pane.
+      onClick: () => actions.setCurrentGoal(g.id),
     };
   });
 
@@ -232,7 +187,7 @@ export default function PortfolioGlimpse() {
           onClick={openPortfolio}
           className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
         >
-          Build →
+          Manage →
         </button>
       </div>
 
