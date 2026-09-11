@@ -183,7 +183,7 @@ export default function PortfolioBuilder() {
       {s.goals.length > 0 && !matchesRec && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface-2 px-3 py-2.5">
           <span className="text-support text-ink">
-            Better fit: a {recLabel.toLowerCase()} mix.
+            Better fit: a {recLabel.toLowerCase()} portfolio.
           </span>
           {!matchesRec && (
             <button
@@ -203,11 +203,11 @@ export default function PortfolioBuilder() {
           <button
             onClick={() => setRiskOpen((v) => !v)}
             aria-expanded={riskOpen}
-            title={`${soonGoal.name} is ${soonGoal.horizonYears} ${soonGoal.horizonYears === 1 ? "year" : "years"} away and this mix leans on stocks.`}
+            title={`${soonGoal.name} is ${soonGoal.horizonYears} ${soonGoal.horizonYears === 1 ? "year" : "years"} away and this portfolio leans on stocks.`}
             className="flex w-full items-center justify-between gap-2 rounded-control bg-surface-2 px-2.5 py-1.5 text-left"
           >
             <span className="truncate text-xs text-ink">
-              ⚠️ <span className="font-medium">{soonGoal.name}</span> is close. Review the mix.
+              ⚠️ <span className="font-medium">{soonGoal.name}</span> is close. Review the portfolio.
             </span>
             <span className="flex-none text-caption text-muted">{riskOpen ? "Hide" : "Why"}</span>
           </button>
@@ -323,7 +323,7 @@ export default function PortfolioBuilder() {
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-              <Marker /> Your mix
+              <Marker /> Your portfolio
             </span>
             <span className="text-caption uppercase tracking-wide">
               <span className="font-medium text-ink">{formatINR(sip)}/mo</span>
@@ -355,8 +355,8 @@ export default function PortfolioBuilder() {
 
           {total === 0 && (
             <div className="mt-3 rounded-xl border border-dashed border-line bg-surface-2 px-4 py-5 text-center">
-              <p className="text-sm font-medium text-ink">Your mix is empty</p>
-              <p className="mt-1 text-caption text-muted">Tap a fund to add it, or pick a ready-made mix.</p>
+              <p className="text-sm font-medium text-ink">Your portfolio is empty</p>
+              <p className="mt-1 text-caption text-muted">Tap a fund to add it, or pick a ready-made portfolio.</p>
             </div>
           )}
 
@@ -389,7 +389,7 @@ export default function PortfolioBuilder() {
           {/* Presets — plain-language quick mixes */}
           <div className="mt-4">
             <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-              <Marker /> Ready-made mixes
+              <Marker /> Ready-made portfolios
             </span>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(["steady", "balanced", "bold"] as RiskProfile[]).map((key) => {
@@ -419,13 +419,13 @@ export default function PortfolioBuilder() {
               })}
             </div>
             {total === 0 && (
-              <p className="mt-2 text-center text-caption text-muted">Tap one to fill your mix.</p>
+              <p className="mt-2 text-center text-caption text-muted">Tap one to fill your portfolio.</p>
             )}
           </div>
 
           {equityHeavy && (
             <p className="mt-3 rounded-control bg-surface-2 px-3 py-2 text-center text-xs text-ink">
-              Add some bonds to steady out this stock-heavy mix.
+              Add some bonds to steady out this stock-heavy portfolio.
             </p>
           )}
 
@@ -435,7 +435,7 @@ export default function PortfolioBuilder() {
             <div className="mt-5">
               <div className="flex items-center justify-between gap-2">
                 <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-                  <Marker /> What's in your mix
+                  <Marker /> What's in your portfolio
                 </span>
                 <span className="text-index uppercase tracking-wide text-muted">
                   {holdings.length} {holdings.length === 1 ? "fund" : "funds"}

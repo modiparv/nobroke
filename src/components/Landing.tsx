@@ -35,7 +35,7 @@ const OFFERINGS = [
   {
     title: "One portfolio funds every goal",
     paras: [
-      "Not a bucket per dream. A single mix, matched to the risk you can actually live with, carries the house, the wedding and the retirement together.",
+      "Not a bucket per dream. A single portfolio, matched to the risk you can actually live with, carries the house, the wedding and the retirement together.",
       "Each goal gets a target, a date, and the monthly amount it truly needs.",
     ],
   },
@@ -43,7 +43,7 @@ const OFFERINGS = [
     title: "Ask. It runs the numbers.",
     paras: [
       "Change the plan in plain words: the monthly, a target, a horizon. It happens on the spot, every number recomputed.",
-      "Anything else you ask is answered against your whole plan: every goal, target, monthly, projection and mix.",
+      "Anything else you ask is answered against your whole plan: every goal, target, monthly, projection and holding.",
     ],
   },
 ];

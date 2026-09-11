@@ -134,7 +134,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
         ))}
       </ul>
       <p className={`mt-2 ${tone.caption}`}>
-        Lines follow each goal's share of your money at the mix's historical pace. Hollow circles mark what each goal
+        Lines follow each goal's share of your money at your portfolio's historical pace. Hollow circles mark what each goal
         needs by its date.
       </p>
     </Wrapper>

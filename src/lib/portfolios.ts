@@ -31,12 +31,12 @@ export function autoAllocation(horizonYears: number): { profile: RiskProfile; al
   return { profile, allocation: { ...MODEL_PORTFOLIOS[profile].allocation } };
 }
 
-/** Plain-language description of the one shared mix. Never a percentage here. */
+/** Plain words for the shared portfolio's tilt. Never a percentage, never a riddle. */
 export function mixLabel(alloc: Allocation): string {
   const total = allocationTotal(alloc);
   if (total <= 0) return "Not invested yet";
   const equityShare = bandWeights(alloc).equity / total;
-  if (equityShare >= 0.65) return "Mostly-stocks mix";
-  if (equityShare <= 0.35) return "Mostly-bonds mix";
-  return "Balanced mix";
+  if (equityShare >= 0.65) return "Mostly stocks";
+  if (equityShare <= 0.35) return "Mostly bonds";
+  return "Balanced";
 }

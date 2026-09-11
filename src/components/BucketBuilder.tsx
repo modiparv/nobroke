@@ -17,8 +17,9 @@ import { sectionLabel } from "../ui";
 /**
  * The bucket studio: the right half of the portfolio room. A drafting table —
  * drag instruments from the pool into the bucket, weight them, name the goal
- * it is for — that touches nothing until "Make this the live mix" hands the
- * draft to the engine. The left pane is the live mix; this is the sketchbook.
+ * it is for — that touches nothing until "Make this my portfolio" hands the
+ * draft to the engine. The left pane is the live portfolio; this is the
+ * sketchbook.
  */
 
 function Grip() {
@@ -63,7 +64,7 @@ export default function BucketBuilder() {
       <div className="p-3.5 sm:p-4">
         <p className="text-support text-text-2">
           Your methodology, your bucket. Drag instruments in from the pool, weight them, and when it feels right, make
-          it the live mix.
+          it your portfolio.
         </p>
 
         {/* What this bucket is for. Chips wrap; nothing here ever scrolls. */}
@@ -194,14 +195,14 @@ export default function BucketBuilder() {
                 onClick={actions.applyBucketAsMix}
                 className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-control bg-accent-fill text-support font-medium text-on-accent transition hover:bg-accent-fill-hi disabled:cursor-not-allowed disabled:bg-line-2 disabled:text-text-2"
               >
-                {isLive ? "This is the live mix" : "Make this the live mix"}
+                {isLive ? "This is your portfolio now" : "Make this my portfolio"}
               </button>
               <p className="mt-1.5 text-center text-caption text-text-2">
                 {isLive
                   ? "The pane on the left is running exactly this bucket."
                   : goalName
-                    ? `Replaces the mix on the left. One shared mix powers every goal, ${goalName} in front.`
-                    : "Replaces the mix on the left. Every goal grows in the one shared mix."}
+                    ? `Replaces the portfolio on the left. One shared portfolio powers every goal, ${goalName} in front.`
+                    : "Replaces the portfolio on the left. Every goal grows in one shared portfolio."}
               </p>
             </>
           )}
