@@ -183,7 +183,7 @@ function HeroPath() {
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="text-eyebrow uppercase text-accent">One line, every goal</span>
+        <span className="text-eyebrow uppercase text-accent-hi">One line, every goal</span>
         <span className="num text-caption text-text-2">₹25,000 a month · Illustrative, not advice</span>
       </div>
       <svg
@@ -193,7 +193,7 @@ function HeroPath() {
         aria-label="A rising line through three goals: safety net 2027, first home 2034, early retirement 2046"
       >
         {/* What you put in: the quiet dashed floor. */}
-        <path d="M0 196 L 720 152" stroke="rgb(var(--line-2))" strokeWidth="1.5" strokeDasharray="4 5" fill="none" />
+        <path d="M0 196 L 720 152" stroke="rgb(var(--text-2))" strokeWidth="1.2" strokeDasharray="4 5" fill="none" />
         {/* The rising line, through each goal's hollow circle. */}
         <polyline
           points="0,190 80,184 160,172 240,158 320,142 400,124 480,102 560,78 640,52 720,26"
@@ -214,7 +214,7 @@ function HeroPath() {
           <text x="640" y="34" textAnchor="end">Early retirement · 2046</text>
         </g>
       </svg>
-      <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-line pt-3.5">
+      <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-line-2 pt-3.5">
         <span className="num text-section font-medium text-text">₹37.0L</span>
         <span className="text-caption text-text-2">
           projected for the home by 2034 · put in <span className="num font-medium text-text">₹24.0L</span> · growth{" "}
@@ -276,7 +276,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-line-2 bg-sidebar/90 backdrop-blur">
         <div className={`${container} flex h-14 items-center justify-between`}>
           <Logo />
           {signedIn ? (
@@ -298,11 +298,12 @@ export default function Landing() {
 
       {showAuth && <AuthSheet initialMode="login" onClose={() => setShowAuth(false)} onAuthed={afterAuth} />}
 
-      {/* Hero: ruled paper, one column, and the product's own rising line. */}
-      <section className="paper-grid border-b border-line">
+      {/* Hero: the intake's greige, ruled like paper, one column, and the
+          product's own rising line. */}
+      <section className="paper-grid-greige border-b border-line-2">
         <div className={`${container} py-14 sm:py-20`}>
           <div className="max-w-3xl">
-            <span className={eyebrow}>Wealth, minus the noise</span>
+            <span className="text-eyebrow uppercase text-accent-hi">Wealth, minus the noise</span>
             <h1 className="mt-4 text-3xl font-medium leading-[1.06] tracking-[-0.025em] text-text sm:text-5xl">
               We won't let you go broke.
             </h1>
@@ -414,7 +415,7 @@ export default function Landing() {
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {LAYERS.map((l, idx) => (
               <div key={l.title} className="overflow-hidden rounded-card border border-line bg-surface">
-                <div className="paper-grid flex h-44 items-center justify-center border-b border-line">{l.art}</div>
+                <div className="paper-grid-greige flex h-44 items-center justify-center border-b border-line">{l.art}</div>
                 <div className="p-5">
                   <span className="num text-index uppercase tracking-[0.13em] text-accent">Layer {idx + 1}</span>
                   <h3 className="mt-2 text-section font-medium">{l.title}</h3>
