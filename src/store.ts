@@ -53,6 +53,8 @@ export interface AppState {
   goalOrderCustom: boolean;
   /** Which surface is showing: the plan, the portfolio room, or money. */
   tab: "plan" | "portfolio" | "money";
+  /** Inside the portfolio room: reading it (overview) or building it. */
+  portfolioView: "overview" | "build";
   /**
    * True once the user sets a goal's monthly amount by hand. Balancing the split
    * is otherwise silent and automatic (there is no Auto-balance button), but an
@@ -136,6 +138,7 @@ const defaults: AppState = {
   goalOrder: [],
   goalOrderCustom: false,
   tab: "plan",
+  portfolioView: "build",
   goalSharesCustom: false,
   portfolio: {},
   portfolioProfile: null,
@@ -413,6 +416,9 @@ export const actions = {
   goLanding: () => set({ screen: "landing" }),
   goPlan: () => set({ screen: "plan" }),
   setTab: (tab: AppState["tab"]) => set({ tab }),
+  /** Open the portfolio room on a specific view (the plan's strip lands on
+      overview; builders land on build). */
+  goPortfolio: (portfolioView: AppState["portfolioView"]) => set({ tab: "portfolio", portfolioView }),
 
   // ---- Account ----
   /**

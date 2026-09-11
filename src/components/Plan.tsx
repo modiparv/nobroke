@@ -9,7 +9,7 @@ import AppHeader from "./AppHeader";
 import GoalCard from "./GoalCard";
 import GoalsChart from "./GoalsChart";
 import MoneyTab from "./MoneyTab";
-import PortfolioGlimpse from "./PortfolioGlimpse";
+import { PortfolioStrip } from "./PortfolioGlimpse";
 import PortfolioTab from "./PortfolioTab";
 
 const inrDigits = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
@@ -69,11 +69,10 @@ function AddGoal({ onAdd, onBand }: { onAdd: (id: string) => void; onBand?: bool
 }
 
 /**
- * The plan screen.
- *
- * Two panes side by side on desktop, split 60/40: goals are the major pane
- * because they are the object the user manipulates; the investment mix rides
- * alongside at 40 percent. Below 1024px the mix drops beneath the goals.
+ * The plan screen: goals, and only goals. The night band carries the
+ * numbers and every trajectory; beneath it the goal cards get the whole
+ * width of one calm column. The portfolio lives in its own room now — the
+ * one-line strip under the goals is the bridge there.
  */
 export default function Plan() {
   const s = useStore();
@@ -203,8 +202,8 @@ export default function Plan() {
 
       {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
       <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
-        <div className={`grid gap-4 py-5 ${s.goals.length ? "lg:grid-cols-2 lg:items-start" : ""}`}>
-          {/* Goals: the major pane (60 percent on desktop). */}
+        <div className="mx-auto max-w-3xl py-5">
+          {/* Goals: the sole pane. */}
           <div className="flex min-w-0 flex-col gap-4">
             {s.goals.length > 0 && <AdvisorNote />}
 
@@ -263,11 +262,10 @@ export default function Plan() {
                 </ul>
               </section>
             )}
-          </div>
 
-          {/* The portfolio glimpse: read-only beside the goals. Building
-              happens in the Portfolio tab; the plan page only looks. */}
-          {s.goals.length > 0 && <PortfolioGlimpse />}
+            {/* The bridge to the portfolio room: one line, whole-strip tap. */}
+            {s.goals.length > 0 && <PortfolioStrip />}
+          </div>
         </div>
 
         <p className="pb-2 text-center text-caption text-text-2">
