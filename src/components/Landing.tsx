@@ -275,8 +275,8 @@ export default function Landing() {
   const eyebrow = "text-eyebrow uppercase text-accent";
 
   return (
-    <div className="min-h-screen bg-surface">
-      <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
+    <div className="min-h-screen bg-bg">
+      <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
         <div className={`${container} flex h-14 items-center justify-between`}>
           <Logo />
           {signedIn ? (
@@ -358,8 +358,9 @@ export default function Landing() {
         </Reveal>
       </section>
 
-      {/* Human + AI: a plain two-column ledger. No circles, no theatre. */}
-      <section className="border-y border-line bg-bg">
+      {/* Human + AI: a plain two-column ledger. No circles, no theatre. The
+          white table lifts off the warm paper on its own. */}
+      <section className="border-y border-line">
         <div className={`${container} py-14 sm:py-20`}>
           <Reveal>
             <div className="text-center">
