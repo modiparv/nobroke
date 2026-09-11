@@ -6,10 +6,12 @@ import Logo from "./Logo";
 import SupportPill from "./SupportPill";
 
 /**
- * Landing, in the Decade register: near-monochrome, serif display set dimmer
- * than the numbers, black night sections that stay black in both themes, and
- * copy in short plain sentences. Every claim is scoped to what the product
- * does today.
+ * Landing, in NoBroke's own register: blueprint minimalism. White ruled
+ * paper (the notebook a plan is born in), one geometric face, brand blue as
+ * the single accent, and the logo's rising line as the recurring motif —
+ * the product's own chart language doing the talking. The one deep moment
+ * is the brand navy, never black. Every claim is scoped to what the
+ * product does today.
  */
 
 /** Set to the founder's LinkedIn URL to light up the footer link. */
@@ -17,7 +19,6 @@ const FOUNDER_LINKEDIN = "https://www.linkedin.com/in/parv-modi-3008p/";
 
 const OFFERINGS = [
   {
-    n: "01",
     title: "See everything you own",
     paras: [
       "Cash, mutual funds, FDs, gold, EPF. One clean view of your wealth, today.",
@@ -25,7 +26,6 @@ const OFFERINGS = [
     ],
   },
   {
-    n: "02",
     title: "A plan built from real numbers",
     paras: [
       "Five short sections: income, spending, what you hold, your context, your goals. Every answer shapes the plan, so none can be skipped.",
@@ -33,7 +33,6 @@ const OFFERINGS = [
     ],
   },
   {
-    n: "03",
     title: "One portfolio funds every goal",
     paras: [
       "Not a bucket per dream. A single mix, matched to the risk you can actually live with, carries the house, the wedding and the retirement together.",
@@ -41,7 +40,6 @@ const OFFERINGS = [
     ],
   },
   {
-    n: "04",
     title: "Ask. It runs the numbers.",
     paras: [
       "Change the plan in plain words: the monthly, a target, a horizon. It happens on the spot, every number recomputed.",
@@ -71,7 +69,6 @@ const TIERS = [
       "Portfolio x-ray and deeper nudges",
       "Priority copilot",
     ],
-    cta: "soon" as const,
   },
   {
     name: "Meru",
@@ -87,22 +84,21 @@ const TIERS = [
       "Tax lens on every holding",
       "A named human wealth manager, 1:1 reviews",
     ],
-    cta: "soon" as const,
   },
 ];
 
-/** Stacked safety-net chip, goal arc, rising line: quiet monochrome line art
- *  for the layer cards, drawn from tokens so both themes carry it. */
+/** Line art for the layer cards: quiet hairlines with the blue doing only
+ *  the load-bearing stroke, drawn from tokens. */
 const LAYERS = [
   {
     title: "Protect",
     body: "A cushion check before anything else: if cash covers less than three months of expenses, the plan says so plainly. Risk appetite is read from your answers, then handed to you. One slide to change.",
     art: (
       <div className="relative" aria-hidden>
-        <div className="absolute -bottom-4 left-1/2 h-10 w-40 -translate-x-1/2 rounded-xl border border-line-2 bg-surface" />
-        <div className="absolute -bottom-2 left-1/2 h-10 w-44 -translate-x-1/2 rounded-xl border border-line-2 bg-surface" />
+        <div className="absolute -bottom-4 left-1/2 h-10 w-40 -translate-x-1/2 rounded-xl border border-line bg-surface" />
+        <div className="absolute -bottom-2 left-1/2 h-10 w-44 -translate-x-1/2 rounded-xl border border-line bg-surface" />
         <div className="relative flex h-11 w-48 items-center justify-center gap-2 rounded-xl border border-line-2 bg-surface">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-text-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--accent-text))" strokeWidth="1.6">
             <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
           </svg>
           <span className="text-index uppercase tracking-[0.13em] text-text-2">Safety net</span>
@@ -118,7 +114,7 @@ const LAYERS = [
         <span className="text-index uppercase tracking-[0.13em] text-text-3">Goals</span>
         <svg viewBox="0 0 200 78" className="w-44 text-text-2">
           <path d="M22 74 A 78 78 0 0 1 178 74" fill="none" stroke="rgb(var(--text-3))" strokeDasharray="3 4" />
-          <g fill="rgb(var(--surface))" stroke="rgb(var(--text-3))">
+          <g fill="rgb(var(--surface))" stroke="rgb(var(--accent-text))">
             <circle cx="46" cy="45" r="13" />
             <circle cx="100" cy="20" r="13" />
             <circle cx="154" cy="45" r="13" />
@@ -137,7 +133,7 @@ const LAYERS = [
     body: "One portfolio carries every goal, tuned to your horizon and risk. Projections show the arithmetic: expected return, the gap, what changes if you wait.",
     art: (
       <svg viewBox="0 0 220 120" className="w-52" aria-hidden>
-        <g stroke="rgb(var(--line-2))" strokeWidth="1">
+        <g stroke="rgb(var(--line))" strokeWidth="1">
           <line x1="10" y1="10" x2="10" y2="110" />
           <line x1="60" y1="10" x2="60" y2="110" />
           <line x1="110" y1="10" x2="110" y2="110" />
@@ -151,17 +147,17 @@ const LAYERS = [
         <polyline
           points="10,105 30,98 50,100 70,88 90,90 110,78 130,72 150,60 170,50 190,35 210,18"
           fill="none"
-          stroke="rgb(var(--text-2))"
-          strokeWidth="1.6"
+          stroke="rgb(var(--accent-text))"
+          strokeWidth="2"
           strokeLinejoin="round"
         />
-        <circle cx="210" cy="18" r="3.5" fill="rgb(var(--text))" />
+        <circle cx="210" cy="18" r="3.5" fill="rgb(var(--accent-text))" />
       </svg>
     ),
   },
 ];
 
-/** The division of labour, in Decade's two-list form. The AI column states
+/** The division of labour as a plain two-column ledger. The AI column states
  *  only what the engine truly does. */
 const HUMAN_ROWS = [
   "Chooses the goals that matter",
@@ -177,35 +173,53 @@ const AI_ROWS = [
 ];
 
 /**
- * The hero graphic is the product's own arithmetic, not an illustration:
+ * The hero graphic is the product's own arithmetic drawn on the ruled paper:
  * ₹25,000 a month for 8 years at a conservative return is what the curve and
- * every number here actually compute to. The projected figure is the
- * brightest thing in the hero, which is the whole hierarchy in one card.
+ * every printed number compute to (put in ₹24.0L, growth ₹13.0L, ₹37.0L by
+ * 2034). The other circles mark goals on the same path without inventing
+ * figures for them. The projected number stays the brightest thing here.
  */
-function HeroProjection() {
+function HeroPath() {
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="text-eyebrow uppercase text-on-night-3">A goal, projected</span>
-        <span className="text-caption text-on-night-2">Home down payment · 2034</span>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="text-eyebrow uppercase text-accent">One line, every goal</span>
+        <span className="num text-caption text-text-2">₹25,000 a month · Illustrative, not advice</span>
       </div>
-      <p className="num mt-3 text-hero font-medium text-on-night">₹37.0L</p>
-      <p className="mt-0.5 text-caption text-on-night-2">
-        projected by 2034, at <span className="num">₹25,000</span> a month
-      </p>
-      <svg viewBox="0 0 320 110" className="mt-4 w-full" role="img" aria-label="Projected value curving above the amount put in">
-        <path d="M0 106 C 100 100, 210 88, 320 62" className="stroke-on-night-2" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
-        <path d="M0 104 C 90 96, 180 76, 320 22" className="stroke-on-night" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-        <circle cx="320" cy="22" r="4" className="fill-on-night" />
+      <svg
+        viewBox="0 0 720 216"
+        className="mt-3 w-full"
+        role="img"
+        aria-label="A rising line through three goals: safety net 2027, first home 2034, early retirement 2046"
+      >
+        {/* What you put in: the quiet dashed floor. */}
+        <path d="M0 196 L 720 152" stroke="rgb(var(--line-2))" strokeWidth="1.5" strokeDasharray="4 5" fill="none" />
+        {/* The rising line, through each goal's hollow circle. */}
+        <polyline
+          points="0,190 80,184 160,172 240,158 320,142 400,124 480,102 560,78 640,52 720,26"
+          fill="none"
+          stroke="rgb(var(--accent-text))"
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        <g fill="rgb(var(--surface))" stroke="rgb(var(--accent-text))" strokeWidth="2">
+          <circle cx="160" cy="172" r="6" />
+          <circle cx="400" cy="124" r="6" />
+          <circle cx="640" cy="52" r="6" />
+        </g>
+        <g fontSize="11" fill="rgb(var(--text-2))">
+          <text x="160" y="206">Safety net · 2027</text>
+          <text x="400" y="106" textAnchor="middle">First home · 2034</text>
+          <text x="640" y="34" textAnchor="end">Early retirement · 2046</text>
+        </g>
       </svg>
-      <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-on-night-3/40 pt-3">
-        <span className="text-caption text-on-night-2">
-          Put in <span className="num font-medium text-on-night">₹24.0L</span>
+      <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-line pt-3.5">
+        <span className="num text-section font-medium text-text">₹37.0L</span>
+        <span className="text-caption text-text-2">
+          projected for the home by 2034 · put in <span className="num font-medium text-text">₹24.0L</span> · growth{" "}
+          <span className="num font-medium text-text">₹13.0L</span>
         </span>
-        <span className="text-caption text-on-night-2">
-          Growth <span className="num font-medium text-on-night">₹13.0L</span>
-        </span>
-        <span className="text-index uppercase text-on-night-3">Illustrative</span>
       </div>
     </div>
   );
@@ -250,30 +264,31 @@ export default function Landing() {
     else actions.startOnboarding();
   };
 
-  // Decade palette: interactive elements are ink, not brand blue. Ink inverts
-  // cleanly per theme; night sections get the fixed warm-white button.
-  const btnInk =
-    "inline-flex h-10 items-center justify-center whitespace-nowrap rounded-control bg-text px-4 text-support font-medium text-bg transition hover:opacity-85";
-  const btnInkLg =
-    "inline-flex h-12 items-center justify-center whitespace-nowrap rounded-control bg-text px-7 text-sm font-medium text-bg transition hover:opacity-85";
+  // The landing's accent is the brand blue — the same stroke that rises in
+  // the logo. In the product, fills stay ink; out here the blue is the brand.
+  const btnBlue =
+    "inline-flex h-10 items-center justify-center whitespace-nowrap rounded-control bg-accent px-4 text-support font-medium text-surface transition hover:bg-accent-hi";
+  const btnBlueLg =
+    "inline-flex h-12 items-center justify-center whitespace-nowrap rounded-control bg-accent px-7 text-sm font-medium text-surface transition hover:bg-accent-hi";
 
   const container = "mx-auto max-w-page px-4 sm:px-6";
+  const eyebrow = "text-eyebrow uppercase text-accent";
 
   return (
-    <div className="min-h-screen bg-bg">
-      <header className="sticky top-3 z-30 px-3 sm:px-4">
-        <div className="mx-auto flex h-14 max-w-page items-center justify-between rounded-full border border-line-2 bg-sidebar px-4 sm:px-5">
+    <div className="min-h-screen bg-surface">
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
+        <div className={`${container} flex h-14 items-center justify-between`}>
           <Logo />
           {signedIn ? (
-            <button className={btnInk} onClick={afterAuth}>
+            <button className={btnBlue} onClick={afterAuth}>
               Go to my plan
             </button>
           ) : (
             <div className="flex items-center gap-2">
-              <button className={`${btnGhost} px-3.5 py-2`} onClick={() => setShowAuth(true)}>
+              <button className={`${btnGhost} border-transparent px-3.5 py-2`} onClick={() => setShowAuth(true)}>
                 Login
               </button>
-              <button className={btnInk} onClick={actions.startOnboarding}>
+              <button className={btnBlue} onClick={actions.startOnboarding}>
                 Join the waitlist
               </button>
             </div>
@@ -283,11 +298,12 @@ export default function Landing() {
 
       {showAuth && <AuthSheet initialMode="login" onClose={() => setShowAuth(false)} onAuthed={afterAuth} />}
 
-      <section className={container}>
-        <div className="grid items-center gap-10 py-16 sm:py-24 lg:grid-cols-[1fr_400px] lg:gap-16">
+      {/* Hero: ruled paper, one column, and the product's own rising line. */}
+      <section className="paper-grid border-b border-line">
+        <div className={`${container} py-14 sm:py-20`}>
           <div className="max-w-3xl">
-            <span className="text-eyebrow uppercase text-text-3">Wealth, minus the noise</span>
-            <h1 className="mt-4 font-serif text-2xl font-normal leading-[1.08] tracking-[-0.015em] text-display sm:text-4xl">
+            <span className={eyebrow}>Wealth, minus the noise</span>
+            <h1 className="mt-4 text-3xl font-medium leading-[1.06] tracking-[-0.025em] text-text sm:text-5xl">
               We won't let you go broke.
             </h1>
             <p className="mt-5 max-w-xl text-body text-text-2">
@@ -296,42 +312,40 @@ export default function Landing() {
             </p>
             <div className="mt-8 flex flex-wrap gap-2.5">
               {signedIn ? (
-                <button className={btnInkLg} onClick={afterAuth}>
+                <button className={btnBlueLg} onClick={afterAuth}>
                   Go to my plan
                 </button>
               ) : (
                 <>
-                  <button className={btnInkLg} onClick={actions.startOnboarding}>
+                  <button className={btnBlueLg} onClick={actions.startOnboarding}>
                     Join the waitlist
                   </button>
-                  <button className={`${btnGhost} h-12 px-6`} onClick={() => setShowAuth(true)}>
+                  <button className={`${btnGhost} h-12 bg-surface px-6`} onClick={() => setShowAuth(true)}>
                     Login
                   </button>
                 </>
               )}
             </div>
           </div>
-          <div className="rounded-screen bg-night p-6 sm:p-8">
-            <HeroProjection />
+          <div className="mt-14 sm:mt-16">
+            <HeroPath />
           </div>
         </div>
       </section>
 
+      {/* What it does: a ledger, not a brochure. Row by row, hairline by
+          hairline, each entry marked with the blue index square. */}
       <section className={container}>
-        <Reveal className="border-t border-line py-14 sm:py-20">
-          <div className="grid border border-line sm:grid-cols-2">
-            {OFFERINGS.map((o, idx) => (
-              <article
-                key={o.n}
-                className={`p-7 max-sm:border-b max-sm:border-line max-sm:last:border-b-0 sm:p-9 ${
-                  idx % 2 === 0 ? "sm:border-r sm:border-line" : ""
-                } ${idx < 2 ? "sm:border-b sm:border-line" : ""}`}
-              >
-                <span className="num text-support text-text-3">{o.n}</span>
-                <h3 className="mt-3 font-serif text-xl font-normal tracking-[-0.01em] text-display sm:text-2xl">
+        <Reveal className="py-14 sm:py-20">
+          <span className={eyebrow}>What it does</span>
+          <div className="mt-5 border-t border-line">
+            {OFFERINGS.map((o) => (
+              <article key={o.title} className="grid gap-3 border-b border-line py-7 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-10 sm:py-9">
+                <h3 className="flex items-baseline gap-3 text-headline font-medium text-text">
+                  <span aria-hidden className="relative top-[-2px] inline-block h-2 w-2 flex-none bg-accent" />
                   {o.title}
                 </h3>
-                <div className="mt-4 flex max-w-xl flex-col gap-3">
+                <div className="flex max-w-xl flex-col gap-3 sm:pl-0">
                   {o.paras.map((p) => (
                     <p key={p} className="text-sm leading-relaxed text-text-2">
                       {p}
@@ -344,63 +358,46 @@ export default function Landing() {
         </Reveal>
       </section>
 
-      {/* Night section: stays near-black in both themes, like Decade's. */}
-      <section className="bg-night">
-        <div className={`${container} py-16 sm:py-24`}>
+      {/* Human + AI: a plain two-column ledger. No circles, no theatre. */}
+      <section className="border-y border-line bg-bg">
+        <div className={`${container} py-14 sm:py-20`}>
           <Reveal>
-            <h2 className="mx-auto max-w-2xl text-center text-xl font-medium leading-[1.15] tracking-[-0.02em] text-on-night-2 sm:text-2xl">
-              Human judgment, combined with the precision of AI.
-            </h2>
-            <div className="mt-14 grid items-center gap-10 border border-on-night-3/40 p-6 sm:p-10 lg:grid-cols-[1fr_360px_1fr] lg:gap-8">
-              <div>
-                <span className="text-support font-medium text-on-night">Human Judgment</span>
-                <ul className="mt-4">
+            <div className="text-center">
+              <span className={eyebrow}>Human + AI</span>
+              <h2 className="mx-auto mt-3 max-w-2xl text-xl font-medium leading-[1.15] tracking-[-0.02em] text-text sm:text-2xl">
+                Your judgment, carried by numbers that never sleep.
+              </h2>
+            </div>
+            <div className="mx-auto mt-10 grid max-w-3xl border border-line bg-surface sm:grid-cols-2">
+              <div className="p-6 max-sm:border-b max-sm:border-line sm:border-r sm:border-line sm:p-8">
+                <span className="text-support font-medium text-text">Human judgment</span>
+                <ul className="mt-3">
                   {HUMAN_ROWS.map((r) => (
-                    <li key={r} className="border-b border-on-night-3/40 py-3.5 text-base text-on-night-2">
+                    <li key={r} className="border-b border-line py-3 text-sm text-text-2 last:border-b-0">
                       {r}
                     </li>
                   ))}
                 </ul>
               </div>
-
-              <svg
-                viewBox="0 0 360 240"
-                className="mx-auto w-full max-w-[340px]"
-                role="img"
-                aria-label="Two overlapping circles: human judgment and NoBroke AI, meeting in wealth intelligence"
-              >
-                <defs>
-                  <pattern id="venn-hatch" width="5" height="8" patternUnits="userSpaceOnUse">
-                    <line x1="2.5" y1="0" x2="2.5" y2="8" stroke="rgb(var(--on-night-3))" strokeWidth="1" opacity="0.6" />
-                  </pattern>
-                  <clipPath id="venn-left">
-                    <circle cx="130" cy="120" r="104" />
-                  </clipPath>
-                </defs>
-                <g clipPath="url(#venn-left)">
-                  <circle cx="230" cy="120" r="104" fill="url(#venn-hatch)" />
-                </g>
-                <circle cx="130" cy="120" r="104" fill="none" stroke="rgb(var(--on-night-3))" strokeWidth="1" />
-                <circle cx="230" cy="120" r="104" fill="none" stroke="rgb(var(--on-night-3))" strokeWidth="1" />
-                <text x="180" y="112" textAnchor="middle" fill="rgb(var(--on-night))" fontSize="15" fontWeight="500">
-                  Goal
-                </text>
-                <text x="180" y="132" textAnchor="middle" fill="rgb(var(--on-night))" fontSize="15" fontWeight="500">
-                  Intelligence
-                </text>
-              </svg>
-
-              <div className="lg:text-right">
-                <span className="text-support font-medium text-on-night">NoBroke AI</span>
-                <ul className="mt-4">
+              <div className="p-6 sm:p-8">
+                <span className="text-support font-medium text-text">NoBroke AI</span>
+                <ul className="mt-3">
                   {AI_ROWS.map((r) => (
-                    <li key={r} className="border-b border-on-night-3/40 py-3.5 text-base text-on-night-2">
+                    <li key={r} className="border-b border-line py-3 text-sm text-text-2 last:border-b-0">
                       {r}
                     </li>
                   ))}
                 </ul>
               </div>
             </div>
+            <p className="mt-5 text-center text-support text-text-2">
+              Where the two meet, we call it{" "}
+              <span className="inline-flex items-baseline gap-1.5 font-medium text-text">
+                <span aria-hidden className="relative top-[-1px] inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+                Goal Intelligence
+              </span>
+              .
+            </p>
           </Reveal>
         </div>
       </section>
@@ -408,17 +405,17 @@ export default function Landing() {
       <section className={container}>
         <Reveal className="py-14 sm:py-20">
           <div className="text-center">
-            <span className="text-eyebrow uppercase text-text-3">Our philosophy</span>
-            <h2 className="mt-3 font-serif text-xl font-normal tracking-[-0.01em] text-display sm:text-2xl">
-              We plan in decades, not quarters.
+            <span className={eyebrow}>Our philosophy</span>
+            <h2 className="mt-3 text-xl font-medium tracking-[-0.02em] text-text sm:text-2xl">
+              We plan in lifetimes, not market cycles.
             </h2>
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {LAYERS.map((l, idx) => (
               <div key={l.title} className="overflow-hidden rounded-card border border-line bg-surface">
-                <div className="flex h-44 items-center justify-center border-b border-line">{l.art}</div>
+                <div className="paper-grid flex h-44 items-center justify-center border-b border-line">{l.art}</div>
                 <div className="p-5">
-                  <span className="num text-index uppercase tracking-[0.13em] text-text-3">Layer {idx + 1}</span>
+                  <span className="num text-index uppercase tracking-[0.13em] text-accent">Layer {idx + 1}</span>
                   <h3 className="mt-2 text-section font-medium">{l.title}</h3>
                   <p className="mt-2 text-support text-text-2">{l.body}</p>
                 </div>
@@ -431,8 +428,8 @@ export default function Landing() {
       <section id="pricing" className={container}>
         <Reveal className="border-t border-line py-14 sm:py-20">
           <div className="text-center">
-            <span className="text-eyebrow uppercase text-text-3">Pricing</span>
-            <h2 className="mt-3 font-serif text-xl font-normal tracking-[-0.01em] text-display sm:text-2xl">
+            <span className={eyebrow}>Pricing</span>
+            <h2 className="mt-3 text-xl font-medium tracking-[-0.02em] text-text sm:text-2xl">
               Two tiers. One promise.
             </h2>
           </div>
@@ -441,11 +438,11 @@ export default function Landing() {
               <div
                 key={t.name}
                 className={`relative flex flex-col rounded-card border bg-surface p-5 ${
-                  t.popular ? "border-text" : "border-line"
+                  t.popular ? "border-accent" : "border-line"
                 }`}
               >
                 {t.popular && (
-                  <span className="absolute -top-2.5 left-5 rounded-full bg-text px-2.5 py-0.5 text-index font-medium uppercase tracking-wide text-bg">
+                  <span className="absolute -top-2.5 left-5 rounded-full bg-accent px-2.5 py-0.5 text-index font-medium uppercase tracking-wide text-surface">
                     Most chosen
                   </span>
                 )}
@@ -464,9 +461,7 @@ export default function Landing() {
                 <ul className="mt-4 flex-1 space-y-2">
                   {t.features.map((f) => (
                     <li key={f} className="flex gap-2 text-support text-text-2">
-                      <span aria-hidden className="text-text-3">
-                        ·
-                      </span>
+                      <span aria-hidden className="relative top-[7px] inline-block h-1 w-1 flex-none rounded-full bg-accent" />
                       {f}
                     </li>
                   ))}
@@ -480,17 +475,17 @@ export default function Landing() {
         </Reveal>
       </section>
 
-      {/* Closing call, on night like Decade's dark closer. */}
-      <section className="bg-night">
+      {/* The one deep moment: brand navy on ruled paper, never black. */}
+      <section className="paper-grid-deep">
         <div className={`${container} py-16 text-center sm:py-24`}>
           <Reveal>
-            <h2 className="font-serif text-xl font-normal tracking-[-0.01em] text-on-night sm:text-2xl">
+            <h2 className="text-xl font-medium tracking-[-0.02em] text-on-band sm:text-2xl">
               Start with what you have.
             </h2>
-            <button
-              className="mt-8 inline-flex h-12 items-center justify-center rounded-control bg-on-night px-8 text-sm font-medium text-night transition hover:opacity-85"
-              onClick={actions.startOnboarding}
-            >
+            <p className="mx-auto mt-2 max-w-md text-support text-on-band-2">
+              Five short sections. A plan that shows its work.
+            </p>
+            <button className={`${btnBlueLg} mt-8 px-8`} onClick={actions.startOnboarding}>
               Start now
             </button>
           </Reveal>
