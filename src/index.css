@@ -194,16 +194,6 @@ input[type="range"] {
     linear-gradient(90deg, rgb(var(--accent-text) / 0.08) 1px, transparent 1px);
   background-size: 28px 28px;
 }
-/* The intake's greige, promoted to the landing's hero ground — the same
-   calm mass the journey sidebar sits on, so marketing and product share
-   one skin. Text on it steps to the deeper blue (AA); the drawn line
-   keeps the bright accent. */
-.paper-grid-greige {
-  background-color: rgb(var(--sidebar));
-  background-image: linear-gradient(rgb(var(--accent-text) / 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--accent-text) / 0.1) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
 .paper-grid-deep {
   background-color: rgb(var(--band));
   background-image: linear-gradient(rgb(var(--on-band-3) / 0.22) 1px, transparent 1px),
