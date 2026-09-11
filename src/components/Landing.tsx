@@ -173,52 +173,72 @@ const AI_ROWS = [
 ];
 
 /**
- * The hero graphic is the product's own arithmetic drawn on the ruled paper:
- * ₹25,000 a month for 8 years at a conservative return is what the curve and
- * every printed number compute to (put in ₹24.0L, growth ₹13.0L, ₹37.0L by
- * 2034). The other circles mark goals on the same path without inventing
- * figures for them. The projected number stays the brightest thing here.
+ * The hero graphic is the product's own chart, drawn on the ruled paper:
+ * one monthly amount splits across the goals, so each goal gets ITS OWN
+ * line, growing to its own date and hollow circle — exactly how the app's
+ * goals chart draws it, in the same categorical palette. The printed
+ * figures are the whole pool's honest arithmetic: ₹25,000 a month for 20
+ * years at the same conservative pace is put in ₹60.0L, growth ₹1.4Cr,
+ * about ₹2.0Cr by 2046.
  */
 function HeroPath() {
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="text-eyebrow uppercase text-accent-hi">One line, every goal</span>
+        <span className="text-eyebrow uppercase text-accent-hi">One plan, every goal</span>
         <span className="num text-caption text-text-2">₹25,000 a month · Illustrative, not advice</span>
       </div>
       <svg
         viewBox="0 0 720 216"
         className="mt-3 w-full"
         role="img"
-        aria-label="A rising line through three goals: safety net 2027, first home 2034, early retirement 2046"
+        aria-label="Three rising lines from one monthly amount: safety net by 2027, first home by 2034, early retirement by 2046"
       >
-        {/* What you put in: the quiet dashed floor. */}
-        <path d="M0 196 L 720 152" stroke="rgb(var(--text-2))" strokeWidth="1.2" strokeDasharray="4 5" fill="none" />
-        {/* The rising line, through each goal's hollow circle. */}
+        {/* One monthly amount fans into three trajectories from a shared
+            origin — each goal's share on its own line, in the app's own
+            palette. The safety net finishes high early (it hits its small
+            target first); the longer horizons pass beneath and overtake.
+            Geometry generated and gap-checked, not eyeballed. */}
         <polyline
-          points="0,190 80,184 160,172 240,158 320,142 400,124 480,102 560,78 640,52 720,26"
+          points="0,196 100,190 200,177 300,158 400,133 500,105 600,71 700,34"
           fill="none"
-          stroke="rgb(var(--accent-text))"
+          stroke="var(--chart-3)"
           strokeWidth="2.5"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
-        <g fill="rgb(var(--surface))" stroke="rgb(var(--accent-text))" strokeWidth="2">
-          <circle cx="160" cy="172" r="6" />
-          <circle cx="400" cy="124" r="6" />
-          <circle cx="640" cy="52" r="6" />
+        <polyline
+          points="0,196 63,191 126,181 189,168 251,153 314,136 377,117 440,96"
+          fill="none"
+          stroke="var(--chart-2)"
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        <polyline
+          points="0,196 26,192 51,185 77,177 103,169 129,160 154,150 180,140"
+          fill="none"
+          stroke="var(--chart-1)"
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        <g fill="rgb(var(--surface))" strokeWidth="2">
+          <circle cx="180" cy="140" r="6" stroke="var(--chart-1)" />
+          <circle cx="440" cy="96" r="6" stroke="var(--chart-2)" />
+          <circle cx="700" cy="34" r="6" stroke="var(--chart-3)" />
         </g>
         <g fontSize="11" fill="rgb(var(--text-2))">
-          <text x="160" y="206">Safety net · 2027</text>
-          <text x="400" y="106" textAnchor="middle">First home · 2034</text>
-          <text x="640" y="34" textAnchor="end">Early retirement · 2046</text>
+          <text x="180" y="124">Safety net · 2027</text>
+          <text x="440" y="78" textAnchor="middle">First home · 2034</text>
+          <text x="700" y="16" textAnchor="end">Early retirement · 2046</text>
         </g>
       </svg>
       <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-line-2 pt-3.5">
-        <span className="num text-section font-medium text-text">₹37.0L</span>
+        <span className="num text-section font-medium text-text">₹2.0Cr</span>
         <span className="text-caption text-text-2">
-          projected for the home by 2034 · put in <span className="num font-medium text-text">₹24.0L</span> · growth{" "}
-          <span className="num font-medium text-text">₹13.0L</span>
+          together by 2046 · put in <span className="num font-medium text-text">₹60.0L</span> · growth{" "}
+          <span className="num font-medium text-text">₹1.4Cr</span>
         </span>
       </div>
     </div>
