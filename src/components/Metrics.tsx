@@ -1,18 +1,15 @@
 import { useState } from "react";
 import type { PlanGoal, PlanResult } from "../lib/types";
-import { requiredSip } from "../lib/finance";
 import { formatINR, formatPct, formatYears } from "../lib/format";
 import { actions } from "../store";
 
 const THIS_YEAR = new Date().getFullYear();
 
 /**
- * The goal brief, told in three lines the way a wealth manager tells it:
- * where you are, where today's pace lands you, and the gap with its fix.
- * Each line carries one number and its meaning; the bar above them is the
- * same story drawn. Everything that explains the numbers (time left, the
- * pace, inflation, the cost of waiting, the technical figures) waits
- * behind "Why these numbers".
+ * The goal's status, one meaning per element. The bar is what is set aside
+ * against what the goal will cost by its date, nothing else. The projection
+ * is one sentence, with the fix as a button beside it. The rest are chips.
+ * Technical numbers behind a tap.
  */
 interface Props {
   r: PlanResult;
@@ -26,132 +23,104 @@ interface Props {
   monthlyPool: number;
 }
 
-function Dot({ tone }: { tone: "saved" | "expected" | "gap" }) {
-  const cls =
-    tone === "saved" ? "bg-text" : tone === "expected" ? "bg-text/25" : "border border-line-2 bg-transparent";
-  return <span aria-hidden className={`mt-[7px] h-2 w-2 flex-none rounded-full ${cls}`} />;
-}
+const chip = "num rounded-full border border-line px-2.5 py-1 text-caption text-text-2";
 
 export default function Metrics({ r, goal, inflation, saved, monthly, monthlyShare, monthlyPool }: Props) {
-  const [showWhy, setShowWhy] = useState(false);
+  const [showNumbers, setShowNumbers] = useState(false);
   const year = THIS_YEAR + goal.horizonYears;
   const need = r.requiredCorpus;
-  const pct = (v: number) => (need > 0 ? Math.max(0, Math.min(1, v / need)) * 100 : 0);
-  const gapAbs = Math.abs(r.gap);
+  const savedPct = need > 0 ? Math.max(0, Math.min(1, saved / need)) * 100 : 0;
   const reachedEarly = r.onTrack && r.goalReachedMonth !== null && r.goalReachedMonth < r.months;
   // The one-tap fix: put the needed monthly on this goal, if the pool allows.
   const canFix = !r.onTrack && r.requiredSip <= monthlyPool;
-  // The cost of waiting: same target, same date, one year less of investing.
-  const delayedSip =
-    goal.horizonYears > 1 ? requiredSip(need, saved, r.blendedReturn, goal.horizonYears - 1) : null;
-
-  const strong = "num font-medium text-text";
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* The story, drawn: set aside (dark), expected by the date (light),
-          still missing (grey), all against what the goal will cost. */}
-      <div
-        className="relative h-2.5 w-full overflow-hidden rounded-full bg-surface-2"
-        title={`Set aside ${formatINR(saved)} · expected ${formatINR(r.projectedCorpus)} by ${year} · needs ${formatINR(need)}`}
-      >
-        <div className="absolute inset-y-0 left-0 rounded-full bg-text/25 transition-[width] duration-500 ease-out" style={{ width: `${pct(r.projectedCorpus)}%` }} />
-        <div className="absolute inset-y-0 left-0 rounded-full bg-text transition-[width] duration-500 ease-out" style={{ width: `${pct(saved)}%` }} />
+    <div className="flex flex-col gap-4">
+      {/* One bar, one meaning. */}
+      <div>
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="num text-row font-medium text-text">
+            {formatINR(saved)} <span className="font-normal text-text-2">of {formatINR(need)}</span>
+          </span>
+          <span
+            className="num text-caption text-text-2"
+            title={`${formatINR(goal.targetToday)} today, at ${formatPct(inflation, 0)} inflation a year`}
+          >
+            needed by {year}
+          </span>
+        </div>
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-2">
+          <div className="h-full rounded-full bg-text transition-[width] duration-500 ease-out" style={{ width: `${savedPct}%` }} />
+        </div>
       </div>
 
-      {/* The story, told. */}
-      <ol className="flex flex-col gap-2 text-support leading-relaxed text-text-2">
-        <li className="flex gap-2.5">
-          <Dot tone="saved" />
-          <span>
-            Set aside so far: <span className={strong}>{formatINR(saved)}</span>.
-          </span>
-        </li>
-        <li className="flex gap-2.5">
-          <Dot tone="expected" />
-          <span>
-            At <span className={strong}>{formatINR(monthly)}/mo</span>, you'll have about{" "}
-            <span className={strong}>{formatINR(r.projectedCorpus)}</span> by {year}.
-          </span>
-        </li>
-        <li className="flex gap-2.5">
-          <Dot tone="gap" />
-          <span>
-            The goal will cost <span className={strong}>{formatINR(need)}</span> in {year} ({formatINR(goal.targetToday)}{" "}
-            today).{" "}
-            {r.onTrack ? (
-              <>
-                That leaves <span className="num font-medium text-pos">{formatINR(r.gap)} to spare</span>
-                {reachedEarly && r.goalReachedMonth !== null ? (
-                  <>
-                    ; you cross the line in about <span className={strong}>{formatYears(r.goalReachedMonth / 12)}</span>
-                  </>
-                ) : null}
-                .
-              </>
-            ) : (
-              <>
-                You'd be <span className="num font-medium text-cau">{formatINR(gapAbs)} short</span>;{" "}
-                <span className={strong}>{formatINR(r.requiredSip)}/mo</span> closes it.
-              </>
-            )}
-          </span>
-        </li>
-      </ol>
+      {/* The projection in one sentence, with the fix beside it. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="num text-support text-text">
+          At today's pace, <span className="font-medium">{formatINR(r.projectedCorpus)}</span> by {year}
+          <span className="mx-1.5 text-text-3">·</span>
+          {r.onTrack ? (
+            <span className="font-medium text-pos">
+              on track
+              {reachedEarly && r.goalReachedMonth !== null ? `, there in ~${formatYears(r.goalReachedMonth / 12)}` : ""}
+            </span>
+          ) : (
+            <span className="font-medium text-cau">{formatINR(Math.abs(r.gap))} short</span>
+          )}
+        </p>
+        {!r.onTrack &&
+          (canFix ? (
+            <button
+              type="button"
+              onClick={() => actions.setGoalAmount(goal.id, Math.ceil(r.requiredSip))}
+              className="num inline-flex h-8 items-center rounded-full bg-accent-fill px-3 text-caption font-medium text-on-accent transition hover:bg-accent-fill-hi"
+            >
+              Put {formatINR(r.requiredSip)}/mo on this
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => actions.setTab("money")}
+              className="text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+            >
+              Needs more than you invest monthly · raise it →
+            </button>
+          ))}
+      </div>
 
-      {!r.onTrack &&
-        (canFix ? (
-          <button
-            type="button"
-            onClick={() => actions.setGoalAmount(goal.id, Math.ceil(r.requiredSip))}
-            className="inline-flex h-9 w-fit items-center rounded-full bg-accent-fill px-3.5 text-support font-medium text-on-accent transition hover:bg-accent-fill-hi"
-          >
-            Put {formatINR(r.requiredSip)}/mo on this
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => actions.setTab("money")}
-            className="w-fit text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
-          >
-            That's more than you invest in total; raise your monthly on Money →
-          </button>
-        ))}
-
-      <div>
+      {/* The small facts, as chips. */}
+      <div className="flex flex-wrap gap-1.5">
+        <span className={chip} title={`Target year ${year}`}>
+          {formatYears(goal.horizonYears)} left
+        </span>
+        <span className={chip} title={`${Math.round(monthlyShare * 100)}% of your ${formatINR(monthlyPool)} a month`}>
+          {formatINR(monthly)}/mo
+        </span>
+        <span className={chip} title="Your portfolio's historical pace">
+          {formatPct(r.blendedReturn, 1)}/yr pace
+        </span>
         <button
           type="button"
-          onClick={() => setShowWhy((v) => !v)}
-          className="inline-flex items-center gap-1.5 text-caption text-text-2 transition hover:text-text"
+          onClick={() => setShowNumbers((v) => !v)}
+          className="rounded-full border border-dashed border-line px-2.5 py-1 text-caption text-text-2 transition hover:border-line-2 hover:text-text"
         >
-          {showWhy ? "Hide the workings" : "Why these numbers"}
-          <span className={`inline-block transition-transform ${showWhy ? "rotate-180" : ""}`}>▾</span>
+          {showNumbers ? "hide technical" : "technical ▾"}
         </button>
-        {showWhy && (
-          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-            {[
-              { label: "Time left", value: formatYears(goal.horizonYears), hint: `Target year ${year}` },
-              { label: "Pace assumed", value: `${formatPct(r.blendedReturn, 1)}/yr`, hint: "Your portfolio's historical pace" },
-              { label: "Inflation", value: `${formatPct(inflation, 0)}/yr`, hint: "Why the goal costs more by the date" },
-              {
-                label: "Share of your monthly",
-                value: `${Math.round(monthlyShare * 100)}%`,
-                hint: `of ${formatINR(monthlyPool)} a month`,
-              },
-              ...(delayedSip !== null
-                ? [{ label: "Start a year later", value: `${formatINR(delayedSip)}/mo`, hint: "The monthly needed if you wait a year" }]
-                : []),
-              { label: "XIRR", value: formatPct(r.xirr), hint: "Your true return after the timing of each deposit" },
-              { label: "Volatility", value: formatPct(r.blendedVolatility, 0), hint: "Higher means bigger ups and downs along the way" },
-            ].map((f) => (
-              <div key={f.label} className="min-w-0" title={f.hint}>
-                <dt className="truncate text-eyebrow uppercase text-text-3">{f.label}</dt>
-                <dd className="num mt-0.5 truncate text-row font-medium text-text">{f.value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
       </div>
+      {showNumbers && (
+        <dl className="grid grid-cols-3 gap-x-4">
+          {[
+            { label: "Growth / yr", value: formatPct(r.blendedReturn), hint: "A rough yearly average across your portfolio" },
+            { label: "XIRR", value: formatPct(r.xirr), hint: "Your true return after the timing of each deposit" },
+            { label: "Volatility", value: formatPct(r.blendedVolatility, 0), hint: "Higher means bigger ups and downs along the way" },
+          ].map((f) => (
+            <div key={f.label} className="min-w-0" title={f.hint}>
+              <dt className="truncate text-eyebrow uppercase text-text-3">{f.label}</dt>
+              <dd className="num mt-0.5 truncate text-row font-medium text-text">{f.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </div>
   );
 }

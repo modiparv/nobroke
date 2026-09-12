@@ -182,6 +182,9 @@ export default function Plan() {
               <Climb />
             </div>
 
+            {/* The avatar: a climber on Meru, as high as today's pace carries the plan. */}
+            <Climb />
+
             <div className="flex-1" />
 
             {/* The breakup, inline in the band on a hairline divider. */}

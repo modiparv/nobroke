@@ -1,108 +1,96 @@
-import { appetiteCeiling } from "../lib/risk";
+import { STAGES, routeHeight, stageFor } from "../lib/climb";
 import { formatINR } from "../lib/format";
-import { totalCapital, useStore } from "../store";
+import { appetiteCeiling } from "../lib/risk";
+import { actions, monthlyForCoverage, planCoverage, useStore } from "../store";
 
 /**
- * The climb: the plan's progress as an ascent, drawn in the band's own line
- * language. The marker's position is honest arithmetic (everything set
- * aside, over what every goal costs at today's prices); it passes named
- * stages on the way to the summit, the next one priced in rupees. Meru, the
- * golden mountain of the top tier, is the metaphor the brand already owns.
- * Risk appetite names the climber, never the route.
+ * The avatar: a climber on Meru, the golden mountain. Height is how much of
+ * the whole plan today's pace covers; the route's shape follows risk
+ * appetite (steady rises early, bold runs flat then steep); five named
+ * stages mark the way; the flag waits at the summit. The one nudge under
+ * it is computed, not motivational filler: the smallest extra monthly that
+ * reaches the next stage, applied in a tap.
  */
-const POINTS: Array<[number, number]> = [
-  [0, 90],
-  [40, 78],
-  [70, 84],
-  [110, 60],
-  [140, 66],
-  [180, 42],
-  [210, 48],
-  [250, 26],
-  [280, 32],
-  [320, 8],
-];
-
-const STAGES = [
-  { at: 0, name: "Base camp" },
-  { at: 0.1, name: "Foothills" },
-  { at: 0.35, name: "The ridge" },
-  { at: 0.65, name: "Cloud line" },
-  { at: 0.9, name: "Summit" },
-];
-
-const CLIMBER = { steady: "Steady climber", balanced: "Balanced climber", bold: "Bold climber" } as const;
-
-/** The point a given fraction of the way along the route, by arc length. */
-function alongRoute(frac: number) {
-  const lengths: number[] = [];
-  let total = 0;
-  for (let i = 1; i < POINTS.length; i++) {
-    const [x0, y0] = POINTS[i - 1];
-    const [x1, y1] = POINTS[i];
-    const len = Math.hypot(x1 - x0, y1 - y0);
-    lengths.push(len);
-    total += len;
-  }
-  let remaining = frac * total;
-  for (let i = 1; i < POINTS.length; i++) {
-    const len = lengths[i - 1];
-    if (remaining <= len || i === POINTS.length - 1) {
-      const t = len > 0 ? Math.max(0, Math.min(1, remaining / len)) : 0;
-      const [x0, y0] = POINTS[i - 1];
-      const [x1, y1] = POINTS[i];
-      return { x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t, done: frac * total, total };
-    }
-    remaining -= len;
-  }
-  return { x: POINTS[0][0], y: POINTS[0][1], done: 0, total };
-}
+const W = 320;
+const H = 96;
+const PAD = 10;
+const SKY = 16;
 
 export default function Climb() {
   const s = useStore();
   if (s.goals.length === 0) return null;
-  const targets = s.goals.reduce((sum, g) => sum + g.targetToday, 0);
-  const saved = totalCapital(s);
-  const frac = targets > 0 ? Math.max(0, Math.min(1, saved / targets)) : 0;
-  const stage = [...STAGES].reverse().find((st) => frac >= st.at) ?? STAGES[0];
-  const next = STAGES.find((st) => st.at > frac);
-  const toNext = next ? Math.max(0, next.at * targets - saved) : 0;
-  const { x, y, done, total } = alongRoute(frac);
-  const route = POINTS.map(([px, py]) => `${px},${py}`).join(" ");
-  const climber = CLIMBER[appetiteCeiling(s.riskAppetite)];
+  const coverage = planCoverage(s);
+  const { stage, index, next } = stageFor(coverage);
+  const appetite = appetiteCeiling(s.riskAppetite);
+  const pt = (t: number) => ({
+    x: PAD + t * (W - 2 * PAD),
+    y: H - PAD - routeHeight(t, appetite) * (H - 2 * PAD - SKY),
+  });
+  const path = Array.from({ length: 33 }, (_, i) => pt(i / 32))
+    .map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+    .join(" ");
+  const me = pt(Math.min(coverage, 1));
+  const top = pt(1);
+  const extra = next ? monthlyForCoverage(s, next.min) : null;
+  const pctText = `${Math.round(coverage * 100)}% covered`;
 
   return (
-    <div className="mt-5 max-w-sm">
+    <div className="mt-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-eyebrow uppercase text-on-night-2">Your climb</span>
+        <span className="num text-caption text-on-night-2">{pctText} at today's pace</span>
+      </div>
       <svg
-        viewBox="0 0 320 100"
-        className="w-full"
+        viewBox={`0 0 ${W} ${H}`}
+        className="mt-1.5 w-full"
         role="img"
-        aria-label={`Your climb: ${stage.name}, ${Math.round(frac * 100)}% of the way to funding every goal at today's prices`}
+        aria-label={`Your climb: ${stage.name}, ${pctText} at today's pace`}
       >
-        <polyline points={route} fill="none" stroke="rgb(var(--on-night-3))" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-        <polyline
-          points={route}
-          fill="none"
-          stroke="rgb(var(--on-night))"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          strokeDasharray={`${done.toFixed(1)} ${total.toFixed(1)}`}
-          className="transition-all duration-700 ease-out"
-        />
-        <circle cx={x} cy={y} r="8" fill="none" stroke="rgb(var(--on-night))" opacity="0.35" />
-        <circle cx={x} cy={y} r="4" fill="rgb(var(--on-night))" />
-        <circle cx="320" cy="8" r="2.5" fill="rgb(var(--on-night-3))" />
+        <path d={path} fill="none" stroke="rgb(var(--on-night-3))" strokeWidth="1.5" strokeLinejoin="round" />
+        {STAGES.map((st, i) => {
+          const p = pt(st.min);
+          return (
+            <circle
+              key={st.name}
+              cx={p.x}
+              cy={p.y}
+              r={i <= index ? 2.6 : 2}
+              fill={i <= index ? "rgb(var(--on-night))" : "rgb(var(--night))"}
+              stroke="rgb(var(--on-night-3))"
+              strokeWidth="1"
+            />
+          );
+        })}
+        {/* The flag at the summit. */}
+        <line x1={top.x} y1={top.y} x2={top.x} y2={top.y - 15} stroke="rgb(var(--on-night-2))" strokeWidth="1.2" />
+        <path d={`M${top.x},${top.y - 15} l9,3.5 l-9,3.5 z`} fill="var(--chartn-3)" />
+        {/* The climber, feet on the path. */}
+        <g transform={`translate(${me.x.toFixed(1)},${(me.y - 4).toFixed(1)})`}>
+          <circle cx="0" cy="-11" r="3.2" fill="var(--chartn-1)" />
+          <path
+            d="M0,-8 L0,-1 M0,-6 L-4,-3 M0,-6 L4,-4 M0,-1 L-3,4 M0,-1 L3,4"
+            fill="none"
+            stroke="var(--chartn-1)"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        </g>
       </svg>
-      <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-        <span className="text-eyebrow uppercase text-on-night-2">
-          The climb · {stage.name}
-        </span>
-        <span className="num text-caption text-on-night-2">
-          {next ? `${formatINR(toNext)} to ${next.name.toLowerCase()}` : "Every goal funded at today's prices"}
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <span className="text-support text-on-night">
+          <span className="font-medium">{stage.name}</span>
           <span className="mx-1.5 text-on-night-3">·</span>
-          {climber}
+          <span className="text-on-night-2">{stage.line}</span>
         </span>
+        {next && extra !== null && (
+          <button
+            type="button"
+            onClick={() => actions.setSip(s.monthlySip + extra)}
+            className="num inline-flex h-7 items-center rounded-full border border-on-night-3/60 px-2.5 text-caption text-on-night transition hover:border-on-night-2"
+          >
+            Add {formatINR(extra)}/mo → {next.name}
+          </button>
+        )}
       </div>
     </div>
   );

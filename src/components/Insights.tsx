@@ -1,5 +1,5 @@
 import type { Insight, PlanInputs, PlanResult } from "../lib/types";
-import { allocationTotal, growthWeight, normalizedWeights } from "../lib/finance";
+import { allocationTotal, growthWeight, normalizedWeights, requiredSip } from "../lib/finance";
 import { FUND_MAP } from "../lib/funds";
 import { formatINR, formatPct, formatYears } from "../lib/format";
 
@@ -35,6 +35,12 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
   const total = allocationTotal(inputs.allocation);
   if (Math.abs(total - 100) > 0.5) {
     out.push({ tone: "info", icon: "⚖️", title: `Your portfolio is ${Math.round(total)}% filled`, message: `We work it out as shares of 100%. A ready-made portfolio fills it cleanly.` });
+  }
+
+  // The cost of waiting: same target, same date, one year less of investing.
+  if (inputs.horizonYears > 1) {
+    const later = requiredSip(r.requiredCorpus, inputs.currentSavings, r.blendedReturn, inputs.horizonYears - 1);
+    out.push({ tone: "info", icon: "⏳", title: "The cost of waiting", message: `Start a year later and the monthly needed rises to ${formatINR(later)}, from ${formatINR(r.requiredSip)} now. Time is doing part of the work.` });
   }
 
   out.push({ tone: "info", icon: "🔥", title: "Prices rise over time", message: `Your ${formatINR(inputs.targetToday)} goal will cost about ${formatINR(r.requiredCorpus)} in ${formatYears(inputs.horizonYears)}, so we plan for the future price, not today's.` });

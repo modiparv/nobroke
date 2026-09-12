@@ -4,6 +4,7 @@ import { GOAL_MAP } from "./lib/goals";
 import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios";
 import { adjustedTarget, emptyProfile, suggestedSip } from "./lib/profile";
 import { assessRiskAppetite, capProfile, riskBandLabel } from "./lib/risk";
+import { coverageFrom } from "./lib/climb";
 import { askGroq, type AiAction } from "./lib/groq";
 import { FUND_MAP } from "./lib/funds";
 // Side-effect import: registers the curated instrument catalogue (ETFs,
@@ -302,6 +303,28 @@ export function totalCapital(s: AppState = state): number {
   return s.currentSavings + holdingsTotal(s);
 }
 /** Goals in priority order (falls back to declaration order). */
+/** The climb: how much of everything the goals need today's pace reaches,
+    0..1 (lib/climb). The avatar's height, from the same engine as every
+    card. */
+export function planCoverage(s: AppState = state): number {
+  return coverageFrom(
+    s.goals.map((g) => {
+      const r = computePlan(planInputsForGoal(s, g));
+      return { projected: r.projectedCorpus, need: r.requiredCorpus };
+    }),
+  );
+}
+
+/** The smallest extra monthly (₹500 steps, up to ₹30,000) that lifts the
+    plan's coverage to `target`; null when that much would not do it. Each
+    goal keeps its share of the pool, so the whole plan moves together. */
+export function monthlyForCoverage(s: AppState, target: number): number | null {
+  for (let extra = 500; extra <= 30000; extra += 500) {
+    if (planCoverage({ ...s, monthlySip: s.monthlySip + extra }) >= target) return extra;
+  }
+  return null;
+}
+
 export function goalsByPriority(s: AppState = state): PlanGoal[] {
   const order = s.goalOrder.length ? s.goalOrder : s.goals.map((g) => g.id);
   const byId = new Map(s.goals.map((g) => [g.id, g] as const));

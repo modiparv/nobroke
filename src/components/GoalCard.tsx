@@ -63,9 +63,7 @@ export function GoalTile({
   const s = useStore();
   const { r, savedForGoal, year } = goalFacts(g, s);
   const need = r.requiredCorpus;
-  const pctOfNeed = (v: number) => (need > 0 ? Math.max(0, Math.min(1, v / need)) * 100 : 0);
-  const savedPct = pctOfNeed(savedForGoal);
-  const projectedPct = pctOfNeed(r.projectedCorpus);
+  const savedPct = need > 0 ? Math.max(0, Math.min(1, savedForGoal / need)) * 100 : 0;
 
   return (
     <button
@@ -106,19 +104,14 @@ export function GoalTile({
       <span className="num mt-0.5 block truncate text-caption text-muted">
         {formatINR(g.targetToday)} by {year}
       </span>
-      {/* One bar, three facts, all against what the goal will cost by its
-          date: the dark run is money already set aside, the lighter run is
-          what today's pace adds by then, what stays grey is the gap. */}
+      {/* One bar, one meaning: what is set aside against what the goal will
+          cost by its date. The caption carries the projection in words. */}
       <span
-        className="relative mt-2.5 block h-1.5 w-full overflow-hidden rounded-full bg-surface-2"
-        title={`Set aside ${formatINR(savedForGoal)} · expected ${formatINR(r.projectedCorpus)} by ${year} · needs ${formatINR(r.requiredCorpus)}`}
+        className="mt-2.5 block h-1.5 w-full overflow-hidden rounded-full bg-surface-2"
+        title={`Set aside ${formatINR(savedForGoal)} of ${formatINR(r.requiredCorpus)} needed by ${year}`}
       >
         <span
-          className="absolute inset-y-0 left-0 rounded-full bg-text/25 transition-[width] duration-500 ease-out"
-          style={{ width: `${projectedPct}%` }}
-        />
-        <span
-          className="absolute inset-y-0 left-0 rounded-full bg-text transition-[width] duration-500 ease-out"
+          className="block h-full rounded-full bg-text transition-[width] duration-500 ease-out"
           style={{ width: `${savedPct}%` }}
         />
       </span>
@@ -152,9 +145,8 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             {r.onTrack ? "On track" : "Needs a change"}
           </span>
         </span>
-        <span className="num text-support text-text-2">
-          <span className="font-medium text-text">{formatINR(savedForGoal)}</span> saved of{" "}
-          <span className="font-medium text-text">{formatINR(g.targetToday)}</span>
+        <span className="num text-caption text-text-2">
+          {formatINR(g.targetToday)} by {year}
         </span>
       </div>
 
