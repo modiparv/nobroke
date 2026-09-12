@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
-import { STAGES, coverageFrom, routeHeight, stageFor } from "./climb.ts";
+import { STAGES, coverageFrom, stageFor } from "./climb.ts";
 
 test("coverage is the share of what the goals need that today's pace reaches, capped per goal", () => {
   assert.equal(coverageFrom([]), 0);
@@ -25,15 +25,4 @@ test("stages step at their thresholds and name the next one", () => {
   assert.equal(stageFor(0.5).next?.name, "High camp");
   assert.equal(stageFor(1).next, null);
   assert.equal(STAGES.length, 5);
-});
-
-test("the route runs from base to summit whatever the appetite, steady early and bold late", () => {
-  for (const a of ["steady", "balanced", "bold"] as const) {
-    assert.equal(routeHeight(0, a), 0);
-    assert.equal(routeHeight(1, a), 1);
-    assert.equal(routeHeight(-0.5, a), 0);
-    assert.equal(routeHeight(2, a), 1);
-  }
-  assert.ok(routeHeight(0.5, "steady") > routeHeight(0.5, "balanced"));
-  assert.ok(routeHeight(0.5, "balanced") > routeHeight(0.5, "bold"));
 });

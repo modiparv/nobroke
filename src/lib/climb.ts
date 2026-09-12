@@ -39,12 +39,3 @@ export function stageFor(coverage: number): { stage: Stage; index: number; next:
   for (let i = 0; i < STAGES.length; i++) if (c >= STAGES[i].min) index = i;
   return { stage: STAGES[index], index, next: STAGES[index + 1] ?? null };
 }
-
-/** The route's shape by appetite: a steady climber rises early and eases,
- *  a bold one runs flat then steep. Returns y in 0..1 (1 = summit) for a
- *  position t in 0..1 along the path. */
-export function routeHeight(t: number, appetite: "steady" | "balanced" | "bold"): number {
-  const x = Math.max(0, Math.min(1, t));
-  const p = appetite === "steady" ? 0.7 : appetite === "bold" ? 1.6 : 1;
-  return Math.pow(x, p);
-}
