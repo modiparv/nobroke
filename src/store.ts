@@ -632,6 +632,11 @@ export const actions = {
   updateCurrentGoal: (patch: Partial<PlanGoal>) =>
     set({ goals: state.goals.map((g) => (g.id === state.currentGoalId ? { ...g, ...patch } : g)) }),
 
+  /** Free-text notes on one goal. Capped so a pasted essay cannot bloat the
+      synced plan; persisted like every other goal field. */
+  setGoalNotes: (id: string, notes: string) =>
+    set({ goals: state.goals.map((g) => (g.id === id ? { ...g, notes: notes.slice(0, 2000) } : g)) }),
+
   /** The one portfolio every goal shares. Editing it marks it custom so we stop
       auto-re-recommending a mix from the goals' horizon. */
   setPortfolio: (portfolio: Allocation, portfolioProfile: RiskProfile | null) =>
@@ -939,6 +944,9 @@ function buildPlanData(s: AppState): unknown | null {
       requiredCorpusINR: Math.round(r.requiredCorpus),
       gapINR: Math.round(r.gap),
       onTrack: r.onTrack,
+      // The person's own notes ride along (trimmed, capped) so the AI can
+      // answer with them: "dad is adding 5L" changes the conversation.
+      ...(g.notes?.trim() ? { notes: g.notes.trim().slice(0, 400) } : {}),
       isCurrent: g.id === s.currentGoalId,
     };
   });

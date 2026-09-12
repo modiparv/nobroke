@@ -236,6 +236,20 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
           )}
         </div>
 
+        {/* The client's own words on this goal, kept with the plan. */}
+        <div>
+          <span className={sectionLabel}>Notes</span>
+          <textarea
+            value={g.notes ?? ""}
+            onChange={(e) => actions.setGoalNotes(g.id, e.target.value)}
+            rows={3}
+            maxLength={2000}
+            aria-label={`Notes for ${g.name}`}
+            placeholder="Anything worth remembering: who is chipping in, what is already booked, what could change the number."
+            className="mt-2 w-full resize-none rounded-control border border-line bg-surface px-3 py-2.5 text-support leading-relaxed text-text outline-none transition focus:border-text [field-sizing:content]"
+          />
+        </div>
+
         <div className="flex justify-end">
           <button
             onClick={onDelete}
