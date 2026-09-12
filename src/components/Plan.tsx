@@ -6,6 +6,7 @@ import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapita
 import { btnPrimary, card, sectionLabel } from "../ui";
 import AdvisorNote from "./AdvisorNote";
 import AppHeader from "./AppHeader";
+import Climb from "./Climb";
 import { GoalDetail, GoalTile } from "./GoalCard";
 import GoalsChart from "./GoalsChart";
 import MoneyTab from "./MoneyTab";
@@ -178,6 +179,7 @@ export default function Plan() {
                   ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track`
                   : "Add a goal to start your plan"}
               </p>
+              <Climb />
             </div>
 
             <div className="flex-1" />
