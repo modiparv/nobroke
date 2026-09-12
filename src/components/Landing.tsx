@@ -190,7 +190,7 @@ function HeroPath() {
       </div>
       <svg
         viewBox="0 0 720 216"
-        className="mt-3 w-full"
+        className="hero-path mt-3 w-full"
         role="img"
         aria-label="Three rising lines from one monthly amount: safety net by 2027, first home by 2034, early retirement by 2046"
       >
@@ -327,7 +327,7 @@ export default function Landing() {
             <h1 className="mt-4 text-3xl font-medium leading-[1.06] tracking-[-0.025em] text-text sm:text-5xl">
               We won't let you go broke.
             </h1>
-            <p className="mt-5 max-w-xl text-body text-text-2">
+            <p className="mt-5 max-w-xl text-prose text-text-2">
               Financial planning &amp; wealth management for the Bharat that has goals to reach, but no one to plan
               them with.
             </p>
@@ -368,7 +368,7 @@ export default function Landing() {
                 </h3>
                 <div className="flex max-w-xl flex-col gap-3 sm:pl-0">
                   {o.paras.map((p) => (
-                    <p key={p} className="text-sm leading-relaxed text-text-2">
+                    <p key={p} className="text-prose text-text-2">
                       {p}
                     </p>
                   ))}
@@ -395,7 +395,7 @@ export default function Landing() {
                 <span className="text-support font-medium text-text">Human judgment</span>
                 <ul className="mt-3">
                   {HUMAN_ROWS.map((r) => (
-                    <li key={r} className="border-b border-line py-3 text-sm text-text-2 last:border-b-0">
+                    <li key={r} className="border-b border-line py-3 text-prose text-text-2 last:border-b-0">
                       {r}
                     </li>
                   ))}
@@ -405,7 +405,7 @@ export default function Landing() {
                 <span className="text-support font-medium text-text">NoBroke AI</span>
                 <ul className="mt-3">
                   {AI_ROWS.map((r) => (
-                    <li key={r} className="border-b border-line py-3 text-sm text-text-2 last:border-b-0">
+                    <li key={r} className="border-b border-line py-3 text-prose text-text-2 last:border-b-0">
                       {r}
                     </li>
                   ))}
@@ -439,7 +439,7 @@ export default function Landing() {
                 <div className="p-5">
                   <span className="num text-index uppercase tracking-[0.13em] text-accent">Layer {idx + 1}</span>
                   <h3 className="mt-2 text-section font-medium">{l.title}</h3>
-                  <p className="mt-2 text-support text-text-2">{l.body}</p>
+                  <p className="mt-2 text-body text-text-2">{l.body}</p>
                 </div>
               </div>
             ))}
@@ -452,7 +452,7 @@ export default function Landing() {
           <div className="text-center">
             <span className={eyebrow}>Pricing</span>
             <h2 className="mt-3 text-xl font-medium tracking-[-0.02em] text-text sm:text-2xl">
-              Two tiers. One promise.
+              Two tiers. Plain prices.
             </h2>
           </div>
           <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:grid-cols-2">
@@ -465,7 +465,7 @@ export default function Landing() {
               >
                 {t.popular && (
                   <span className="absolute -top-2.5 left-5 rounded-full bg-accent px-2.5 py-0.5 text-index font-medium uppercase tracking-wide text-surface">
-                    Most chosen
+                    Start here
                   </span>
                 )}
                 <div className="flex items-baseline justify-between gap-2">
@@ -504,7 +504,7 @@ export default function Landing() {
             <h2 className="text-xl font-medium tracking-[-0.02em] text-on-band sm:text-2xl">
               Start with what you have.
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-support text-on-band-2">
+            <p className="mx-auto mt-2 max-w-md text-body text-on-band-2">
               Five short sections. A plan that shows its work.
             </p>
             <button className={`${btnBlueLg} mt-8 px-8`} onClick={actions.startOnboarding}>

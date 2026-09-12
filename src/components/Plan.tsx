@@ -87,6 +87,12 @@ export default function Plan() {
   useEffect(() => {
     if (s.currentGoalId) setOpenId(s.currentGoalId);
   }, [s.currentGoalId]);
+
+  // A tab change is a page change: start at the top, never mid-scroll of
+  // the page before. The content itself fades in (keyed wrappers below).
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [s.tab]);
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
@@ -115,7 +121,9 @@ export default function Plan() {
     return (
       <div className="min-h-screen bg-bg">
         <AppHeader />
-        <MoneyTab />
+        <div key="money" className="fade-up">
+          <MoneyTab />
+        </div>
       </div>
     );
   }
@@ -124,7 +132,9 @@ export default function Plan() {
     return (
       <div className="min-h-screen bg-bg">
         <AppHeader />
-        <PortfolioTab />
+        <div key="portfolio" className="fade-up">
+          <PortfolioTab />
+        </div>
       </div>
     );
   }
@@ -132,6 +142,7 @@ export default function Plan() {
   return (
     <div className="min-h-screen bg-bg">
       <AppHeader />
+      <div key="plan" className="fade-up">
 
       {/* The overview band: night ground carrying the numbers AND the goal
           trajectories, Decade-style. The dark chart is the band's second
@@ -272,6 +283,7 @@ export default function Plan() {
         <p className="pb-2 text-center text-caption text-text-2">
           Projections are illustrative and not investment advice.
         </p>
+      </div>
       </div>
     </div>
   );

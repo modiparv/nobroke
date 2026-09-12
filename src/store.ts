@@ -569,7 +569,9 @@ export const actions = {
       portfolio,
       portfolioProfile,
       portfolioCustom: false,
+      // A freshly built plan always opens on the plan, whatever tab was open.
       screen: "plan",
+      tab: "plan",
     });
   },
 
@@ -618,7 +620,9 @@ export const actions = {
       portfolio,
       portfolioProfile,
       portfolioCustom: false,
+      // A freshly built plan always opens on the plan, whatever tab was open.
       screen: "plan",
+      tab: "plan",
     });
   },
 

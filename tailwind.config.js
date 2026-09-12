@@ -80,6 +80,10 @@ export default {
         section: ["15px", { lineHeight: "1.3", letterSpacing: "-0.015em" }],
         row: ["14px", { lineHeight: "1.35", letterSpacing: "-0.005em" }],
         body: ["13.5px", { lineHeight: "1.5" }],
+        // Marketing reading size: the landing's paragraphs sit one notch above
+        // the product's dense body so a 48px headline is not stacked over
+        // 13.5px copy. Never used inside the app.
+        prose: ["15px", { lineHeight: "1.6" }],
         support: ["12.5px", { lineHeight: "1.45" }],
         caption: ["12px", { lineHeight: "1.4" }],
         eyebrow: ["10px", { lineHeight: "1.2", letterSpacing: "0.13em" }],
