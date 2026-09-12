@@ -14,19 +14,22 @@ const MODEL = "llama-3.3-70b-versatile";
  */
 const GOAL_IDS = [
   "emergency",
-  "travel",
   "gadget",
+  "travel",
+  "loan",
   "car",
   "wedding",
   "home",
+  "parents",
   "business",
   "education",
+  "child",
   "fire",
   "freedom",
 ] as const;
 
 const GOAL_LABELS =
-  "emergency=Safety Net, travel=Travel the World, gadget=New Tech, car=Dream Car, wedding=Dream Wedding, home=First Home, business=Start a Business, education=Study / Upskill, fire=Early Retirement, freedom=Financial Freedom";
+  "emergency=Emergency fund, gadget=New phone or laptop, travel=Big trip, loan=Pay off a loan, car=First car, wedding=Wedding, home=Home down payment, parents=Parents' care, business=Start something, education=Study abroad or upskill, child=Child's education, fire=Retire early, freedom=Financial freedom";
 
 const goalParam = {
   type: "string",

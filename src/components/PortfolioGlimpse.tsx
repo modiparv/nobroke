@@ -3,7 +3,8 @@ import { allocationTotal, bandWeights, blendedReturn, computePlan } from "../lib
 import { ASSET_CLASSES } from "../lib/funds";
 import { formatINR } from "../lib/format";
 import { categoryCode } from "../lib/holdings";
-import { mixLabel } from "../lib/portfolios";
+import { equityShare, mixLabel } from "../lib/portfolios";
+import { squarify } from "../lib/treemap";
 import { actions, goalShareFraction, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
 import { sectionLabel } from "../ui";
 import RiskMeter from "./RiskMeter";
@@ -17,14 +18,6 @@ import RiskMeter from "./RiskMeter";
  * tab, holdings tiles lead to Money.
  */
 
-interface Tile {
-  key: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
 interface TreemapItem {
   key: string;
   label: string;
@@ -35,43 +28,33 @@ interface TreemapItem {
   onClick?: () => void;
 }
 
-/** Slice-and-dice treemap: split items into two weight-balanced halves,
- *  split the rectangle along its longer axis, recurse. */
-function layoutTiles(items: { key: string; amount: number }[], x: number, y: number, w: number, h: number): Tile[] {
-  if (items.length === 0) return [];
-  if (items.length === 1) return [{ key: items[0].key, x, y, w, h }];
-  const total = items.reduce((s, i) => s + i.amount, 0);
-  let acc = 0;
-  let split = 1;
-  for (let i = 0; i < items.length - 1; i++) {
-    acc += items[i].amount;
-    split = i + 1;
-    if (acc >= total / 2) break;
-  }
-  const a = items.slice(0, split);
-  const b = items.slice(split);
-  const fa = a.reduce((s, i) => s + i.amount, 0) / total;
-  if (w >= h) {
-    return [...layoutTiles(a, x, y, w * fa, h), ...layoutTiles(b, x + w * fa, y, w * (1 - fa), h)];
-  }
-  return [...layoutTiles(a, x, y, w, h * fa), ...layoutTiles(b, x, y + h * fa, w, h * (1 - fa))];
-}
-
+/** Squarified tiles (lib/treemap), so a third or a tenth goal still gets a
+ *  near-square tile. The map grows taller with the count, and a tile prints
+ *  only what it has room for: label and figure, label alone, or just its
+ *  tooltip. */
 function Treemap({ items, ariaLabel }: { items: TreemapItem[]; ariaLabel: string }) {
   const sorted = [...items].filter((i) => i.amount > 0).sort((a, b) => b.amount - a.amount);
   if (sorted.length === 0) return null;
-  const tiles = layoutTiles(sorted, 0, 0, 100, 100);
+  const heightPx = sorted.length <= 2 ? 176 : sorted.length <= 4 ? 216 : 264;
+  // The map renders about twice as wide as it is tall, so the layout runs
+  // in a 200x100 space and x is halved back to percent: tiles that come out
+  // square here come out square on screen.
+  const tiles = squarify(sorted, 0, 0, 200, 100);
   const byKey = Object.fromEntries(sorted.map((i) => [i.key, i]));
   return (
-    <div className="relative h-44 w-full overflow-hidden rounded-control" role="img" aria-label={ariaLabel}>
+    <div className="relative w-full overflow-hidden rounded-control" style={{ height: heightPx }} role="img" aria-label={ariaLabel}>
       {tiles.map((t) => {
         const item = byKey[t.key];
         const Tag = item.onClick ? "button" : "div";
+        const px = (t.h / 100) * heightPx;
+        const wPct = t.w / 2;
+        const showLabel = px >= 18 && wPct >= 9;
+        const showFigure = px >= 44 && wPct >= 16;
         return (
           <div
             key={t.key}
             className="absolute p-[1.5px]"
-            style={{ left: `${t.x}%`, top: `${t.y}%`, width: `${t.w}%`, height: `${t.h}%` }}
+            style={{ left: `${t.x / 2}%`, top: `${t.y}%`, width: `${wPct}%`, height: `${t.h}%` }}
           >
             <Tag
               {...(item.onClick ? { type: "button" as const, onClick: item.onClick } : {})}
@@ -79,8 +62,8 @@ function Treemap({ items, ariaLabel }: { items: TreemapItem[]; ariaLabel: string
               className="flex h-full w-full flex-col items-start justify-between overflow-hidden rounded-[5px] p-1.5 text-left"
               style={{ background: item.bg, color: item.ink }}
             >
-              <span className="max-w-full truncate text-index font-medium leading-tight">{item.label}</span>
-              <span className="num text-caption font-medium">{formatINR(item.amount)}</span>
+              {showLabel && <span className="max-w-full truncate text-index font-medium leading-tight">{item.label}</span>}
+              {showFigure && <span className="num text-caption font-medium">{formatINR(item.amount)}</span>}
             </Tag>
           </div>
         );
@@ -178,11 +161,15 @@ export default function PortfolioGlimpse() {
   const onTrackCount = goalItems.filter((i) => i.bg === "rgb(var(--pos-bg))").length;
   const shareOf = (amount: number) => (capital > 0 ? Math.round((amount / capital) * 100) : 0);
   const listed = [...holdingItems].sort((a, b) => b.amount - a.amount);
+  const unfunded = goalItems.filter((i) => i.amount <= 0).map((i) => i.label);
 
   return (
     <section className="min-w-0 rounded-card border border-line bg-surface">
       <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-        <span className="text-support text-text">{mixLabel(s.portfolio)}</span>
+        <span className="flex min-w-0 items-baseline gap-2">
+          <span className="text-support text-text">{mixLabel(s.portfolio)} portfolio</span>
+          <span className="num text-caption text-text-2">{Math.round(equityShare(s.portfolio) * 100)}% in stocks</span>
+        </span>
         <button
           onClick={openPortfolio}
           className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
@@ -267,6 +254,10 @@ export default function PortfolioGlimpse() {
               {view === "holdings" ? "Sized by value" : "Green on track · amber needs a change"}
             </span>
           </div>
+          {/* A goal with nothing set aside has no tile; it is named, never lost. */}
+          {view === "goals" && unfunded.length > 0 && (
+            <p className="mt-1.5 text-caption text-text-2">Nothing set aside yet: {unfunded.join(", ")}.</p>
+          )}
         </div>
 
         {/* Every holding with its share of the portfolio. */}

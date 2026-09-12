@@ -27,10 +27,10 @@ function AccountStep({ step }: { step: Step }) {
   // form, just save this plan to their account and show it.
   if (s.user) {
     return (
-      <div className="fade-up w-full max-w-md">
+      <div className="fade-up mx-auto w-full max-w-md">
         <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">Your plan is ready.</h1>
         <p className="mt-3 text-muted">Signed in as {s.user.email}. We will save it to your account.</p>
-        <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
+        <button className={`${btnIntake} mx-auto mt-6 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
           {step.cta}
         </button>
       </div>
@@ -104,7 +104,7 @@ function AccountStep({ step }: { step: Step }) {
   const invalid = credentialError(email, password, mode === "register") != null;
 
   return (
-    <div className="fade-up w-full max-w-md">
+    <div className="fade-up mx-auto w-full max-w-md">
       <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
       <p className="mt-3 text-muted">{step.subtitle}</p>
 
@@ -152,7 +152,7 @@ function AccountStep({ step }: { step: Step }) {
         </button>
       </form>
 
-      <div className="mt-4 flex flex-col items-start gap-2">
+      <div className="mt-4 flex flex-col items-center gap-2">
         <button
           type="button"
           onClick={() => {
@@ -253,10 +253,10 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
   };
 
   return (
-    <div className="fade-up w-full max-w-xl">
-      <h1 className="max-w-[22ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
-      {step.subtitle && <p className="mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
-      <div className="mt-6 flex w-full max-w-sm items-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
+    <div className="fade-up mx-auto w-full max-w-xl">
+      <h1 className="mx-auto max-w-[22ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
+      {step.subtitle && <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
+      <div className="mx-auto mt-6 flex w-full max-w-sm items-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
         <span className="text-lg font-medium text-muted">₹</span>
         <input
           autoFocus
@@ -279,11 +279,11 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
         <p className="mt-3 text-caption text-muted">Enter at least ₹{min.toLocaleString("en-IN")}.</p>
       )}
       {challenge && (
-        <p className="mt-5 max-w-[46ch] rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-caption text-text">
+        <p className="mx-auto mt-5 max-w-[46ch] rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-left text-caption text-text">
           {challenge}
         </p>
       )}
-      <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={commit} disabled={!ok}>
+      <button className={`${btnIntake} mx-auto mt-6 w-full max-w-sm`} onClick={commit} disabled={!ok}>
         {challenge ? "Yes, this is right" : "Continue"}
       </button>
     </div>
@@ -414,12 +414,16 @@ export default function Onboarding() {
           )}
         </div>
 
-        <div className="flex-1 pt-5 sm:pt-8">
+        {/* Every question composes around the column's centre: heading,
+            copy and control share one axis, so a wide screen never reads
+            as a block hugging the left. Cards keep their own left-aligned
+            text inside. */}
+        <div className="flex-1 pt-5 text-center sm:pt-8">
         {step.kind === "intro" && (
-          <div className="fade-up w-full max-w-xl">
-            <h1 className="max-w-[16ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
-            <p className="mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
-            <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={next}>
+          <div className="fade-up mx-auto w-full max-w-xl">
+            <h1 className="mx-auto max-w-[16ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
+            <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
+            <button className={`${btnIntake} mx-auto mt-6 w-full max-w-sm`} onClick={next}>
               {step.cta}
             </button>
           </div>
@@ -428,10 +432,10 @@ export default function Onboarding() {
         {/* Ten options and a footer, in one frame: compact cards, tight gaps,
             nothing that forces the page into scroll. */}
         {step.kind === "goals" && (
-          <div className="fade-up w-full">
+          <div className="fade-up mx-auto w-full">
             <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
             <p className="mt-2 text-muted">{step.subtitle}</p>
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
               {GOALS.map((g) => {
                 const sel = s.selectedGoalIds.includes(g.id);
                 return (
@@ -448,7 +452,7 @@ export default function Onboarding() {
                 );
               })}
             </div>
-            <div className="mt-4 flex items-center justify-between">
+            <div className="mt-4 flex items-center justify-center gap-5">
               <span className="text-support font-medium text-muted">{s.selectedGoalIds.length}/3 picked</span>
               <button className={`${btnIntake} px-10`} disabled={s.selectedGoalIds.length === 0} onClick={next}>
                 Continue
@@ -458,7 +462,7 @@ export default function Onboarding() {
         )}
 
         {step.kind === "single" && (
-          <div className="fade-up w-full">
+          <div className="fade-up mx-auto w-full">
             <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
             {step.subtitle && <p className="mt-3 text-muted">{step.subtitle}</p>}
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -488,7 +492,7 @@ export default function Onboarding() {
         )}
 
           {step.kind === "connect" && (
-            <div className="fade-up w-full">
+            <div className="fade-up mx-auto w-full">
               <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
               <p className="mt-3 text-muted">{step.subtitle}</p>
               <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
@@ -507,7 +511,7 @@ export default function Onboarding() {
                   </div>
                 ))}
               </div>
-              <button className={`${btnIntake} mt-5 w-full max-w-sm`} onClick={next}>
+              <button className={`${btnIntake} mx-auto mt-5 w-full max-w-sm`} onClick={next}>
                 Skip for now
               </button>
             </div>
