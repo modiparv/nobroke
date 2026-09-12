@@ -6,7 +6,6 @@ import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapita
 import { btnPrimary, card, sectionLabel } from "../ui";
 import AdvisorNote from "./AdvisorNote";
 import AppHeader from "./AppHeader";
-import Climb from "./Climb";
 import { GoalDetail, GoalTile } from "./GoalCard";
 import GoalsChart from "./GoalsChart";
 import MoneyTab from "./MoneyTab";
@@ -180,9 +179,6 @@ export default function Plan() {
                   : "Add a goal to start your plan"}
               </p>
             </div>
-
-            {/* The avatar: a climber on Meru, as high as today's pace carries the plan. */}
-            <Climb />
 
             <div className="flex-1" />
 
