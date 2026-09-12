@@ -106,7 +106,7 @@ export default function PortfolioGlimpse() {
       <section className="min-w-0 rounded-card border border-line bg-surface p-5 text-center">
         <p className="text-row font-medium">Not invested yet</p>
         <p className="mx-auto mt-1 max-w-xs text-support text-text-2">
-          Pick a mix and your goals start growing toward their dates.
+          Pick a portfolio and your goals start growing toward their dates.
         </p>
         <button
           onClick={openPortfolio}
@@ -168,6 +168,7 @@ export default function PortfolioGlimpse() {
       bg: onTrack ? "rgb(var(--pos-bg))" : "rgb(var(--cau-bg))",
       ink: onTrack ? "rgb(var(--pos))" : "rgb(var(--cau))",
       title: `${g.name} · ${formatINR(amount)} set aside · ${onTrack ? "on track" : "needs a change"}`,
+      // Selecting a tile opens that goal's workbench beside this pane.
       onClick: () => actions.setCurrentGoal(g.id),
     };
   });

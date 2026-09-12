@@ -15,14 +15,16 @@ import { sectionLabel } from "../ui";
 const PALETTE = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)"];
 const NIGHT_PALETTE = ["var(--chartn-1)", "var(--chartn-2)", "var(--chartn-3)", "var(--chartn-4)", "var(--chartn-5)", "var(--chartn-6)"];
 
-const W = 640;
+const W = 820;
 const M = { top: 14, right: 18, bottom: 26, left: 62 };
 
 export default function GoalsChart({ variant = "card" }: { variant?: "card" | "night" }) {
   const s = useStore();
   const goals = goalsByPriority(s);
   const night = variant === "night";
-  const H = night ? 200 : 300;
+  // One height everywhere: the band chart stands as tall as the card one,
+  // so the trajectories read as a chart, not a strip.
+  const H = 300;
   const palette = night ? NIGHT_PALETTE : PALETTE;
   const tone = night
     ? {
@@ -33,7 +35,6 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
         eyebrow: "text-eyebrow uppercase text-on-night-3",
         aside: "text-caption text-on-night-2",
         name: "text-support text-on-night",
-        caption: "text-caption text-on-night-3",
       }
     : {
         grid: "rgb(var(--line))",
@@ -43,7 +44,6 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
         eyebrow: sectionLabel,
         aside: "text-caption text-text-2",
         name: "text-support text-text",
-        caption: "text-caption text-text-2",
       };
   if (goals.length === 0) return null;
 
@@ -58,7 +58,9 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
     };
   });
 
-  const maxYears = Math.max(5, ...goals.map((g) => g.horizonYears));
+  // The axis hugs the real horizons (2-year floor only), so short-dated
+  // plans fill the width instead of huddling in the left half.
+  const maxYears = Math.max(2, ...goals.map((g) => g.horizonYears));
   const maxValue = Math.max(...series.flatMap((sr) => [sr.need, sr.points[sr.points.length - 1]?.value ?? 0])) * 1.06 || 1;
 
   const x = (year: number) => M.left + (year / maxYears) * (W - M.left - M.right);
@@ -133,10 +135,6 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
           </li>
         ))}
       </ul>
-      <p className={`mt-2 ${tone.caption}`}>
-        Lines follow each goal's share of your money at the mix's historical pace. Hollow circles mark what each goal
-        needs by its date.
-      </p>
     </Wrapper>
   );
 }

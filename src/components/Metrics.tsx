@@ -94,7 +94,7 @@ export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: P
         </button>
         {showNumbers && (
           <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-            <Stat label="Growth each year (estimate)" value={formatPct(r.blendedReturn)} sub="A rough yearly average across your mix." />
+            <Stat label="Growth each year (estimate)" value={formatPct(r.blendedReturn)} sub="A rough yearly average across your portfolio." />
             <Stat label="Real return (XIRR)" value={formatPct(r.xirr)} sub="Your true return after the timing of each deposit." />
             <Stat label="Volatility" value={formatPct(r.blendedVolatility, 0)} sub="Higher means bigger ups and downs along the way." />
           </div>

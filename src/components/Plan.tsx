@@ -6,7 +6,7 @@ import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapita
 import { btnPrimary, card, sectionLabel } from "../ui";
 import AdvisorNote from "./AdvisorNote";
 import AppHeader from "./AppHeader";
-import GoalCard from "./GoalCard";
+import { GoalDetail, GoalTile } from "./GoalCard";
 import GoalsChart from "./GoalsChart";
 import MoneyTab from "./MoneyTab";
 import PortfolioGlimpse from "./PortfolioGlimpse";
@@ -69,11 +69,12 @@ function AddGoal({ onAdd, onBand }: { onAdd: (id: string) => void; onBand?: bool
 }
 
 /**
- * The plan screen.
- *
- * Two panes side by side on desktop, split 60/40: goals are the major pane
- * because they are the object the user manipulates; the investment mix rides
- * alongside at 40 percent. Below 1024px the mix drops beneath the goals.
+ * The plan screen, master–detail. The night band carries the numbers and
+ * every trajectory. Beneath it, ALL goals sit in one row of tiles —
+ * comparable at a glance, draggable to reorder — with the selected goal's
+ * full workbench below on the left and the portfolio glimpse beside it on
+ * the right. Tapping a tile, or a goal in the glimpse's heatmap, swaps the
+ * workbench; nothing ever shoves the list around.
  */
 export default function Plan() {
   const s = useStore();
@@ -97,7 +98,8 @@ export default function Plan() {
     actions.setCurrentGoal(id);
     setOpenId(id);
   };
-  const toggle = (id: string) => (openId === id ? setOpenId("") : openGoal(id));
+  // The workbench always shows something: the selected goal, else the first.
+  const detailGoal = ordered.find((g) => g.id === openId) ?? ordered[0];
   const addGoal = (id: string) => {
     actions.addGoal(id);
     setOpenId(id);
@@ -203,45 +205,38 @@ export default function Plan() {
 
       {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
       <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
-        <div className={`grid gap-4 py-5 ${s.goals.length ? "lg:grid-cols-2 lg:items-start" : ""}`}>
-          {/* Goals: the major pane (60 percent on desktop). */}
-          <div className="flex min-w-0 flex-col gap-4">
-            {s.goals.length > 0 && <AdvisorNote />}
-
-            {s.goals.length === 0 ? (
-              <div className={`${card} py-10 text-center`}>
-                <p className="text-row font-medium">No goals yet</p>
-                <p className="mx-auto mt-1 max-w-xs text-support text-text-2">Add your first goal, or start a fresh plan.</p>
-                <button className={`${btnPrimary} mt-4`} onClick={actions.startOnboarding}>
-                  Start a new plan
-                </button>
+        <div className="flex flex-col gap-4 py-5">
+          {s.goals.length === 0 ? (
+            <div className={`${card} py-10 text-center`}>
+              <p className="text-row font-medium">No goals yet</p>
+              <p className="mx-auto mt-1 max-w-xs text-support text-text-2">Add your first goal, or start a fresh plan.</p>
+              <button className={`${btnPrimary} mt-4`} onClick={actions.startOnboarding}>
+                Start a new plan
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Every goal at once: one row of tiles, priority order. */}
+              <div className="flex items-center justify-between gap-3">
+                <span className={sectionLabel}>Goals · priority order · drag to reorder</span>
+                {s.goals.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={actions.recommendGoalSplit}
+                    className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+                  >
+                    Use recommended split
+                  </button>
+                )}
               </div>
-            ) : (
-              <section className="overflow-hidden rounded-card border border-line bg-surface">
-                {/* The card's own header carries the split action: no floating
-                    rows spending vertical space outside it. */}
-                <div className="flex items-center justify-between gap-3 border-b border-line px-3 py-2.5 sm:px-4">
-                  <span className={sectionLabel}>Goals · priority order</span>
-                  {s.goals.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={actions.recommendGoalSplit}
-                      className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
-                    >
-                      Use recommended split
-                    </button>
-                  )}
-                </div>
-                <ul className="divide-y divide-line" aria-label="Your goals">
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4" aria-label="Your goals">
                 {ordered.map((g, i) => (
-                  <GoalCard
+                  <GoalTile
                     key={g.id}
                     g={g}
                     rank={i + 1}
-                    count={ordered.length}
-                    open={openId === g.id}
-                    onToggle={() => toggle(g.id)}
-                    onDelete={() => del(g)}
+                    selected={detailGoal?.id === g.id}
+                    onSelect={() => openGoal(g.id)}
                     dragActive={dragId !== null}
                     isDragging={dragId === g.id}
                     isOver={overId === g.id && dragId !== g.id}
@@ -260,14 +255,18 @@ export default function Plan() {
                     }}
                   />
                 ))}
-                </ul>
-              </section>
-            )}
-          </div>
+              </div>
 
-          {/* The portfolio glimpse: read-only beside the goals. Building
-              happens in the Portfolio tab; the plan page only looks. */}
-          {s.goals.length > 0 && <PortfolioGlimpse />}
+              {/* The selected goal's workbench, with the portfolio beside it. */}
+              <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                <div className="flex min-w-0 flex-col gap-4">
+                  <AdvisorNote />
+                  {detailGoal && <GoalDetail g={detailGoal} onDelete={() => del(detailGoal)} />}
+                </div>
+                <PortfolioGlimpse />
+              </div>
+            </>
+          )}
         </div>
 
         <p className="pb-2 text-center text-caption text-text-2">

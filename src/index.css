@@ -183,6 +183,24 @@ input[type="range"] {
   scrollbar-width: none;
 }
 
+/* ---------- The graph-paper theme (landing) ---------- */
+/* NoBroke's own ground: faintly ruled paper, like the notebook a plan is
+   born in. Blue ink rules on warm beige paper — the bahi-khata palette —
+   and the deep variant inks the closer in the brand navy. Purely
+   decorative, so the rules stay whisper-faint. */
+.paper-grid {
+  background-color: rgb(var(--bg));
+  background-image: linear-gradient(rgb(var(--accent-text) / 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--accent-text) / 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.paper-grid-deep {
+  background-color: rgb(var(--band));
+  background-image: linear-gradient(rgb(var(--on-band-3) / 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--on-band-3) / 0.22) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
 /* ---------- Animations ---------- */
 @keyframes blink {
   0%, 100% { opacity: 1; }
