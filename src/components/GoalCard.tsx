@@ -23,14 +23,13 @@ const stepper =
  * the controls never shove the list around.
  */
 
-/** The rail binds to saved over target and nothing else (spec 10.2): both
- *  figures in today's rupees, so the bar never overstates a healthy SIP. */
+/** The facts every goal surface shares: the plan result and the capital
+ *  already set aside (this goal's share of everything held). */
 function goalFacts(g: PlanGoal, s: ReturnType<typeof useStore>) {
   const inputs = planInputsForGoal(s, g);
   const r = computePlan(inputs);
   const savedForGoal = totalCapital(s) * goalShareFraction(s, g.id);
-  const savedRatio = g.targetToday > 0 ? savedForGoal / g.targetToday : 0;
-  return { inputs, r, savedForGoal, savedRatio, railPct: Math.max(0, Math.min(1, savedRatio)) * 100, year: BASE_YEAR + g.horizonYears };
+  return { inputs, r, savedForGoal, year: BASE_YEAR + g.horizonYears };
 }
 
 export interface GoalTileProps {
@@ -62,7 +61,11 @@ export function GoalTile({
   onDrop,
 }: GoalTileProps) {
   const s = useStore();
-  const { r, savedForGoal, savedRatio, railPct, year } = goalFacts(g, s);
+  const { r, savedForGoal, year } = goalFacts(g, s);
+  const need = r.requiredCorpus;
+  const pctOfNeed = (v: number) => (need > 0 ? Math.max(0, Math.min(1, v / need)) * 100 : 0);
+  const savedPct = pctOfNeed(savedForGoal);
+  const projectedPct = pctOfNeed(r.projectedCorpus);
 
   return (
     <button
@@ -103,15 +106,27 @@ export function GoalTile({
       <span className="num mt-0.5 block truncate text-caption text-muted">
         {formatINR(g.targetToday)} by {year}
       </span>
-      <span className="mt-2.5 block h-[3px] w-full overflow-hidden rounded-[2px] bg-surface-2">
+      {/* One bar, three facts, all against what the goal will cost by its
+          date: the dark run is money already set aside, the lighter run is
+          what today's pace adds by then, what stays grey is the gap. */}
+      <span
+        className="relative mt-2.5 block h-1.5 w-full overflow-hidden rounded-full bg-surface-2"
+        title={`Set aside ${formatINR(savedForGoal)} · expected ${formatINR(r.projectedCorpus)} by ${year} · needs ${formatINR(r.requiredCorpus)}`}
+      >
         <span
-          className="block h-full rounded-[2px] bg-text transition-[width] duration-500 ease-out"
-          style={{ width: `${railPct}%` }}
+          className="absolute inset-y-0 left-0 rounded-full bg-text/25 transition-[width] duration-500 ease-out"
+          style={{ width: `${projectedPct}%` }}
+        />
+        <span
+          className="absolute inset-y-0 left-0 rounded-full bg-text transition-[width] duration-500 ease-out"
+          style={{ width: `${savedPct}%` }}
         />
       </span>
       <span className="num mt-1.5 flex items-baseline justify-between gap-2 text-caption">
-        <span className="font-medium text-text">{formatINR(savedForGoal)}</span>
-        <span className="text-muted">{Math.round(savedRatio * 100)}%</span>
+        <span className="font-medium text-text">{formatINR(savedForGoal)} saved</span>
+        <span className={r.onTrack ? "text-muted" : "text-cau"}>
+          {r.onTrack ? `reaches ${formatINR(r.projectedCorpus)}` : `short ${formatINR(Math.abs(r.gap))}`}
+        </span>
       </span>
     </button>
   );
@@ -192,13 +207,15 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
           </div>
         </div>
 
-        {!r.onTrack && (
-          <p className="text-support text-ink">
-            On this plan you'd reach about <span className="num">{formatINR(r.projectedCorpus)}</span>.
-          </p>
-        )}
-
-        <Metrics r={r} goal={g} inflation={s.inflation} />
+        <Metrics
+          r={r}
+          goal={g}
+          inflation={s.inflation}
+          saved={savedForGoal}
+          monthly={amount}
+          monthlyShare={goalShareFraction(s, g.id)}
+          monthlyPool={s.monthlySip}
+        />
 
         <div>
           <span className={sectionLabel}>Path to {g.name}</span>

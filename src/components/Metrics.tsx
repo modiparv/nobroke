@@ -1,89 +1,106 @@
 import { useState } from "react";
 import type { PlanGoal, PlanResult } from "../lib/types";
-import { formatINR, formatPct } from "../lib/format";
-import { C } from "../lib/theme";
+import { requiredSip } from "../lib/finance";
+import { formatINR, formatPct, formatYears } from "../lib/format";
+import { sectionLabel } from "../ui";
 
 const THIS_YEAR = new Date().getFullYear();
 
-function Ring({ progress, onTrack }: { progress: number; onTrack: boolean }) {
-  const pct = Math.max(0, Math.min(1, progress));
-  const radius = 30;
-  const c = 2 * Math.PI * radius;
-  const color = C.brand;
-  return (
-    <svg viewBox="0 0 72 72" className="h-[72px] w-[72px] flex-none">
-      <circle cx="36" cy="36" r={radius} fill="none" stroke={C.track} strokeWidth="7" />
-      <circle
-        cx="36"
-        cy="36"
-        r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth="7"
-        strokeLinecap="round"
-        strokeDasharray={`${(c * pct).toFixed(1)} ${(c * (1 - pct)).toFixed(1)}`}
-        transform="rotate(-90 36 36)"
-      />
-      <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="500" fill={C.ink}>
-        {Math.round(pct * 100)}%
-      </text>
-    </svg>
-  );
+/**
+ * The goal brief, the way a wealth manager gives it across the table: the
+ * verdict first in one sentence, then the six facts they would be asked
+ * for — what it will cost by the date, how long is left, what is already
+ * set aside, what goes in each month, the pace assumed, and what waiting
+ * a year would cost — then the technical numbers behind a tap.
+ */
+interface Props {
+  r: PlanResult;
+  goal: PlanGoal;
+  inflation: number;
+  /** Capital already set aside for this goal (its share of everything held). */
+  saved: number;
+  /** Monthly amount flowing to this goal, and its share of the monthly pool. */
+  monthly: number;
+  monthlyShare: number;
+  monthlyPool: number;
 }
 
-function Stat({ label, value, sub }: { label: string; value: string; sub: string }) {
+function Fact({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="rounded-xl border border-line bg-surface-2 p-3">
-      <div className="text-caption font-medium text-muted">{label}</div>
-      <div className="text-lg font-medium text-text">{value}</div>
-      <div className="text-caption leading-snug text-muted">{sub}</div>
+    <div className="rounded-xl border border-line bg-surface-2 px-3 py-2.5">
+      <div className="text-eyebrow uppercase text-text-3">{label}</div>
+      <div className="num mt-0.5 text-row font-medium text-text">{value}</div>
+      <div className="mt-0.5 text-caption leading-snug text-text-2">{sub}</div>
     </div>
   );
 }
 
-export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: PlanGoal; inflation: number }) {
+export default function Metrics({ r, goal, inflation, saved, monthly, monthlyShare, monthlyPool }: Props) {
   const [showNumbers, setShowNumbers] = useState(false);
   const year = THIS_YEAR + goal.horizonYears;
-  const growth = Math.max(0, r.projectedCorpus - r.totalInvested);
+  const extra = Math.max(0, r.requiredSip - monthly);
+  // The cost of waiting: same target, same date, one year less of investing.
+  const delayedSip =
+    goal.horizonYears > 1 ? requiredSip(r.requiredCorpus, saved, r.blendedReturn, goal.horizonYears - 1) : null;
+  const reachedEarly = r.onTrack && r.goalReachedMonth !== null && r.goalReachedMonth < r.months;
+  const savedShare = goal.targetToday > 0 ? Math.round((saved / goal.targetToday) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-4">
-      {/* The plain-English answer first */}
-      <div className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-surface-2 p-4">
-        <div className="min-w-0">
-          <div className="text-caption font-medium text-muted">Will you reach {goal.name}?</div>
-          <div className="mt-0.5 text-2xl font-medium tracking-tight sm:text-3xl">
-            {r.onTrack ? "Yes, on track" : "A little short"}
-          </div>
-          <div className="mt-1 text-support leading-snug text-muted">
-            By <span className="font-medium text-ink">{year}</span> you'll have about{" "}
-            <span className="font-medium text-ink">{formatINR(r.projectedCorpus)}</span>. Your goal needs{" "}
-            <span className="font-medium text-ink">{formatINR(r.requiredCorpus)}</span>.
-          </div>
+      {/* The verdict, in one sentence. */}
+      <p className="text-support leading-relaxed text-text">
+        By <span className="num font-medium">{year}</span> this reaches about{" "}
+        <span className="num font-medium">{formatINR(r.projectedCorpus)}</span> against{" "}
+        <span className="num font-medium">{formatINR(r.requiredCorpus)}</span> needed:{" "}
+        {r.onTrack ? (
+          <>
+            on track, with <span className="num font-medium text-pos">{formatINR(r.gap)}</span> to spare
+            {reachedEarly && r.goalReachedMonth !== null ? (
+              <>
+                , and at this pace you cross the line in about{" "}
+                <span className="num font-medium">{formatYears(r.goalReachedMonth / 12)}</span>
+              </>
+            ) : null}
+            .
+          </>
+        ) : (
+          <>
+            short by <span className="num font-medium text-cau">{formatINR(Math.abs(r.gap))}</span>. About{" "}
+            <span className="num font-medium">{formatINR(r.requiredSip)}</span> a month gets there
+            {extra > 0 ? <> (+{formatINR(extra)} on today's monthly)</> : null}.
+          </>
+        )}
+      </p>
+
+      <div>
+        <span className={sectionLabel}>The goal at a glance</span>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <Fact
+            label={`Costs by ${year}`}
+            value={formatINR(r.requiredCorpus)}
+            sub={`${formatINR(goal.targetToday)} today, at ${formatPct(inflation, 0)} inflation a year`}
+          />
+          <Fact label="Time left" value={formatYears(goal.horizonYears)} sub={`Target year ${year}`} />
+          <Fact label="Set aside now" value={formatINR(saved)} sub={`${savedShare}% of today's price`} />
+          <Fact
+            label="Going in monthly"
+            value={`${formatINR(monthly)}/mo`}
+            sub={`${Math.round(monthlyShare * 100)}% of your ${formatINR(monthlyPool)} a month`}
+          />
+          <Fact label="Pace assumed" value={`${formatPct(r.blendedReturn, 1)} a year`} sub="Your portfolio's historical pace" />
+          {delayedSip !== null ? (
+            <Fact
+              label="If you wait a year"
+              value={`${formatINR(delayedSip)}/mo`}
+              sub={`against ${formatINR(r.requiredSip)}/mo starting now`}
+            />
+          ) : (
+            <Fact label="Needed monthly" value={`${formatINR(r.requiredSip)}/mo`} sub="To reach it by the date" />
+          )}
         </div>
-        <Ring progress={r.progress} onTrack={r.onTrack} />
       </div>
 
-      {/* The three numbers that actually matter, in plain words */}
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-        <Stat
-          label="What it'll cost by then"
-          value={formatINR(r.requiredCorpus)}
-          sub={`${formatINR(goal.targetToday)} today, adjusted for rising prices (${formatPct(inflation, 0)} a year).`}
-        />
-        <Stat
-          label={r.onTrack ? "Extra cushion" : "You'll be short by"}
-          value={formatINR(Math.abs(r.gap))}
-          sub={r.onTrack ? "More than the goal needs." : `About ${formatINR(r.requiredSip)}/mo gets there.`}
-        />
-        <Stat
-          label="Money you'll put in"
-          value={formatINR(r.totalInvested)}
-          sub={`Plus ${formatINR(growth)} of growth on top.`}
-        />
-      </div>
-
-      {/* The technical numbers, hidden by default so they don't intimidate */}
+      {/* The technical numbers, behind a tap so they never intimidate. */}
       <div>
         <button
           onClick={() => setShowNumbers((v) => !v)}
@@ -93,10 +110,10 @@ export default function Metrics({ r, goal, inflation }: { r: PlanResult; goal: P
           <span className={`inline-block transition-transform ${showNumbers ? "rotate-180" : ""}`}>▾</span>
         </button>
         {showNumbers && (
-          <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-            <Stat label="Growth each year (estimate)" value={formatPct(r.blendedReturn)} sub="A rough yearly average across your portfolio." />
-            <Stat label="Real return (XIRR)" value={formatPct(r.xirr)} sub="Your true return after the timing of each deposit." />
-            <Stat label="Volatility" value={formatPct(r.blendedVolatility, 0)} sub="Higher means bigger ups and downs along the way." />
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <Fact label="Growth each year (estimate)" value={formatPct(r.blendedReturn)} sub="A rough yearly average across your portfolio." />
+            <Fact label="Real return (XIRR)" value={formatPct(r.xirr)} sub="Your true return after the timing of each deposit." />
+            <Fact label="Volatility" value={formatPct(r.blendedVolatility, 0)} sub="Higher means bigger ups and downs along the way." />
           </div>
         )}
       </div>
