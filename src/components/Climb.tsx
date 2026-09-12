@@ -31,8 +31,19 @@ export default function Climb() {
     .join(" ");
   const me = pt(Math.min(coverage, 1));
   const top = pt(1);
-  const extra = next ? monthlyForCoverage(s, next.min) : null;
   const pctText = `${Math.round(coverage * 100)}% covered`;
+  // The nudge: the smallest extra monthly that reaches the next stage. When
+  // the goals are too big for any reasonable step to get there, fall back
+  // to a fifth more a month and say exactly how far that climbs instead.
+  const toNext = next ? monthlyForCoverage(s, next.min) : null;
+  const bump = Math.max(1000, Math.round((s.monthlySip * 0.2) / 500) * 500);
+  const afterBump = next && toNext === null ? planCoverage({ ...s, monthlySip: s.monthlySip + bump }) : null;
+  const nudge =
+    toNext !== null && next
+      ? { extra: toNext, label: `Add ${formatINR(toNext)}/mo → ${next.name}` }
+      : afterBump !== null && afterBump > coverage + 0.005
+        ? { extra: bump, label: `Add ${formatINR(bump)}/mo → ${Math.round(afterBump * 100)}% covered` }
+        : null;
 
   return (
     <div className="mt-5">
@@ -82,13 +93,13 @@ export default function Climb() {
           <span className="mx-1.5 text-on-night-3">·</span>
           <span className="text-on-night-2">{stage.line}</span>
         </span>
-        {next && extra !== null && (
+        {nudge && (
           <button
             type="button"
-            onClick={() => actions.setSip(s.monthlySip + extra)}
+            onClick={() => actions.setSip(s.monthlySip + nudge.extra)}
             className="num inline-flex h-7 items-center rounded-full border border-on-night-3/60 px-2.5 text-caption text-on-night transition hover:border-on-night-2"
           >
-            Add {formatINR(extra)}/mo → {next.name}
+            {nudge.label}
           </button>
         )}
       </div>

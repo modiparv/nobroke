@@ -179,7 +179,6 @@ export default function Plan() {
                   ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track`
                   : "Add a goal to start your plan"}
               </p>
-              <Climb />
             </div>
 
             {/* The avatar: a climber on Meru, as high as today's pace carries the plan. */}
