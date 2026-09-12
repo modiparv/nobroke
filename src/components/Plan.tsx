@@ -47,7 +47,10 @@ function AddGoal({ onAdd, onBand }: { onAdd: (id: string) => void; onBand?: bool
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-[calc(100%+8px)] z-20 flex max-h-72 w-60 flex-col overflow-y-auto rounded-card border border-line bg-surface p-1.5 sm:left-auto sm:right-0">
+          {/* Anchored to the pill's left edge, where the band has room; on a
+              phone it becomes a sheet above the copilot bar. Each row shows
+              what the goal is and roughly what it costs, not just a name. */}
+          <div className="absolute left-0 top-[calc(100%+8px)] z-20 flex max-h-80 w-80 flex-col overflow-y-auto rounded-card border border-line bg-surface p-1.5 max-sm:fixed max-sm:inset-x-3 max-sm:bottom-24 max-sm:top-auto max-sm:w-auto">
             {remaining.length === 0 && <span className="p-3 text-center text-support text-text-2">All goals added</span>}
             {remaining.map((g) => (
               <button
@@ -56,9 +59,18 @@ function AddGoal({ onAdd, onBand }: { onAdd: (id: string) => void; onBand?: bool
                   onAdd(g.id);
                   setOpen(false);
                 }}
-                className="rounded-control px-3 py-2 text-left text-support hover:bg-surface-2"
+                className="flex items-start gap-2.5 rounded-control px-2.5 py-2 text-left transition hover:bg-surface-2"
               >
-                {g.name}
+                <span className="pt-px text-base leading-none" aria-hidden>
+                  {g.emoji}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-support font-medium text-text">{g.name}</span>
+                  <span className="block text-caption text-text-2">{g.blurb}</span>
+                </span>
+                <span className="num flex-none pt-px text-caption text-text-2">
+                  {formatINR(g.targetToday)} · {g.horizonYears}y
+                </span>
               </button>
             ))}
           </div>

@@ -431,7 +431,7 @@ export default function Onboarding() {
           <div className="fade-up w-full">
             <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
             <p className="mt-2 text-muted">{step.subtitle}</p>
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
               {GOALS.map((g) => {
                 const sel = s.selectedGoalIds.includes(g.id);
                 return (
