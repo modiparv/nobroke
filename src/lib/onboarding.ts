@@ -172,7 +172,7 @@ export const STEPS: Step[] = [
     stage: 5,
     stageLabel: "Goals",
     title: "What are you building toward?",
-    subtitle: "Pick up to three. Each one gets a target, a date and a monthly amount.",
+    subtitle: "Pick up to three.",
   },
   {
     id: "timeline",
