@@ -20,7 +20,7 @@ const EMAIL = "a@b.co";
  *  out together anywhere else, so a secret scanner has nothing to pair. */
 const creds = (email, pw) => ({ email, password: pw });
 
-const db = { rows: [], fail: null, calls: [] };
+const db = { rows: [], fail: null, calls: [], syncs: [] };
 const env = { url: "postgres://mock" };
 
 mock.module("./_data.js", {
@@ -34,7 +34,11 @@ mock.module("./_data.js", {
       },
       end: async () => {},
     }),
-    PgDb: class {},
+    PgDb: class {
+      async lastSuccessfulSyncs() {
+        return db.syncs;
+      }
+    },
   },
 });
 
@@ -44,17 +48,18 @@ const me = (await import("./auth/me.js")).default;
 const logout = (await import("./auth/logout.js")).default;
 const del = (await import("./auth/delete.js")).default;
 const plan = (await import("./plan.js")).default;
-const healthAuth = (await import("./health/auth.js")).default;
+const health = (await import("./health/[kind].js")).default;
 
 function reset() {
   db.rows = [];
   db.fail = null;
   db.calls = [];
+  db.syncs = [];
   env.url = "postgres://mock";
   process.env.AUTH_SECRET = SECRET;
 }
 
-async function call(handler, { method = "POST", body, cookie } = {}) {
+async function call(handler, { method = "POST", body, cookie, query, url } = {}) {
   const headers = {};
   const res = {
     statusCode: 200,
@@ -71,7 +76,7 @@ async function call(handler, { method = "POST", body, cookie } = {}) {
       headers[k] = v;
     },
   };
-  const req = { method, body, headers: cookie ? { cookie } : {} };
+  const req = { method, body, headers: cookie ? { cookie } : {}, ...(query ? { query } : {}), ...(url ? { url } : {}) };
   await handler(req, res);
   return { status: res.statusCode, body: res.body, headers };
 }
@@ -223,11 +228,16 @@ test("logout clears the cookie; delete needs a session, then clears it too", asy
   assert.match(db.calls.at(-1).sql, /delete from app_user/);
 });
 
-// ---- health/auth ----
+// ---- health/[kind] ----
+// One function serves every health check (the Hobby plan allows twelve per
+// deployment, and the app uses all twelve); the path segment picks the check.
+const healthAuth = (opts = {}) => call(health, { method: "GET", query: { kind: "auth" }, ...opts });
+const healthSources = (opts = {}) => call(health, { method: "GET", query: { kind: "sources" }, ...opts });
+
 test("health/auth reports what is provisioned, and never a secret", async () => {
   reset();
   db.rows = [{ app_user: "app_user", user_plan: "user_plan" }];
-  const r = await call(healthAuth, { method: "GET", cookie: session() });
+  const r = await healthAuth({ cookie: session() });
   assert.equal(r.status, 200);
   assert.equal(r.body.ok, true);
   assert.equal(r.body.auth_secret, "auth_secret");
@@ -239,7 +249,7 @@ test("health/auth reports what is provisioned, and never a secret", async () => 
   delete process.env.AUTH_SECRET;
   process.env.CRON_SECRET = "cron";
   db.rows = [{ app_user: "app_user", user_plan: null }];
-  const partial = await call(healthAuth, { method: "GET" });
+  const partial = await healthAuth();
   assert.equal(partial.body.ok, false);
   assert.equal(partial.body.auth_secret, "cron_secret_fallback");
   assert.deepEqual(partial.body.tables, { app_user: true, user_plan: false });
@@ -248,8 +258,52 @@ test("health/auth reports what is provisioned, and never a secret", async () => 
 
   reset();
   env.url = null;
-  const bare = await call(healthAuth, { method: "GET" });
+  const bare = await healthAuth();
   assert.equal(bare.body.ok, false);
   assert.equal(bare.body.database, false);
   assert.equal(bare.body.tables, null);
+});
+
+test("health/sources: syncs and counts; 503 without a database; 500 when it fails", async () => {
+  reset();
+  db.syncs = [{ dataSourceCode: "amfi", finishedAt: "2026-09-19T17:45:00.000Z" }];
+  db.rows = [{ instruments: 12, quotes: 340 }];
+  const r = await healthSources();
+  assert.equal(r.status, 200);
+  assert.equal(r.body.ok, true);
+  assert.deepEqual(r.body.sources, ["amfi"]);
+  assert.equal(r.body.data.instruments, 12);
+  assert.equal(r.body.data.quotes, 340);
+  assert.deepEqual(r.body.warnings, []);
+
+  db.syncs = [];
+  const unsynced = await healthSources();
+  assert.equal(unsynced.status, 200);
+  assert.deepEqual(unsynced.body.warnings, ["no successful sync recorded yet"]);
+
+  env.url = null;
+  const bare = await healthSources();
+  assert.equal(bare.status, 503);
+  assert.equal(bare.body.ok, false);
+
+  reset();
+  db.fail = new Error("db down");
+  const broken = await healthSources();
+  assert.equal(broken.status, 500);
+  assert.deepEqual(broken.body.warnings, ["db down"]);
+});
+
+test("health: the path segment picks the check, from the query or the URL; unknown is a 404", async () => {
+  reset();
+  db.rows = [{ app_user: "app_user", user_plan: "user_plan" }];
+  // No router query (local dev, a bare Node server): the URL's last segment decides.
+  const byUrl = await call(health, { method: "GET", url: "/api/health/auth?x=1" });
+  assert.equal(byUrl.status, 200);
+  assert.equal(byUrl.body.auth_secret, "auth_secret");
+  const unknown = await call(health, { method: "GET", query: { kind: "nope" } });
+  assert.equal(unknown.status, 404);
+  assert.equal(unknown.body.ok, false);
+  assert.match(unknown.body.error, /sources.*auth/);
+  const none = await call(health, { method: "GET", url: "/api/health" });
+  assert.equal(none.status, 404);
 });

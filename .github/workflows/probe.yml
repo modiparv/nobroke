@@ -1,9 +1,10 @@
 name: probe
 
-# Manual endpoint probe for the preview deployment. This sandboxed agent has
-# no outbound network; GitHub runners do. Dispatched remotely to check
-# endpoints and, when a CRON_SECRET repository secret exists, to drive the
-# guarded sync/migrate endpoints too.
+# Manual endpoint probe. This sandboxed agent has no outbound network; GitHub
+# runners do. Dispatched remotely to check endpoints on the branch preview
+# (the default) or on production, and, when a CRON_SECRET repository secret
+# exists, to drive the guarded sync/migrate endpoints too. The secret is only
+# ever sent to this project's own hosts.
 on:
   workflow_dispatch:
     inputs:
@@ -12,8 +13,16 @@ on:
         default: GET
         required: false
       path:
-        description: Path on the preview deployment
+        description: Path on the deployment
         default: /api/health/sources
+        required: false
+      base:
+        description: Deployment origin (the branch preview, or https://nobroke.in)
+        default: https://nobroke-git-claude-adoring-keller-npx37u-modiparvs-projects.vercel.app
+        required: false
+      body:
+        description: JSON request body, sent as application/json when not empty
+        default: ""
         required: false
 
 jobs:
@@ -25,8 +34,15 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           METHOD: ${{ inputs.method }}
           ENDPOINT_PATH: ${{ inputs.path }}
+          BASE: ${{ inputs.base }}
+          BODY: ${{ inputs.body }}
         run: |
-          URL="https://nobroke-git-claude-adoring-keller-npx37u-modiparvs-projects.vercel.app${ENDPOINT_PATH}"
+          URL="${BASE%/}${ENDPOINT_PATH}"
           ARGS=(-sS -X "$METHOD" -w "\nHTTP_STATUS:%{http_code}\n" --max-time 120)
-          if [ -n "$CRON_SECRET" ]; then ARGS+=(-H "Authorization: Bearer $CRON_SECRET"); fi
+          if [[ "$BASE" =~ ^https://(nobroke\.in|www\.nobroke\.in|nobroke(-[a-z0-9-]+)?\.vercel\.app)$ ]]; then
+            if [ -n "$CRON_SECRET" ]; then ARGS+=(-H "Authorization: Bearer $CRON_SECRET"); fi
+          else
+            echo "Not one of this project's hosts; probing without the secret."
+          fi
+          if [ -n "$BODY" ]; then ARGS+=(-H "Content-Type: application/json" --data "$BODY"); fi
           curl "${ARGS[@]}" "$URL"
