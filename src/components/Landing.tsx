@@ -17,34 +17,23 @@ import SupportPill from "./SupportPill";
 /** Set to the founder's LinkedIn URL to light up the footer link. */
 const FOUNDER_LINKEDIN = "https://www.linkedin.com/in/parv-modi-3008p/";
 
+// One sentence per row: the page is scanned, not read.
 const OFFERINGS = [
   {
     title: "See everything you own",
-    paras: [
-      "Cash, mutual funds, FDs, gold, EPF. One clean view of your wealth, today.",
-      "Each holding takes seconds to add, and the totals update live. No accounts to link. No money to move.",
-    ],
+    paras: ["Cash, mutual funds, FDs, gold, EPF. One clean view of your wealth, today."],
   },
   {
     title: "A plan built from real numbers",
-    paras: [
-      "Five short sections: income, spending, what you hold, your context, your goals. Every answer shapes the plan, so none can be skipped.",
-      "The plan shows its work. Every assumption inspectable, every projection explained.",
-    ],
+    paras: ["Income, spending, what you hold, your goals. Every answer shapes the plan, and the plan shows its work."],
   },
   {
     title: "One portfolio funds every goal",
-    paras: [
-      "Not a bucket per dream. A single portfolio, matched to the risk you can actually live with, carries the house, the wedding and the retirement together.",
-      "Each goal gets a target, a date, and the monthly amount it truly needs.",
-    ],
+    paras: ["A single portfolio, matched to the risk you can live with, carries the house, the wedding and the retirement together."],
   },
   {
     title: "Ask. It runs the numbers.",
-    paras: [
-      "Change the plan in plain words: the monthly, a target, a horizon. It happens on the spot, every number recomputed.",
-      "Anything else you ask is answered against your whole plan: every goal, target, monthly, projection and holding.",
-    ],
+    paras: ["Change the plan in plain words and every number recomputes on the spot."],
   },
 ];
 
@@ -92,7 +81,7 @@ const TIERS = [
 const LAYERS = [
   {
     title: "Protect",
-    body: "A cushion check before anything else: if cash covers less than three months of expenses, the plan says so plainly. Risk appetite is read from your answers, then handed to you. One slide to change.",
+    body: "A cushion check first: if cash covers under three months of expenses, the plan says so. Risk is read from your answers, then handed to you.",
     art: (
       <div className="relative" aria-hidden>
         <div className="absolute -bottom-4 left-1/2 h-10 w-40 -translate-x-1/2 rounded-xl border border-line bg-surface" />
@@ -108,7 +97,7 @@ const LAYERS = [
   },
   {
     title: "Plan",
-    body: "Every goal gets a target in today's money, a date, and the monthly it truly needs. Inflation is priced in. Trade-offs show the moment you make them.",
+    body: "Every goal gets a target in today's money, a date, and the monthly it truly needs. Inflation is priced in.",
     art: (
       <div className="flex flex-col items-center gap-1" aria-hidden>
         <span className="text-index uppercase tracking-[0.13em] text-text-3">Goals</span>
@@ -130,7 +119,7 @@ const LAYERS = [
   },
   {
     title: "Prosper",
-    body: "One portfolio carries every goal, tuned to your horizon and risk. Projections show the arithmetic: expected return, the gap, what changes if you wait.",
+    body: "One portfolio carries every goal, tuned to your horizon and risk. Projections show the arithmetic, gap included.",
     art: (
       <svg viewBox="0 0 220 120" className="w-52" aria-hidden>
         <g stroke="rgb(var(--line))" strokeWidth="1">
@@ -186,7 +175,7 @@ function HeroPath() {
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="text-eyebrow uppercase text-accent">One plan, every goal</span>
-        <span className="num text-caption text-text-2">₹25,000 a month · Illustrative, not advice</span>
+        <span className="num text-caption text-text-2">₹25,000 a month</span>
       </div>
       <svg
         viewBox="0 0 720 216"
@@ -309,7 +298,7 @@ export default function Landing() {
                 Login
               </button>
               <button className={btnBlue} onClick={actions.startOnboarding}>
-                Join the waitlist
+                Start your plan
               </button>
             </div>
           )}
@@ -339,7 +328,7 @@ export default function Landing() {
               ) : (
                 <>
                   <button className={btnBlueLg} onClick={actions.startOnboarding}>
-                    Join the waitlist
+                    Start your plan
                   </button>
                   <button className={`${btnGhost} h-12 bg-surface px-6`} onClick={() => setShowAuth(true)}>
                     Login

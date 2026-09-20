@@ -44,6 +44,10 @@ export default function PortfolioTab() {
 
         <BucketBuilder />
       </div>
+
+      <p className="pb-2 pt-5 text-center text-caption text-text-2">
+        Projections are illustrative and not investment advice.
+      </p>
     </div>
   );
 }

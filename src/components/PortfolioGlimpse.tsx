@@ -301,7 +301,6 @@ export default function PortfolioGlimpse() {
           )}
         </div>
 
-        <p className="mt-3 border-t border-line pt-2.5 text-caption text-text-2">Illustrative, not advice.</p>
       </div>
     </section>
   );
