@@ -429,31 +429,45 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Ten options and a footer, in one frame: compact cards, tight gaps,
-            nothing that forces the page into scroll. */}
+        {/* Thirteen goals in one frame, each a picture and a name: the
+            catalogue's sentences belong to the plan page, not to a choice
+            made in seconds. The furthest goal closes the grid as a full-width
+            tile, so thirteen never leaves an orphan in the last row. Picks are
+            counted by three dots, not a sentence. */}
         {step.kind === "goals" && (
           <div className="fade-up mx-auto w-full">
             <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
             <p className="mt-2 text-muted">{step.subtitle}</p>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-              {GOALS.map((g) => {
+              {GOALS.map((g, i) => {
                 const sel = s.selectedGoalIds.includes(g.id);
+                const last = i === GOALS.length - 1;
                 return (
                   <button
                     key={g.id}
                     onClick={() => actions.toggleGoal(g.id)}
-                    className={`flex flex-col gap-0.5 rounded-xl border px-3 py-2.5 text-left transition ${
-                      sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-accent"
-                    }`}
+                    aria-pressed={sel}
+                    className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 transition ${
+                      last ? "col-span-2 sm:col-span-3 md:col-span-4" : ""
+                    } ${sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-accent"}`}
                   >
-                    <span className="text-support font-medium">{g.name}</span>
-                    <span className={`text-caption ${sel ? "text-on-accent/70" : "text-muted"}`}>{g.blurb}</span>
+                    <span aria-hidden="true" className="text-2xl leading-none">
+                      {g.emoji}
+                    </span>
+                    <span className="text-support font-medium leading-tight">{g.name}</span>
                   </button>
                 );
               })}
             </div>
             <div className="mt-4 flex items-center justify-center gap-5">
-              <span className="text-support font-medium text-muted">{s.selectedGoalIds.length}/3 picked</span>
+              <span role="img" aria-label={`${s.selectedGoalIds.length} of 3 picked`} className="flex items-center gap-1.5">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className={`h-2.5 w-2.5 rounded-full transition ${i < s.selectedGoalIds.length ? "bg-brand-deep" : "border border-line-2 bg-surface"}`}
+                  />
+                ))}
+              </span>
               <button className={`${btnIntake} px-10`} disabled={s.selectedGoalIds.length === 0} onClick={next}>
                 Continue
               </button>
