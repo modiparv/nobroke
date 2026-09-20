@@ -17,34 +17,23 @@ import SupportPill from "./SupportPill";
 /** Set to the founder's LinkedIn URL to light up the footer link. */
 const FOUNDER_LINKEDIN = "https://www.linkedin.com/in/parv-modi-3008p/";
 
+// One sentence per row: the page is scanned, not read.
 const OFFERINGS = [
   {
     title: "See everything you own",
-    paras: [
-      "Cash, mutual funds, FDs, gold, EPF. One clean view of your wealth, today.",
-      "Each holding takes seconds to add, and the totals update live. No accounts to link. No money to move.",
-    ],
+    paras: ["Cash, mutual funds, FDs, gold, EPF. One clean view of your wealth, today."],
   },
   {
     title: "A plan built from real numbers",
-    paras: [
-      "Five short sections: income, spending, what you hold, your context, your goals. Every answer shapes the plan, so none can be skipped.",
-      "The plan shows its work. Every assumption inspectable, every projection explained.",
-    ],
+    paras: ["Income, spending, what you hold, your goals. Every answer shapes the plan, and the plan shows its work."],
   },
   {
     title: "One portfolio funds every goal",
-    paras: [
-      "Not a bucket per dream. A single portfolio, matched to the risk you can actually live with, carries the house, the wedding and the retirement together.",
-      "Each goal gets a target, a date, and the monthly amount it truly needs.",
-    ],
+    paras: ["A single portfolio, matched to the risk you can live with, carries the house, the wedding and the retirement together."],
   },
   {
     title: "Ask. It runs the numbers.",
-    paras: [
-      "Change the plan in plain words: the monthly, a target, a horizon. It happens on the spot, every number recomputed.",
-      "Anything else you ask is answered against your whole plan: every goal, target, monthly, projection and holding.",
-    ],
+    paras: ["Change the plan in plain words and every number recomputes on the spot."],
   },
 ];
 
@@ -92,7 +81,7 @@ const TIERS = [
 const LAYERS = [
   {
     title: "Protect",
-    body: "A cushion check before anything else: if cash covers less than three months of expenses, the plan says so plainly. Risk appetite is read from your answers, then handed to you. One slide to change.",
+    body: "A cushion check first: if cash covers under three months of expenses, the plan says so. Risk is read from your answers, then handed to you.",
     art: (
       <div className="relative" aria-hidden>
         <div className="absolute -bottom-4 left-1/2 h-10 w-40 -translate-x-1/2 rounded-xl border border-line bg-surface" />
@@ -108,7 +97,7 @@ const LAYERS = [
   },
   {
     title: "Plan",
-    body: "Every goal gets a target in today's money, a date, and the monthly it truly needs. Inflation is priced in. Trade-offs show the moment you make them.",
+    body: "Every goal gets a target in today's money, a date, and the monthly it truly needs. Inflation is priced in.",
     art: (
       <div className="flex flex-col items-center gap-1" aria-hidden>
         <span className="text-index uppercase tracking-[0.13em] text-text-3">Goals</span>
@@ -130,7 +119,7 @@ const LAYERS = [
   },
   {
     title: "Prosper",
-    body: "One portfolio carries every goal, tuned to your horizon and risk. Projections show the arithmetic: expected return, the gap, what changes if you wait.",
+    body: "One portfolio carries every goal, tuned to your horizon and risk. Projections show the arithmetic, gap included.",
     art: (
       <svg viewBox="0 0 220 120" className="w-52" aria-hidden>
         <g stroke="rgb(var(--line))" strokeWidth="1">
@@ -186,11 +175,11 @@ function HeroPath() {
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="text-eyebrow uppercase text-accent">One plan, every goal</span>
-        <span className="num text-caption text-text-2">₹25,000 a month · Illustrative, not advice</span>
+        <span className="num text-caption text-text-2">₹25,000 a month</span>
       </div>
       <svg
         viewBox="0 0 720 216"
-        className="mt-3 w-full"
+        className="hero-path mt-3 w-full"
         role="img"
         aria-label="Three rising lines from one monthly amount: safety net by 2027, first home by 2034, early retirement by 2046"
       >
@@ -309,7 +298,7 @@ export default function Landing() {
                 Login
               </button>
               <button className={btnBlue} onClick={actions.startOnboarding}>
-                Join the waitlist
+                Start your plan
               </button>
             </div>
           )}
@@ -327,7 +316,7 @@ export default function Landing() {
             <h1 className="mt-4 text-3xl font-medium leading-[1.06] tracking-[-0.025em] text-text sm:text-5xl">
               We won't let you go broke.
             </h1>
-            <p className="mt-5 max-w-xl text-body text-text-2">
+            <p className="mt-5 max-w-xl text-prose text-text-2">
               Financial planning &amp; wealth management for the Bharat that has goals to reach, but no one to plan
               them with.
             </p>
@@ -339,7 +328,7 @@ export default function Landing() {
               ) : (
                 <>
                   <button className={btnBlueLg} onClick={actions.startOnboarding}>
-                    Join the waitlist
+                    Start your plan
                   </button>
                   <button className={`${btnGhost} h-12 bg-surface px-6`} onClick={() => setShowAuth(true)}>
                     Login
@@ -368,7 +357,7 @@ export default function Landing() {
                 </h3>
                 <div className="flex max-w-xl flex-col gap-3 sm:pl-0">
                   {o.paras.map((p) => (
-                    <p key={p} className="text-sm leading-relaxed text-text-2">
+                    <p key={p} className="text-prose text-text-2">
                       {p}
                     </p>
                   ))}
@@ -395,7 +384,7 @@ export default function Landing() {
                 <span className="text-support font-medium text-text">Human judgment</span>
                 <ul className="mt-3">
                   {HUMAN_ROWS.map((r) => (
-                    <li key={r} className="border-b border-line py-3 text-sm text-text-2 last:border-b-0">
+                    <li key={r} className="border-b border-line py-3 text-prose text-text-2 last:border-b-0">
                       {r}
                     </li>
                   ))}
@@ -405,7 +394,7 @@ export default function Landing() {
                 <span className="text-support font-medium text-text">NoBroke AI</span>
                 <ul className="mt-3">
                   {AI_ROWS.map((r) => (
-                    <li key={r} className="border-b border-line py-3 text-sm text-text-2 last:border-b-0">
+                    <li key={r} className="border-b border-line py-3 text-prose text-text-2 last:border-b-0">
                       {r}
                     </li>
                   ))}
@@ -439,7 +428,7 @@ export default function Landing() {
                 <div className="p-5">
                   <span className="num text-index uppercase tracking-[0.13em] text-accent">Layer {idx + 1}</span>
                   <h3 className="mt-2 text-section font-medium">{l.title}</h3>
-                  <p className="mt-2 text-support text-text-2">{l.body}</p>
+                  <p className="mt-2 text-body text-text-2">{l.body}</p>
                 </div>
               </div>
             ))}
@@ -452,7 +441,7 @@ export default function Landing() {
           <div className="text-center">
             <span className={eyebrow}>Pricing</span>
             <h2 className="mt-3 text-xl font-medium tracking-[-0.02em] text-text sm:text-2xl">
-              Two tiers. One promise.
+              Two tiers. Plain prices.
             </h2>
           </div>
           <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:grid-cols-2">
@@ -465,7 +454,7 @@ export default function Landing() {
               >
                 {t.popular && (
                   <span className="absolute -top-2.5 left-5 rounded-full bg-accent px-2.5 py-0.5 text-index font-medium uppercase tracking-wide text-surface">
-                    Most chosen
+                    Start here
                   </span>
                 )}
                 <div className="flex items-baseline justify-between gap-2">
@@ -504,7 +493,7 @@ export default function Landing() {
             <h2 className="text-xl font-medium tracking-[-0.02em] text-on-band sm:text-2xl">
               Start with what you have.
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-support text-on-band-2">
+            <p className="mx-auto mt-2 max-w-md text-body text-on-band-2">
               Five short sections. A plan that shows its work.
             </p>
             <button className={`${btnBlueLg} mt-8 px-8`} onClick={actions.startOnboarding}>

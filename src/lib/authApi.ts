@@ -31,18 +31,38 @@ interface AuthResponse {
   status?: number;
 }
 
+/**
+ * Every failure gets a specific, honest message. A non-JSON answer (a
+ * crashed function, a missing route) names its status instead of masquerading
+ * as a network error; a 503 from the server means this deployment has no
+ * secret or database, which is a configuration fact worth saying plainly.
+ */
 async function post(path: string, body?: unknown): Promise<AuthResponse> {
+  let r: Response;
   try {
-    const r = await fetch(path, {
+    r = await fetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body ?? {}),
     });
-    const data = (await r.json()) as AuthResponse;
-    return { ...data, status: r.status };
   } catch {
-    return { ok: false, error: "Network error. Try again." };
+    return { ok: false, error: "No connection. Check your network and try again." };
   }
+  let data: AuthResponse | null = null;
+  try {
+    data = (await r.json()) as AuthResponse;
+  } catch {
+    data = null;
+  }
+  if (!data) return { ok: false, error: `The server did not answer properly (${r.status}). Try again in a moment.`, status: r.status };
+  if (r.status === 503) {
+    return {
+      ...data,
+      status: 503,
+      error: "Sign-in is not set up on this deployment yet (no AUTH_SECRET or database). Check /api/health/auth.",
+    };
+  }
+  return { ...data, status: r.status };
 }
 
 export function register(email: string, password: string): Promise<AuthResponse> {

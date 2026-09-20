@@ -49,6 +49,9 @@ export interface PlanGoal {
   horizonYears: number;
   /** Whether the user has confirmed the goal's target year/tenure. */
   tenureConfirmed: boolean;
+  /** The person's own notes on this goal (who is chipping in, what is booked,
+      what could change the number). Free text, saved with the plan. */
+  notes?: string;
 }
 
 export type CityTier = "metro" | "tier1" | "tier2" | "tier3";

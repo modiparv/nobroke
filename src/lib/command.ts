@@ -16,17 +16,22 @@ export type Command =
   | { kind: "newPlan" };
 
 // Loose keyword → { id, display name } map (ids match src/lib/goals.ts).
+// Order matters where words overlap: "education loan" is a loan, "kid's
+// college" is the child's education, so those two sit before "education".
 const GOAL_KEYWORDS: Array<{ re: RegExp; id: string; name: string }> = [
-  { re: /\b(safety net|safety|emergency|rainy day)\b/, id: "emergency", name: "Safety Net" },
-  { re: /\b(travel|trip|vacation|holiday)\b/, id: "travel", name: "Travel the World" },
-  { re: /\b(gadget|tech|phone|laptop|iphone|macbook)\b/, id: "gadget", name: "New Tech" },
-  { re: /\b(car|bike|scooter|vehicle)\b/, id: "car", name: "Dream Car" },
-  { re: /\b(wedding|marriage|shaadi)\b/, id: "wedding", name: "Dream Wedding" },
-  { re: /\b(home|house|flat|apartment|property)\b/, id: "home", name: "First Home" },
-  { re: /\b(business|startup|venture)\b/, id: "business", name: "Start a Business" },
-  { re: /\b(education|study|upskill|college|degree|masters|abroad)\b/, id: "education", name: "Study / Upskill" },
-  { re: /\b(retire|retirement|fire)\b/, id: "fire", name: "Early Retirement" },
-  { re: /\b(financial freedom|freedom|independence)\b/, id: "freedom", name: "Financial Freedom" },
+  { re: /\b(safety net|safety|emergency|rainy day)\b/, id: "emergency", name: "Emergency fund" },
+  { re: /\b(travel|trip|vacation|holiday)\b/, id: "travel", name: "Big trip" },
+  { re: /\b(gadget|tech|phone|laptop|iphone|macbook)\b/, id: "gadget", name: "New phone or laptop" },
+  { re: /\b(loan|pay ?off|debt free|debt-free)\b/, id: "loan", name: "Pay off a loan" },
+  { re: /\b(car|bike|scooter|vehicle)\b/, id: "car", name: "First car" },
+  { re: /\b(wedding|marriage|shaadi)\b/, id: "wedding", name: "Wedding" },
+  { re: /\b(home|house|flat|apartment|property|down ?payment)\b/, id: "home", name: "Home down payment" },
+  { re: /\b(parents?|mom|dad|mother|father|maa|papa)\b/, id: "parents", name: "Parents' care" },
+  { re: /\b(business|startup|venture)\b/, id: "business", name: "Start something" },
+  { re: /\b(child|children|kids?|son|daughter|baby)\b/, id: "child", name: "Child's education" },
+  { re: /\b(education|study|upskill|college|degree|masters|abroad)\b/, id: "education", name: "Study abroad or upskill" },
+  { re: /\b(retire|retirement|fire)\b/, id: "fire", name: "Retire early" },
+  { re: /\b(financial freedom|freedom|independence)\b/, id: "freedom", name: "Financial freedom" },
 ];
 
 function findGoal(text: string): { goalId: string; name: string } | null {

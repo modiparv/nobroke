@@ -198,11 +198,22 @@ export default function BucketBuilder() {
                 {isLive ? "This is your portfolio now" : "Make this my portfolio"}
               </button>
               <p className="mt-1.5 text-center text-caption text-text-2">
-                {isLive
-                  ? "The pane on the left is running exactly this bucket."
-                  : goalName
-                    ? `Replaces the portfolio on the left. One shared portfolio powers every goal, ${goalName} in front.`
-                    : "Replaces the portfolio on the left. Every goal grows in one shared portfolio."}
+                {isLive ? (
+                  <>
+                    The pane on the left is running exactly this bucket.{" "}
+                    <button
+                      type="button"
+                      onClick={() => actions.setTab("plan")}
+                      className="font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+                    >
+                      See it on your plan →
+                    </button>
+                  </>
+                ) : goalName ? (
+                  `Replaces the portfolio on the left. One shared portfolio powers every goal, ${goalName} in front.`
+                ) : (
+                  "Replaces the portfolio on the left. Every goal grows in one shared portfolio."
+                )}
               </p>
             </>
           )}

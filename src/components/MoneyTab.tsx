@@ -81,7 +81,18 @@ export default function MoneyTab() {
 
   return (
     <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
-      <div className="grid gap-4 py-6 lg:grid-cols-[1.55fr_1fr] lg:gap-6">
+      {/* Orientation, one line: what this page holds, and where it feeds. */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pt-5">
+        <p className="text-support text-text-2">What you have, and where it sits. Every number here feeds the plan.</p>
+        <button
+          type="button"
+          onClick={() => actions.setTab("plan")}
+          className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+        >
+          See the plan →
+        </button>
+      </div>
+      <div className="grid gap-4 py-4 lg:grid-cols-[1.55fr_1fr] lg:gap-6">
         <div className="flex flex-col gap-4">
           {/* 1. What do I have: one primary number, its split, its path. */}
           <section className={card}>
@@ -145,7 +156,9 @@ export default function MoneyTab() {
                       </div>
                     </li>
                   ))}
-                  {breakdown.length === 0 && <p className="text-caption text-text-2">Add cash or holdings to see this.</p>}
+                  {breakdown.length === 0 && (
+                    <p className="text-caption text-text-2">Add cash in Your numbers, or an existing investment below, to see this.</p>
+                  )}
                 </ul>
               ) : (
                 <ul className="mt-1 divide-y divide-line">
@@ -153,28 +166,54 @@ export default function MoneyTab() {
                     const share = goalShareFraction(s, g.id);
                     const onTrack = computePlan(planInputsForGoal(s, g)).onTrack;
                     return (
-                      <li key={g.id} className="flex items-center justify-between gap-3 py-2.5">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="truncate text-support font-medium text-text">{g.name}</span>
-                            <span
-                              className={`flex-none rounded-full px-1.5 py-px text-index uppercase tracking-wide ${
-                                onTrack ? "bg-pos-bg text-pos" : "bg-cau-bg text-cau"
-                              }`}
-                            >
-                              {onTrack ? "On track" : "Short"}
+                      <li key={g.id}>
+                        {/* The row IS the link: this goal's workbench on the plan. */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            actions.setCurrentGoal(g.id);
+                            actions.setTab("plan");
+                          }}
+                          title={`Open ${g.name} on the plan`}
+                          className="flex w-full items-center justify-between gap-3 py-2.5 text-left transition hover:text-text-2"
+                        >
+                          <span className="min-w-0">
+                            <span className="flex items-center gap-2">
+                              <span className="truncate text-support font-medium text-text">{g.name}</span>
+                              <span
+                                className={`flex-none rounded-full px-1.5 py-px text-index uppercase tracking-wide ${
+                                  onTrack ? "bg-pos-bg text-pos" : "bg-cau-bg text-cau"
+                                }`}
+                              >
+                                {onTrack ? "On track" : "Short"}
+                              </span>
                             </span>
-                          </div>
-                          <span className="num text-caption text-text-2">{Math.round(share * 100)}% of the pool</span>
-                        </div>
-                        <div className="flex-none text-right">
-                          <div className="num text-support font-medium">{formatINR(totalCapital(s) * share)}</div>
-                          <div className="num text-caption text-text-2">{formatINR(goalMonthly(s, g.id))}/mo</div>
-                        </div>
+                            <span className="num block text-caption text-text-2">{Math.round(share * 100)}% of the pool</span>
+                          </span>
+                          <span className="flex flex-none items-center gap-2 text-right">
+                            <span>
+                              <span className="num block text-support font-medium text-text">{formatINR(totalCapital(s) * share)}</span>
+                              <span className="num block text-caption text-text-2">{formatINR(goalMonthly(s, g.id))}/mo</span>
+                            </span>
+                            <span aria-hidden className="text-text-3">
+                              →
+                            </span>
+                          </span>
+                        </button>
                       </li>
                     );
                   })}
-                  {s.goals.length === 0 && <p className="py-2 text-caption text-text-2">Add a goal to see this.</p>}
+                  {s.goals.length === 0 && (
+                    <li className="py-2">
+                      <button
+                        type="button"
+                        onClick={() => actions.setTab("plan")}
+                        className="text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+                      >
+                        Add a goal on the plan →
+                      </button>
+                    </li>
+                  )}
                 </ul>
               )}
             </section>

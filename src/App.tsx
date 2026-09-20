@@ -52,6 +52,12 @@ export default function App() {
     return () => window.removeEventListener("pagehide", flush);
   }, []);
 
+  // Every screen change starts at the top: landing to intake to plan should
+  // never inherit a scroll position from the page before it.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [s.screen]);
+
   return (
     <>
       {s.screen === "landing" && <Landing />}

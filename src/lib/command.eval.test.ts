@@ -17,6 +17,9 @@ const GOLDENS: Array<[string, Record<string, unknown> | null]> = [
   ["save for my wedding", { kind: "addGoal", goalId: "wedding" }],
   ["planning for early retirement", { kind: "addGoal", goalId: "fire" }],
   ["set up an emergency fund goal", { kind: "addGoal", goalId: "emergency" }],
+  ["add a goal to pay off my education loan", { kind: "addGoal", goalId: "loan" }],
+  ["save for my parents", { kind: "addGoal", goalId: "parents" }],
+  ["add a kid's college goal", { kind: "addGoal", goalId: "child" }],
   // remove a goal
   ["remove the travel goal", { kind: "removeGoal", goalId: "travel" }],
   ["drop the gadget", { kind: "removeGoal", goalId: "gadget" }],
