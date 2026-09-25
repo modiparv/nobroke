@@ -17,7 +17,7 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
     }
   } else {
     const extra = Math.max(0, r.requiredSip - inputs.monthlySip);
-    out.push({ tone: "warning", icon: "📉", title: "A little short", message: `You're on track for ${formatINR(r.projectedCorpus)}, about ${formatINR(Math.abs(r.gap))} under. Bump your monthly investing to ${formatINR(r.requiredSip)}/mo (+${formatINR(extra)}) to close the gap.` });
+    out.push({ tone: "warning", icon: "📉", title: "A little short", message: `At today's pace you reach ${formatINR(r.projectedCorpus)}, about ${formatINR(Math.abs(r.gap))} under. Raising your monthly investing to ${formatINR(r.requiredSip)}/mo (+${formatINR(extra)}) closes the gap.` });
   }
 
   const eq = growthWeight(inputs.allocation);

@@ -32,9 +32,11 @@ export function assessRiskAppetite(i: RiskInputs): number {
   const p = i.profile;
   let score = 50;
 
-  // Runway: early careers can sit through drawdowns.
+  // Runway: early careers can sit through drawdowns. A student has the
+  // longest runway of all but no earning record yet, so half the credit;
+  // the thin, unsteady income is scored below.
   if (p.careerStage === "starting") score += 10;
-  else if (p.careerStage === "growing") score += 5;
+  else if (p.careerStage === "growing" || p.careerStage === "studying") score += 5;
 
   // Income stability.
   if (p.employment === "salaried") score += 5;

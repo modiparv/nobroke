@@ -200,8 +200,7 @@ function setAnswer(field: string, value: string | number) {
  * are the plan's foundation.
  */
 const CHECKS: Record<string, (v: number, p: Profile) => string | null> = {
-  takeHome: (v) =>
-    v > 0 && v < 5000 ? "A take-home below ₹5,000 a month is unusual. Confirm only if it is accurate." : null,
+  takeHome: (v) => (v > 0 && v < 1000 ? "Under ₹1,000 a month. Confirm if that is right." : null),
   rent: (v, p) =>
     p.takeHome > 0 && v >= p.takeHome
       ? "Rent alone equals your entire take-home. Confirm only if that is truly the case."
@@ -213,8 +212,7 @@ const CHECKS: Record<string, (v: number, p: Profile) => string | null> = {
   monthlySpend: (v, p) => {
     if (p.takeHome > 0 && p.rent + p.emi + v >= p.takeHome)
       return "These numbers say you spend more than you earn. A plan built on honest figures works; one built on guesses does not. Confirm only if this is truly the case.";
-    if (v === 0)
-      return "Zero for groceries, bills and transport is rare. Confirm only if someone else genuinely covers all of it.";
+    if (v === 0) return "Nothing at all for groceries, bills and transport? Confirm if family covers all of it.";
     return null;
   },
   investedValue: (v, p) =>

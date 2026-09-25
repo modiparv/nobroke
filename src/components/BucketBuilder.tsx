@@ -63,8 +63,8 @@ export default function BucketBuilder() {
 
       <div className="p-3.5 sm:p-4">
         <p className="text-support text-text-2">
-          Your methodology, your bucket. Drag instruments in from the pool, weight them, and when it feels right, make
-          it your portfolio.
+          Build a portfolio your way. Drag instruments in from the pool, set their weights, and when it looks right,
+          make it your portfolio.
         </p>
 
         {/* What this bucket is for. Chips wrap; nothing here ever scrolls. */}
