@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 import { computePlan, requiredCorpus } from "./finance.ts";
-import { cleanTarget, goalOptions, reachableHorizon } from "./options.ts";
+import { cleanTarget, goalOptions, neededMonthly, reachableHorizon } from "./options.ts";
 import type { PlanInputs } from "./types";
 
 // A laptop a year away, ₹2,000 a month, nothing saved, no portfolio yet.
@@ -49,6 +49,14 @@ test("a later year is offered only within five years of the goal's own date", ()
   // Aarav's laptop at ₹2,000 a month is reachable within five years, so the move stays.
   const o = goalOptions(laptop, computePlan(laptop));
   assert.ok(o.year !== null && o.year - laptop.horizonYears <= 5);
+});
+
+test("the monthly needed rounds up to the rupee, once, for every surface", () => {
+  // Rajesh's card read ₹53,969 in one place and ₹53,968 in another.
+  assert.equal(neededMonthly({ requiredSip: 53968.2 }), 53969);
+  assert.equal(neededMonthly({ requiredSip: 53968 }), 53968);
+  const r = computePlan(laptop);
+  assert.equal(goalOptions(laptop, r).monthly, neededMonthly(r));
 });
 
 test("targets round down to a clean step for their size", () => {

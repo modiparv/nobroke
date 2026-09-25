@@ -41,6 +41,13 @@ export function reachableHorizon(inputs: PlanInputs, maxYears = MAX_HORIZON_YEAR
   return null;
 }
 
+/** The monthly amount that gets a goal there, rounded up to the rupee: the
+    one number every surface shows, so the goal card and the reason card
+    never disagree by a rupee. */
+export function neededMonthly(r: Pick<PlanResult, "requiredSip">): number {
+  return Math.ceil(r.requiredSip);
+}
+
 /** Round a target down to a clean step for its size. */
 export function cleanTarget(value: number): number {
   const step = value >= 1_000_000 ? 50_000 : value >= 100_000 ? 10_000 : value >= 10_000 ? 1_000 : 500;
@@ -50,7 +57,7 @@ export function cleanTarget(value: number): number {
 export function goalOptions(inputs: PlanInputs, r: PlanResult, rules: GoalOptionRules = {}): GoalOptions {
   const canMove = !r.onTrack && !rules.dateFixed;
   return {
-    monthly: Math.ceil(r.requiredSip),
+    monthly: neededMonthly(r),
     year: canMove ? reachableHorizon(inputs, inputs.horizonYears + MAX_DATE_MOVE_YEARS) : null,
     target: cleanTarget(r.realProjectedCorpus),
   };
