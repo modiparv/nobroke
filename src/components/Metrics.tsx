@@ -1,6 +1,7 @@
-import { useState } from "react";
-import type { PlanGoal, PlanResult } from "../lib/types";
+import { useMemo, useState } from "react";
+import type { PlanGoal, PlanInputs, PlanResult } from "../lib/types";
 import { formatINR, formatPct, formatYears } from "../lib/format";
+import { goalOptions } from "../lib/options";
 import { actions } from "../store";
 
 const THIS_YEAR = new Date().getFullYear();
@@ -13,6 +14,7 @@ const THIS_YEAR = new Date().getFullYear();
  */
 interface Props {
   r: PlanResult;
+  inputs: PlanInputs;
   goal: PlanGoal;
   inflation: number;
   /** Capital already set aside for this goal (its share of everything held). */
@@ -29,6 +31,8 @@ interface Props {
 }
 
 const chip = "num rounded-full border border-line px-2.5 py-1 text-caption text-text-2";
+const fill = "num inline-flex h-8 items-center rounded-full bg-accent-fill px-3 text-caption font-medium text-on-accent transition hover:bg-accent-fill-hi";
+const pill = "num inline-flex h-8 items-center rounded-full border border-line px-3 text-caption font-medium text-text transition hover:border-line-2";
 
 function listNames(items: Array<{ name: string }>): string {
   const names = items.map((i) => i.name);
@@ -36,16 +40,22 @@ function listNames(items: Array<{ name: string }>): string {
   return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
-export default function Metrics({ r, goal, inflation, saved, monthly, monthlyShare, monthlyPool, available, ahead }: Props) {
+export default function Metrics({ r, inputs, goal, inflation, saved, monthly, monthlyShare, monthlyPool, available, ahead }: Props) {
   const [showNumbers, setShowNumbers] = useState(false);
   const year = THIS_YEAR + goal.horizonYears;
   const need = r.requiredCorpus;
   const savedPct = need > 0 ? Math.max(0, Math.min(1, saved / need)) * 100 : 0;
   const reachedEarly = r.onTrack && r.goalReachedMonth !== null && r.goalReachedMonth < r.months;
-  // The one-tap fix: put the needed monthly on this goal, if that much is
-  // free after the other goals. Otherwise the honest number is shown and
-  // the choice is theirs: invest more, or move the date.
+  // The moves that close a gap, each computed by the engine: the monthly
+  // that gets there (one tap, if that much is free after the other goals),
+  // the year today's pace does get there, and the smaller target today's
+  // pace reaches by the date. The choice is theirs.
+  const options = useMemo(
+    () => (r.onTrack ? null : goalOptions(inputs, r)),
+    [r.onTrack, r.requiredSip, r.realProjectedCorpus, inputs.targetToday, inputs.horizonYears, inputs.currentSavings, inputs.monthlySip, inputs.inflation, inputs.allocation],
+  );
   const canFix = !r.onTrack && r.requiredSip <= available;
+  const canLower = !!options && options.target >= goal.targetToday * 0.25 && options.target < goal.targetToday;
   const starved = monthly <= 0 && monthlyPool > 0 && ahead.length > 0;
   // A projected XIRR of nothing is noise, not a number: it appears once money is in.
   const hasXirr = r.totalInvested > 0 && Number.isFinite(r.xirr) && r.xirr !== 0;
@@ -84,29 +94,49 @@ export default function Metrics({ r, goal, inflation, saved, monthly, monthlySha
             <span className="font-medium text-cau">{formatINR(Math.abs(r.gap))} short</span>
           )}
         </p>
-        {!r.onTrack &&
-          (canFix ? (
-            <button
-              type="button"
-              onClick={() => actions.setGoalAmount(goal.id, Math.ceil(r.requiredSip))}
-              className="num inline-flex h-8 items-center rounded-full bg-accent-fill px-3 text-caption font-medium text-on-accent transition hover:bg-accent-fill-hi"
-            >
-              Put {formatINR(r.requiredSip)}/mo on this
+      </div>
+
+      {/* The three honest moves, as buttons that do the thing. */}
+      {!r.onTrack && options && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {canFix ? (
+            <button type="button" onClick={() => actions.setGoalAmount(goal.id, options.monthly)} className={fill}>
+              Put {formatINR(options.monthly)}/mo on this
             </button>
           ) : (
             <span className="num text-caption text-text-2">
-              Needs {formatINR(r.requiredSip)}/mo; {formatINR(available)} is free after your other goals.{" "}
+              Needs {formatINR(options.monthly)}/mo; {formatINR(available)} is free after your other goals.{" "}
               <button
                 type="button"
                 onClick={() => actions.setTab("money")}
                 className="font-medium text-text underline underline-offset-2 transition hover:text-text-2"
               >
                 Invest more →
-              </button>{" "}
-              or move the date.
+              </button>
             </span>
-          ))}
-      </div>
+          )}
+          {options.year !== null && (
+            <button
+              type="button"
+              onClick={() => actions.setGoalTenure(goal.id, options.year!)}
+              title={`At today's pace this goal is on track by ${THIS_YEAR + options.year}`}
+              className={pill}
+            >
+              Move to {THIS_YEAR + options.year}
+            </button>
+          )}
+          {canLower && (
+            <button
+              type="button"
+              onClick={() => actions.setGoalTarget(goal.id, options.target)}
+              title={`Today's pace reaches ${formatINR(options.target)} in today's money by ${year}`}
+              className={pill}
+            >
+              Lower target to {formatINR(options.target)}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Why a goal is getting nothing: the money is going to nearer goals
           first. Said plainly, with the year the first of them is done. */}

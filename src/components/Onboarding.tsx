@@ -201,24 +201,17 @@ function setAnswer(field: string, value: string | number) {
  */
 const CHECKS: Record<string, (v: number, p: Profile) => string | null> = {
   takeHome: (v) => (v > 0 && v < 1000 ? "Under ₹1,000 a month. Confirm if that is right." : null),
-  rent: (v, p) =>
-    p.takeHome > 0 && v >= p.takeHome
-      ? "Rent alone equals your entire take-home. Confirm only if that is truly the case."
-      : null,
+  rent: (v, p) => (p.takeHome > 0 && v >= p.takeHome ? "Rent alone equals everything that comes in. Confirm if that is right." : null),
   emi: (v, p) =>
-    p.takeHome > 0 && p.rent + v >= p.takeHome
-      ? "Rent and EMIs together exceed your take-home. Confirm only if that is truly the case."
-      : null,
+    p.takeHome > 0 && p.rent + v >= p.takeHome ? "Rent and EMIs together exceed what comes in. Confirm if that is right." : null,
   monthlySpend: (v, p) => {
     if (p.takeHome > 0 && p.rent + p.emi + v >= p.takeHome)
-      return "These numbers say you spend more than you earn. A plan built on honest figures works; one built on guesses does not. Confirm only if this is truly the case.";
+      return "These numbers say you spend more than comes in. Confirm if that is right; the plan is only as good as its numbers.";
     if (v === 0) return "Nothing at all for groceries, bills and transport? Confirm if family covers all of it.";
     return null;
   },
   investedValue: (v, p) =>
-    p.takeHome > 0 && v > p.takeHome * 600
-      ? "That is a very large portfolio against this income. Confirm only if the value is accurate."
-      : null,
+    p.takeHome > 0 && v > p.takeHome * 600 ? "That is a very large portfolio against this income. Confirm if the value is right." : null,
 };
 
 /**
@@ -511,13 +504,13 @@ export default function Onboarding() {
                 {CONNECT_SOURCES.map((c, idx) => (
                   <div
                     key={c.name}
-                    className={`flex items-center justify-between gap-3 px-4 py-2.5 ${idx > 0 ? "border-t border-line" : ""}`}
+                    className={`flex items-center justify-between gap-3 px-4 py-2.5 text-left ${idx > 0 ? "border-t border-line" : ""}`}
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-support font-medium">{c.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-support font-medium text-text">{c.name}</p>
                       <p className="truncate text-caption text-text-2">{c.via}</p>
                     </div>
-                    <span className="flex-none rounded-full border border-line px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
+                    <span className="flex-none rounded-full bg-surface-2 px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
                       Soon
                     </span>
                   </div>
