@@ -183,12 +183,14 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
               </div>
             </div>
 
+            {/* Steps that suit the size: a ₹25k emergency fund moves in
+                thousands, a ₹30L down payment in half-lakhs. */}
             <MoneyInput
               label="Target amount"
               value={g.targetToday}
               onChange={(v) => actions.setGoalTarget(g.id, v)}
-              step={50000}
-              min={50000}
+              step={g.targetToday >= 1000000 ? 50000 : g.targetToday >= 100000 ? 10000 : 5000}
+              min={1000}
               max={50000000}
               compact
             />
@@ -208,6 +210,7 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
 
         <Metrics
           r={r}
+          inputs={inputs}
           goal={g}
           inflation={s.inflation}
           saved={savedForGoal}
