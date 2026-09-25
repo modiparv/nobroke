@@ -24,19 +24,23 @@ export type Command =
 
 // Loose keyword → { id, display name } map (ids match src/lib/goals.ts).
 // Order matters where words overlap: "education loan" is a loan, "kid's
-// college" is the child's education, so those two sit before "education".
+// college" is the child's education, a "course" is not "study abroad", so
+// the narrower goals sit before the wider ones.
 const GOAL_KEYWORDS: Array<{ re: RegExp; id: string; name: string }> = [
   { re: /\b(safety net|safety|emergency|rainy day)\b/, id: "emergency", name: "Emergency fund" },
   { re: /\b(travel|trip|vacation|holiday)\b/, id: "travel", name: "Big trip" },
   { re: /\b(gadget|tech|phone|laptop|iphone|macbook)\b/, id: "gadget", name: "New phone or laptop" },
   { re: /\b(loan|pay ?off|debt free|debt-free)\b/, id: "loan", name: "Pay off a loan" },
-  { re: /\b(car|bike|scooter|vehicle)\b/, id: "car", name: "First car" },
+  { re: /\b(bike|scooter|scooty|activa|two.?wheeler|motorcycle)\b/, id: "bike", name: "Bike or scooter" },
+  { re: /\b(car|vehicle|four.?wheeler)\b/, id: "car", name: "First car" },
   { re: /\b(wedding|marriage|shaadi)\b/, id: "wedding", name: "Wedding" },
   { re: /\b(home|house|flat|apartment|property|down ?payment)\b/, id: "home", name: "Home down payment" },
   { re: /\b(parents?|mom|dad|mother|father|maa|papa)\b/, id: "parents", name: "Parents' care" },
   { re: /\b(business|startup|venture)\b/, id: "business", name: "Start something" },
   { re: /\b(child|children|kids?|son|daughter|baby)\b/, id: "child", name: "Child's education" },
-  { re: /\b(education|study|upskill|college|degree|masters|abroad)\b/, id: "education", name: "Study abroad or upskill" },
+  { re: /\b(college|fees|semester|tuition|hostel)\b/, id: "college", name: "College fees" },
+  { re: /\b(course|upskill|bootcamp|certification|certificate|skill)\b/, id: "course", name: "Upskill or a course" },
+  { re: /\b(education|study|degree|masters|abroad|university)\b/, id: "education", name: "Study abroad" },
   { re: /\b(retire|retirement|fire)\b/, id: "fire", name: "Retire early" },
   { re: /\b(financial freedom|freedom|independence)\b/, id: "freedom", name: "Financial freedom" },
 ];
@@ -114,7 +118,8 @@ const TARGET_CONTEXT = /\b(target|cost|costs?|worth|need|needs|needed|budget|goa
     to invest: "i get 8000 pocket money a month" must never set the monthly
     investment to ₹8,000. The AI reads these and answers. */
 const INCOME_CONTEXT = /\b(salary|stipend|pocket money|allowance|earn|earns|earning|earnings|income|get paid|paid|gives? me|give me|got from)\b/;
-const SPEND_CONTEXT = /\b(spent|spend|spends|spending|expenses?|bills?|rent|fees?|kharcha|kharch)\b/;
+// "fees" is not here: college fees are a goal, not a spend.
+const SPEND_CONTEXT = /\b(spent|spend|spends|spending|expenses?|bills?|rent|kharcha|kharch)\b/;
 
 /** Interrogatives that mark a QUESTION, which must never mutate the plan —
     "explain the safety net goal" or "should I rebalance?" go to the AI.

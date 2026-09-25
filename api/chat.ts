@@ -25,7 +25,10 @@ const MAX_ACTIONS = 4;
  */
 const GOAL_IDS = [
   "emergency",
+  "course",
   "gadget",
+  "bike",
+  "college",
   "travel",
   "loan",
   "car",
@@ -40,7 +43,7 @@ const GOAL_IDS = [
 ] as const;
 
 const GOAL_LABELS =
-  "emergency=Emergency fund, gadget=New phone or laptop, travel=Big trip, loan=Pay off a loan, car=First car, wedding=Wedding, home=Home down payment, parents=Parents' care, business=Start something, education=Study abroad or upskill, child=Child's education, fire=Retire early, freedom=Financial freedom";
+  "emergency=Emergency fund, course=Upskill or a course, gadget=New phone or laptop, bike=Bike or scooter, college=College fees, travel=Big trip, loan=Pay off a loan, car=First car, wedding=Wedding, home=Home down payment, parents=Parents' care, business=Start something, education=Study abroad, child=Child's education, fire=Retire early, freedom=Financial freedom";
 
 const goalParam = {
   type: "string",
