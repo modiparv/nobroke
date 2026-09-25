@@ -1,3 +1,5 @@
+import type { GapLevel } from "./lib/gap";
+
 export const btnPrimary =
   "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-control bg-accent-fill px-5 text-support font-medium text-on-accent transition hover:bg-accent-fill-hi active:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed";
 
@@ -16,3 +18,24 @@ export const paneTop = card;
 
 /** One eyebrow per section. Everything else is sentence case. */
 export const sectionLabel = "text-eyebrow uppercase text-text-3";
+
+/** A goal's status in colour: the pill, the dot, the text, one family per
+    gap level (lib/gap). Literal class names, so Tailwind sees them. */
+export const GAP_PILL: Record<GapLevel, string> = {
+  on_track: "bg-pos-bg text-pos",
+  little_short: "bg-cau-bg text-cau",
+  short: "bg-cau-bg text-cau",
+  far_short: "bg-neg-bg text-neg",
+};
+export const GAP_DOT: Record<GapLevel, string> = {
+  on_track: "bg-pos",
+  little_short: "bg-cau",
+  short: "bg-cau",
+  far_short: "bg-neg",
+};
+export const GAP_TEXT: Record<GapLevel, string> = {
+  on_track: "text-muted",
+  little_short: "text-cau",
+  short: "text-cau",
+  far_short: "text-neg",
+};

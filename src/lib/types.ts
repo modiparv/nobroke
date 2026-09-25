@@ -111,7 +111,7 @@ export interface PlanResult {
   progress: number;
 }
 
-export type InsightTone = "positive" | "warning" | "info";
+export type InsightTone = "positive" | "warning" | "negative" | "info";
 export interface Insight {
   tone: InsightTone;
   icon: string;

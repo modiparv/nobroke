@@ -2,8 +2,9 @@ import { useState } from "react";
 import type { PlanGoal } from "../lib/types";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
+import { GAP_LABEL, gapLevel } from "../lib/gap";
 import { actions, goalMonthly, goalShareFraction, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
-import { sectionLabel } from "../ui";
+import { GAP_DOT, GAP_PILL, GAP_TEXT, sectionLabel } from "../ui";
 import Chart from "./Chart";
 import Metrics from "./Metrics";
 import Insights from "./Insights";
@@ -64,6 +65,7 @@ export function GoalTile({
   const { r, savedForGoal, year } = goalFacts(g, s);
   const need = r.requiredCorpus;
   const savedPct = need > 0 ? Math.max(0, Math.min(1, savedForGoal / need)) * 100 : 0;
+  const level = gapLevel(r);
 
   return (
     <button
@@ -94,11 +96,8 @@ export function GoalTile({
     >
       <span className="flex items-center justify-between gap-2">
         <span className="num text-index tracking-[0.06em] text-muted">{String(rank).padStart(2, "0")}</span>
-        <span
-          aria-hidden
-          className={`h-2 w-2 flex-none rounded-full ${r.onTrack ? "bg-pos" : "bg-cau"}`}
-        />
-        <span className="sr-only">{r.onTrack ? "On track" : "Needs a change"}</span>
+        <span aria-hidden className={`h-2 w-2 flex-none rounded-full ${GAP_DOT[level]}`} />
+        <span className="sr-only">{GAP_LABEL[level]}</span>
       </span>
       <span className="mt-1.5 block truncate text-row font-medium tracking-[-0.005em]">{g.name}</span>
       <span className="num mt-0.5 block truncate text-caption text-muted">
@@ -117,7 +116,7 @@ export function GoalTile({
       </span>
       <span className="num mt-1.5 flex items-baseline justify-between gap-2 text-caption">
         <span className="font-medium text-text">{formatINR(savedForGoal)} saved</span>
-        <span className={r.onTrack ? "text-muted" : "text-cau"}>
+        <span className={GAP_TEXT[level]}>
           {r.onTrack ? `reaches ${formatINR(r.projectedCorpus)}` : `short ${formatINR(Math.abs(r.gap))}`}
         </span>
       </span>
@@ -145,11 +144,9 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
           <span className="truncate text-section font-medium tracking-[-0.015em]">{g.name}</span>
           <span
             // Status is carried by the pill, never by a coloured number.
-            className={`flex-none rounded-full px-2 py-0.5 text-caption ${
-              r.onTrack ? "bg-pos-bg text-pos" : "bg-cau-bg text-cau"
-            }`}
+            className={`flex-none rounded-full px-2 py-0.5 text-caption ${GAP_PILL[gapLevel(r)]}`}
           >
-            {r.onTrack ? "On track" : "Needs a change"}
+            {GAP_LABEL[gapLevel(r)]}
           </span>
         </span>
         <span className="num text-caption text-text-2">

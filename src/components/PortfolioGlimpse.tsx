@@ -2,6 +2,7 @@ import { useState } from "react";
 import { allocationTotal, bandWeights, blendedReturn, computePlan } from "../lib/finance";
 import { ASSET_CLASSES } from "../lib/funds";
 import { formatINR } from "../lib/format";
+import { GAP_LABEL, gapLevel, gapTone } from "../lib/gap";
 import { categoryCode } from "../lib/holdings";
 import { equityShare, mixLabel } from "../lib/portfolios";
 import { squarify } from "../lib/treemap";
@@ -143,14 +144,15 @@ export default function PortfolioGlimpse() {
   const capital = totalCapital(s);
   const goalItems: TreemapItem[] = goalsByPriority(s).map((g) => {
     const amount = capital * goalShareFraction(s, g.id);
-    const onTrack = computePlan(planInputsForGoal(s, g)).onTrack;
+    const level = gapLevel(computePlan(planInputsForGoal(s, g)));
+    const tone = gapTone(level);
     return {
       key: g.id,
       label: g.name,
       amount,
-      bg: onTrack ? "rgb(var(--pos-bg))" : "rgb(var(--cau-bg))",
-      ink: onTrack ? "rgb(var(--pos))" : "rgb(var(--cau))",
-      title: `${g.name} · ${formatINR(amount)} set aside · ${onTrack ? "on track" : "needs a change"}`,
+      bg: `rgb(var(--${tone}-bg))`,
+      ink: `rgb(var(--${tone}))`,
+      title: `${g.name} · ${formatINR(amount)} set aside · ${GAP_LABEL[level].toLowerCase()}`,
       // Selecting a tile opens that goal's workbench beside this pane.
       onClick: () => actions.setCurrentGoal(g.id),
     };
