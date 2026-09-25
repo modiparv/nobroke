@@ -1,6 +1,7 @@
 import { strict as assert } from "node:assert";
 import { mock, test } from "node:test";
 import { COOKIE_NAME, createSession, hashPassword } from "./_auth.js";
+import { resetRateLimits } from "./_ratelimit.js";
 
 /**
  * Every auth and plan endpoint, every branch, against a mocked database:
@@ -57,6 +58,7 @@ function reset() {
   db.syncs = [];
   env.url = "postgres://mock";
   process.env.AUTH_SECRET = SECRET;
+  resetRateLimits();
 }
 
 async function call(handler, { method = "POST", body, cookie, query, url } = {}) {
@@ -153,6 +155,18 @@ test("login: the right password signs in with a session cookie, case-insensitive
   assert.equal(db.calls[0].params[0], "a@b.co");
   db.fail = new Error("db down");
   assert.equal((await call(login, { body: creds(EMAIL, PW.right) })).status, 500);
+});
+
+test("login: the twenty-first attempt from one address in a quarter hour is a 429", async () => {
+  reset();
+  db.rows = [];
+  for (let i = 0; i < 20; i++) assert.equal((await call(login, { body: creds(EMAIL, PW.wrong) })).status, 401);
+  const blocked = await call(login, { body: creds(EMAIL, PW.wrong) });
+  assert.equal(blocked.status, 429);
+  assert.match(blocked.body.error, /Too many/);
+  assert.equal(blocked.headers["Retry-After"], "900");
+  // The database was never asked on the blocked attempt.
+  assert.equal(db.calls.length, 20);
 });
 
 // ---- me ----

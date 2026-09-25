@@ -1,15 +1,22 @@
 import { makePool, resolveDatabaseUrl } from "../_data.js";
 import { authSecret, createSession, hashPassword, normalizeEmail, sessionCookie, verifyPassword } from "../_auth.js";
+import { throttled } from "../_ratelimit.js";
 
 // Hashing a throwaway password when the account does not exist keeps the
 // response time of "no such user" close to "wrong password".
 const DECOY = hashPassword("decoy-password-for-timing");
+
+// Twenty sign-in attempts per address per quarter hour: room for a person
+// who mistypes, a wall for a script that guesses.
+const ATTEMPTS = 20;
+const WINDOW_MS = 15 * 60 * 1000;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ ok: false, error: "POST only" });
     return;
   }
+  if (throttled(req, res, "login", ATTEMPTS, WINDOW_MS)) return;
   const secret = authSecret();
   if (!secret || !resolveDatabaseUrl()) {
     res.status(503).json({ ok: false, error: "accounts not provisioned (AUTH_SECRET / database missing)" });

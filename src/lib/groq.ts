@@ -11,7 +11,10 @@ export interface AiAction {
 
 export interface AiReply {
   text?: string;
+  /** The first proposed action (older servers send only this)... */
   action?: AiAction;
+  /** ...and every proposed action, in order, when a message asks for several changes. */
+  actions?: AiAction[];
 }
 
 /** Calls our own serverless proxy (/api/chat), which talks to Groq server-side. Never throws. */

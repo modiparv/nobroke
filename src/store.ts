@@ -844,13 +844,17 @@ export const actions = {
     const planData = buildPlanData(state);
     set({ chat: history, chatTyping: true });
     void askGroq(history, planData).then((reply) => {
-      // The model may PROPOSE a plan action; only the deterministic engine
-      // applies it, after re-validating, and its verbatim confirmation is
-      // what the person reads.
+      // The model may PROPOSE plan actions, one per change asked for; only
+      // the deterministic engine applies them, after re-validating each, and
+      // its verbatim confirmations are what the person reads.
       let msg = reply.text ?? "";
-      if (reply.action) {
-        const cmd = actionToCommand(reply.action);
-        msg = cmd ? runCommand(cmd) : "I couldn't apply that safely. Try saying it with the goal and the amount.";
+      const proposed = reply.actions?.length ? reply.actions : reply.action ? [reply.action] : [];
+      if (proposed.length) {
+        const lines = proposed.map((a) => {
+          const cmd = actionToCommand(a);
+          return cmd ? runCommand(cmd) : "I couldn't apply one of those safely. Try saying it with the goal and the amount.";
+        });
+        msg = lines.join("\n");
       }
       set({ chat: [...getState().chat, { role: "ai", text: msg || "Something went wrong. Try again." }], chatTyping: false });
     });
