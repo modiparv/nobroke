@@ -1,5 +1,6 @@
 import { blendedReturn, computePlan, projectionSeries, requiredCorpus } from "../lib/finance";
 import { formatINR } from "../lib/format";
+import { useIsPhone } from "../lib/usePhone";
 import { goalsByPriority, planInputsForGoal, useStore } from "../store";
 import { sectionLabel } from "../ui";
 
@@ -15,13 +16,16 @@ import { sectionLabel } from "../ui";
 const PALETTE = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)"];
 const NIGHT_PALETTE = ["var(--chartn-1)", "var(--chartn-2)", "var(--chartn-3)", "var(--chartn-4)", "var(--chartn-5)", "var(--chartn-6)"];
 
-const W = 820;
-const M = { top: 14, right: 18, bottom: 26, left: 62 };
+// Two drawing spaces: wide on a desktop card, narrow on a phone so the
+// labels render at about 11px instead of shrinking to 5px with the viewBox.
+const WIDE = { W: 820, M: { top: 14, right: 18, bottom: 26, left: 62 }, font: 10 };
+const NARROW = { W: 400, M: { top: 14, right: 14, bottom: 26, left: 66 }, font: 12 };
 
 export default function GoalsChart({ variant = "card" }: { variant?: "card" | "night" }) {
   const s = useStore();
   const goals = goalsByPriority(s);
   const night = variant === "night";
+  const { W, M, font } = useIsPhone() ? NARROW : WIDE;
   // One height everywhere: the band chart stands as tall as the card one,
   // so the trajectories read as a chart, not a strip.
   const H = 300;
@@ -61,7 +65,10 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
   // The axis hugs the real horizons (2-year floor only), so short-dated
   // plans fill the width instead of huddling in the left half.
   const maxYears = Math.max(2, ...goals.map((g) => g.horizonYears));
-  const maxValue = Math.max(...series.flatMap((sr) => [sr.need, sr.points[sr.points.length - 1]?.value ?? 0])) * 1.06 || 1;
+  const peak = Math.max(...series.flatMap((sr) => [sr.need, sr.points[sr.points.length - 1]?.value ?? 0]));
+  // With nothing to plot, the value axis stays blank rather than reading ₹0 / ₹1 / ₹1.
+  const hasValues = peak > 0;
+  const maxValue = hasValues ? peak * 1.06 : 1;
 
   const x = (year: number) => M.left + (year / maxYears) * (W - M.left - M.right);
   const y = (v: number) => H - M.bottom - (v / maxValue) * (H - M.top - M.bottom);
@@ -69,7 +76,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
   const yearStep = Math.max(1, Math.ceil(maxYears / 6));
   const yearTicks: number[] = [];
   for (let t = 0; t <= maxYears; t += yearStep) yearTicks.push(t);
-  const valueTicks = [0.25, 0.5, 0.75, 1].map((f) => maxValue * f);
+  const valueTicks = hasValues ? [0.25, 0.5, 0.75, 1].map((f) => maxValue * f) : [];
   const baseYear = new Date().getFullYear();
 
   const Wrapper = night ? "div" : "section";
@@ -85,14 +92,14 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
         {valueTicks.map((v) => (
           <g key={v}>
             <line x1={M.left} x2={W - M.right} y1={y(v)} y2={y(v)} stroke={tone.grid} strokeWidth="1" />
-            <text x={M.left - 8} y={y(v) + 3} textAnchor="end" fontSize="10" fill={tone.tick} className="num">
+            <text x={M.left - 8} y={y(v) + 3} textAnchor="end" fontSize={font} fill={tone.tick} className="num">
               {formatINR(v)}
             </text>
           </g>
         ))}
         <line x1={M.left} x2={W - M.right} y1={y(0)} y2={y(0)} stroke={tone.base} strokeWidth="1" />
         {yearTicks.map((t) => (
-          <text key={t} x={x(t)} y={H - 8} textAnchor="middle" fontSize="10" fill={tone.tick} className="num">
+          <text key={t} x={x(t)} y={H - 8} textAnchor="middle" fontSize={font} fill={tone.tick} className="num">
             {baseYear + t}
           </text>
         ))}

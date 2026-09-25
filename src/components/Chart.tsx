@@ -1,14 +1,17 @@
 import type { PlanResult } from "../lib/types";
 import { formatINR, formatYears } from "../lib/format";
 import { C } from "../lib/theme";
+import { useIsPhone } from "../lib/usePhone";
 
-const W = 720;
-const H = 196;
-const PAD = { t: 14, r: 18, b: 26, l: 56 };
-const PW = W - PAD.l - PAD.r;
-const PH = H - PAD.t - PAD.b;
+// Two drawing spaces: wide on a desktop card, narrow on a phone so the
+// labels render at about 11px instead of shrinking with the viewBox.
+const WIDE = { W: 720, H: 196, PAD: { t: 14, r: 18, b: 26, l: 56 }, font: 11 };
+const NARROW = { W: 400, H: 220, PAD: { t: 14, r: 14, b: 26, l: 60 }, font: 12 };
 
 export default function Chart({ r }: { r: PlanResult }) {
+  const { W, H, PAD, font } = useIsPhone() ? NARROW : WIDE;
+  const PW = W - PAD.l - PAD.r;
+  const PH = H - PAD.t - PAD.b;
   const maxX = Math.max(1, r.months);
 
   // Scale to your money's own path so the curve is always readable. If the goal
@@ -16,6 +19,9 @@ export default function Chart({ r }: { r: PlanResult }) {
   const peak = Math.max(r.projectedCorpus, r.totalInvested, 1);
   const goalInView = r.requiredCorpus <= peak * 1.6;
   const maxY = (goalInView ? Math.max(peak, r.requiredCorpus) : peak) * 1.2;
+  // With no money in and none projected, the value axis stays blank rather
+  // than reading ₹0 / ₹1 / ₹1.
+  const hasValues = r.projectedCorpus > 0 || r.totalInvested > 0;
 
   const x = (m: number) => PAD.l + (m / maxX) * PW;
   const y = (v: number) => PAD.t + PH - (Math.min(Math.max(v, 0), maxY) / maxY) * PH;
@@ -26,7 +32,7 @@ export default function Chart({ r }: { r: PlanResult }) {
   const base = (PAD.t + PH).toFixed(1);
   const area = `${valuePath} L${x(maxX).toFixed(1)},${base} L${x(0).toFixed(1)},${base} Z`;
 
-  const yTicks = [0, 0.5, 1].map((f) => f * maxY);
+  const yTicks = hasValues ? [0, 0.5, 1].map((f) => f * maxY) : [];
   const tickCount = Math.min(5, Math.max(2, Math.round(maxX / 12)));
   const xTicks = Array.from({ length: tickCount + 1 }, (_, i) => Math.round((maxX / tickCount) * i));
   const mono = "Inter, ui-sans-serif, system-ui, sans-serif";
@@ -39,13 +45,13 @@ export default function Chart({ r }: { r: PlanResult }) {
         {yTicks.map((v, i) => (
           <g key={i}>
             <line x1={PAD.l} y1={y(v)} x2={PAD.l + PW} y2={y(v)} stroke={C.line} strokeWidth="1" />
-            <text x={PAD.l - 10} y={y(v) + 4} textAnchor="end" fontSize="11" fill={C.muted} fontFamily={mono}>
+            <text x={PAD.l - 10} y={y(v) + 4} textAnchor="end" fontSize={font} fill={C.muted} fontFamily={mono}>
               {formatINR(v)}
             </text>
           </g>
         ))}
         {xTicks.map((m, i) => (
-          <text key={i} x={x(m)} y={PAD.t + PH + 18} textAnchor="middle" fontSize="11" fill={C.muted} fontFamily={mono}>
+          <text key={i} x={x(m)} y={PAD.t + PH + 18} textAnchor="middle" fontSize={font} fill={C.muted} fontFamily={mono}>
             {formatYears(m / 12)}
           </text>
         ))}
@@ -57,12 +63,12 @@ export default function Chart({ r }: { r: PlanResult }) {
         {goalInView ? (
           <>
             <line x1={PAD.l} y1={ty} x2={PAD.l + PW} y2={ty} stroke={C.ink} strokeWidth="1.2" strokeDasharray="2 4" />
-            <text x={PAD.l + 4} y={ty - 5} textAnchor="start" fontSize="10" fontWeight="600" fill={C.ink} fontFamily={mono}>
+            <text x={PAD.l + 4} y={ty - 5} textAnchor="start" fontSize={font} fontWeight="600" fill={C.ink} fontFamily={mono}>
               GOAL
             </text>
           </>
         ) : (
-          <text x={PAD.l + PW} y={PAD.t + 10} textAnchor="end" fontSize="10" fontWeight="600" fill={C.ink} fontFamily={mono}>
+          <text x={PAD.l + PW} y={PAD.t + 10} textAnchor="end" fontSize={font} fontWeight="600" fill={C.ink} fontFamily={mono}>
             ↑ GOAL FAR ABOVE
           </text>
         )}

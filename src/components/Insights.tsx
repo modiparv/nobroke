@@ -54,8 +54,10 @@ const BORDER: Record<string, string> = {
   info: "rgb(var(--line))",
 };
 
-export default function Insights({ r, inputs }: { r: PlanResult; inputs: PlanInputs }) {
-  const list = generate(inputs, r);
+/** Folded, the verdict and any warning show; the rest waits behind "more". */
+export default function Insights({ r, inputs, expanded = true }: { r: PlanResult; inputs: PlanInputs; expanded?: boolean }) {
+  const all = generate(inputs, r);
+  const list = expanded ? all : all.filter((ins, i) => i === 0 || ins.tone === "warning");
   return (
     <div className="flex flex-col gap-2.5">
       {list.map((ins, i) => (

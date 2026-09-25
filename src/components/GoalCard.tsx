@@ -223,18 +223,19 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
           <Chart r={r} />
         </div>
 
+        {/* The reasons are always in view: the verdict and any warning (a
+            bold mix for a near goal, say) show by default; the rest unfolds. */}
         <div>
+          <span className={sectionLabel}>Why this plan</span>
+          <div className="mt-2">
+            <Insights r={r} inputs={inputs} expanded={showWhy} />
+          </div>
           <button
             onClick={() => setShowWhy((v) => !v)}
-            className="text-support text-muted underline-offset-2 transition hover:text-ink hover:underline"
+            className="mt-2 text-support text-muted underline-offset-2 transition hover:text-ink hover:underline"
           >
-            {showWhy ? "Hide the why" : "Why this plan?"}
+            {showWhy ? "Fewer reasons" : "More reasons"}
           </button>
-          {showWhy && (
-            <div className="mt-2">
-              <Insights r={r} inputs={inputs} />
-            </div>
-          )}
         </div>
 
         {/* The client's own words on this goal, kept with the plan. */}
