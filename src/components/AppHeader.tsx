@@ -22,8 +22,15 @@ export default function AppHeader() {
   // Near-opaque bar: content must never ghost through it over the ink band.
   return (
     <header className="sticky top-0 z-30 border-b border-line/60 bg-bg/95">
-      <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-3 px-4 sm:px-6">
-        <Logo />
+      {/* Everything here fits a 360px phone in one row: the mark alone below
+          sm, tighter segments, and a Sign in that never wraps. */}
+      <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-2 px-3 sm:gap-3 sm:px-6">
+        <span className="sm:hidden">
+          <Logo variant="mark" />
+        </span>
+        <span className="hidden sm:block">
+          <Logo />
+        </span>
 
         {/* Segmented control: a filled track, no border, exact heights. */}
         <nav className="flex items-center gap-0.5 rounded-full bg-surface p-0.5" aria-label="Sections">
@@ -32,7 +39,7 @@ export default function AppHeader() {
               key={t}
               onClick={() => actions.setTab(t)}
               aria-current={s.tab === t ? "page" : undefined}
-              className={`inline-flex h-7 items-center rounded-full px-3 text-support capitalize transition sm:px-3.5 ${
+              className={`inline-flex h-7 items-center rounded-full px-2.5 text-caption capitalize transition sm:px-3.5 sm:text-support ${
                 s.tab === t ? "bg-accent-fill text-on-accent" : "text-text-2 hover:text-text"
               }`}
             >
@@ -95,7 +102,7 @@ export default function AppHeader() {
             <button
               type="button"
               onClick={() => setShowAuth(true)}
-              className="inline-flex h-8 items-center rounded-full bg-accent-fill px-3 text-support font-medium text-on-accent transition hover:bg-accent-fill-hi sm:px-3.5"
+              className="inline-flex h-8 items-center whitespace-nowrap rounded-full bg-accent-fill px-3 text-support font-medium text-on-accent transition hover:bg-accent-fill-hi sm:px-3.5"
             >
               Sign in
             </button>

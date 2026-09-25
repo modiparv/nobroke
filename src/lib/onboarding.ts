@@ -58,9 +58,9 @@ export const STEPS: Step[] = [
     stage: 1,
     stageLabel: "Income",
     field: "takeHome",
-    min: 1000,
-    title: "Monthly take-home, after tax?",
-    subtitle: "What actually lands in your account each month. Every recommendation is anchored to this number.",
+    min: 100,
+    title: "What comes in each month?",
+    subtitle: "Salary after tax, stipend, freelance income or pocket money: what actually lands with you. Every recommendation is anchored to this number.",
   },
 
   // ---- Stage 2: Spending ----
@@ -144,6 +144,7 @@ export const STEPS: Step[] = [
     field: "careerStage",
     title: "Where are you in your career?",
     options: [
+      { value: "studying", label: "Still studying", hint: "Not working full-time yet" },
       { value: "starting", label: "Early career", hint: "First few working years" },
       { value: "growing", label: "Growing", hint: "Income rising year on year" },
       { value: "stable", label: "Established", hint: "Income largely settled" },

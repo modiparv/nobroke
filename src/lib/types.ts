@@ -56,7 +56,7 @@ export interface PlanGoal {
 
 export type CityTier = "metro" | "tier1" | "tier2" | "tier3";
 export type Employment = "salaried" | "self_employed" | "freelancer" | "student";
-export type CareerStage = "starting" | "growing" | "stable";
+export type CareerStage = "studying" | "starting" | "growing" | "stable";
 export type Dependents = "none" | "partner" | "kids" | "parents";
 
 export interface Profile {

@@ -1,11 +1,17 @@
 import { makePool, resolveDatabaseUrl } from "../_data.js";
 import { authSecret, createSession, hashPassword, normalizeEmail, sessionCookie, validPassword } from "../_auth.js";
+import { throttled } from "../_ratelimit.js";
+
+// Fifteen sign-ups per address per quarter hour: a household, not a script.
+const ATTEMPTS = 15;
+const WINDOW_MS = 15 * 60 * 1000;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ ok: false, error: "POST only" });
     return;
   }
+  if (throttled(req, res, "register", ATTEMPTS, WINDOW_MS)) return;
   const secret = authSecret();
   if (!secret || !resolveDatabaseUrl()) {
     res.status(503).json({ ok: false, error: "accounts not provisioned (AUTH_SECRET / database missing)" });

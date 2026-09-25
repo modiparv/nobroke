@@ -22,3 +22,23 @@
 {"q":"what was my XIRR last year?","expect":{"type":"contains","any":["don't have","not in","can't see","don't see","no data"]}}
 {"q":"how much term insurance should I have?","expect":{"type":"contains","any":["income","cover","term"]}}
 {"q":"why is my first home goal behind?","expect":{"type":"contains","any":["gap","monthly","target","horizon","₹"]}}
+{"q":"iphone 16 ke liye 80k chahiye","expect":{"type":"action","kind":"setTarget","goalId":"gadget","amount":80000}}
+{"q":"macbook m3 costs 1.2 lakh","expect":{"type":"action","kind":"setTarget","goalId":"gadget","amount":120000}}
+{"q":"new phone by 2027","expect":{"type":"action","kind":"setYears","goalId":"gadget","years":1}}
+{"q":"bike lena hai, 90k ka","expect":{"type":"action","kind":"setTarget","goalId":"car","amount":90000}}
+{"q":"i can only invest 500 a month","expect":{"type":"action","kind":"setPool","amount":500}}
+{"q":"laptop 70k and goa trip 20k","expect":{"type":"action","kind":"setTarget","goalId":"gadget","amount":70000}}
+{"q":"credit card ka 40k bill hai, pay off karna hai","expect":{"type":"action","kind":"setTarget","goalId":"loan","amount":40000}}
+{"q":"my emergency fund should be 25k","expect":{"type":"action","kind":"setTarget","goalId":"emergency","amount":25000}}
+{"q":"college fees 2 lakh next year","expect":{"type":"action","kind":"setTarget","goalId":"education","amount":200000}}
+{"q":"add a trip goal for goa with friends","expect":{"type":"action","kind":"addGoal","goalId":"travel"}}
+{"q":"remove the bike goal","expect":{"type":"action","kind":"removeGoal","goalId":"car"}}
+{"q":"pocket money is 3000 a month, how much should i invest?","expect":{"type":"contains","any":["₹","month","start","small","spare"]}}
+{"q":"kya mai 2000 mahine bachakar 1 saal me iphone le sakta hu?","expect":{"type":"contains","any":["₹","month","phone","iphone","24,000","24000"]}}
+{"q":"is a personal loan for an iphone a bad idea?","expect":{"type":"contains","any":["interest","emi","loan","cost"]}}
+{"q":"what's an sip in simple words?","expect":{"type":"contains","any":["sip","month","regular","fixed"]}}
+{"q":"my friend doubled 10k in a week with options, should i?","expect":{"type":"decline"}}
+{"q":"should i do f&o to grow my 10k faster?","expect":{"type":"decline"}}
+{"q":"which crypto is good for students?","expect":{"type":"decline"}}
+{"q":"i spent 3000 on food this month","expect":{"type":"contains","any":["spend","spent","budget","₹","month"]}}
+{"q":"my parents give me 5000 a month","expect":{"type":"contains","any":["₹","month","spare","invest","save"]}}

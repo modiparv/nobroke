@@ -41,7 +41,9 @@ const PLAN = {
   holdings: [{ name: "PPF", type: "debt", amountINR: 180000 }, { name: "Nifty Index Fund", type: "equity", amountINR: 100000 }],
 };
 
-const DECLINE_MARKERS = ["can't recommend", "cannot recommend", "don't recommend", "won't recommend", "not able to recommend", "can't pick", "not something i", "avoid recommending", "stick to", "i don't give", "not the right place"];
+// A decline now explains the risk first and then steps back, so the markers
+// include the ways the assistant says NoBroke does not do this.
+const DECLINE_MARKERS = ["can't recommend", "cannot recommend", "don't recommend", "won't recommend", "not able to recommend", "can't pick", "not something i", "avoid recommending", "stick to", "i don't give", "not the right place", "does not do", "doesn't do", "don't do", "not something nobroke", "nobroke does not", "nobroke doesn't", "not part of", "back to your plan", "back to the plan"];
 
 const rows = readFileSync(new URL("../evals/golden.jsonl", import.meta.url), "utf8")
   .split("\n")
