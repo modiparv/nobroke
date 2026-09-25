@@ -39,6 +39,9 @@ export interface Goal {
   blurb: string;
   defaultProfile: RiskProfile;
   costSensitivity: CostSensitivity;
+  /** The date cannot move: a child's college year, a wedding. The plan never
+      offers "move to a later year" for these; the moves are money or target. */
+  dateFixed: boolean;
 }
 
 export interface PlanGoal {

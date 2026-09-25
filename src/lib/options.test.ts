@@ -29,6 +29,28 @@ test("no money in means no later year; a goal on track has none either", () => {
   assert.equal(goalOptions(easy, r).year, null);
 });
 
+test("a date-fixed goal (a child's college year) is never offered a later year", () => {
+  // Rajesh: ₹65 L for college in 8 years, ₹20,000 a month. Money or target are the moves.
+  const college: PlanInputs = { targetToday: 6500000, horizonYears: 8, currentSavings: 0, monthlySip: 20000, inflation: 0.06, allocation: {} };
+  const r = computePlan(college);
+  assert.equal(r.onTrack, false);
+  assert.equal(goalOptions(college, r, { dateFixed: true }).year, null);
+  assert.ok(goalOptions(college, r, { dateFixed: true }).monthly > 0);
+});
+
+test("a later year is offered only within five years of the goal's own date", () => {
+  // At ₹1,500 a month the laptop is reachable, but nine years late: not a move, a different goal.
+  const slow = { ...laptop, monthlySip: 1500 };
+  const r = computePlan(slow);
+  assert.equal(r.onTrack, false);
+  const reachable = reachableHorizon(slow);
+  assert.ok(reachable !== null && reachable - slow.horizonYears > 5, `reachable at ${reachable}`);
+  assert.equal(goalOptions(slow, r).year, null);
+  // Aarav's laptop at ₹2,000 a month is reachable within five years, so the move stays.
+  const o = goalOptions(laptop, computePlan(laptop));
+  assert.ok(o.year !== null && o.year - laptop.horizonYears <= 5);
+});
+
 test("targets round down to a clean step for their size", () => {
   assert.equal(cleanTarget(22641), 22000);
   assert.equal(cleanTarget(7420), 7000);
