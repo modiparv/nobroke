@@ -3,6 +3,13 @@
  * so it can be unit-tested in isolation. It recognises the common "change my plan"
  * intents on-device so the copilot can actually DO things; anything it can't parse
  * falls through to the AI for a general answer.
+ *
+ * The bar acts only when it is sure. A number is money only when it is marked
+ * as money (₹, rs, or a unit like k, lakh, crore) or is a bare number of at
+ * least ₹500: the 16 in "iphone 16", the 8 in "8 months" and the 4 in "4
+ * friends" are never amounts. A sentence with two amounts, or one about what
+ * comes in or goes out rather than what to invest, goes to the AI, which can
+ * ask which is which.
  */
 export type Command =
   | { kind: "addGoal"; goalId: string; name: string }
@@ -10,7 +17,7 @@ export type Command =
   | { kind: "setPool"; amount: number }
   | { kind: "setCash"; amount: number }
   | { kind: "setTarget"; goalId: string; name: string; amount: number }
-  | { kind: "setYears"; goalId: string; name: string; years: number }
+  | { kind: "setYears"; goalId: string; name: string; years: number; note?: string }
   | { kind: "autoSplit" }
   | { kind: "recommendPortfolio" }
   | { kind: "newPlan" };
@@ -39,19 +46,62 @@ function findGoal(text: string): { goalId: string; name: string } | null {
   return null;
 }
 
-/** Parse "30k", "30,000", "5 lakh / lac", "1.2 cr / crore", "₹50L". */
+const UNIT_MULT: Record<string, number> = {
+  k: 1e3,
+  thousand: 1e3,
+  l: 1e5,
+  lac: 1e5,
+  lakh: 1e5,
+  lakhs: 1e5,
+  cr: 1e7,
+  crore: 1e7,
+  crores: 1e7,
+  m: 1e6,
+  mn: 1e6,
+  million: 1e6,
+};
+
+/** The smallest bare number (no ₹, no unit) the bar reads as money. */
+const BARE_MINIMUM = 500;
+
+/** A number followed by one of these is a duration, a count or an ordinal, not money. */
+const NOT_MONEY_AFTER =
+  /^\s*(?:months?|mos?|weeks?|wks?|days?|years?|yrs?|hours?|hrs?|friends?|people|persons?|guys|kids?|nights?|times|x|%|percent|th|st|nd|rd)\b/;
+/** A bare 20xx is a calendar year, unless it is plainly a monthly amount. */
+const MONTHLY_AFTER = /^\s*(?:a month|per month|monthly|each month|every month|\/\s*mo(?:nth)?)\b/;
+const YEAR_LIKE = /^20[2-9]\d$/;
+
+// A number not glued to a word or a dot on its left (so "m3" and "3.5" stay
+// whole), optionally marked with ₹ or rs and followed by a unit.
+const AMOUNT_RE = /(?<![\w.])(₹\s*|rs\.?\s*)?(\d[\d,]*(?:\.\d+)?)(?:\s*(k|thousand|l|lac|lakh|lakhs|cr|crore|crores|m|mn|million)\b)?/g;
+
+/** Every number in the text that can honestly be read as rupees, in order. */
+export function amountsINR(text: string): number[] {
+  const t = text.toLowerCase();
+  const out: number[] = [];
+  for (const m of t.matchAll(AMOUNT_RE)) {
+    const marker = !!m[1];
+    const raw = m[2];
+    const unit = m[3];
+    const rest = t.slice((m.index ?? 0) + m[0].length);
+    // Glued to a word on the right: 16gb, 3000km, 16th.
+    if (!unit && /^[a-z]/.test(rest)) continue;
+    if (NOT_MONEY_AFTER.test(rest)) continue;
+    const num = parseFloat(raw.replace(/,/g, ""));
+    if (!Number.isFinite(num) || num <= 0) continue;
+    if (!marker && !unit) {
+      if (YEAR_LIKE.test(raw) && !MONTHLY_AFTER.test(rest)) continue;
+      if (num < BARE_MINIMUM) continue;
+    }
+    out.push(Math.round(num * (unit ? UNIT_MULT[unit] : 1)));
+  }
+  return out;
+}
+
+/** The one amount in the text, or null when there is none or more than one. */
 export function parseAmountINR(text: string): number | null {
-  const m = text.match(/(?:₹|rs\.?\s*)?(\d[\d,]*\.?\d*)\s*(k|thousand|l|lac|lakh|lakhs|cr|crore|crores|m|mn|million)?\b/i);
-  if (!m) return null;
-  const num = parseFloat(m[1].replace(/,/g, ""));
-  if (!Number.isFinite(num) || num <= 0) return null;
-  const unit = (m[2] || "").toLowerCase();
-  let mult = 1;
-  if (unit === "k" || unit === "thousand") mult = 1e3;
-  else if (unit === "l" || unit === "lac" || unit === "lakh" || unit === "lakhs") mult = 1e5;
-  else if (unit === "cr" || unit === "crore" || unit === "crores") mult = 1e7;
-  else if (unit === "m" || unit === "mn" || unit === "million") mult = 1e6;
-  return Math.round(num * mult);
+  const amounts = amountsINR(text);
+  return amounts.length === 1 ? amounts[0] : null;
 }
 
 const ADD_INTENT = /\b(add|create|creating|new|start|save for|saving for|want|wanna|plan for|planning for|include|buy|buying|get|need a|i'?d like|set up)\b/;
@@ -59,6 +109,12 @@ const REMOVE_INTENT = /\b(remove|delete|drop|cancel|get rid of|take out|scrap)\b
 const POOL_CONTEXT = /\b(invest|investing|sip|per month|a month|monthly|each month|\/mo|month|put away|set aside|contribute)\b/;
 const CASH_CONTEXT = /\b(savings?|cash|in the bank|in bank|saved|i have|i've got|sitting|lump\s?sum|corpus)\b/;
 const TARGET_CONTEXT = /\b(target|cost|costs?|worth|need|needs|needed|budget|goal amount|amount|to|=)\b/;
+
+/** What comes in or goes out is a fact about the person, not an instruction
+    to invest: "i get 8000 pocket money a month" must never set the monthly
+    investment to ₹8,000. The AI reads these and answers. */
+const INCOME_CONTEXT = /\b(salary|stipend|pocket money|allowance|earn|earns|earning|earnings|income|get paid|paid|gives? me|give me|got from)\b/;
+const SPEND_CONTEXT = /\b(spent|spend|spends|spending|expenses?|bills?|rent|fees?|kharcha|kharch)\b/;
 
 /** Interrogatives that mark a QUESTION, which must never mutate the plan —
     "explain the safety net goal" or "should I rebalance?" go to the AI.
@@ -73,8 +129,14 @@ export function parseCommand(raw: string, now = new Date().getFullYear()): Comma
   // Questions are answered, never executed.
   if ((QUESTION_START.test(text) || text.endsWith("?")) && !POLITE_COMMAND.test(text)) return null;
 
+  // Two amounts in one breath ("laptop 70k and trip 20k"), or a sentence about
+  // income or spending: the AI sorts out which number is which.
+  const amounts = amountsINR(text);
+  if (amounts.length > 1) return null;
+  if (INCOME_CONTEXT.test(text) || SPEND_CONTEXT.test(text)) return null;
+  const amount = amounts[0] ?? null;
+
   const goal = findGoal(text);
-  const amount = parseAmountINR(text);
   const hasPortfolioWord = /\b(portfolio|mix|allocation|funds?|investments?)\b/.test(text);
 
   // Re-tune the single portfolio to the goals.
@@ -89,12 +151,29 @@ export function parseCommand(raw: string, now = new Date().getFullYear()): Comma
   // Remove a goal.
   if (goal && REMOVE_INTENT.test(text)) return { kind: "removeGoal", ...goal };
 
-  // Set a goal's timeline ("in 6 years", "by 2032").
-  const byYear = text.match(/\bby\s+(20\d{2})\b/);
+  // Set a goal's timeline: "in 6 years", "by 2032", "in 2027", "2032 tak",
+  // "in 8 months". The plan works in whole years, so months round and the
+  // confirmation says so.
+  const yearMatch = text.match(/\b(20[2-9]\d)\b/);
+  const yearMention =
+    yearMatch && !MONTHLY_AFTER.test(text.slice((yearMatch.index ?? 0) + yearMatch[0].length)) ? Number(yearMatch[1]) : null;
   const inYears = text.match(/\b(?:in|within|after|over)\s+(\d{1,2})\s*(?:years?|yrs?)\b/) || text.match(/\b(\d{1,2})\s*(?:years?|yrs?)\b/);
-  if (goal && (byYear || inYears)) {
-    const years = byYear ? Number(byYear[1]) - now : Number(inYears![1]);
-    if (years > 0 && years <= 60) return { kind: "setYears", ...goal, years };
+  const inMonths = text.match(/\b(?:in|within|after|over)\s+(\d{1,2})\s*(?:months?|mos?)\b/) || text.match(/\b(\d{1,2})\s*months?\b/);
+  if (goal) {
+    if (yearMention != null) {
+      const years = yearMention - now;
+      if (years > 0 && years <= 60) return { kind: "setYears", ...goal, years };
+    } else if (inYears) {
+      const years = Number(inYears[1]);
+      if (years > 0 && years <= 60) return { kind: "setYears", ...goal, years };
+    } else if (inMonths) {
+      const months = Number(inMonths[1]);
+      if (months > 0) {
+        const years = Math.max(1, Math.round(months / 12));
+        const note = months % 12 ? `${months} months rounds to ${years} ${years === 1 ? "year" : "years"}; the plan works in whole years.` : undefined;
+        return { kind: "setYears", ...goal, years, ...(note ? { note } : {}) };
+      }
+    }
   }
 
   // Set a goal's target amount (a goal + a ₹ amount → set/auto-add that goal's target).

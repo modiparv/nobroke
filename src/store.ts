@@ -937,7 +937,7 @@ function runCommand(cmd: Command): string {
     case "setYears":
       ensureGoal(cmd.goalId);
       actions.setGoalTenure(cmd.goalId, cmd.years);
-      return `Set ${cmd.name} to ${cmd.years} ${cmd.years === 1 ? "year" : "years"} away.`;
+      return `Set ${cmd.name} to ${cmd.years} ${cmd.years === 1 ? "year" : "years"} away.${cmd.note ? ` ${cmd.note}` : ""}`;
     case "autoSplit":
       actions.recommendGoalSplit();
       return `Auto-balanced your money across goals. ✨`;
