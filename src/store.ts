@@ -946,6 +946,11 @@ function runCommand(cmd: Command): string {
       ensureGoal(cmd.goalId);
       actions.setGoalTenure(cmd.goalId, cmd.years);
       return `Set ${cmd.name} to ${cmd.years} ${cmd.years === 1 ? "year" : "years"} away.${cmd.note ? ` ${cmd.note}` : ""}`;
+    case "setTargetAndYears":
+      ensureGoal(cmd.goalId);
+      actions.setGoalTarget(cmd.goalId, cmd.amount);
+      actions.setGoalTenure(cmd.goalId, cmd.years);
+      return `Set ${cmd.name} to ${formatINR(cmd.amount)} in today's money, ${cmd.years} ${cmd.years === 1 ? "year" : "years"} away.${cmd.note ? ` ${cmd.note}` : ""}`;
     case "autoSplit":
       actions.recommendGoalSplit();
       return `Auto-balanced your money across goals. ✨`;

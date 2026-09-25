@@ -87,6 +87,13 @@ const GOLDENS: Array<[string, Record<string, unknown> | null]> = [
   ["save 500 a month", { kind: "setPool", amount: 500 }],
   ["i can put ₹300 a month", { kind: "setPool", amount: 300 }],
   ["i have 12k in the bank", { kind: "setCash", amount: 12000 }],
+  ["i want a bike for 90k", { kind: "setTarget", goalId: "bike", amount: 90000 }],
+  ["macbook air m3 for 1.1 lakh", { kind: "setTarget", goalId: "gadget", amount: 110000 }],
+  ["goa trip with 4 friends for 20k", { kind: "setTarget", goalId: "travel", amount: 20000 }],
+  // an amount and a date together: both applied, never just the date
+  ["trip 25k in 10 months", { kind: "setTargetAndYears", goalId: "travel", amount: 25000, years: 1 }],
+  ["home 40 lakh by 2032", { kind: "setTargetAndYears", goalId: "home", amount: 4000000, years: 6 }],
+  ["laptop 80k in 2 years", { kind: "setTargetAndYears", goalId: "gadget", amount: 80000, years: 2 }],
   // never a wrong command: small bare numbers, two amounts, income or spending
   ["put 300 a month", null],
   ["laptop 70k and trip 20k", null],
@@ -94,6 +101,8 @@ const GOLDENS: Array<[string, Record<string, unknown> | null]> = [
   ["my parents give me 5000 a month", null],
   ["spent 3000 on food this month", null],
   ["concert tickets 8k", null],
+  ["gift for mom 5k", null],
+  ["birthday present for dad 3k", null],
 ];
 
 const AMOUNTS: Array<[string, number[]]> = [

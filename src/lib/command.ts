@@ -18,6 +18,8 @@ export type Command =
   | { kind: "setCash"; amount: number }
   | { kind: "setTarget"; goalId: string; name: string; amount: number }
   | { kind: "setYears"; goalId: string; name: string; years: number; note?: string }
+  /** "trip 25k in 10 months": an amount and a date in one breath, both applied. */
+  | { kind: "setTargetAndYears"; goalId: string; name: string; amount: number; years: number; note?: string }
   | { kind: "autoSplit" }
   | { kind: "recommendPortfolio" }
   | { kind: "newPlan" };
@@ -120,6 +122,8 @@ const TARGET_CONTEXT = /\b(target|cost|costs?|worth|need|needs|needed|budget|goa
 const INCOME_CONTEXT = /\b(salary|stipend|pocket money|allowance|earn|earns|earning|earnings|income|get paid|paid|gives? me|give me|got from)\b/;
 // "fees" is not here: college fees are a goal, not a spend.
 const SPEND_CONTEXT = /\b(spent|spend|spends|spending|expenses?|bills?|rent|kharcha|kharch)\b/;
+/** A gift for mom is not Parents' care; the AI reads these and answers. */
+const GIFT_CONTEXT = /\b(gifts?|presents?|birthday|anniversary|treat)\b/;
 
 /** Interrogatives that mark a QUESTION, which must never mutate the plan —
     "explain the safety net goal" or "should I rebalance?" go to the AI.
@@ -138,7 +142,7 @@ export function parseCommand(raw: string, now = new Date().getFullYear()): Comma
   // income or spending: the AI sorts out which number is which.
   const amounts = amountsINR(text);
   if (amounts.length > 1) return null;
-  if (INCOME_CONTEXT.test(text) || SPEND_CONTEXT.test(text)) return null;
+  if (INCOME_CONTEXT.test(text) || SPEND_CONTEXT.test(text) || GIFT_CONTEXT.test(text)) return null;
   const amount = amounts[0] ?? null;
 
   const goal = findGoal(text);
@@ -158,26 +162,31 @@ export function parseCommand(raw: string, now = new Date().getFullYear()): Comma
 
   // Set a goal's timeline: "in 6 years", "by 2032", "in 2027", "2032 tak",
   // "in 8 months". The plan works in whole years, so months round and the
-  // confirmation says so.
+  // confirmation says so. With an amount in the same breath ("trip 25k in
+  // 10 months") both are applied, never just the date.
   const yearMatch = text.match(/\b(20[2-9]\d)\b/);
   const yearMention =
     yearMatch && !MONTHLY_AFTER.test(text.slice((yearMatch.index ?? 0) + yearMatch[0].length)) ? Number(yearMatch[1]) : null;
   const inYears = text.match(/\b(?:in|within|after|over)\s+(\d{1,2})\s*(?:years?|yrs?)\b/) || text.match(/\b(\d{1,2})\s*(?:years?|yrs?)\b/);
   const inMonths = text.match(/\b(?:in|within|after|over)\s+(\d{1,2})\s*(?:months?|mos?)\b/) || text.match(/\b(\d{1,2})\s*months?\b/);
   if (goal) {
+    let years: number | null = null;
+    let note: string | undefined;
     if (yearMention != null) {
-      const years = yearMention - now;
-      if (years > 0 && years <= 60) return { kind: "setYears", ...goal, years };
+      years = yearMention - now;
     } else if (inYears) {
-      const years = Number(inYears[1]);
-      if (years > 0 && years <= 60) return { kind: "setYears", ...goal, years };
+      years = Number(inYears[1]);
     } else if (inMonths) {
       const months = Number(inMonths[1]);
       if (months > 0) {
-        const years = Math.max(1, Math.round(months / 12));
-        const note = months % 12 ? `${months} months rounds to ${years} ${years === 1 ? "year" : "years"}; the plan works in whole years.` : undefined;
-        return { kind: "setYears", ...goal, years, ...(note ? { note } : {}) };
+        years = Math.max(1, Math.round(months / 12));
+        if (months % 12) note = `${months} months rounds to ${years} ${years === 1 ? "year" : "years"}; the plan works in whole years.`;
       }
+    }
+    if (years != null && years > 0 && years <= 60) {
+      const when = note ? { years, note } : { years };
+      if (amount != null) return { kind: "setTargetAndYears", ...goal, amount, ...when };
+      return { kind: "setYears", ...goal, ...when };
     }
   }
 
