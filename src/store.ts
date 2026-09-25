@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { Allocation, ChatMessage, Holding, PlanGoal, PlanInputs, Profile, RiskProfile } from "./lib/types";
 import { GOAL_MAP } from "./lib/goals";
 import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios";
-import { adjustedTarget, emptyProfile, suggestedSip } from "./lib/profile";
+import { adjustedTarget, emergencyTarget, emptyProfile, suggestedSip } from "./lib/profile";
 import { assessRiskAppetite, capProfile, riskBandLabel } from "./lib/risk";
 import { coverageFrom } from "./lib/climb";
 import { askGroq, type AiAction } from "./lib/groq";
@@ -403,7 +403,8 @@ function buildPlanGoal(goalId: string, profile: Profile, horizonOverride?: numbe
     id: g.id,
     name: g.name,
     emoji: g.emoji,
-    targetToday: adjustedTarget(g, profile.cityTier),
+    // The emergency fund is sized to this person's outgoings, not to a city.
+    targetToday: g.id === "emergency" ? emergencyTarget(profile) : adjustedTarget(g, profile.cityTier),
     horizonYears: horizon,
     tenureConfirmed: confirmed,
   };

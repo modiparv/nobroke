@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { PlanGoal } from "../lib/types";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
-import { actions, goalShareFraction, planInputsForGoal, totalCapital, useStore } from "../store";
+import { actions, goalMonthly, goalShareFraction, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
 import { sectionLabel } from "../ui";
 import Chart from "./Chart";
 import Metrics from "./Metrics";
@@ -130,6 +130,13 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
   const [showWhy, setShowWhy] = useState(false);
   const { inputs, r, savedForGoal, year } = goalFacts(g, s);
   const amount = s.monthlySip * goalShareFraction(s, g.id);
+  // What this goal could take without touching the others, and which goals
+  // ahead of it are taking the money today.
+  const othersMonthly = s.goals.filter((x) => x.id !== g.id).reduce((sum, x) => sum + goalMonthly(s, x.id), 0);
+  const available = Math.max(0, s.monthlySip - othersMonthly);
+  const ahead = goalsByPriority(s)
+    .filter((x) => x.id !== g.id && goalMonthly(s, x.id) > 0)
+    .map((x) => ({ name: x.name, year: BASE_YEAR + x.horizonYears }));
 
   return (
     <section className="overflow-hidden rounded-card border border-line bg-surface">
@@ -207,6 +214,8 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
           monthly={amount}
           monthlyShare={goalShareFraction(s, g.id)}
           monthlyPool={s.monthlySip}
+          available={available}
+          ahead={ahead}
         />
 
         <div>
