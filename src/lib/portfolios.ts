@@ -8,17 +8,17 @@ export const MODEL_PORTFOLIOS: Record<
 > = {
   steady: {
     label: "Steady",
-    tagline: "Protect first",
+    tagline: "Fewer ups and downs",
     allocation: { icici_liquid: 25, hdfc_corp_bond: 25, sbi_gilt: 20, icici_gold: 15, icici_nifty: 15 },
   },
   balanced: {
     label: "Balanced",
-    tagline: "Grow with guardrails",
+    tagline: "Some ups and downs",
     allocation: { icici_nifty: 25, parag_flexi: 15, mirae_hybrid: 20, hdfc_corp_bond: 20, icici_gold: 20 },
   },
   bold: {
     label: "Bold",
-    tagline: "Maximize growth",
+    tagline: "Big ups and downs",
     allocation: { parag_flexi: 25, nippon_small: 20, icici_nifty: 20, quant_elss: 20, icici_gold: 15 },
   },
 };

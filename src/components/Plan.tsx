@@ -69,7 +69,7 @@ function AddGoal({ onAdd, onBand }: { onAdd: (id: string) => void; onBand?: bool
                   <span className="block text-caption text-text-2">{g.blurb}</span>
                 </span>
                 <span className="num flex-none pt-px text-caption text-text-2">
-                  {formatINR(g.targetToday)} · {g.horizonYears}y
+                  {formatINR(g.targetToday)}, {g.horizonYears} {g.horizonYears === 1 ? "year" : "years"}
                 </span>
               </button>
             ))}
@@ -163,7 +163,7 @@ export default function Plan() {
         <div className="mx-auto grid max-w-page gap-x-10 gap-y-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-stretch">
           <div className="flex h-full flex-col">
             <div>
-              <span className="text-eyebrow uppercase text-on-night-2">Total saved</span>
+              <span className="text-eyebrow uppercase text-on-night-2">Saved so far</span>
               <HeroAmount value={totalCapital(s)} />
               <p className="mt-2 flex items-center gap-2 text-support text-on-night-2">
                 {s.goals.length > 0 && (
@@ -185,20 +185,19 @@ export default function Plan() {
             {/* The breakup, inline in the band on a hairline divider. */}
             <dl className="flex flex-wrap items-stretch gap-x-6 gap-y-2 border-t border-on-night-3/40 pt-3">
               {[
-                { label: "Cash", text: formatINR(s.currentSavings) },
+                { label: "In the bank", text: formatINR(s.currentSavings) },
                 { label: "Invested", text: formatINR(holdingsTotal(s)) },
-                { label: "Monthly", text: formatINR(s.monthlySip) },
-                // Months of spending the cash would carry: the Protect layer
-                // as a number, same arithmetic as the advisor note. "Cash
-                // runway", because "cover" reads as insurance.
+                { label: "Added every month", text: formatINR(s.monthlySip) },
+                // Months of expenses the cash would carry: the Protect layer
+                // as a number, same arithmetic as the advisor note.
                 ...(s.monthlyExpenses > 0
                   ? [
                       {
-                        label: "Cash runway",
+                        label: "Cash lasts",
                         text:
                           s.currentSavings / s.monthlyExpenses >= 12
-                            ? "12+ mo"
-                            : `${(s.currentSavings / s.monthlyExpenses).toFixed(1)} mo`,
+                            ? "12+ months"
+                            : `${(s.currentSavings / s.monthlyExpenses).toFixed(1)} months`,
                       },
                     ]
                   : []),
@@ -242,14 +241,14 @@ export default function Plan() {
             <>
               {/* Every goal at once: one row of tiles, priority order. */}
               <div className="flex items-center justify-between gap-3">
-                <span className={sectionLabel}>Goals · priority order · drag to reorder</span>
+                <span className={sectionLabel}>Your goals, most urgent first</span>
                 {s.goals.length > 1 && (
                   <button
                     type="button"
                     onClick={actions.recommendGoalSplit}
                     className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
                   >
-                    Use recommended split
+                    Split my money for me
                   </button>
                 )}
               </div>

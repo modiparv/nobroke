@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { HOLDING_TYPES, HOLDING_TYPE_BY_LABEL } from "../lib/holdings";
+import { HOLDING_TYPES, HOLDING_TYPE_BY_LABEL, UNSORTED_TYPE } from "../lib/holdings";
 import { formatINR } from "../lib/format";
 import { actions, useStore } from "../store";
 import { sectionLabel } from "../ui";
@@ -33,7 +33,7 @@ export default function Holdings() {
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <span className={sectionLabel}>Existing investments</span>
+        <span className={sectionLabel}>Your investments</span>
         <button
           onClick={() => setOpen(true)}
           className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-line px-3 py-1.5 text-caption font-medium text-muted transition hover:border-accent hover:text-ink"
@@ -53,7 +53,9 @@ export default function Holdings() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-support font-medium">{h.name}</div>
-                  <div className="text-index uppercase tracking-wide text-muted">{h.type}</div>
+                  <div className="text-caption text-muted">
+                    {h.type === UNSORTED_TYPE ? "Not sorted yet. Add each investment below to split it." : h.type}
+                  </div>
                 </div>
                 <span className="text-support font-medium tabular-nums">{formatINR(h.amount)}</span>
                 <button

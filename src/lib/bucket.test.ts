@@ -32,10 +32,15 @@ test("every pool instrument resolves to a registered fund row", () => {
   assert.ok(!isPoolInstrument("live_999999"));
 });
 
-test("the pool spans every side of a real bucket", () => {
+test("the options span every side of a real bucket", () => {
   const labels = POOL_GROUPS.map((g) => g.label);
-  for (const want of ["Fund picks", "ETFs", "Gold & silver", "Bonds & debt", "Real estate & cash"]) {
+  for (const want of ["Funds", "ETFs (need a demat account)", "Gold and silver", "Bonds", "Property and cash"]) {
     assert.ok(labels.includes(want), `missing group ${want}`);
+  }
+  // Plain words only: no "&", no semicolons, in a label or a note.
+  for (const g of POOL_GROUPS) {
+    assert.ok(!/[&;]/.test(g.label), `group label "${g.label}" uses & or ;`);
+    for (const item of g.items) assert.ok(!/;/.test(item.note), `note for ${item.id} has a semicolon`);
   }
   const classes = new Set(POOL_ITEMS.map((i) => FUND_MAP[i.id].assetClass));
   for (const c of ["equity", "debt", "gold", "hybrid"]) assert.ok(classes.has(c as never), `no ${c} instrument`);

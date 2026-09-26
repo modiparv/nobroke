@@ -27,6 +27,32 @@ export const HOLDING_TYPE_BY_LABEL: Record<string, (typeof HOLDING_TYPES)[number
   HOLDING_TYPES.map((t) => [t.label, t]),
 );
 
+/** The intake's one-line total of everything already invested, before it is
+    split by type. Its category and type both say so, so the Money page never
+    calls EPF or FD money "Funds" and never clashes with the Portfolio tab. */
+export const UNSORTED_CATEGORY = "Not sorted yet";
+export const UNSORTED_TYPE = "Not sorted yet";
+export const INTAKE_HOLDING_ID = "intake";
+export const INTAKE_HOLDING_NAME = "All investments";
+
+interface HoldingLike {
+  id: string;
+  category: string;
+  type: string;
+  name: string;
+}
+
+/** Saved plans from before the rename carry the intake row as category
+    "Funds", type "Portfolio", name "Existing investments". Bring that one
+    row up to date. Rows the person added by hand are left alone. */
+export function refreshHoldingLabels<T extends HoldingLike>(holdings: T[]): T[] {
+  return holdings.map((h) => {
+    if (!h || typeof h !== "object" || h.id !== INTAKE_HOLDING_ID) return h;
+    if (h.type === UNSORTED_TYPE && h.category === UNSORTED_CATEGORY && h.name === INTAKE_HOLDING_NAME) return h;
+    return { ...h, category: UNSORTED_CATEGORY, type: UNSORTED_TYPE, name: INTAKE_HOLDING_NAME };
+  });
+}
+
 /** The asset-class colour code for holding categories (tokens in index.css):
     one hue per kind of money. The hue carries dots, bars and meters; the
     tint grounds treemap tiles with the hue as ink. */
@@ -37,6 +63,7 @@ export const CATEGORY_CODE: Record<string, { bg: string; ink: string }> = {
   "Gold & Silver": { bg: "var(--class-gold-bg)", ink: "var(--class-gold)" },
   Cash: { bg: "var(--class-cash-bg)", ink: "var(--class-cash)" },
   Other: { bg: "var(--class-cash-bg)", ink: "var(--class-cash)" },
+  [UNSORTED_CATEGORY]: { bg: "var(--class-funds-bg)", ink: "var(--class-funds)" },
 };
 
 export function categoryCode(category: string): { bg: string; ink: string } {

@@ -25,26 +25,27 @@ export default function AdvisorNote() {
   const coverMonths = s.monthlyExpenses > 0 ? s.currentSavings / s.monthlyExpenses : null;
 
   if (coverMonths != null && coverMonths < 3) {
-    const cover = coverMonths < 1 ? "under a month" : `about ${Math.floor(coverMonths)} ${Math.floor(coverMonths) === 1 ? "month" : "months"}`;
+    const whole = Math.floor(coverMonths);
+    const cover = coverMonths < 1 ? "under a month" : `only ${whole} ${whole === 1 ? "month" : "months"}`;
     notes.push({
       id: "emergency",
-      text: `Your cash covers ${cover} of spending. We keep 3 to 6 months within reach before taking any risk.`,
-      cta: "Review cash",
+      text: `Your cash covers ${cover} of expenses. Keep 3 to 6 months in the bank before you invest more.`,
+      cta: "Add to cash",
       onCta: () => actions.setTab("money"),
     });
   }
   if (surplus > 0 && s.monthlySip < surplus * 0.5) {
     notes.push({
       id: "idle_surplus",
-      text: `${formatINR(surplus - s.monthlySip)} of your monthly surplus is sitting idle. Even part of it, invested regularly, compounds meaningfully.`,
-      cta: "Adjust monthly",
+      text: `${formatINR(surplus - s.monthlySip)} a month is left over and not invested. Even part of it, invested every month, adds up.`,
+      cta: "Put in more",
       onCta: () => actions.setTab("money"),
     });
   }
   if (coverMonths != null && coverMonths > 8 && s.currentSavings > holdingsTotal(s)) {
     notes.push({
       id: "cash_drag",
-      text: "You hold more cash than a plan of this shape needs. Idle cash quietly loses ground to inflation every year.",
+      text: "You hold more cash than you need. Cash loses value to inflation every year.",
     });
   }
 

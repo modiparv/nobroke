@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { Allocation, ChatMessage, Holding, PlanGoal, PlanInputs, Profile, RiskProfile } from "./lib/types";
 import { GOAL_MAP, refreshGoalNames } from "./lib/goals";
+import { INTAKE_HOLDING_ID, INTAKE_HOLDING_NAME, UNSORTED_CATEGORY, UNSORTED_TYPE, refreshHoldingLabels } from "./lib/holdings";
 import { applyGoalCosts } from "./lib/onboarding";
 import { splitCapital, splitMonthly } from "./lib/split";
 import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios";
@@ -219,7 +220,10 @@ function coercePlan(raw: unknown): Partial<AppState> {
   if (Array.isArray(r.goals))
     out.goals = refreshGoalNames(r.goals.filter((g) => isObj(g) && typeof (g as { id?: unknown }).id === "string") as PlanGoal[]);
   if (Array.isArray(r.goalOrder)) out.goalOrder = r.goalOrder;
-  if (Array.isArray(r.externalHoldings)) out.externalHoldings = r.externalHoldings;
+  // The intake's unsplit total follows the current labels, so an older plan
+  // never shows the "Portfolio" type that clashed with the Portfolio tab.
+  if (Array.isArray(r.externalHoldings))
+    out.externalHoldings = refreshHoldingLabels(r.externalHoldings.filter(isObj) as Holding[]);
   if (Array.isArray(r.selectedGoalIds)) out.selectedGoalIds = r.selectedGoalIds;
   for (const k of ["inflation", "riskAppetite", "monthlySip", "currentSavings", "monthlyIncome", "monthlyExpenses"]) {
     const v = num(r[k]);
@@ -588,7 +592,7 @@ export const actions = {
       currentSavings: p.cashOnHand,
       externalHoldings:
         p.investedValue > 0
-          ? [{ id: "intake", category: "Funds", type: "Portfolio", name: "Existing investments", amount: p.investedValue }]
+          ? [{ id: INTAKE_HOLDING_ID, category: UNSORTED_CATEGORY, type: UNSORTED_TYPE, name: INTAKE_HOLDING_NAME, amount: p.investedValue }]
           : [],
       portfolio,
       portfolioProfile,
@@ -639,7 +643,7 @@ export const actions = {
       monthlyExpenses: profile.rent + profile.emi + profile.monthlySpend,
       currentSavings: profile.cashOnHand,
       externalHoldings: [
-        { id: "intake", category: "Funds", type: "Portfolio", name: "Existing investments", amount: profile.investedValue },
+        { id: INTAKE_HOLDING_ID, category: UNSORTED_CATEGORY, type: UNSORTED_TYPE, name: INTAKE_HOLDING_NAME, amount: profile.investedValue },
       ],
       portfolio,
       portfolioProfile,

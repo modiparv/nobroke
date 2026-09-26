@@ -13,10 +13,10 @@ import RiskMeter from "./RiskMeter";
 /**
  * The plan page's read-only window onto the whole portfolio. Two facts up
  * top (the mix by class, the risk ceiling with expected return), then one
- * heatmap of everything you own with two views: by holding (cash and every
- * instrument, sized by value) and by goal (the same money, split by the
- * goal it serves). No dials, no building — Manage leads to the Portfolio
- * tab, holdings tiles lead to Money.
+ * map of everything you own with two views: by holding (cash and every
+ * fund, sized by value) and by goal (the same money, split by the goal it
+ * serves). No dials, no building. Manage leads to the Portfolio tab,
+ * holdings tiles lead to Money.
  */
 
 interface TreemapItem {
@@ -89,14 +89,12 @@ export default function PortfolioGlimpse() {
     return (
       <section className="min-w-0 rounded-card border border-line bg-surface p-5 text-center">
         <p className="text-row font-medium">Not invested yet</p>
-        <p className="mx-auto mt-1 max-w-xs text-support text-text-2">
-          Pick a portfolio and your goals start growing toward their dates.
-        </p>
+        <p className="mx-auto mt-1 max-w-xs text-support text-text-2">Pick a mix and your goals start growing.</p>
         <button
           onClick={openPortfolio}
           className="mt-4 inline-flex h-10 items-center justify-center rounded-control bg-accent-fill px-5 text-support font-medium text-on-accent transition hover:bg-accent-fill-hi"
         >
-          Build the portfolio
+          Pick a mix
         </button>
       </section>
     );
@@ -105,9 +103,9 @@ export default function PortfolioGlimpse() {
   const bands = bandWeights(s.portfolio);
   const scale = 100 / total;
   const segs = [
-    { label: "Equity", v: bands.equity * scale, color: ASSET_CLASSES.equity.color },
-    { label: "Debt", v: bands.debt * scale, color: ASSET_CLASSES.debt.color },
-    { label: "Gold", v: bands.gold * scale, color: ASSET_CLASSES.gold.color },
+    { label: "stocks", v: bands.equity * scale, color: ASSET_CLASSES.equity.color },
+    { label: "bonds", v: bands.debt * scale, color: ASSET_CLASSES.debt.color },
+    { label: "gold", v: bands.gold * scale, color: ASSET_CLASSES.gold.color },
   ].filter((x) => x.v > 0.5);
   const expected = Math.round(blendedReturn(s.portfolio) * 1000) / 10;
 
@@ -120,7 +118,7 @@ export default function PortfolioGlimpse() {
             label: "Cash",
             amount: s.currentSavings,
             ...categoryCode("Cash"),
-            title: `Cash · ${formatINR(s.currentSavings)} · in the bank`,
+            title: `Cash: ${formatINR(s.currentSavings)} in the bank`,
             onClick: openMoney,
           },
         ]
@@ -134,7 +132,7 @@ export default function PortfolioGlimpse() {
           label: h.name,
           amount: h.amount,
           ...tone,
-          title: `${h.name} · ${formatINR(h.amount)} · ${h.type}`,
+          title: `${h.name}: ${formatINR(h.amount)} (${h.type})`,
           onClick: openMoney,
         };
       }),
@@ -152,14 +150,13 @@ export default function PortfolioGlimpse() {
       amount,
       bg: `rgb(var(--${tone}-bg))`,
       ink: `rgb(var(--${tone}))`,
-      title: `${g.name} · ${formatINR(amount)} set aside · ${GAP_LABEL[level].toLowerCase()}`,
+      title: `${g.name}: ${formatINR(amount)} set aside, ${GAP_LABEL[level].toLowerCase()}`,
       // Selecting a tile opens that goal's workbench beside this pane.
       onClick: () => actions.setCurrentGoal(g.id),
     };
   });
 
-  // Highlights: the four numbers a client checks first.
-  const largest = [...holdingItems].sort((a, b) => b.amount - a.amount)[0];
+  // Highlights: the three numbers a client checks first.
   const onTrackCount = goalItems.filter((i) => i.bg === "rgb(var(--pos-bg))").length;
   const shareOf = (amount: number) => (capital > 0 ? Math.round((amount / capital) * 100) : 0);
   const listed = [...holdingItems].sort((a, b) => b.amount - a.amount);
@@ -181,21 +178,15 @@ export default function PortfolioGlimpse() {
       </div>
 
       <div className="p-4">
-        {/* Highlights: value, pace, weight, progress — the client's first four. */}
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+        {/* Highlights: value, growth, progress. The client's first three. */}
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
           <div>
             <dt className="text-eyebrow uppercase text-text-3">Portfolio value</dt>
             <dd className="num mt-0.5 text-row font-medium">{formatINR(capital)}</dd>
           </div>
           <div>
-            <dt className="text-eyebrow uppercase text-text-3">Expected pace</dt>
-            <dd className="num mt-0.5 text-row font-medium">~{expected}% a year</dd>
-          </div>
-          <div className="min-w-0">
-            <dt className="text-eyebrow uppercase text-text-3">Largest holding</dt>
-            <dd className="mt-0.5 truncate text-row font-medium">
-              {largest ? `${largest.label} · ${shareOf(largest.amount)}%` : "—"}
-            </dd>
+            <dt className="text-eyebrow uppercase text-text-3">Expected growth</dt>
+            <dd className="num mt-0.5 text-row font-medium">About {expected}% a year</dd>
           </div>
           <div>
             <dt className="text-eyebrow uppercase text-text-3">Goals on track</dt>
@@ -218,22 +209,20 @@ export default function PortfolioGlimpse() {
         <p className="num mt-1.5 text-caption text-text-2">
           {segs.map((x, i) => (
             <span key={x.label}>
-              {i > 0 && <span className="mx-1 text-text-3">·</span>}
-              {x.label} <span className="font-medium text-text">{Math.round(x.v)}%</span>
+              <span className="font-medium text-text">{Math.round(x.v)}%</span> {x.label}
+              {i < segs.length - 1 ? ", " : ""}
             </span>
           ))}
         </p>
 
-
-
         {/* The whole portfolio, one map, two views */}
         <div className="mt-4">
-          <span className={sectionLabel}>Portfolio heatmap</span>
+          <span className={sectionLabel}>Where your money is</span>
           <div className="mt-1.5">
             {view === "holdings" ? (
               <Treemap items={holdingItems} ariaLabel="Everything you own, each tile sized by its value" />
             ) : (
-              <Treemap items={goalItems} ariaLabel="Your money split by the goal it serves; green is on track, amber needs a change" />
+              <Treemap items={goalItems} ariaLabel="Your money split by the goal it serves. Green is on track, amber needs a change." />
             )}
           </div>
 
@@ -252,11 +241,9 @@ export default function PortfolioGlimpse() {
                 </button>
               ))}
             </div>
-            <span className="truncate text-caption text-text-2">
-              {view === "holdings" ? "Sized by value" : "Green on track · amber needs a change"}
-            </span>
+            {view === "goals" && <span className="truncate text-caption text-text-2">Green is on track, amber needs a change</span>}
           </div>
-          {/* A goal with nothing set aside has no tile; it is named, never lost. */}
+          {/* A goal with nothing set aside has no tile. It is named, never lost. */}
           {view === "goals" && unfunded.length > 0 && (
             <p className="mt-1.5 text-caption text-text-2">Nothing set aside yet: {unfunded.join(", ")}.</p>
           )}
@@ -276,7 +263,7 @@ export default function PortfolioGlimpse() {
             {listed.map((h) => (
               <div
                 key={h.key}
-                title={`${h.label} · ${shareOf(h.amount)}%`}
+                title={`${h.label}: ${shareOf(h.amount)}%`}
                 style={{ width: `${Math.max(shareOf(h.amount), 1.5)}%`, background: h.ink }}
               />
             ))}
@@ -290,8 +277,7 @@ export default function PortfolioGlimpse() {
                 </span>
                 <span className="num flex-none text-support">
                   <span className="font-medium text-text">{shareOf(h.amount)}%</span>
-                  <span className="mx-1.5 text-text-3">·</span>
-                  <span className="text-text-2">{formatINR(h.amount)}</span>
+                  <span className="ml-2 text-text-2">{formatINR(h.amount)}</span>
                 </span>
               </li>
             ))}

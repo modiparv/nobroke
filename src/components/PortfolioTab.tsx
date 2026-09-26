@@ -6,11 +6,11 @@ import PortfolioBuilder from "./PortfolioBuilder";
 
 /**
  * The portfolio room: where the portfolio is BUILT. LEFT: the live
- * portfolio — presets, the fund universe, sliders, the macro backdrop —
- * exactly what the plan runs on today. RIGHT: the bucket studio, where a
- * portfolio is curated by hand from the whole instrument pool and applied
- * only when it is ready. READING the portfolio happens on the plan page's
- * glimpse; this room is for hands.
+ * portfolio (ready-made mixes, the fund search, the weights, the macro
+ * backdrop), exactly what the plan runs on today. RIGHT: build your own
+ * mix by hand from every option and apply it only when it is ready.
+ * READING the portfolio happens on the plan page's glimpse. This room is
+ * for hands.
  */
 export default function PortfolioTab() {
   const s = useStore();
@@ -20,7 +20,7 @@ export default function PortfolioTab() {
           where its result shows. */}
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <p className="text-support text-text-2">
-          Every goal grows in this one portfolio. Build it here; watch it work on the plan.
+          All your goals are funded from this one mix of funds. Change it here and your goals update.
         </p>
         <button
           type="button"
