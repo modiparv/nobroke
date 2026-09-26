@@ -4,8 +4,11 @@ import { fundFromLiveScheme, getLiveSchemeDetail, searchLiveSchemes, type LiveSc
 import { MODEL_PORTFOLIOS } from "../lib/portfolios";
 import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
 import { formatINR, formatPct } from "../lib/format";
+import { FOCUS, holdingForFund, holdingFocus } from "../lib/links";
+import { onTrackCount, outlook } from "../lib/outlook";
 import type { Allocation, AssetClassId, RiskProfile } from "../lib/types";
-import { actions, recommendedPortfolio, useStore } from "../store";
+import { useFocus } from "../lib/useFocus";
+import { actions, planShape, recommendedPortfolio, useStore } from "../store";
 import { appetiteCeiling } from "../lib/risk";
 import RiskMeter from "./RiskMeter";
 import { sectionLabel } from "../ui";
@@ -15,8 +18,8 @@ const CLASS_ORDER: AssetClassId[] = ["equity", "hybrid", "gold", "debt"];
 /**
  * An illustrative spread around the blended return, so we never print a point
  * estimate (spec section 5). These multipliers are a presentation band, NOT a
- * modelled confidence interval; a real p10/p90 needs the Monte Carlo work in a
- * later phase; the copy frames every figure as a range or as history.
+ * modelled confidence interval. A real p10/p90 needs the Monte Carlo work in a
+ * later phase. The copy frames every figure as a range or as history.
  */
 const BAND_LOW = 0.7;
 const BAND_HIGH = 1.15;
@@ -24,11 +27,14 @@ const BAND_HIGH = 1.15;
 function growthBand(ret: number) {
   const low = ret * BAND_LOW;
   const high = ret * BAND_HIGH;
+  const lakh = (r: number, years: number) => 100000 * Math.pow(1 + r, years);
   return {
     low,
     high,
-    tenYearLow: 100000 * Math.pow(1 + low, 10),
-    tenYearHigh: 100000 * Math.pow(1 + high, 10),
+    threeYearLow: lakh(low, 3),
+    threeYearHigh: lakh(high, 3),
+    tenYearLow: lakh(low, 10),
+    tenYearHigh: lakh(high, 10),
   };
 }
 
@@ -37,10 +43,10 @@ function Marker() {
 }
 
 /**
- * The ONE portfolio every goal shares. There's no per-goal basket anymore — the
- * whole monthly pool grows in this single mix, and each goal simply draws its
- * share of that money. We surface an advisor recommendation (a mix matched to
- * the goals' blended horizon) and a near-term mismatch warning.
+ * The ONE portfolio every goal shares. There's no per-goal basket anymore: the
+ * whole monthly amount grows in this single mix, and each goal simply draws
+ * its share of that money. We surface an advisor recommendation (a mix
+ * matched to the goals' blended horizon) and a near-term mismatch warning.
  */
 export default function PortfolioBuilder() {
   const s = useStore();
@@ -48,6 +54,9 @@ export default function PortfolioBuilder() {
   const [search, setSearch] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [riskOpen, setRiskOpen] = useState(false);
+  // Links from the plan land on the mix, or on the funds in it.
+  const mixFocus = useFocus(FOCUS.mix);
+  const fundsFocus = useFocus(FOCUS.funds);
 
   // Live universe search (AMFI via /api/instruments), debounced. Failures are
   // silent: the built-in list keeps working without the network.
@@ -106,7 +115,7 @@ export default function PortfolioBuilder() {
   const bands = bandWeights(alloc);
   const ret = blendedReturn(alloc);
   const band = growthBand(ret);
-  // The entire monthly pool funds this single portfolio (all goals share it).
+  // The entire monthly amount funds this single portfolio (all goals share it).
   const sip = s.monthlySip;
   const amountFor = (id: string) => (total > 0 ? (alloc[id] / total) * sip : 0);
 
@@ -153,6 +162,10 @@ export default function PortfolioBuilder() {
     setAlloc(normalizeTo100(next), null);
   };
   const applyPreset = (key: RiskProfile) => setAlloc(normalizeTo100(MODEL_PORTFOLIOS[key].allocation), key);
+  // What each ready-made mix would do to the goals, before it is applied:
+  // the same money, the same split, only the mix changed.
+  const previewFor = (key: RiskProfile) =>
+    s.goals.length ? onTrackCount(outlook({ ...planShape(s), allocation: normalizeTo100(MODEL_PORTFOLIOS[key].allocation) })) : null;
 
   const holdings = Object.keys(alloc).sort(
     (a, b) => CLASS_ORDER.indexOf(FUND_MAP[a]?.assetClass) - CLASS_ORDER.indexOf(FUND_MAP[b]?.assetClass),
@@ -183,7 +196,7 @@ export default function PortfolioBuilder() {
       {s.goals.length > 0 && !matchesRec && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface-2 px-3 py-2.5">
           <span className="text-support text-ink">
-            Better fit: a {recLabel.toLowerCase()} portfolio.
+            A {recLabel.toLowerCase()} mix fits your goals better.
           </span>
           {!matchesRec && (
             <button
@@ -196,59 +209,59 @@ export default function PortfolioBuilder() {
         </div>
       )}
 
-      {/* Near-term risk: one compact line; the reasoning sits behind a tap so
+      {/* Near-term risk: one compact line. The reasoning sits behind a tap so
           it never crowds the pane. */}
       {nearTermRisk && soonGoal && (
         <div className="mb-3">
           <button
             onClick={() => setRiskOpen((v) => !v)}
             aria-expanded={riskOpen}
-            title={`${soonGoal.name} is ${soonGoal.horizonYears} ${soonGoal.horizonYears === 1 ? "year" : "years"} away and this portfolio leans on stocks.`}
+            title={`${soonGoal.name} is ${soonGoal.horizonYears} ${soonGoal.horizonYears === 1 ? "year" : "years"} away and this mix leans on stocks.`}
             className="flex w-full items-center justify-between gap-2 rounded-control bg-surface-2 px-2.5 py-1.5 text-left"
           >
             <span className="truncate text-xs text-ink">
-              ⚠️ <span className="font-medium">{soonGoal.name}</span> is close. Review the portfolio.
+              ⚠️ <span className="font-medium">{soonGoal.name}</span> is close. Check this mix.
             </span>
             <span className="flex-none text-caption text-muted">{riskOpen ? "Hide" : "Why"}</span>
           </button>
           {riskOpen && (
             <p className="mt-1.5 px-1 text-xs text-muted">
               {soonGoal.name} is {soonGoal.horizonYears} {soonGoal.horizonYears === 1 ? "year" : "years"} away and this
-              mix leans on stocks, which move sharply over short periods. For money needed soon, we would hold a calmer
-              mix or add a little more each month.
+              mix leans on stocks, which can drop a lot in a short time. For money you need soon, hold safer funds or
+              put in a little more each month.
             </p>
           )}
         </div>
       )}
 
       {/* Single column: the builder lives in the side pane beside the goals,
-          so its sections stack. The mix leads; picking funds follows. */}
+          so its sections stack. The mix leads. Picking funds follows. */}
       <div className="grid gap-4">
         {/* ---- Fund search: the live AMFI universe only ---- */}
         <div className="order-2 min-w-0">
           <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-            <Marker /> Pick your own (optional)
+            <Marker /> Want a specific fund?
           </span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search any fund, A to Z"
+            placeholder="Search any mutual fund (type 3 letters)"
             className="mt-2 h-10 w-full rounded-control border border-line bg-surface px-3 text-sm outline-none transition focus:border-ink"
           />
 
           <div className="no-scrollbar mt-3 flex max-h-[22rem] flex-col gap-1.5 overflow-y-auto pr-0.5">
             {search.trim().length < 3 && !liveBusy && liveRows.length === 0 && (
               <p className="py-4 text-center text-caption text-muted">
-                Type 3 or more letters to search every AMFI-listed scheme.
+                Every mutual fund in India, from the official AMFI list.
               </p>
             )}
             {search.trim().length >= 3 && !liveBusy && liveRows.length === 0 && (
-              <p className="py-6 text-center text-sm text-muted">No scheme matches “{search}”.</p>
+              <p className="py-6 text-center text-sm text-muted">No fund matches “{search}”.</p>
             )}
 
             {(liveBusy || liveRows.length > 0) && (
               <div>
-                {liveBusy && <p className="mt-1 text-caption text-muted">Searching every scheme…</p>}
+                {liveBusy && <p className="mt-1 text-caption text-muted">Searching every fund…</p>}
                 <div className="mt-1.5 flex flex-col gap-1.5">
                   {liveRows.map((row, i) => {
                     const id = `live_${row.schemeCode}`;
@@ -273,11 +286,11 @@ export default function PortfolioBuilder() {
                             <span className="num block truncate text-caption text-muted">
                               {row.score != null && (
                                 <span className="mr-1.5 rounded-full bg-accent-tint px-1.5 py-px text-index font-medium uppercase tracking-wide text-accent">
-                                  {Math.round(row.score.score)} · {row.score.grade}
+                                  {Math.round(row.score.score)} {row.score.grade}
                                 </span>
                               )}
                               {row.cagr3y != null && <>3Y {formatPct(row.cagr3y, 1)}</>}
-                              {row.cagr3y != null && row.cagr5y != null && " · "}
+                              {row.cagr3y != null && row.cagr5y != null && ", "}
                               {row.cagr5y != null && <>5Y {formatPct(row.cagr5y, 1)}</>}
                               {isTop && (
                                 <span className="ml-1.5 rounded-full border border-line px-1.5 py-px text-index uppercase tracking-wide text-muted">
@@ -305,7 +318,10 @@ export default function PortfolioBuilder() {
 
         {/* ---- Basket (drop zone) ---- */}
         <div
-          className={`order-1 min-w-0 rounded-card border bg-surface p-3.5 transition ${dragOver ? "border-accent ring-2 ring-accent/40" : "border-line"}`}
+          ref={mixFocus.ref}
+          className={`order-1 min-w-0 rounded-card border bg-surface p-3.5 transition ${dragOver ? "border-accent ring-2 ring-accent/40" : "border-line"} ${
+            mixFocus.active ? "focus-flash" : ""
+          }`}
           onDragOver={(e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";
@@ -321,14 +337,9 @@ export default function PortfolioBuilder() {
             if (FUND_MAP[id]) addFund(id);
           }}
         >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-              <Marker /> Your portfolio
-            </span>
-            <span className="text-caption uppercase tracking-wide">
-              <span className="font-medium text-ink">{formatINR(sip)}/mo</span>
-            </span>
-          </div>
+          <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
+            <Marker /> Your portfolio
+          </span>
 
           {/* Minimalist stacked allocation bar */}
           <div className="mt-3 flex h-4 w-full overflow-hidden rounded-full bg-line">
@@ -340,62 +351,62 @@ export default function PortfolioBuilder() {
               />
             ))}
           </div>
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-index uppercase tracking-wide">
-            {[
-              { label: "Stocks", v: bands.equity, color: ASSET_CLASSES.equity.color },
-              { label: "Bonds", v: bands.debt, color: ASSET_CLASSES.debt.color },
-              { label: "Gold", v: bands.gold, color: ASSET_CLASSES.gold.color },
-            ].map((l) => (
-              <span key={l.label} className="inline-flex items-center gap-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: l.color }} />
-                {l.label} {Math.round(l.v)}%
-              </span>
-            ))}
-          </div>
+          {/* One sentence: where each month's money goes. */}
+          {total > 0 && (
+            <p className="num mt-2 text-caption text-text-2">
+              {sip > 0 ? (
+                <>
+                  Your <span className="font-medium text-text">{formatINR(sip)}</span> a month goes:{" "}
+                </>
+              ) : (
+                "This mix is: "
+              )}
+              {[
+                { label: "stocks", v: bands.equity, color: ASSET_CLASSES.equity.color },
+                { label: "bonds", v: bands.debt, color: ASSET_CLASSES.debt.color },
+                { label: "gold", v: bands.gold, color: ASSET_CLASSES.gold.color },
+              ]
+                .filter((l) => Math.round(l.v * scale) > 0)
+                .map((l, i, arr) => (
+                  <span key={l.label} className="whitespace-nowrap">
+                    <span className="mr-1 inline-block h-2 w-2 rounded-sm align-baseline" style={{ background: l.color }} aria-hidden />
+                    <span className="font-medium text-text">{Math.round(l.v * scale)}%</span> {l.label}
+                    {i < arr.length - 1 ? ", " : ""}
+                  </span>
+                ))}
+            </p>
+          )}
 
           {total === 0 && (
             <div className="mt-3 rounded-xl border border-dashed border-line bg-surface-2 px-4 py-5 text-center">
-              <p className="text-sm font-medium text-ink">Your portfolio is empty</p>
-              <p className="mt-1 text-caption text-muted">Tap a fund to add it, or pick a ready-made portfolio.</p>
+              <p className="text-sm font-medium text-ink">Your mix is empty</p>
+              <p className="mt-1 text-caption text-muted">Pick a mix below, or add a fund.</p>
             </div>
           )}
 
-          {/* Ranges, never point estimates (section 5): compact and glanceable. */}
+          {/* Ranges, never point estimates (section 5): one plain paragraph. */}
           {total > 0 && (
-            <div className="mt-4 rounded-control bg-surface-2 px-3.5 py-3">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-eyebrow uppercase text-text-3">A year, historically</span>
-                <span className="num text-row font-medium text-ink">
-                  {formatPct(band.low, 0)}–{formatPct(band.high, 0)}
-                </span>
-              </div>
-              <div className="mt-2.5 grid grid-cols-3 gap-1.5">
-                {[3, 5, 10].map((n) => (
-                  <div key={n} className="rounded-lg bg-surface px-1.5 py-1.5 text-center">
-                    <div className="num text-caption font-medium leading-tight text-ink">
-                      {formatINR(100000 * Math.pow(1 + band.low, n))}
-                    </div>
-                    <div className="num text-index leading-tight text-text-2">
-                      to {formatINR(100000 * Math.pow(1 + band.high, n))}
-                    </div>
-                    <div className="mt-0.5 text-index uppercase tracking-wide text-text-3">{n}y</div>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-1.5 text-index text-text-2">On ₹1 lakh, if the future rhymes with the past.</p>
-            </div>
+            <p className="num mt-4 rounded-control bg-surface-2 px-3.5 py-3 text-caption text-text-2">
+              In the past this mix grew{" "}
+              <span className="font-medium text-text">
+                {formatPct(band.low, 0)} to {formatPct(band.high, 0)}
+              </span>{" "}
+              a year. ₹1 lakh became {formatINR(band.threeYearLow)}–{formatINR(band.threeYearHigh)} in 3 years and{" "}
+              {formatINR(band.tenYearLow)}–{formatINR(band.tenYearHigh)} in 10. The future can be different.
+            </p>
           )}
 
-          {/* Presets — plain-language quick mixes */}
+          {/* Presets: plain-language quick mixes */}
           <div className="mt-4">
             <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-              <Marker /> Ready-made portfolios
+              <Marker /> Pick a mix
             </span>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(["steady", "balanced", "bold"] as RiskProfile[]).map((key) => {
                 const active = s.portfolioProfile === key;
                 const order: RiskProfile[] = ["steady", "balanced", "bold"];
                 const beyond = order.indexOf(key) > order.indexOf(appetiteCeiling(s.riskAppetite));
+                const preview = previewFor(key);
                 return (
                   <button
                     key={key}
@@ -409,38 +420,34 @@ export default function PortfolioBuilder() {
                     <div className={`mt-0.5 text-index leading-tight ${active ? "text-text-2" : "text-muted"}`}>
                       {MODEL_PORTFOLIOS[key].tagline}
                     </div>
-                    {beyond && (
-                      <div className="mt-1 text-index uppercase leading-tight tracking-wide text-cau">
-                        Beyond appetite
+                    {preview !== null && (
+                      <div className="num mt-1 text-index leading-tight text-text-2">
+                        {preview} of {s.goals.length} on track
                       </div>
+                    )}
+                    {beyond && (
+                      <div className="mt-1 text-index leading-tight text-cau">Riskier than you said you're OK with</div>
                     )}
                   </button>
                 );
               })}
             </div>
-            {total === 0 && (
-              <p className="mt-2 text-center text-caption text-muted">Tap one to fill your portfolio.</p>
-            )}
+            {total === 0 && <p className="mt-2 text-center text-caption text-muted">Tap one to fill your mix.</p>}
           </div>
 
           {equityHeavy && (
             <p className="mt-3 rounded-control bg-surface-2 px-3 py-2 text-center text-xs text-ink">
-              Add some bonds to steady out this stock-heavy portfolio.
+              Almost all of this is in stocks. Add some bonds to smooth it out.
             </p>
           )}
 
           {/* What's in your mix: compact dot rows in a fixed-height, scrollable
               basket so adding more funds never makes the pane grow. */}
           {holdings.length > 0 && (
-            <div className="mt-5">
-              <div className="flex items-center justify-between gap-2">
-                <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
-                  <Marker /> What's in your portfolio
-                </span>
-                <span className="text-index uppercase tracking-wide text-muted">
-                  {holdings.length} {holdings.length === 1 ? "fund" : "funds"}
-                </span>
-              </div>
+            <div ref={fundsFocus.ref} className={`mt-5 rounded-control ${fundsFocus.active ? "focus-flash" : ""}`}>
+              <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
+                <Marker /> The {holdings.length} {holdings.length === 1 ? "fund" : "funds"} in your mix
+              </span>
               <div className="no-scrollbar mt-2 flex max-h-56 flex-col gap-1.5 overflow-y-auto pr-0.5">
                 {holdings.map((id) => {
                   const f = FUND_MAP[id];
@@ -448,11 +455,24 @@ export default function PortfolioBuilder() {
                   const ac = ASSET_CLASSES[f.assetClass];
                   const pctOfTotal = total > 0 ? Math.round(((alloc[id] ?? 0) / total) * 100) : 0;
                   const amt = amountFor(id);
+                  // A fund the person already holds links to that holding on Money.
+                  const owned = holdingForFund(f.name, s.externalHoldings);
                   return (
                     <div key={id} className="flex items-center gap-1.5 rounded-control bg-surface-2/40 px-2 py-1.5">
                       <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: ac.color }} title={ac.label} />
-                      <span className="min-w-0 flex-1 truncate text-support font-medium leading-tight">{f.name}</span>
-                      <span className="hidden flex-none text-index tabular-nums text-muted sm:inline">{formatINR(amt)}/mo</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-support font-medium leading-tight">{f.name}</span>
+                        {owned && (
+                          <button
+                            type="button"
+                            onClick={() => actions.setTab("money", { focus: holdingFocus(owned.id) })}
+                            className="num block truncate text-index text-text-2 underline underline-offset-2 transition hover:text-text"
+                          >
+                            You hold {formatINR(owned.amount)} of this. See it in Money →
+                          </button>
+                        )}
+                      </span>
+                      <span className="hidden flex-none text-index tabular-nums text-muted sm:inline">{formatINR(amt)} a month</span>
                       <button
                         onClick={() => setWeight(id, (alloc[id] ?? 0) - 5)}
                         aria-label={`Lower ${f.name} share`}

@@ -1,6 +1,6 @@
 # NoBroke: UX and product fixes (brief for Claude Code)
 
-**Status (26 Sep 2026): Phase 1 shipped in #11 and verified.** All 293 tests pass, and all six Phase 1 fixes show correctly on screen. Next: Phase 1b (below), then Phase 2.
+**Status (26 Sep 2026): Phases 1 and 1b shipped (#11, #12) and verified.** All 303 tests pass. Next: Phase 7 copy and links (7.2, 7.6), then Phase 2, then the rest of Phase 7.
 
 Source: persona testing of `main` at `6238043` (25 Sep 2026), re-checked at `a0f550e` (26 Sep) with a 20-year-old student and a 40-year-old salaried parent, on 360px and 390px phone screens with the real fonts. Every issue below was reproduced in the app or in the code. File paths and line numbers are from that commit; line numbers are approximate.
 
@@ -8,7 +8,7 @@ Source: persona testing of `main` at `6238043` (25 Sep 2026), re-checked at `a0f
 
 1. Replace `docs/ux-brief.md` in the repo with this file.
 2. In Claude Code, start with:
-   > Read docs/ux-brief.md. Phase 1 is done. Do Phase 1b, one task per commit. Run `npm test` and `npm run build` after each task. Stop and report when Phase 1b is done.
+   > Read docs/ux-brief.md. Phases 1 and 1b are done. Do tasks 7.2 (copy) and 7.6 (links), one task per commit. Run `npm test` and `npm run build` after each task. Stop and report.
 3. Review, then ask for the next phase. Phases 4 to 6 change structure, so review each step before continuing.
 
 ## Ground rules
@@ -43,8 +43,8 @@ Use these for every acceptance check.
 
 What these personas show at `a0f550e`:
 - **Aarav:**
-  - opens on "0 of 3 goals on track", with all three goals marked "Far short", on the default goal prices (trip ₹2 L, laptop ₹1 L);
-  - with his real prices (trip ₹20,000, laptop ₹70,000) he gets "1 of 3", although 2 of 3 is reachable (task 1b.1).
+  - on the default goal prices (trip ₹2 L, laptop ₹1 L), opens on "0 of 3 goals on track", all "Far short";
+  - with his real prices (trip ₹20,000, laptop ₹70,000), entered at the new cost step, he gets "2 of 3". Correct; keep it.
 - **Riya:** monthly ₹10,000, emergency fund ₹25,000. Both correct; keep them that way.
 - **Rajesh:**
   - "Cash runway 2.9 mo", "1 of 3 on track";
@@ -121,7 +121,7 @@ What these personas show at `a0f550e`:
 
 ---
 
-## Phase 1b: follow-ups found while verifying Phase 1 (do next)
+## Phase 1b: follow-ups found while verifying Phase 1 (done in #12, verified 26 Sep)
 
 ### 1b.1 Split money by what each goal still needs
 - **Problem:**
@@ -355,7 +355,182 @@ What these personas show at `a0f550e`:
 
 ---
 
+## Phase 7: Plan, Portfolio and Money (advisory-first rebuild)
+
+Each page answers one question:
+
+| Page | The question it answers |
+|---|---|
+| Plan | Am I on track, and what do I do next? |
+| Portfolio | Where is my money invested, and why? |
+| Money | What do I own, owe, earn and spend? |
+
+Rules for all three pages:
+- **"Do this next":** the top of Plan shows one action at a time.
+- **Every recommendation shows four things:** what to do, why, what it changes (goal dates and amounts), and what would change the advice.
+- **Links open the exact thing** (a sheet or a highlighted section), never just the top of another tab.
+
+### 7.1 Voice
+- Write like a friend who is good with money. Short sentences. Numbers first. One idea per line.
+- No metaphors, no semicolons, no sentences strung together with "·", no all-caps labels. Say what happens next ("Your laptop moves to March 2028").
+- Replace these words:
+  - "pace" → growth
+  - "trajectory" → where your goals are headed
+  - "appetite" → risk level
+  - "instruments" → funds
+  - "pool" → all options
+  - "heatmap" → where your money is
+- Remove these words: guardrails, rhymes, journey, unlock, seamless, empower.
+- Keep the legal disclaimer once per page, in the wording counsel approves.
+
+### 7.2 Copy deck (current → new)
+Paths are relative to `src/`. Where a string is built from parts, change the template.
+
+**Plan**
+
+| Where | Now | New |
+|---|---|---|
+| Plan band | Total saved | Saved so far |
+| Plan band | Cash | In the bank |
+| Plan band | Monthly | Added every month |
+| Plan band | Cash runway / 2.9 mo | Cash lasts / 2.9 months |
+| components/GoalsChart.tsx:87 | Goal trajectories · At today's pace | Where your goals are headed · If you keep going like this |
+| components/Plan.tsx ~244 | Goals · priority order · drag to reorder | Your goals, most urgent first |
+| components/Plan.tsx:252 | Use recommended split | Split my money for me |
+| Goal tile | reaches ₹15.39 L | will reach ₹15.39 L |
+| components/AdvisorNote.tsx:31 | Your cash covers about 2 months of spending. We keep 3 to 6 months within reach before taking any risk. / Review cash | Your cash covers only 2 months of expenses. Keep 3 to 6 months in the bank before you invest more. / Add to cash |
+| components/GoalCard.tsx:159 | Set up this goal / Target year / Target amount / Monthly amount | Goal details / By when / How much (today's prices) / Every month |
+| components/Metrics.tsx | ₹11.82 L of ₹1.04 Cr needed by 2034 | ₹11.82 L saved of ₹1.04 Cr needed by 2034 |
+| components/Metrics.tsx:89 | At today's pace, ₹82.48 L by 2034 · ₹21.12 L short | At this rate: ₹82.48 L by 2034. ₹21.12 L short. |
+| components/Metrics.tsx:111 | Needs ₹51,086/mo; ₹37,000 is free after your other goals. Invest more → | To get there, put in ₹51,086 a month. You have ₹37,000 free after your other goals. / Put in more |
+| components/Metrics.tsx | Lower target to ₹51.5 L | Aim for ₹51.5 L instead |
+| components/Metrics.tsx | 8 yrs left · ₹37,000/mo · 10.4%/yr pace · technical | 8 years to go · ₹37,000 a month · assumes 10.4% growth a year · Show the maths |
+| Goal chart title | Path to child's education | How child's education grows |
+| components/GoalCard.tsx:229 | Why this plan / More reasons | Why we say this / More |
+| components/Insights.tsx (gap card) | At today's pace you reach ₹82.48 L, about ₹21.12 L under. Raising your monthly investing to ₹51,086/mo (+₹14,086) closes the gap. | You'll reach ₹82.48 L. That's ₹21.12 L short. Add ₹14,086 a month (₹51,086 in total) and you'll make it. |
+| components/Insights.tsx:49 | Start a year later and the monthly needed rises to ₹X, from ₹Y now. Time is doing part of the work. | Wait a year and you'll need ₹X a month instead of ₹Y. Starting now is cheaper. |
+| components/Insights.tsx:52 | Your ₹1 L goal will cost about ₹1.12 L in 2 yrs, so we plan for the future price, not today's. | Prices go up. ₹1 L today is about ₹1.12 L in 2 years, so we plan for ₹1.12 L. |
+| components/Insights.tsx:31 | A bit bold for a near goal: 53% in stocks with only 2 yrs left can swing a lot. Lean toward bonds (calmer) for this one. | Too risky for a goal this close: 53% of this money is in stocks and you need it in 2 years. One bad year could cut it. Move it to safer funds. |
+| components/GoalCard.tsx:250 | Anything worth remembering: who is chipping in, what is already booked, what could change the number. | Notes, e.g. "Papa is paying half. Flights are booked." |
+| Goal card | Remove this goal | Delete this goal |
+| components/PortfolioGlimpse.tsx | Expected pace / Largest holding / Portfolio heatmap / Sized by value | Moves to Portfolio (see 7.4). Use "Expected growth" and "Where your money is". Drop "Largest holding" and "Sized by value". |
+
+**Portfolio**
+
+| Where | Now | New |
+|---|---|---|
+| components/PortfolioTab.tsx:23 | Every goal grows in this one portfolio. Build it here; watch it work on the plan. | All your goals are funded from this one mix of funds. Change it here and your goals update. |
+| components/RiskMeter.tsx:37 | Risk appetite | Your risk level |
+| Your portfolio card | ₹37,000/mo · Stocks 53% · Bonds 27% · Gold 20% | Your ₹37,000 a month goes: 53% stocks, 27% bonds, 20% gold |
+| components/PortfolioBuilder.tsx:385 | A year, historically 7%–12% … On ₹1 lakh, if the future rhymes with the past. | In the past this mix grew 7 to 12% a year. ₹1 lakh became ₹1.23–1.40 L in 3 years and ₹2.02–3.09 L in 10. The future can be different. |
+| Ready-made heading | Ready-made portfolios | Pick a mix |
+| lib/portfolios.ts:11/16/21 | Protect first / Grow with guardrails / Maximize growth | Fewer ups and downs / Some ups and downs / Big ups and downs |
+| components/PortfolioBuilder.tsx:414 | Beyond appetite | Riskier than you said you're OK with |
+| Funds list heading | What's in your portfolio · 5 funds | The 5 funds in your mix |
+| components/PortfolioBuilder.tsx:230 | Pick your own (optional) / Type 3 or more letters to search every AMFI-listed scheme. | Want a specific fund? / Search any mutual fund (type 3 letters) |
+| components/BucketBuilder.tsx:60–66 | Bucket studio / A draft, until you apply it / Build a portfolio your way. Drag instruments in from the pool, set their weights, and when it looks right, make it your portfolio. | Build your own mix (advanced) / Nothing changes until you tap Apply / Add funds, set how much goes to each, then apply. |
+| Bucket target chips | Building toward: The whole plan | For: all goals |
+| Empty bucket | Drag your first instrument here or tap anything in the pool below. | Your mix is empty. Tap a fund below to add it. |
+| components/BucketBuilder.tsx:225 | Suggested for your appetite | Good fits for your risk level |
+| components/BucketBuilder.tsx:252 | The pool · Drag in, or tap to add · Fund picks / ETFs / Gold & silver / Bonds & debt / Real estate & cash | All options · tap to add · Funds / ETFs (need a demat account) / Gold and silver / Bonds / Property and cash |
+| components/BucketBuilder.tsx:308 | Want a specific fund? The search on the left covers every AMFI-listed scheme, A to Z. | Can't find your fund? Use the search. (Today's text says "on the left", which is wrong on phones, where the search sits above.) |
+
+**Money**
+
+| Where | Now | New |
+|---|---|---|
+| components/MoneyTab.tsx:88 | What you have, and where it sits. Every number here feeds the plan. | Everything you own and owe. Change a number here and your plan updates. |
+| components/MoneyTab.tsx:106 | Cash ₹3 L · Invested ₹18 L · ₹37,000/mo going in | ₹3 L in the bank · ₹18 L invested · ₹37,000 added every month |
+| components/MoneyTab.tsx:112 | About ₹1.37 Cr in 10 years at this pace. | Keep this up and it could be ₹1.37 Cr in 10 years. |
+| Breakdown toggle | Breakdown · By location / By goal | Where it is · By type / By goal |
+| components/Holdings.tsx:36 | Existing investments (type label "Portfolio") | Your investments (unsplit amount labelled "Not sorted yet. Tap to split.") |
+| Your numbers | Your numbers · Monthly income / Monthly spend / Monthly investing | Every month · Money in / Spent / Invested |
+| components/MoneyTab.tsx:242 | ₹57,000 left after spending. You put ₹37,000 of it to work. | ₹57,000 is left after expenses. ₹37,000 goes into investments. ₹20,000 has no plan yet. (Compute the remainder. Hide the last sentence when it's 0.) |
+| components/MoneyTab.tsx:258 | Wealth tools: Tax centre, Portfolio x-ray, Cost check, Nominee audit, Action inbox (all "Soon") | Remove until built |
+
+**Accept for 7.2:**
+- No banned word or semicolon appears anywhere on the three pages.
+- Every row above shows the new text.
+- Tests that match copy are updated.
+
+### 7.3 Plan page (top to bottom)
+1. **Do this next** (new). One card: the single highest-value action from the advisor notes and goal fixes.
+   - Example: "Move ₹60,000 to your bank account. Your cash covers 2.9 months. Aim for 3 to 6."
+   - Buttons: [Do it] [Why?] [Not now].
+2. **Goals at a glance:** one ring per goal with a one-word verdict and "1 of 3 goals on track". The combined 20-year chart moves behind "See over time".
+3. **Goal list:** tapping a goal opens its own screen. Each row shows amount, date, verdict and one line on what fixes it.
+4. **Goal screen:**
+   - what you'll have vs what you need;
+   - the three moves, each showing its effect;
+   - "Why we say this";
+   - **What would change this advice** (new): e.g. "We'd move this goal to safer funds once it's less than 3 years away";
+   - notes.
+5. **Advice log** (new): every recommendation NoBroke has made. Each entry shows the date, the reason, and what you did (done / skipped). Once it's measurable, it also shows what happened after.
+6. **Something changed?** (new): chips for new job, marriage, baby, big expense, job loss, parents' hospital bill. Each opens a re-plan preview showing which goals move and by how much.
+7. **Remove from Plan:** the portfolio summary (`PortfolioGlimpse`) and the second risk meter. Both live on Portfolio.
+
+### 7.4 Portfolio page (top to bottom)
+1. **Your mix in one line** plus your risk level (the only place the risk meter appears).
+2. **Money by goal** (new): which part of the portfolio funds which goal. Goals under about 3 years show in safer funds; show the move, or suggest it.
+3. **The funds:** one line on why each fund is there, and its yearly cost in rupees (expense ratio × amount).
+4. **Past returns** in plain words (see 7.2).
+5. **Change your mix** (Steady / Balanced / Bold) with a live preview of goal impact before applying, e.g. "Laptop: March 2028 → May 2028".
+6. **Second opinion** (new): "Someone selling you a policy, a ULIP or a fund? Tell us what it is." The answer is a plain verdict on costs, lock-in and what it does to your goals. No product sales, ever.
+7. **Build your own mix (advanced):** collapsed by default.
+
+### 7.5 Money page (top to bottom)
+1. **Net worth** = what you own minus what you owe (needs task 3.2), plus the change since last month.
+2. **Safe to invest this month** (new): money in minus spending, upcoming bills (EMIs, premiums, school fees) and any emergency-fund top-up. Show it as one number with a button: "Invest ₹X".
+3. **Money calendar** (new): SIP dates, EMIs, insurance premiums, fees, goal dates and tax dates on one timeline. Start with manual entries; bank linking can come later.
+4. **What you own** by type (EPF/PPF, FDs, mutual funds, stocks, gold, property) and **what you owe** (loans).
+5. **Every month:** money in, spent, invested. Changes show their effect on goals live.
+6. **Need money now?** (new): enter an amount and see which holdings to use first. Order by the least tax, no exit load, and the least damage to your goals.
+7. **Remove** the "Wealth tools" list of Soon items.
+
+### 7.6 Links between the three pages
+
+**Today:**
+- Plan links to Money four ways: "Add money", "Review cash", "Invest more" and "Manage holdings". All four land on the top of Money, and the person has to find the field themselves.
+- Plan links to Portfolio once ("Manage →").
+- Portfolio and Money only link back to Plan ("See the plan →"). There's no link between Portfolio and Money.
+
+**Change:**
+
+| From | Tap | Opens |
+|---|---|---|
+| Plan | Add money | Sheet on Plan: "Add to cash" or "Add an investment" |
+| Plan advisor note | Add to cash | Cash amount sheet on Plan, showing the new cash runway live |
+| Goal screen | Put in more | Monthly amount sheet showing each goal's new date live |
+| Goal screen | Where this money is invested | Portfolio, scrolled to that goal in "Money by goal" |
+| Portfolio | A fund you already own | Money, that holding highlighted |
+| Portfolio | Change your mix | Inline preview of goal impact; "See your goals" goes to Plan |
+| Money | A row in "By goal" | That goal's screen on Plan |
+| Money | Invest ₹X (safe to invest) | Monthly amount sheet (the same one as "Put in more") |
+
+- **Implementation:** add `actions.openSheet(kind, params)` and `actions.setTab(tab, { focus: sectionId })`. The second scrolls to the section and highlights it for a moment.
+- **Accept:**
+  - No link lands at the top of a tab when it's about one field.
+  - Every sheet shows the effect on goals before saving.
+  - The Plan page has no duplicate "Manage" links left.
+
+### 7.7 Advisory-first features rivals don't offer
+Checked on 26 Sep 2026 against INDmoney, Kuvera, ET Money, Scripbox, Dezerv, PowerUp Money and Groww. All of them already offer portfolio health checks, fund ratings, family net worth, tax harvesting or smart withdrawal, and (Groww, INDmoney) AI Q&A over your portfolio. None of the pages checked describe the items below. Build them in this order:
+
+1. **Do this next**, with the effect shown (7.3.1).
+2. **What would change this advice** on every recommendation (7.3.4).
+3. **Money by goal**, with near goals made safer inside one portfolio (7.4.2).
+4. **Safe to invest this month** (7.5.2).
+5. **Advice log** (7.3.5).
+6. **Something changed?** life-event re-plans (7.3.6).
+7. **Money calendar** (7.5.3).
+8. **Need money now?**, ranked by tax, exit load and goal damage (7.5.6).
+9. **Second opinion** on products being sold to you (7.4.6). Needs the AI plus product data; confirm with the founders before building.
+
+---
+
 ## Founder decisions (not for Claude Code)
+
+- **Advisory-first needs a licence decision.** Every page footer still says "not investment advice", and the landing page says NoBroke is not SEBI-registered. Decide between registering as an RIA and partnering with one before shipping "Do this next" and "Advice log" as advice.
 
 - **WhatsApp help number:** `src/components/SupportPill.tsx` line 7 is empty, so the help pill never shows.
 - **Password reset:** the sign-in sheet says "Password reset coming soon". Reset needs an email provider; Google or phone-OTP sign-in needs OAuth or SMS keys.

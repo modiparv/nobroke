@@ -2,7 +2,7 @@ import { riskBandIndex, riskBandLabel } from "../lib/risk";
 import { actions, useStore } from "../store";
 
 /**
- * The risk appetite dial: five segments from Conservative to Aggressive with
+ * The risk level dial: five segments from Conservative to Aggressive with
  * the person's position marked. Assessed from the intake, slidable by hand
  * (a real range input drives it, so keyboard and screen readers work), and
  * every mix recommendation respects it as a ceiling.
@@ -29,12 +29,12 @@ export default function RiskMeter({ readOnly = false }: { readOnly?: boolean }) 
         readOnly
           ? "Your risk level. Change it on the Portfolio tab."
           : s.riskAppetiteSource === "assessed"
-            ? "Assessed from your income, cash runway, dependants and timelines. Slide it if it feels wrong."
+            ? "Worked out from your income, how long your cash lasts, your dependants and your goal dates. Slide it if it feels wrong."
             : "Set by you. Recommendations stay within it."
       }
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-eyebrow uppercase text-text-3">Risk appetite</span>
+        <span className="text-eyebrow uppercase text-text-3">Your risk level</span>
         <span className="text-support font-medium">{riskBandLabel(v)}</span>
       </div>
 
@@ -63,7 +63,7 @@ export default function RiskMeter({ readOnly = false }: { readOnly?: boolean }) 
             step={5}
             value={v}
             onChange={(e) => actions.setRiskAppetite(Number(e.target.value))}
-            aria-label="Risk appetite"
+            aria-label="Your risk level"
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           />
         )}

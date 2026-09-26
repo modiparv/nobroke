@@ -3,6 +3,8 @@ import type { PlanGoal } from "../lib/types";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { GAP_LABEL, gapLevel } from "../lib/gap";
+import { FOCUS } from "../lib/links";
+import { useFocus } from "../lib/useFocus";
 import { actions, capitalForGoal, goalMonthly, goalShareFraction, goalsByPriority, planInputsForGoal, useStore } from "../store";
 import { GAP_DOT, GAP_PILL, GAP_TEXT, sectionLabel } from "../ui";
 import Chart from "./Chart";
@@ -89,7 +91,7 @@ export function GoalTile({
         e.preventDefault();
         onDrop();
       }}
-      title={`${g.name} · priority ${rank}. Tap to open, drag to reorder.`}
+      title={`${g.name}, priority ${rank}. Tap to open, drag to reorder.`}
       className={`min-w-0 rounded-card border bg-surface p-3 text-left transition sm:p-3.5 ${
         selected ? "border-text" : "border-line hover:border-line-2"
       } ${isOver ? "bg-accent-tint" : ""} ${isDragging ? "opacity-50" : ""}`}
@@ -117,7 +119,7 @@ export function GoalTile({
       <span className="num mt-1.5 flex items-baseline justify-between gap-2 text-caption">
         <span className="font-medium text-text">{formatINR(savedForGoal)} saved</span>
         <span className={GAP_TEXT[level]}>
-          {r.onTrack ? `reaches ${formatINR(r.projectedCorpus)}` : `short ${formatINR(Math.abs(r.gap))}`}
+          {r.onTrack ? `will reach ${formatINR(r.projectedCorpus)}` : `short ${formatINR(Math.abs(r.gap))}`}
         </span>
       </span>
     </button>
@@ -136,9 +138,11 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
   const ahead = goalsByPriority(s)
     .filter((x) => x.id !== g.id && goalMonthly(s, x.id) > 0)
     .map((x) => ({ name: x.name, year: BASE_YEAR + x.horizonYears }));
+  // A row on Money's "By goal" lands here.
+  const focus = useFocus(FOCUS.goalDetail);
 
   return (
-    <section className="overflow-hidden rounded-card border border-line bg-surface">
+    <section ref={focus.ref} className={`overflow-hidden rounded-card border border-line bg-surface ${focus.active ? "focus-flash" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-b border-line px-3 py-3 sm:px-4">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-section font-medium tracking-[-0.015em]">{g.name}</span>
@@ -156,10 +160,10 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
 
       <div className="flex flex-col gap-5 px-3 pb-5 pt-4 sm:px-4">
         <div>
-          <span className={sectionLabel}>Set up this goal</span>
+          <span className={sectionLabel}>Goal details</span>
           <div className="mt-3 flex flex-col gap-3.5">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-support text-muted">Target year</span>
+              <span className="text-support text-muted">By when</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => actions.setGoalTenure(g.id, g.horizonYears - 1)}
@@ -183,7 +187,7 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             {/* Steps that suit the size: a ₹25k emergency fund moves in
                 thousands, a ₹30L down payment in half-lakhs. */}
             <MoneyInput
-              label="Target amount"
+              label="How much (today's prices)"
               value={g.targetToday}
               onChange={(v) => actions.setGoalTarget(g.id, v)}
               step={g.targetToday >= 1000000 ? 50000 : g.targetToday >= 100000 ? 10000 : 5000}
@@ -193,7 +197,7 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             />
 
             <MoneyInput
-              label="Monthly amount"
+              label="Every month"
               value={Math.round(amount)}
               onChange={(v) => actions.setGoalAmount(g.id, v)}
               step={500}
@@ -219,14 +223,25 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
         />
 
         <div>
-          <span className={sectionLabel}>Path to {g.name}</span>
+          <div className="flex items-baseline justify-between gap-3">
+            <span className={sectionLabel}>How {g.name} grows</span>
+            {/* Every goal is funded from the one mix: the funds list on the
+                Portfolio tab is where this money is invested today. */}
+            <button
+              type="button"
+              onClick={() => actions.setTab("portfolio", { focus: FOCUS.funds })}
+              className="text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+            >
+              Where this money is invested →
+            </button>
+          </div>
           <Chart r={r} />
         </div>
 
         {/* The reasons are always in view: the verdict and any warning (a
             bold mix for a near goal, say) show by default; the rest unfolds. */}
         <div>
-          <span className={sectionLabel}>Why this plan</span>
+          <span className={sectionLabel}>Why we say this</span>
           <div className="mt-2">
             <Insights r={r} inputs={inputs} expanded={showWhy} />
           </div>
@@ -234,7 +249,7 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             onClick={() => setShowWhy((v) => !v)}
             className="mt-2 text-support text-muted underline-offset-2 transition hover:text-ink hover:underline"
           >
-            {showWhy ? "Fewer reasons" : "More reasons"}
+            {showWhy ? "Less" : "More"}
           </button>
         </div>
 
@@ -247,7 +262,7 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             rows={3}
             maxLength={2000}
             aria-label={`Notes for ${g.name}`}
-            placeholder="Anything worth remembering: who is chipping in, what is already booked, what could change the number."
+            placeholder='Notes, e.g. "Papa is paying half. Flights are booked."'
             className="mt-2 w-full resize-none rounded-control border border-line bg-surface px-3 py-2.5 text-support leading-relaxed text-text outline-none transition focus:border-text [field-sizing:content]"
           />
         </div>
@@ -257,7 +272,7 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             onClick={onDelete}
             className="text-support text-muted underline-offset-2 transition hover:text-ink hover:underline"
           >
-            Remove this goal
+            Delete this goal
           </button>
         </div>
       </div>

@@ -247,6 +247,18 @@ input[type="range"] {
 .live-dot { animation: blink 1.4s ease-in-out infinite; }
 .typing-dot { animation: typing 1.2s infinite ease-in-out; }
 
+/* A link from another page lands here: the section lights up for a moment
+   (a 3px ring in the chart blue, 3:1 or better on every ground) and then
+   settles. Motion-reduced users get the ring without the fade. */
+@keyframes focusFlash {
+  0%, 60% { box-shadow: 0 0 0 3px rgb(var(--accent-text)); }
+  100% { box-shadow: 0 0 0 3px rgb(var(--accent-text) / 0); }
+}
+.focus-flash { animation: focusFlash 1.8s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .focus-flash { animation: none; box-shadow: 0 0 0 3px rgb(var(--accent-text)); }
+}
+
 /* Copilot command bar. Focus is carried by the border alone: no shadow, no glow. */
 .copilot-bar {
   transition: border-color 0.2s ease;

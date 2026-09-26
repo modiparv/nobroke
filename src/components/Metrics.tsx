@@ -69,7 +69,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
       <div>
         <div className="flex items-baseline justify-between gap-3">
           <span className="num text-row font-medium text-text">
-            {formatINR(saved)} <span className="font-normal text-text-2">of {formatINR(need)}</span>
+            {formatINR(saved)} saved <span className="font-normal text-text-2">of {formatINR(need)}</span>
           </span>
           <span
             className="num text-caption text-text-2"
@@ -86,15 +86,13 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
       {/* The projection in one sentence, with the fix beside it. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="num text-support text-text">
-          At today's pace, <span className="font-medium">{formatINR(r.projectedCorpus)}</span> by {year}
-          <span className="mx-1.5 text-text-3">·</span>
+          At this rate: <span className="font-medium">{formatINR(r.projectedCorpus)}</span> by {year}.{" "}
           {r.onTrack ? (
             <span className="font-medium text-pos">
-              on track
-              {reachedEarly && r.goalReachedMonth !== null ? `, there in ~${formatYears(r.goalReachedMonth / 12)}` : ""}
+              On track{reachedEarly && r.goalReachedMonth !== null ? `, there in about ${formatYears(r.goalReachedMonth / 12)}` : ""}.
             </span>
           ) : (
-            <span className="font-medium text-cau">{formatINR(Math.abs(r.gap))} short</span>
+            <span className="font-medium text-cau">{formatINR(Math.abs(r.gap))} short.</span>
           )}
         </p>
       </div>
@@ -104,17 +102,25 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
         <div className="flex flex-wrap items-center gap-1.5">
           {canFix ? (
             <button type="button" onClick={() => actions.setGoalAmount(goal.id, options.monthly)} className={fill}>
-              Put {formatINR(options.monthly)}/mo on this
+              Put in {formatINR(options.monthly)} a month
             </button>
           ) : (
             <span className="num text-caption text-text-2">
-              Needs {formatINR(options.monthly)}/mo; {formatINR(available)} is free after your other goals.{" "}
+              To get there, put in {formatINR(options.monthly)} a month. You have {formatINR(available)} free after your other goals.{" "}
               <button
                 type="button"
-                onClick={() => actions.setTab("money")}
+                // The monthly sheet, prefilled so this goal gets what it
+                // needs, with every goal's new date shown before saving.
+                onClick={() =>
+                  actions.openSheet({
+                    kind: "monthly",
+                    goalId: goal.id,
+                    prefill: Math.max(0, Math.round(monthlyPool + options.monthly - monthly)),
+                  })
+                }
                 className="font-medium text-text underline underline-offset-2 transition hover:text-text-2"
               >
-                Invest more →
+                Put in more
               </button>
             </span>
           )}
@@ -122,7 +128,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
             <button
               type="button"
               onClick={() => actions.setGoalTenure(goal.id, options.year!)}
-              title={`At today's pace this goal is on track by ${THIS_YEAR + options.year}`}
+              title={`At this rate this goal is on track by ${THIS_YEAR + options.year}`}
               className={pill}
             >
               Move to {THIS_YEAR + options.year}
@@ -132,10 +138,10 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
             <button
               type="button"
               onClick={() => actions.setGoalTarget(goal.id, options.target)}
-              title={`Today's pace reaches ${formatINR(options.target)} in today's money by ${year}`}
+              title={`At this rate you reach ${formatINR(options.target)} in today's money by ${year}`}
               className={pill}
             >
-              Lower target to {formatINR(options.target)}
+              Aim for {formatINR(options.target)} instead
             </button>
           )}
         </div>
@@ -154,20 +160,20 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
       {/* The small facts, as chips. */}
       <div className="flex flex-wrap gap-1.5">
         <span className={chip} title={`Target year ${year}`}>
-          {formatYears(goal.horizonYears)} left
+          {goal.horizonYears} {goal.horizonYears === 1 ? "year" : "years"} to go
         </span>
         <span className={chip} title={`${Math.round(monthlyShare * 100)}% of your ${formatINR(monthlyPool)} a month`}>
-          {formatINR(monthly)}/mo
+          {formatINR(monthly)} a month
         </span>
-        <span className={chip} title="Your portfolio's historical pace">
-          {formatPct(r.blendedReturn, 1)}/yr pace
+        <span className={chip} title="What this mix grew by in the past">
+          assumes {formatPct(r.blendedReturn, 1)} growth a year
         </span>
         <button
           type="button"
           onClick={() => setShowNumbers((v) => !v)}
           className="rounded-full border border-dashed border-line px-2.5 py-1 text-caption text-text-2 transition hover:border-line-2 hover:text-text"
         >
-          {showNumbers ? "hide technical" : "technical ▾"}
+          {showNumbers ? "Hide the maths" : "Show the maths"}
         </button>
       </div>
       {showNumbers && (

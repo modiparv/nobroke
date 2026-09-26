@@ -84,8 +84,8 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
   return (
     <Wrapper className={night ? "" : "rounded-card border border-line bg-surface p-4 sm:p-5"}>
       <div className="flex items-baseline justify-between gap-3">
-        <span className={tone.eyebrow}>Goal trajectories</span>
-        <span className={tone.aside}>At today's pace</span>
+        <span className={tone.eyebrow}>Where your goals are headed</span>
+        <span className={tone.aside}>If you keep going like this</span>
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="Projected path of every goal">
@@ -115,7 +115,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
             <g key={sr.goal.id}>
               <title>
                 {sr.goal.name}: about {formatINR(sr.points[sr.points.length - 1]?.value ?? 0)} by{" "}
-                {baseYear + sr.goal.horizonYears}; needs {formatINR(sr.need)}
+                {baseYear + sr.goal.horizonYears}. Needs {formatINR(sr.need)}.
               </title>
               <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
               <circle

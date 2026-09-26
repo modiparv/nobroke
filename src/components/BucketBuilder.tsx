@@ -15,11 +15,10 @@ import { actions, useStore } from "../store";
 import { sectionLabel } from "../ui";
 
 /**
- * The bucket studio: the right half of the portfolio room. A drafting table —
- * drag instruments from the pool into the bucket, weight them, name the goal
- * it is for — that touches nothing until "Make this my portfolio" hands the
- * draft to the engine. The left pane is the live portfolio; this is the
- * sketchbook.
+ * Build your own mix: the right half of the portfolio room. A drafting
+ * table (add funds from every option, weight them, name the goal it is
+ * for) that touches nothing until "Apply this mix" hands the draft to the
+ * engine. The left pane is the live portfolio. This is the sketchbook.
  */
 
 function Grip() {
@@ -57,22 +56,21 @@ export default function BucketBuilder() {
   return (
     <section className="min-w-0 rounded-card border border-line bg-surface">
       <div className="flex items-baseline justify-between gap-3 border-b border-line px-4 py-3">
-        <span className="text-support text-text">Bucket studio</span>
-        <span className="text-caption text-text-2">{ids.length ? `${ids.length} in hand` : "A draft, until you apply it"}</span>
+        <span className="text-support text-text">Build your own mix (advanced)</span>
+        <span className="text-caption text-text-2">
+          {ids.length ? `${ids.length} ${ids.length === 1 ? "fund" : "funds"} picked` : "Nothing changes until you tap Apply"}
+        </span>
       </div>
 
       <div className="p-3.5 sm:p-4">
-        <p className="text-support text-text-2">
-          Build a portfolio your way. Drag instruments in from the pool, set their weights, and when it looks right,
-          make it your portfolio.
-        </p>
+        <p className="text-support text-text-2">Add funds, set how much goes to each, then apply.</p>
 
-        {/* What this bucket is for. Chips wrap; nothing here ever scrolls. */}
+        {/* What this mix is for. Chips wrap. Nothing here ever scrolls. */}
         {s.goals.length > 0 && (
           <div className="mt-4">
-            <span className={sectionLabel}>Building toward</span>
+            <span className={sectionLabel}>For</span>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {[{ id: null as string | null, name: "The whole plan" }, ...s.goals].map((g) => {
+              {[{ id: null as string | null, name: "All goals" }, ...s.goals].map((g) => {
                 const sel = s.bucketGoalId === g.id;
                 return (
                   <button
@@ -93,9 +91,9 @@ export default function BucketBuilder() {
           </div>
         )}
 
-        {/* ---- The bucket (drop zone) ---- */}
+        {/* ---- The mix (drop zone) ---- */}
         <div
-          aria-label="Your bucket"
+          aria-label="Your mix"
           className={`mt-4 rounded-card border p-3.5 transition ${
             dragOver ? "border-text ring-2 ring-text/20" : ids.length === 0 ? "border-dashed border-line-2" : "border-line"
           }`}
@@ -115,18 +113,18 @@ export default function BucketBuilder() {
           }}
         >
           <div className="flex items-baseline justify-between gap-2">
-            <span className={sectionLabel}>In the bucket</span>
+            <span className={sectionLabel}>Your mix</span>
             {total > 0 && (
               <span className="num text-caption text-text-2">
-                Near <span className="font-medium text-text">{formatPct(ret, 1)}</span> a year, historically
+                Grew about <span className="font-medium text-text">{formatPct(ret, 1)}</span> a year in the past
               </span>
             )}
           </div>
 
           {ids.length === 0 ? (
             <div className="mt-3 px-3 py-6 text-center">
-              <p className="text-support font-medium text-text">Drag your first instrument here</p>
-              <p className="mt-1 text-caption text-text-2">or tap anything in the pool below.</p>
+              <p className="text-support font-medium text-text">Your mix is empty.</p>
+              <p className="mt-1 text-caption text-text-2">Tap a fund below to add it.</p>
             </div>
           ) : (
             <>
@@ -180,11 +178,11 @@ export default function BucketBuilder() {
                   />
                 ))}
               </div>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-index uppercase tracking-wide text-text-2">
+              <div className="num mt-2 flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-2">
                 {segs.map((l) => (
                   <span key={l.label} className="inline-flex items-center gap-1.5">
                     <span className="inline-block h-2 w-2 rounded-sm" style={{ background: l.color }} />
-                    {l.label} {Math.round((l.v / total) * 100)}%
+                    {Math.round((l.v / total) * 100)}% {l.label.toLowerCase()}
                   </span>
                 ))}
               </div>
@@ -195,34 +193,34 @@ export default function BucketBuilder() {
                 onClick={actions.applyBucketAsMix}
                 className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-control bg-accent-fill text-support font-medium text-on-accent transition hover:bg-accent-fill-hi disabled:cursor-not-allowed disabled:bg-line-2 disabled:text-text-2"
               >
-                {isLive ? "This is your portfolio now" : "Make this my portfolio"}
+                {isLive ? "This is your mix now" : "Apply this mix"}
               </button>
               <p className="mt-1.5 text-center text-caption text-text-2">
                 {isLive ? (
                   <>
-                    The pane on the left is running exactly this bucket.{" "}
+                    Your portfolio is running exactly this mix.{" "}
                     <button
                       type="button"
                       onClick={() => actions.setTab("plan")}
                       className="font-medium text-text underline underline-offset-2 transition hover:text-text-2"
                     >
-                      See it on your plan →
+                      See your goals →
                     </button>
                   </>
                 ) : goalName ? (
-                  `Replaces the portfolio on the left. One shared portfolio powers every goal, ${goalName} in front.`
+                  `Replaces your current mix. All goals share one mix, with ${goalName} first.`
                 ) : (
-                  "Replaces the portfolio on the left. Every goal grows in one shared portfolio."
+                  "Replaces your current mix. All goals share one mix."
                 )}
               </p>
             </>
           )}
         </div>
 
-        {/* ---- A starting hand, matched to appetite ---- */}
+        {/* ---- A starting hand, matched to the risk level ---- */}
         {suggestions.length > 0 && (
           <div className="mt-4">
-            <span className={sectionLabel}>Suggested for your appetite</span>
+            <span className={sectionLabel}>Good fits for your risk level</span>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {suggestions.map((p) => (
                 <button
@@ -245,11 +243,11 @@ export default function BucketBuilder() {
           </div>
         )}
 
-        {/* ---- The pool ---- */}
+        {/* ---- All options ---- */}
         <div className="mt-5">
           <div className="flex items-baseline justify-between gap-2">
-            <span className={sectionLabel}>The pool</span>
-            <span className="text-caption text-text-2">Drag in, or tap to add</span>
+            <span className={sectionLabel}>All options</span>
+            <span className="text-caption text-text-2">Tap to add</span>
           </div>
           <div className="mt-2 flex flex-col gap-3">
             {POOL_GROUPS.map((group) => (
@@ -304,9 +302,7 @@ export default function BucketBuilder() {
               </div>
             ))}
           </div>
-          <p className="mt-2 px-2 text-caption text-text-2">
-            Want a specific fund? The search on the left covers every AMFI-listed scheme, A to Z.
-          </p>
+          <p className="mt-2 px-2 text-caption text-text-2">Can't find your fund? Use the search.</p>
         </div>
       </div>
     </section>

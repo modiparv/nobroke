@@ -14,6 +14,8 @@ import {
   useStore,
 } from "../store";
 import { GAP_LABEL, gapLevel } from "../lib/gap";
+import { FOCUS } from "../lib/links";
+import { useFocus } from "../lib/useFocus";
 import { GAP_PILL, card, sectionLabel } from "../ui";
 import Holdings from "./Holdings";
 import MoneyInput from "./MoneyInput";
@@ -22,10 +24,9 @@ import MoneyInput from "./MoneyInput";
  * Money: the wealth management tab.
  *
  * Tracks what you have (net worth + breakdown by category, from real data) and
- * where it goes at the current pace (a projection line from the real engine).
- * The app stores no historical snapshots yet, so the chart is a forward path,
- * labelled as such, never an invented history. Deeper wealth tools (tax, x-ray,
- * costs, hygiene) are listed as rows and land with the wealth engine phases.
+ * where it goes if you keep going like this (a projection line from the real
+ * engine). The app stores no historical snapshots yet, so the chart is a
+ * forward path, labelled as such, never an invented history.
  */
 
 const YEARS_AHEAD = 10;
@@ -52,13 +53,18 @@ function WealthPath({ series }: { series: Array<{ month: number; value: number }
   );
 }
 
-const TOOLS = ["Tax centre", "Portfolio x-ray", "Cost check", "Nominee audit", "Action inbox"];
-
 export default function MoneyTab() {
   const s = useStore();
   const [view, setView] = useState<"location" | "goal">("location");
   const invested = holdingsTotal(s);
   const total = totalCapital(s);
+  // Every month: what comes in, what goes out, what is invested, and what is
+  // left with no plan. The last sentence only appears when it is above zero.
+  const leftover = Math.max(0, s.monthlyIncome - s.monthlyExpenses);
+  const unplanned = Math.max(0, leftover - s.monthlySip);
+  // Links from the plan land on the cash field or the monthly numbers.
+  const cashFocus = useFocus(FOCUS.cash);
+  const monthFocus = useFocus(FOCUS.everyMonth);
 
   const series = projectionSeries(
     {
@@ -85,7 +91,7 @@ export default function MoneyTab() {
     <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
       {/* Orientation, one line: what this page holds, and where it feeds. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pt-5">
-        <p className="text-support text-text-2">What you have, and where it sits. Every number here feeds the plan.</p>
+        <p className="text-support text-text-2">Everything you own and owe. Change a number here and your plan updates.</p>
         <button
           type="button"
           onClick={() => actions.setTab("plan")}
@@ -101,15 +107,15 @@ export default function MoneyTab() {
             <span className={sectionLabel}>Net worth</span>
             <div className="num mt-1.5 text-hero font-medium">{formatINR(total)}</div>
             <div className="num mt-1 flex flex-wrap gap-x-4 text-caption text-text-2">
-              <span>Cash {formatINR(s.currentSavings)}</span>
-              <span>Invested {formatINR(invested)}</span>
-              <span>{formatINR(s.monthlySip)}/mo going in</span>
+              <span>{formatINR(s.currentSavings)} in the bank</span>
+              <span>{formatINR(invested)} invested</span>
+              <span>{formatINR(s.monthlySip)} added every month</span>
             </div>
             <WealthPath series={series} />
             <div className="mt-1 flex items-baseline justify-between">
               <span className="text-caption text-text-3">Today</span>
               <span className="text-caption text-text-2">
-                About <span className="num text-text">{formatINR(projected)}</span> in {YEARS_AHEAD} years at this pace.
+                Keep this up and it could be <span className="num text-text">{formatINR(projected)}</span> in {YEARS_AHEAD} years.
               </span>
             </div>
           </section>
@@ -118,7 +124,7 @@ export default function MoneyTab() {
           {(breakdown.length > 0 || s.goals.length > 0) && (
             <section className={card}>
               <div className="flex items-center justify-between gap-3">
-                <span className={sectionLabel}>Breakdown</span>
+                <span className={sectionLabel}>Where it is</span>
                 <div className="flex items-center gap-0.5 rounded-full bg-surface-2 p-0.5">
                   {(["location", "goal"] as const).map((v) => (
                     <button
@@ -129,7 +135,7 @@ export default function MoneyTab() {
                         view === v ? "bg-surface text-text" : "text-text-2 hover:text-text"
                       }`}
                     >
-                      {v === "location" ? "By location" : "By goal"}
+                      {v === "location" ? "By type" : "By goal"}
                     </button>
                   ))}
                 </div>
@@ -159,7 +165,7 @@ export default function MoneyTab() {
                     </li>
                   ))}
                   {breakdown.length === 0 && (
-                    <p className="text-caption text-text-2">Add cash in Your numbers, or an existing investment below, to see this.</p>
+                    <p className="text-caption text-text-2">Add cash under In the bank, or an investment below, to see this.</p>
                   )}
                 </ul>
               ) : (
@@ -169,12 +175,13 @@ export default function MoneyTab() {
                     const level = gapLevel(computePlan(planInputsForGoal(s, g)));
                     return (
                       <li key={g.id}>
-                        {/* The row IS the link: this goal's workbench on the plan. */}
+                        {/* The row IS the link: this goal's workbench on the plan,
+                            scrolled to and lit up. */}
                         <button
                           type="button"
                           onClick={() => {
                             actions.setCurrentGoal(g.id);
-                            actions.setTab("plan");
+                            actions.setTab("plan", { focus: FOCUS.goalDetail });
                           }}
                           title={`Open ${g.name} on the plan`}
                           className="flex w-full items-center justify-between gap-3 py-2.5 text-left transition hover:text-text-2"
@@ -186,12 +193,12 @@ export default function MoneyTab() {
                                 {GAP_LABEL[level]}
                               </span>
                             </span>
-                            <span className="num block text-caption text-text-2">{Math.round(share * 100)}% of the pool</span>
+                            <span className="num block text-caption text-text-2">{Math.round(share * 100)}% of your monthly amount</span>
                           </span>
                           <span className="flex flex-none items-center gap-2 text-right">
                             <span>
                               <span className="num block text-support font-medium text-text">{formatINR(capitalForGoal(s, g.id))}</span>
-                              <span className="num block text-caption text-text-2">{formatINR(goalMonthly(s, g.id))}/mo</span>
+                              <span className="num block text-caption text-text-2">{formatINR(goalMonthly(s, g.id))} a month</span>
                             </span>
                             <span aria-hidden className="text-text-3">
                               →
@@ -223,48 +230,42 @@ export default function MoneyTab() {
         </div>
 
         <aside className="flex flex-col gap-4">
-          <section className={card}>
-            <span className={sectionLabel}>Your numbers</span>
+          <section ref={monthFocus.ref} className={`${card} ${monthFocus.active ? "focus-flash" : ""}`}>
+            <span className={sectionLabel}>Every month</span>
             <div className="mt-3" />
-            <MoneyInput label="Monthly income" value={s.monthlyIncome} onChange={actions.setIncome} step={5000} min={0} max={10000000} compact />
+            <MoneyInput label="Money in" value={s.monthlyIncome} onChange={actions.setIncome} step={5000} min={0} max={10000000} compact />
             <div className="mt-4 border-t border-line pt-4">
-              <MoneyInput label="Monthly spend" value={s.monthlyExpenses} onChange={actions.setExpenses} step={5000} min={0} max={10000000} compact />
+              <MoneyInput label="Spent" value={s.monthlyExpenses} onChange={actions.setExpenses} step={5000} min={0} max={10000000} compact />
             </div>
             <div className="mt-4 border-t border-line pt-4">
-              <MoneyInput label="Monthly investing" value={s.monthlySip} onChange={actions.setSip} step={1000} min={0} max={1000000} compact />
-            </div>
-            <div className="mt-4 border-t border-line pt-4">
-              <MoneyInput label="Cash" value={s.currentSavings} onChange={actions.setSavings} step={25000} min={0} max={50000000} compact />
+              <MoneyInput label="Invested" value={s.monthlySip} onChange={actions.setSip} step={1000} min={0} max={1000000} compact />
             </div>
             {s.monthlyIncome > 0 &&
-              (s.monthlySip > Math.max(0, s.monthlyIncome - s.monthlyExpenses) ? (
-                <p className="mt-3 text-caption text-cau">
-                  You invest more than what is left after spending. Worth a look.
-                </p>
+              (s.monthlySip > leftover ? (
+                <p className="mt-3 text-caption text-cau">You invest more than what is left after expenses. Check these numbers.</p>
               ) : (
-                <p className="mt-3 text-caption text-text-2">
-                  {formatINR(Math.max(0, s.monthlyIncome - s.monthlyExpenses))} left after spending. You put{" "}
-                  {formatINR(s.monthlySip)} of it to work.
+                <p className="num mt-3 text-caption text-text-2">
+                  {formatINR(leftover)} is left after expenses. {formatINR(s.monthlySip)} goes into investments.
+                  {unplanned > 0 ? ` ${formatINR(unplanned)} has no plan yet.` : ""}
                 </p>
               ))}
+            {/* The money with no plan yet, into the monthly sheet: every
+                goal's new verdict shows before it is saved. */}
+            {s.monthlyIncome > 0 && unplanned > 0 && (
+              <button
+                type="button"
+                onClick={() => actions.openSheet({ kind: "monthly", prefill: s.monthlySip + unplanned })}
+                className="num mt-2 text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+              >
+                Invest the {formatINR(unplanned)} →
+              </button>
+            )}
           </section>
 
-          {/* Everything not yet live sits in ONE card. Listed, never faked.
-              Account connections now live in the intake's connect step. */}
-          <section className={card}>
-            <div>
-              <span className={sectionLabel}>Wealth tools</span>
-              <ul className="mt-1 divide-y divide-line">
-                {TOOLS.map((t) => (
-                  <li key={t} className="flex items-center justify-between gap-3 py-2.5">
-                    <span className="text-support text-text">{t}</span>
-                    <span className="flex-none rounded-full bg-surface-2 px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
-                      Soon
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <section ref={cashFocus.ref} className={`${card} ${cashFocus.active ? "focus-flash" : ""}`}>
+            <span className={sectionLabel}>In the bank</span>
+            <div className="mt-3" />
+            <MoneyInput label="Cash" value={s.currentSavings} onChange={actions.setSavings} step={25000} min={0} max={50000000} compact />
           </section>
         </aside>
       </div>

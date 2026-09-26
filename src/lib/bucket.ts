@@ -5,15 +5,15 @@ import { FUND_MAP, registerFund } from "./funds.ts";
 import { appetiteCeiling } from "./risk.ts";
 
 /**
- * The bucket studio's raw material: everything an Indian portfolio actually
- * holds — platform mutual funds, index and international ETFs, gold, silver
- * and SGBs, government and corporate bonds, a REIT, cash-like funds. Each new
- * instrument is a full Fund row registered into FUND_MAP, so a bucket is a
- * plain Allocation and every existing engine function (blended return, band
- * weights, projections) works on it unchanged.
+ * The raw material for building your own mix: everything an Indian portfolio
+ * actually holds (platform mutual funds, index and international ETFs, gold,
+ * silver and SGBs, government and corporate bonds, a REIT, cash-like funds).
+ * Each new option is a full Fund row registered into FUND_MAP, so a bucket
+ * is a plain Allocation and every existing engine function (blended return,
+ * band weights, projections) works on it unchanged.
  *
  * Return figures are planning estimates at the ASSET-CLASS level, in line
- * with the illustrative fund rows — never a promise about the instrument.
+ * with the illustrative fund rows, never a promise about the fund.
  */
 const NEW_INSTRUMENTS: Fund[] = [
   // ---- ETFs ----
@@ -50,7 +50,7 @@ export interface PoolGroup {
 
 export const POOL_GROUPS: PoolGroup[] = [
   {
-    label: "Fund picks",
+    label: "Funds",
     items: [
       { id: "parag_flexi", kind: "Flexi cap", note: "Goes wherever the manager sees value, across company sizes." },
       { id: "icici_nifty", kind: "Index fund", note: "The 50 largest listed companies, at index cost." },
@@ -59,7 +59,7 @@ export const POOL_GROUPS: PoolGroup[] = [
     ],
   },
   {
-    label: "ETFs",
+    label: "ETFs (need a demat account)",
     items: [
       { id: "inst_nifty_etf", kind: "Equity ETF", note: "The Nifty 50, traded live on the exchange." },
       { id: "inst_next50_etf", kind: "Equity ETF", note: "The next rung of large companies, 51 to 100." },
@@ -68,26 +68,26 @@ export const POOL_GROUPS: PoolGroup[] = [
     ],
   },
   {
-    label: "Gold & silver",
+    label: "Gold and silver",
     items: [
       { id: "nippon_gold", kind: "Gold ETF", note: "Gold in demat form, no locker." },
-      { id: "inst_silver_etf", kind: "Silver ETF", note: "Silver, the industrial metal; moves harder than gold." },
+      { id: "inst_silver_etf", kind: "Silver ETF", note: "Silver moves more than gold, both ways." },
       { id: "inst_sgb", kind: "Govt bond", note: "Gold price plus a 2.5% yearly coupon, from the RBI." },
     ],
   },
   {
-    label: "Bonds & debt",
+    label: "Bonds",
     items: [
       { id: "sbi_gilt", kind: "Gilt fund", note: "Lending to the Government of India." },
       { id: "hdfc_corp_bond", kind: "Corporate", note: "Lending to high-grade companies." },
-      { id: "inst_rbi_frsb", kind: "Govt bond", note: "RBI's floating-rate savings bond; the rate resets with the market." },
+      { id: "inst_rbi_frsb", kind: "Govt bond", note: "RBI's floating-rate savings bond. The rate resets with the market." },
       { id: "inst_tmf_2030", kind: "Target date", note: "G-secs held to 2030, so the yield is largely knowable." },
     ],
   },
   {
-    label: "Real estate & cash",
+    label: "Property and cash",
     items: [
-      { id: "inst_reit", kind: "REIT", note: "Rent-earning offices, listed; behaves between stocks and bonds." },
+      { id: "inst_reit", kind: "REIT", note: "Listed offices that earn rent. Sits between stocks and bonds." },
       { id: "icici_liquid", kind: "Liquid", note: "Parking money: steady, reachable in a day." },
       { id: "inst_arbitrage", kind: "Arbitrage", note: "Cash-like returns with equity taxation." },
     ],
@@ -125,7 +125,7 @@ export function withoutInstrument(bucket: Allocation, id: string): Allocation {
   return Object.fromEntries(rest.map(([k, v]) => [k, (v / total) * 100]));
 }
 
-/** Set one instrument's weight; the others rebalance to keep the sum at 100. */
+/** Set one fund's weight. The others rebalance to keep the sum at 100. */
 export function withWeight(bucket: Allocation, id: string, w: number): Allocation {
   const ids = Object.keys(bucket);
   if (!(id in bucket)) return bucket;
@@ -139,7 +139,7 @@ export function withWeight(bucket: Allocation, id: string, w: number): Allocatio
   return next;
 }
 
-/** A starting hand for the bucket, matched to the person's risk appetite. */
+/** A starting hand for the bucket, matched to the person's risk level. */
 export function suggestedInstruments(appetite: number): PoolItem[] {
   const ids: Record<ReturnType<typeof appetiteCeiling>, string[]> = {
     steady: ["sbi_gilt", "hdfc_corp_bond", "nippon_gold", "icici_liquid"],
@@ -150,8 +150,8 @@ export function suggestedInstruments(appetite: number): PoolItem[] {
   return POOL_ITEMS.filter((i) => wanted.includes(i.id));
 }
 
-/** True when the bucket and the live mix hold the same instruments at the
-    same weights (within rounding), i.e. applying would change nothing. */
+/** True when the bucket and the live mix hold the same funds at the same
+    weights (within rounding), i.e. applying would change nothing. */
 export function sameMix(a: Allocation, b: Allocation): boolean {
   const ka = Object.keys(a).filter((k) => (a[k] ?? 0) > 0.05);
   const kb = Object.keys(b).filter((k) => (b[k] ?? 0) > 0.05);

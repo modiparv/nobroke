@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatINR } from "../lib/format";
+import { RUNWAY_COMFORT_MONTHS, RUNWAY_FLOOR_MONTHS, runwayMonths } from "../lib/runway";
 import { actions, holdingsTotal, useStore } from "../store";
 
 /**
@@ -22,29 +23,33 @@ export default function AdvisorNote() {
 
   const notes: Note[] = [];
   const surplus = s.monthlyIncome > 0 ? Math.max(0, s.monthlyIncome - s.monthlyExpenses) : 0;
-  const coverMonths = s.monthlyExpenses > 0 ? s.currentSavings / s.monthlyExpenses : null;
+  const coverMonths = runwayMonths(s.currentSavings, s.monthlyExpenses);
 
-  if (coverMonths != null && coverMonths < 3) {
-    const cover = coverMonths < 1 ? "under a month" : `about ${Math.floor(coverMonths)} ${Math.floor(coverMonths) === 1 ? "month" : "months"}`;
+  if (coverMonths != null && coverMonths < RUNWAY_FLOOR_MONTHS) {
+    const whole = Math.floor(coverMonths);
+    const cover = coverMonths < 1 ? "under a month" : `only ${whole} ${whole === 1 ? "month" : "months"}`;
     notes.push({
       id: "emergency",
-      text: `Your cash covers ${cover} of spending. We keep 3 to 6 months within reach before taking any risk.`,
-      cta: "Review cash",
-      onCta: () => actions.setTab("money"),
+      text: `Your cash covers ${cover} of expenses. Keep ${RUNWAY_FLOOR_MONTHS} to ${RUNWAY_COMFORT_MONTHS} months in the bank before you invest more.`,
+      cta: "Add to cash",
+      // The cash sheet, with how long the cash lasts shown live.
+      onCta: () => actions.openSheet({ kind: "cash" }),
     });
   }
   if (surplus > 0 && s.monthlySip < surplus * 0.5) {
     notes.push({
       id: "idle_surplus",
-      text: `${formatINR(surplus - s.monthlySip)} of your monthly surplus is sitting idle. Even part of it, invested regularly, compounds meaningfully.`,
-      cta: "Adjust monthly",
-      onCta: () => actions.setTab("money"),
+      text: `${formatINR(surplus - s.monthlySip)} a month is left over and not invested. Even part of it, invested every month, adds up.`,
+      cta: "Put in more",
+      // The monthly sheet, prefilled with the whole surplus and every goal's
+      // new verdict shown before saving.
+      onCta: () => actions.openSheet({ kind: "monthly", prefill: Math.round(surplus) }),
     });
   }
   if (coverMonths != null && coverMonths > 8 && s.currentSavings > holdingsTotal(s)) {
     notes.push({
       id: "cash_drag",
-      text: "You hold more cash than a plan of this shape needs. Idle cash quietly loses ground to inflation every year.",
+      text: "You hold more cash than you need. Cash loses value to inflation every year.",
     });
   }
 

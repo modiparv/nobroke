@@ -494,16 +494,17 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Thirteen goals in one frame, each a picture and a name: the
-            catalogue's sentences belong to the plan page, not to a choice
-            made in seconds. The furthest goal closes the grid as a full-width
-            tile, so thirteen never leaves an orphan in the last row. Picks are
-            counted by three dots, not a sentence. */}
+        {/* Sixteen goals in one frame with no scrollbar: each tile is one
+            short row, a small picture beside a name, so four rows of four
+            stand about as tall as the old three. The catalogue's sentences
+            belong to the plan page, not to a choice made in seconds. An
+            orphan in the last row stretches across it. Picks are counted by
+            three dots, not a sentence. */}
         {step.kind === "goals" && (
           <div className="fade-up mx-auto w-full">
             <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
             <p className="mt-2 text-muted">{step.subtitle}</p>
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
               {GOALS.map((g, i) => {
                 const sel = s.selectedGoalIds.includes(g.id);
                 const last = i === GOALS.length - 1;
@@ -512,14 +513,14 @@ export default function Onboarding() {
                     key={g.id}
                     onClick={() => actions.toggleGoal(g.id)}
                     aria-pressed={sel}
-                    className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 transition ${
+                    className={`flex min-h-10 items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left transition ${
                       last ? LAST_TILE_SPAN : ""
                     } ${sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-accent"}`}
                   >
-                    <span aria-hidden="true" className="text-2xl leading-none">
+                    <span aria-hidden="true" className="text-base leading-none">
                       {g.emoji}
                     </span>
-                    <span className="text-support font-medium leading-tight">{g.name}</span>
+                    <span className="text-caption font-medium leading-tight">{g.name}</span>
                   </button>
                 );
               })}
