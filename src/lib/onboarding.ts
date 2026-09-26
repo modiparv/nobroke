@@ -1,4 +1,17 @@
-export type StepKind = "intro" | "goals" | "single" | "money" | "account" | "connect";
+export type StepKind = "intro" | "goals" | "costs" | "single" | "money" | "account" | "connect";
+
+/** The intake answer that holds a picked goal's own price, in today's money. */
+export const goalCostKey = (id: string) => `cost:${id}`;
+
+/** The intake's own prices for the picked goals, where given: a positive
+    number replaces the catalogue's estimate; a blank or anything else keeps
+    it. A student's trip is ₹20,000, not the ₹2 L a family trip costs. */
+export function applyGoalCosts<T extends { id: string; targetToday: number }>(goals: T[], answers: Record<string, string>): T[] {
+  return goals.map((g) => {
+    const v = Number(answers[goalCostKey(g.id)]);
+    return Number.isFinite(v) && v > 0 ? { ...g, targetToday: Math.round(v) } : g;
+  });
+}
 
 export interface StepOption {
   value: string;
@@ -174,6 +187,14 @@ export const STEPS: Step[] = [
     stageLabel: "Goals",
     title: "What are you building toward?",
     subtitle: "Pick up to three.",
+  },
+  {
+    id: "costs",
+    kind: "costs",
+    stage: 5,
+    stageLabel: "Goals",
+    title: "What will each cost?",
+    subtitle: "Today's prices. Change any you know better; the rest are our estimates.",
   },
   {
     id: "timeline",

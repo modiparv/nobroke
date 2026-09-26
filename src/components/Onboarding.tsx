@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { STEPS, TOTAL_STAGES, type Step } from "../lib/onboarding";
-import { GOALS } from "../lib/goals";
+import { STEPS, TOTAL_STAGES, goalCostKey, type Step } from "../lib/onboarding";
+import { GOAL_MAP, GOALS } from "../lib/goals";
+import { adjustedTarget } from "../lib/profile";
 import { credentialError, login, register } from "../lib/authApi";
 import type { Profile } from "../lib/types";
 import { actions, getState, useStore } from "../store";
@@ -282,6 +283,70 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
 }
 
 /**
+ * What each picked goal will cost, in today's money: one field per goal,
+ * prefilled with the catalogue's estimate for this city. Every field is
+ * optional; "Keep these estimates" moves on with the defaults, and a price
+ * typed here becomes that goal's target. A student's trip is ₹20,000, not
+ * the ₹2 L a family trip costs, and the first screen should know it.
+ */
+function CostsStep({ step, onContinue }: { step: Step; onContinue: () => void }) {
+  const s = useStore();
+  const picked = s.selectedGoalIds.map((id) => GOAL_MAP[id]).filter(Boolean);
+  const [raw, setRaw] = useState<Record<string, string>>(() =>
+    Object.fromEntries(picked.map((g) => [g.id, s.onboardingAnswers[goalCostKey(g.id)] || String(adjustedTarget(g, s.profile.cityTier))])),
+  );
+  const ok = picked.every((g) => Number(raw[g.id]) > 0);
+
+  const commit = () => {
+    for (const g of picked) {
+      const v = Number(raw[g.id]);
+      actions.setAnswer(goalCostKey(g.id), v > 0 ? String(Math.round(v)) : "");
+    }
+    onContinue();
+  };
+  const keep = () => {
+    for (const g of picked) actions.setAnswer(goalCostKey(g.id), "");
+    onContinue();
+  };
+
+  return (
+    <div className="fade-up mx-auto w-full max-w-md">
+      <h1 className="mx-auto max-w-[22ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
+      <p className="mx-auto mt-3 max-w-[46ch] text-muted">{step.subtitle}</p>
+      <div className="mt-5 flex flex-col gap-2.5 text-left">
+        {picked.map((g) => (
+          <label key={g.id} className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3">
+            <span className="flex min-w-0 items-center gap-2.5">
+              <span aria-hidden="true" className="text-xl leading-none">
+                {g.emoji}
+              </span>
+              <span className="truncate text-support font-medium text-text">{g.name}</span>
+            </span>
+            <span className="flex flex-none items-center gap-1">
+              <span className="text-support text-text-2">₹</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={raw[g.id] === "" ? "" : Number(raw[g.id]).toLocaleString("en-IN")}
+                onChange={(e) => setRaw({ ...raw, [g.id]: e.target.value.replace(/[^\d]/g, "") })}
+                aria-label={`${g.name}, cost today`}
+                className="num w-28 bg-transparent text-right text-row font-medium text-text outline-none"
+              />
+            </span>
+          </label>
+        ))}
+      </div>
+      <button className={`${btnIntake} mx-auto mt-6 w-full max-w-sm`} onClick={commit} disabled={!ok}>
+        Continue
+      </button>
+      <button type="button" onClick={keep} className="mt-3 block w-full text-caption text-text-2 transition hover:text-text">
+        Keep these estimates
+      </button>
+    </div>
+  );
+}
+
+/**
  * The five sections of the intake, listed in full from the very first screen
  * so the person knows the size of what they are agreeing to. One line each on
  * what the active section needs. Deliberately monochrome: the rail is not
@@ -295,8 +360,6 @@ const STAGES = [
   { n: 5, label: "Goals", desc: "What you are building toward, and when." },
 ];
 
-/** Indian account rails, listed honestly as coming soon. Nothing here fakes
- *  a connection: the step informs and steps aside. */
 // The goal grid is two columns on phones, three on tablets, four on desktop.
 // Whenever the count leaves one orphan in the last row, that tile stretches
 // across the row. Literal class names per breakpoint, so Tailwind sees them.
@@ -306,6 +369,8 @@ const LAST_TILE_SPAN = [
   GOALS.length % 4 === 1 ? "md:col-span-4" : "md:col-span-1",
 ].join(" ");
 
+/** Indian account rails, listed honestly as coming soon. Nothing here fakes
+ *  a connection: the step informs and steps aside. */
 const CONNECT_SOURCES = [
   { name: "Investment portfolio", via: "CAMS · KFintech" },
   { name: "Banking and income", via: "Finvu · OneMoney · CAMSFinserv" },
@@ -532,6 +597,7 @@ export default function Onboarding() {
           )}
 
           {step.kind === "money" && <MoneyStep key={step.id} step={step} onContinue={next} />}
+          {step.kind === "costs" && <CostsStep key={step.id} step={step} onContinue={next} />}
 
           {step.kind === "account" && <AccountStep step={step} />}
         </div>

@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { Allocation, ChatMessage, Holding, PlanGoal, PlanInputs, Profile, RiskProfile } from "./lib/types";
 import { GOAL_MAP, refreshGoalNames } from "./lib/goals";
+import { applyGoalCosts } from "./lib/onboarding";
 import { splitCapital, splitMonthly } from "./lib/split";
 import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios";
 import { adjustedTarget, emergencyTarget, emptyProfile, suggestedSip } from "./lib/profile";
@@ -558,8 +559,10 @@ export const actions = {
     const p = state.profile;
     const selected = state.selectedGoalIds.length ? state.selectedGoalIds : ["home"];
     const timeline = state.onboardingAnswers.timeline ? Number(state.onboardingAnswers.timeline) : undefined;
-    const goals = selected.map((id, i) =>
-      buildPlanGoal(id, p, i === 0 ? timeline : undefined, i === 0 && timeline != null),
+    // The catalogue's estimate for this city, unless the intake gave a price.
+    const goals = applyGoalCosts(
+      selected.map((id, i) => buildPlanGoal(id, p, i === 0 ? timeline : undefined, i === 0 && timeline != null)),
+      state.onboardingAnswers,
     );
     const monthlySip = suggestedSip(p);
     const order = orderByTenure(goals);
