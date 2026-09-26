@@ -16,7 +16,7 @@ test("the catalogue: permanent, unique ids; the student-sized goals; fixed dates
   assert.equal(GOAL_MAP.education.name, "Study abroad", "renamed, id kept");
   assert.deepEqual(
     GOALS.filter((g) => g.dateFixed).map((g) => g.id),
-    ["wedding", "child"],
+    ["college", "wedding", "child"],
   );
 });
 

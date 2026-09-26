@@ -1,5 +1,14 @@
 import { computePlan } from "./finance.ts";
+import type { GapLevel } from "./gap.ts";
 import type { PlanInputs, PlanResult } from "./types";
+
+/** One line of context under the moves for an education goal that is far
+    short: a loan or a scholarship is a real part of how such goals get
+    funded. General information, never a product. */
+const EDUCATION_NOTE = "An education loan or scholarship can cover part of this.";
+export function educationNote(goalId: string, level: GapLevel): string | null {
+  return (goalId === "child" || goalId === "college") && level === "far_short" ? EDUCATION_NOTE : null;
+}
 
 /**
  * The honest moves for a goal that is short at today's pace, each a real

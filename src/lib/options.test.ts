@@ -1,7 +1,8 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 import { computePlan, requiredCorpus } from "./finance.ts";
-import { cleanTarget, goalOptions, neededMonthly, reachableHorizon } from "./options.ts";
+import { GOAL_MAP } from "./goals.ts";
+import { cleanTarget, educationNote, goalOptions, neededMonthly, reachableHorizon } from "./options.ts";
 import type { PlanInputs } from "./types";
 
 // A laptop a year away, ₹2,000 a month, nothing saved, no portfolio yet.
@@ -36,6 +37,24 @@ test("a date-fixed goal (a child's college year) is never offered a later year",
   assert.equal(r.onTrack, false);
   assert.equal(goalOptions(college, r, { dateFixed: true }).year, null);
   assert.ok(goalOptions(college, r, { dateFixed: true }).monthly > 0);
+});
+
+test("college fees fall due on a date: no later year is offered", () => {
+  const fees: PlanInputs = { targetToday: 150000, horizonYears: 1, currentSavings: 0, monthlySip: 2000, inflation: 0.06, allocation: {} };
+  const r = computePlan(fees);
+  assert.equal(r.onTrack, false);
+  assert.equal(GOAL_MAP.college.dateFixed, true);
+  assert.equal(goalOptions(fees, r, { dateFixed: GOAL_MAP.college.dateFixed }).year, null);
+});
+
+test("education goals that are far short get one line of context, and only they do", () => {
+  const line = "An education loan or scholarship can cover part of this.";
+  assert.equal(educationNote("child", "far_short"), line);
+  assert.equal(educationNote("college", "far_short"), line);
+  assert.equal(educationNote("child", "short"), null);
+  assert.equal(educationNote("child", "on_track"), null);
+  assert.equal(educationNote("gadget", "far_short"), null);
+  assert.equal(educationNote("education", "far_short"), null, "study abroad is not a fixed date and not fee-based");
 });
 
 test("a later year is offered only within five years of the goal's own date", () => {

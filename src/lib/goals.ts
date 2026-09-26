@@ -9,15 +9,15 @@ import type { Goal } from "./types";
  * the emergency fund first because it comes first.
  *
  * dateFixed marks the goals whose date is set by life, not by the plan: a
- * child's college year and a wedding. Those never get "move to a later
- * year" as a fix.
+ * child's college year, college fees that fall due, a wedding. Those never
+ * get "move to a later year" as a fix.
  */
 export const GOALS: Goal[] = [
   { id: "emergency", name: "Emergency fund", emoji: "🛟", targetToday: 300000, horizonYears: 1, blurb: "Six months of expenses, untouchable.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
   { id: "course", name: "Upskill or a course", emoji: "📚", targetToday: 50000, horizonYears: 1, blurb: "A certification, a bootcamp, a new skill.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
   { id: "gadget", name: "New phone or laptop", emoji: "📱", targetToday: 100000, horizonYears: 1, blurb: "Bought outright, no EMI.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
   { id: "bike", name: "Bike or scooter", emoji: "🛵", targetToday: 100000, horizonYears: 1, blurb: "Your own keys, no EMI.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
-  { id: "college", name: "College fees", emoji: "🏫", targetToday: 150000, horizonYears: 1, blurb: "Next year's fees, ready before they are due.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
+  { id: "college", name: "College fees", emoji: "🏫", targetToday: 150000, horizonYears: 1, blurb: "Next year's fees, ready before they are due.", defaultProfile: "steady", costSensitivity: "none", dateFixed: true },
   { id: "travel", name: "Big trip", emoji: "✈️", targetToday: 200000, horizonYears: 1, blurb: "The one on your camera roll.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
   { id: "loan", name: "Pay off a loan", emoji: "💳", targetToday: 400000, horizonYears: 2, blurb: "Education or personal loan, gone for good.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
   { id: "car", name: "First car", emoji: "🚗", targetToday: 800000, horizonYears: 4, blurb: "The keys, without a seven-year EMI.", defaultProfile: "balanced", costSensitivity: "medium", dateFixed: false },

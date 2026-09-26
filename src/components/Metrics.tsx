@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import type { PlanGoal, PlanInputs, PlanResult } from "../lib/types";
 import { formatINR, formatPct, formatYears } from "../lib/format";
+import { gapLevel } from "../lib/gap";
 import { GOAL_MAP } from "../lib/goals";
-import { goalOptions } from "../lib/options";
+import { educationNote, goalOptions } from "../lib/options";
 import { actions } from "../store";
 
 const THIS_YEAR = new Date().getFullYear();
@@ -57,6 +58,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
   );
   const canFix = !r.onTrack && r.requiredSip <= available;
   const canLower = !!options && options.target >= goal.targetToday * 0.25 && options.target < goal.targetToday;
+  const context = educationNote(goal.id, gapLevel(r));
   const starved = monthly <= 0 && monthlyPool > 0 && ahead.length > 0;
   // A projected XIRR of nothing is noise, not a number: it appears once money is in.
   const hasXirr = r.totalInvested > 0 && Number.isFinite(r.xirr) && r.xirr !== 0;
@@ -138,6 +140,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
           )}
         </div>
       )}
+      {context && <p className="text-caption text-text-2">{context}</p>}
 
       {/* Why a goal is getting nothing: the money is going to nearer goals
           first. Said plainly, with the year the first of them is done. */}

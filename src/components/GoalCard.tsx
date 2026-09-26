@@ -3,7 +3,7 @@ import type { PlanGoal } from "../lib/types";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { GAP_LABEL, gapLevel } from "../lib/gap";
-import { actions, goalMonthly, goalShareFraction, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
+import { actions, capitalForGoal, goalMonthly, goalShareFraction, goalsByPriority, planInputsForGoal, useStore } from "../store";
 import { GAP_DOT, GAP_PILL, GAP_TEXT, sectionLabel } from "../ui";
 import Chart from "./Chart";
 import Metrics from "./Metrics";
@@ -29,7 +29,7 @@ const stepper =
 function goalFacts(g: PlanGoal, s: ReturnType<typeof useStore>) {
   const inputs = planInputsForGoal(s, g);
   const r = computePlan(inputs);
-  const savedForGoal = totalCapital(s) * goalShareFraction(s, g.id);
+  const savedForGoal = capitalForGoal(s, g.id);
   return { inputs, r, savedForGoal, year: BASE_YEAR + g.horizonYears };
 }
 
