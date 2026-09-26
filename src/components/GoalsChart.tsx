@@ -1,8 +1,9 @@
 import { blendedReturn, computePlan, projectionSeries, requiredCorpus } from "../lib/finance";
 import { formatINR } from "../lib/format";
+import { GAP_LABEL, gapLevel } from "../lib/gap";
 import { useIsPhone } from "../lib/usePhone";
 import { goalsByPriority, planInputsForGoal, useStore } from "../store";
-import { sectionLabel } from "../ui";
+import { GAP_PILL, sectionLabel } from "../ui";
 
 /**
  * Every goal's trajectory on one chart, computed with exactly the same
@@ -58,7 +59,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
       goal: g,
       points: projectionSeries(inputs, ret),
       need: requiredCorpus(g.targetToday, s.inflation, g.horizonYears),
-      onTrack: computePlan(inputs).onTrack,
+      level: gapLevel(computePlan(inputs)),
     };
   });
 
@@ -136,8 +137,8 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
           <li key={sr.goal.id} className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: palette[i % palette.length] }} />
             <span className={tone.name}>{sr.goal.name}</span>
-            <span className={`rounded-full px-1.5 py-px text-index uppercase tracking-wide ${sr.onTrack ? "bg-pos-bg text-pos" : "bg-cau-bg text-cau"}`}>
-              {sr.onTrack ? "On track" : "Short"}
+            <span className={`rounded-full px-1.5 py-px text-index uppercase tracking-wide ${GAP_PILL[sr.level]}`}>
+              {GAP_LABEL[sr.level]}
             </span>
           </li>
         ))}

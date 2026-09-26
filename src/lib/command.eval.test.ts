@@ -69,13 +69,17 @@ const GOLDENS: Array<[string, Record<string, unknown> | null]> = [
   ["iphone 16 for 80k", { kind: "setTarget", goalId: "gadget", amount: 80000 }],
   ["macbook m3 for 1.2 lakh", { kind: "setTarget", goalId: "gadget", amount: 120000 }],
   ["goa trip with 4 friends, 20k each", { kind: "setTarget", goalId: "travel", amount: 20000 }],
-  ["bike for 90k", { kind: "setTarget", goalId: "car", amount: 90000 }],
+  ["bike for 90k", { kind: "setTarget", goalId: "bike", amount: 90000 }],
+  ["activa for 80k", { kind: "setTarget", goalId: "bike", amount: 80000 }],
+  ["college fees 2 lakh", { kind: "setTarget", goalId: "college", amount: 200000 }],
+  ["upskill course for 30k", { kind: "setTarget", goalId: "course", amount: 30000 }],
+  ["masters abroad 40 lakh", { kind: "setTarget", goalId: "education", amount: 4000000 }],
   ["emergency fund 25k", { kind: "setTarget", goalId: "emergency", amount: 25000 }],
   ["pay off my 40k credit card", { kind: "setTarget", goalId: "loan", amount: 40000 }],
   ["new phone in 2027", { kind: "setYears", goalId: "gadget", years: 1 }],
-  ["get a bike in 2028", { kind: "setYears", goalId: "car", years: 2 }],
+  ["get a bike in 2028", { kind: "setYears", goalId: "bike", years: 2 }],
   ["retire by 2045", { kind: "setYears", goalId: "fire", years: 19 }],
-  ["scooter in 2 years", { kind: "setYears", goalId: "car", years: 2 }],
+  ["scooter in 2 years", { kind: "setYears", goalId: "bike", years: 2 }],
   ["goa trip in 8 months", { kind: "setYears", goalId: "travel", years: 1 }],
   ["trip in 3 months", { kind: "setYears", goalId: "travel", years: 1 }],
   ["wedding in 18 months", { kind: "setYears", goalId: "wedding", years: 2 }],
@@ -83,6 +87,13 @@ const GOLDENS: Array<[string, Record<string, unknown> | null]> = [
   ["save 500 a month", { kind: "setPool", amount: 500 }],
   ["i can put ₹300 a month", { kind: "setPool", amount: 300 }],
   ["i have 12k in the bank", { kind: "setCash", amount: 12000 }],
+  ["i want a bike for 90k", { kind: "setTarget", goalId: "bike", amount: 90000 }],
+  ["macbook air m3 for 1.1 lakh", { kind: "setTarget", goalId: "gadget", amount: 110000 }],
+  ["goa trip with 4 friends for 20k", { kind: "setTarget", goalId: "travel", amount: 20000 }],
+  // an amount and a date together: both applied, never just the date
+  ["trip 25k in 10 months", { kind: "setTargetAndYears", goalId: "travel", amount: 25000, years: 1 }],
+  ["home 40 lakh by 2032", { kind: "setTargetAndYears", goalId: "home", amount: 4000000, years: 6 }],
+  ["laptop 80k in 2 years", { kind: "setTargetAndYears", goalId: "gadget", amount: 80000, years: 2 }],
   // never a wrong command: small bare numbers, two amounts, income or spending
   ["put 300 a month", null],
   ["laptop 70k and trip 20k", null],
@@ -90,6 +101,8 @@ const GOLDENS: Array<[string, Record<string, unknown> | null]> = [
   ["my parents give me 5000 a month", null],
   ["spent 3000 on food this month", null],
   ["concert tickets 8k", null],
+  ["gift for mom 5k", null],
+  ["birthday present for dad 3k", null],
 ];
 
 const AMOUNTS: Array<[string, number[]]> = [

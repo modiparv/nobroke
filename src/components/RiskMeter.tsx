@@ -29,7 +29,7 @@ export default function RiskMeter({ readOnly = false }: { readOnly?: boolean }) 
         readOnly
           ? "Your risk level. Change it on the Portfolio tab."
           : s.riskAppetiteSource === "assessed"
-            ? "Assessed from your income, cover, dependants and timelines. Slide it if it feels wrong."
+            ? "Assessed from your income, cash runway, dependants and timelines. Slide it if it feels wrong."
             : "Set by you. Recommendations stay within it."
       }
     >

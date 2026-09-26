@@ -188,12 +188,13 @@ export default function Plan() {
                 { label: "Cash", text: formatINR(s.currentSavings) },
                 { label: "Invested", text: formatINR(holdingsTotal(s)) },
                 { label: "Monthly", text: formatINR(s.monthlySip) },
-                // Months of expenses the cash covers: the Protect layer as a
-                // number, same arithmetic as the advisor note.
+                // Months of spending the cash would carry: the Protect layer
+                // as a number, same arithmetic as the advisor note. "Cash
+                // runway", because "cover" reads as insurance.
                 ...(s.monthlyExpenses > 0
                   ? [
                       {
-                        label: "Cover",
+                        label: "Cash runway",
                         text:
                           s.currentSavings / s.monthlyExpenses >= 12
                             ? "12+ mo"

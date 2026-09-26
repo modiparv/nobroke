@@ -18,25 +18,31 @@ export type Command =
   | { kind: "setCash"; amount: number }
   | { kind: "setTarget"; goalId: string; name: string; amount: number }
   | { kind: "setYears"; goalId: string; name: string; years: number; note?: string }
+  /** "trip 25k in 10 months": an amount and a date in one breath, both applied. */
+  | { kind: "setTargetAndYears"; goalId: string; name: string; amount: number; years: number; note?: string }
   | { kind: "autoSplit" }
   | { kind: "recommendPortfolio" }
   | { kind: "newPlan" };
 
 // Loose keyword → { id, display name } map (ids match src/lib/goals.ts).
 // Order matters where words overlap: "education loan" is a loan, "kid's
-// college" is the child's education, so those two sit before "education".
+// college" is the child's education, a "course" is not "study abroad", so
+// the narrower goals sit before the wider ones.
 const GOAL_KEYWORDS: Array<{ re: RegExp; id: string; name: string }> = [
   { re: /\b(safety net|safety|emergency|rainy day)\b/, id: "emergency", name: "Emergency fund" },
   { re: /\b(travel|trip|vacation|holiday)\b/, id: "travel", name: "Big trip" },
   { re: /\b(gadget|tech|phone|laptop|iphone|macbook)\b/, id: "gadget", name: "New phone or laptop" },
   { re: /\b(loan|pay ?off|debt free|debt-free)\b/, id: "loan", name: "Pay off a loan" },
-  { re: /\b(car|bike|scooter|vehicle)\b/, id: "car", name: "First car" },
+  { re: /\b(bike|scooter|scooty|activa|two.?wheeler|motorcycle)\b/, id: "bike", name: "Bike or scooter" },
+  { re: /\b(car|vehicle|four.?wheeler)\b/, id: "car", name: "First car" },
   { re: /\b(wedding|marriage|shaadi)\b/, id: "wedding", name: "Wedding" },
   { re: /\b(home|house|flat|apartment|property|down ?payment)\b/, id: "home", name: "Home down payment" },
   { re: /\b(parents?|mom|dad|mother|father|maa|papa)\b/, id: "parents", name: "Parents' care" },
   { re: /\b(business|startup|venture)\b/, id: "business", name: "Start something" },
   { re: /\b(child|children|kids?|son|daughter|baby)\b/, id: "child", name: "Child's education" },
-  { re: /\b(education|study|upskill|college|degree|masters|abroad)\b/, id: "education", name: "Study abroad or upskill" },
+  { re: /\b(college|fees|semester|tuition|hostel)\b/, id: "college", name: "College fees" },
+  { re: /\b(course|upskill|bootcamp|certification|certificate|skill)\b/, id: "course", name: "Upskill or a course" },
+  { re: /\b(education|study|degree|masters|abroad|university)\b/, id: "education", name: "Study abroad" },
   { re: /\b(retire|retirement|fire)\b/, id: "fire", name: "Retire early" },
   { re: /\b(financial freedom|freedom|independence)\b/, id: "freedom", name: "Financial freedom" },
 ];
@@ -114,7 +120,10 @@ const TARGET_CONTEXT = /\b(target|cost|costs?|worth|need|needs|needed|budget|goa
     to invest: "i get 8000 pocket money a month" must never set the monthly
     investment to ₹8,000. The AI reads these and answers. */
 const INCOME_CONTEXT = /\b(salary|stipend|pocket money|allowance|earn|earns|earning|earnings|income|get paid|paid|gives? me|give me|got from)\b/;
-const SPEND_CONTEXT = /\b(spent|spend|spends|spending|expenses?|bills?|rent|fees?|kharcha|kharch)\b/;
+// "fees" is not here: college fees are a goal, not a spend.
+const SPEND_CONTEXT = /\b(spent|spend|spends|spending|expenses?|bills?|rent|kharcha|kharch)\b/;
+/** A gift for mom is not Parents' care; the AI reads these and answers. */
+const GIFT_CONTEXT = /\b(gifts?|presents?|birthday|anniversary|treat)\b/;
 
 /** Interrogatives that mark a QUESTION, which must never mutate the plan —
     "explain the safety net goal" or "should I rebalance?" go to the AI.
@@ -133,7 +142,7 @@ export function parseCommand(raw: string, now = new Date().getFullYear()): Comma
   // income or spending: the AI sorts out which number is which.
   const amounts = amountsINR(text);
   if (amounts.length > 1) return null;
-  if (INCOME_CONTEXT.test(text) || SPEND_CONTEXT.test(text)) return null;
+  if (INCOME_CONTEXT.test(text) || SPEND_CONTEXT.test(text) || GIFT_CONTEXT.test(text)) return null;
   const amount = amounts[0] ?? null;
 
   const goal = findGoal(text);
@@ -153,26 +162,31 @@ export function parseCommand(raw: string, now = new Date().getFullYear()): Comma
 
   // Set a goal's timeline: "in 6 years", "by 2032", "in 2027", "2032 tak",
   // "in 8 months". The plan works in whole years, so months round and the
-  // confirmation says so.
+  // confirmation says so. With an amount in the same breath ("trip 25k in
+  // 10 months") both are applied, never just the date.
   const yearMatch = text.match(/\b(20[2-9]\d)\b/);
   const yearMention =
     yearMatch && !MONTHLY_AFTER.test(text.slice((yearMatch.index ?? 0) + yearMatch[0].length)) ? Number(yearMatch[1]) : null;
   const inYears = text.match(/\b(?:in|within|after|over)\s+(\d{1,2})\s*(?:years?|yrs?)\b/) || text.match(/\b(\d{1,2})\s*(?:years?|yrs?)\b/);
   const inMonths = text.match(/\b(?:in|within|after|over)\s+(\d{1,2})\s*(?:months?|mos?)\b/) || text.match(/\b(\d{1,2})\s*months?\b/);
   if (goal) {
+    let years: number | null = null;
+    let note: string | undefined;
     if (yearMention != null) {
-      const years = yearMention - now;
-      if (years > 0 && years <= 60) return { kind: "setYears", ...goal, years };
+      years = yearMention - now;
     } else if (inYears) {
-      const years = Number(inYears[1]);
-      if (years > 0 && years <= 60) return { kind: "setYears", ...goal, years };
+      years = Number(inYears[1]);
     } else if (inMonths) {
       const months = Number(inMonths[1]);
       if (months > 0) {
-        const years = Math.max(1, Math.round(months / 12));
-        const note = months % 12 ? `${months} months rounds to ${years} ${years === 1 ? "year" : "years"}; the plan works in whole years.` : undefined;
-        return { kind: "setYears", ...goal, years, ...(note ? { note } : {}) };
+        years = Math.max(1, Math.round(months / 12));
+        if (months % 12) note = `${months} months rounds to ${years} ${years === 1 ? "year" : "years"}; the plan works in whole years.`;
       }
+    }
+    if (years != null && years > 0 && years <= 60) {
+      const when = note ? { years, note } : { years };
+      if (amount != null) return { kind: "setTargetAndYears", ...goal, amount, ...when };
+      return { kind: "setYears", ...goal, ...when };
     }
   }
 

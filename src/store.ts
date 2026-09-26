@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { Allocation, ChatMessage, Holding, PlanGoal, PlanInputs, Profile, RiskProfile } from "./lib/types";
-import { GOAL_MAP } from "./lib/goals";
+import { GOAL_MAP, refreshGoalNames } from "./lib/goals";
 import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios";
 import { adjustedTarget, emergencyTarget, emptyProfile, suggestedSip } from "./lib/profile";
 import { assessRiskAppetite, capProfile, riskBandLabel } from "./lib/risk";
@@ -212,7 +212,10 @@ function coercePlan(raw: unknown): Partial<AppState> {
   if (isObj(r.bucket)) out.bucket = r.bucket;
   if (r.bucketGoalId === null || typeof r.bucketGoalId === "string") out.bucketGoalId = r.bucketGoalId;
   if (isObj(r.goalShares)) out.goalShares = r.goalShares;
-  if (Array.isArray(r.goals)) out.goals = r.goals;
+  // Goals keep the person's numbers and notes; their names and emoji follow
+  // the catalogue, so a rename never leaves an old label in a saved plan.
+  if (Array.isArray(r.goals))
+    out.goals = refreshGoalNames(r.goals.filter((g) => isObj(g) && typeof (g as { id?: unknown }).id === "string") as PlanGoal[]);
   if (Array.isArray(r.goalOrder)) out.goalOrder = r.goalOrder;
   if (Array.isArray(r.externalHoldings)) out.externalHoldings = r.externalHoldings;
   if (Array.isArray(r.selectedGoalIds)) out.selectedGoalIds = r.selectedGoalIds;
@@ -943,6 +946,11 @@ function runCommand(cmd: Command): string {
       ensureGoal(cmd.goalId);
       actions.setGoalTenure(cmd.goalId, cmd.years);
       return `Set ${cmd.name} to ${cmd.years} ${cmd.years === 1 ? "year" : "years"} away.${cmd.note ? ` ${cmd.note}` : ""}`;
+    case "setTargetAndYears":
+      ensureGoal(cmd.goalId);
+      actions.setGoalTarget(cmd.goalId, cmd.amount);
+      actions.setGoalTenure(cmd.goalId, cmd.years);
+      return `Set ${cmd.name} to ${formatINR(cmd.amount)} in today's money, ${cmd.years} ${cmd.years === 1 ? "year" : "years"} away.${cmd.note ? ` ${cmd.note}` : ""}`;
     case "autoSplit":
       actions.recommendGoalSplit();
       return `Auto-balanced your money across goals. ✨`;

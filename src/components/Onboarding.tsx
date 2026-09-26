@@ -297,6 +297,15 @@ const STAGES = [
 
 /** Indian account rails, listed honestly as coming soon. Nothing here fakes
  *  a connection: the step informs and steps aside. */
+// The goal grid is two columns on phones, three on tablets, four on desktop.
+// Whenever the count leaves one orphan in the last row, that tile stretches
+// across the row. Literal class names per breakpoint, so Tailwind sees them.
+const LAST_TILE_SPAN = [
+  GOALS.length % 2 === 1 ? "col-span-2" : "col-span-1",
+  GOALS.length % 3 === 1 ? "sm:col-span-3" : "sm:col-span-1",
+  GOALS.length % 4 === 1 ? "md:col-span-4" : "md:col-span-1",
+].join(" ");
+
 const CONNECT_SOURCES = [
   { name: "Investment portfolio", via: "CAMS · KFintech" },
   { name: "Banking and income", via: "Finvu · OneMoney · CAMSFinserv" },
@@ -439,7 +448,7 @@ export default function Onboarding() {
                     onClick={() => actions.toggleGoal(g.id)}
                     aria-pressed={sel}
                     className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 transition ${
-                      last ? "col-span-2 sm:col-span-3 md:col-span-4" : ""
+                      last ? LAST_TILE_SPAN : ""
                     } ${sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-accent"}`}
                   >
                     <span aria-hidden="true" className="text-2xl leading-none">

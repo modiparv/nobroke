@@ -12,7 +12,8 @@ import {
   totalCapital,
   useStore,
 } from "../store";
-import { card, sectionLabel } from "../ui";
+import { GAP_LABEL, gapLevel } from "../lib/gap";
+import { GAP_PILL, card, sectionLabel } from "../ui";
 import Holdings from "./Holdings";
 import MoneyInput from "./MoneyInput";
 
@@ -164,7 +165,7 @@ export default function MoneyTab() {
                 <ul className="mt-1 divide-y divide-line">
                   {goalsByPriority(s).map((g) => {
                     const share = goalShareFraction(s, g.id);
-                    const onTrack = computePlan(planInputsForGoal(s, g)).onTrack;
+                    const level = gapLevel(computePlan(planInputsForGoal(s, g)));
                     return (
                       <li key={g.id}>
                         {/* The row IS the link: this goal's workbench on the plan. */}
@@ -180,12 +181,8 @@ export default function MoneyTab() {
                           <span className="min-w-0">
                             <span className="flex items-center gap-2">
                               <span className="truncate text-support font-medium text-text">{g.name}</span>
-                              <span
-                                className={`flex-none rounded-full px-1.5 py-px text-index uppercase tracking-wide ${
-                                  onTrack ? "bg-pos-bg text-pos" : "bg-cau-bg text-cau"
-                                }`}
-                              >
-                                {onTrack ? "On track" : "Short"}
+                              <span className={`flex-none rounded-full px-1.5 py-px text-index uppercase tracking-wide ${GAP_PILL[level]}`}>
+                                {GAP_LABEL[level]}
                               </span>
                             </span>
                             <span className="num block text-caption text-text-2">{Math.round(share * 100)}% of the pool</span>

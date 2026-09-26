@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 import { computePlan, requiredCorpus } from "./finance.ts";
-import { cleanTarget, goalOptions, reachableHorizon } from "./options.ts";
+import { cleanTarget, goalOptions, neededMonthly, reachableHorizon } from "./options.ts";
 import type { PlanInputs } from "./types";
 
 // A laptop a year away, ₹2,000 a month, nothing saved, no portfolio yet.
@@ -27,6 +27,36 @@ test("no money in means no later year; a goal on track has none either", () => {
   const r = computePlan(easy);
   assert.equal(r.onTrack, true);
   assert.equal(goalOptions(easy, r).year, null);
+});
+
+test("a date-fixed goal (a child's college year) is never offered a later year", () => {
+  // Rajesh: ₹65 L for college in 8 years, ₹20,000 a month. Money or target are the moves.
+  const college: PlanInputs = { targetToday: 6500000, horizonYears: 8, currentSavings: 0, monthlySip: 20000, inflation: 0.06, allocation: {} };
+  const r = computePlan(college);
+  assert.equal(r.onTrack, false);
+  assert.equal(goalOptions(college, r, { dateFixed: true }).year, null);
+  assert.ok(goalOptions(college, r, { dateFixed: true }).monthly > 0);
+});
+
+test("a later year is offered only within five years of the goal's own date", () => {
+  // At ₹1,500 a month the laptop is reachable, but nine years late: not a move, a different goal.
+  const slow = { ...laptop, monthlySip: 1500 };
+  const r = computePlan(slow);
+  assert.equal(r.onTrack, false);
+  const reachable = reachableHorizon(slow);
+  assert.ok(reachable !== null && reachable - slow.horizonYears > 5, `reachable at ${reachable}`);
+  assert.equal(goalOptions(slow, r).year, null);
+  // Aarav's laptop at ₹2,000 a month is reachable within five years, so the move stays.
+  const o = goalOptions(laptop, computePlan(laptop));
+  assert.ok(o.year !== null && o.year - laptop.horizonYears <= 5);
+});
+
+test("the monthly needed rounds up to the rupee, once, for every surface", () => {
+  // Rajesh's card read ₹53,969 in one place and ₹53,968 in another.
+  assert.equal(neededMonthly({ requiredSip: 53968.2 }), 53969);
+  assert.equal(neededMonthly({ requiredSip: 53968 }), 53968);
+  const r = computePlan(laptop);
+  assert.equal(goalOptions(laptop, r).monthly, neededMonthly(r));
 });
 
 test("targets round down to a clean step for their size", () => {

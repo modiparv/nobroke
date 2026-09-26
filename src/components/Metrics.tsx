@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { PlanGoal, PlanInputs, PlanResult } from "../lib/types";
 import { formatINR, formatPct, formatYears } from "../lib/format";
+import { GOAL_MAP } from "../lib/goals";
 import { goalOptions } from "../lib/options";
 import { actions } from "../store";
 
@@ -51,8 +52,8 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
   // the year today's pace does get there, and the smaller target today's
   // pace reaches by the date. The choice is theirs.
   const options = useMemo(
-    () => (r.onTrack ? null : goalOptions(inputs, r)),
-    [r.onTrack, r.requiredSip, r.realProjectedCorpus, inputs.targetToday, inputs.horizonYears, inputs.currentSavings, inputs.monthlySip, inputs.inflation, inputs.allocation],
+    () => (r.onTrack ? null : goalOptions(inputs, r, { dateFixed: GOAL_MAP[goal.id]?.dateFixed ?? false })),
+    [goal.id, r.onTrack, r.requiredSip, r.realProjectedCorpus, inputs.targetToday, inputs.horizonYears, inputs.currentSavings, inputs.monthlySip, inputs.inflation, inputs.allocation],
   );
   const canFix = !r.onTrack && r.requiredSip <= available;
   const canLower = !!options && options.target >= goal.targetToday * 0.25 && options.target < goal.targetToday;

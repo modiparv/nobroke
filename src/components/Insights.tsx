@@ -2,6 +2,8 @@ import type { Insight, PlanInputs, PlanResult } from "../lib/types";
 import { allocationTotal, growthWeight, normalizedWeights, requiredSip } from "../lib/finance";
 import { FUND_MAP } from "../lib/funds";
 import { formatINR, formatPct, formatYears } from "../lib/format";
+import { GAP_LABEL, gapLevel } from "../lib/gap";
+import { neededMonthly } from "../lib/options";
 
 function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
   const out: Insight[] = [];
@@ -16,8 +18,12 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
       out.push({ tone: "positive", icon: "⏱️", title: "Ahead of schedule", message: `At this pace you cross the goal in ~${formatYears(r.goalReachedMonth / 12)}.` });
     }
   } else {
-    const extra = Math.max(0, r.requiredSip - inputs.monthlySip);
-    out.push({ tone: "warning", icon: "📉", title: "A little short", message: `At today's pace you reach ${formatINR(r.projectedCorpus)}, about ${formatINR(Math.abs(r.gap))} under. Raising your monthly investing to ${formatINR(r.requiredSip)}/mo (+${formatINR(extra)}) closes the gap.` });
+    // The title matches the size of the gap: "A little short" for a gap of
+    // more than half the goal would mislead.
+    const level = gapLevel(r);
+    const monthly = neededMonthly(r);
+    const extra = Math.max(0, monthly - Math.round(inputs.monthlySip));
+    out.push({ tone: level === "far_short" ? "negative" : "warning", icon: level === "far_short" ? "🚨" : "📉", title: GAP_LABEL[level], message: `At today's pace you reach ${formatINR(r.projectedCorpus)}, about ${formatINR(Math.abs(r.gap))} under. Raising your monthly investing to ${formatINR(monthly)}/mo (+${formatINR(extra)}) closes the gap.` });
   }
 
   const eq = growthWeight(inputs.allocation);
@@ -39,8 +45,8 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
 
   // The cost of waiting: same target, same date, one year less of investing.
   if (inputs.horizonYears > 1) {
-    const later = requiredSip(r.requiredCorpus, inputs.currentSavings, r.blendedReturn, inputs.horizonYears - 1);
-    out.push({ tone: "info", icon: "⏳", title: "The cost of waiting", message: `Start a year later and the monthly needed rises to ${formatINR(later)}, from ${formatINR(r.requiredSip)} now. Time is doing part of the work.` });
+    const later = neededMonthly({ requiredSip: requiredSip(r.requiredCorpus, inputs.currentSavings, r.blendedReturn, inputs.horizonYears - 1) });
+    out.push({ tone: "info", icon: "⏳", title: "The cost of waiting", message: `Start a year later and the monthly needed rises to ${formatINR(later)}, from ${formatINR(neededMonthly(r))} now. Time is doing part of the work.` });
   }
 
   out.push({ tone: "info", icon: "🔥", title: "Prices rise over time", message: `Your ${formatINR(inputs.targetToday)} goal will cost about ${formatINR(r.requiredCorpus)} in ${formatYears(inputs.horizonYears)}, so we plan for the future price, not today's.` });
@@ -51,13 +57,14 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
 const BORDER: Record<string, string> = {
   positive: "rgb(var(--pos))",
   warning: "rgb(var(--cau))",
+  negative: "rgb(var(--neg))",
   info: "rgb(var(--line))",
 };
 
 /** Folded, the verdict and any warning show; the rest waits behind "more". */
 export default function Insights({ r, inputs, expanded = true }: { r: PlanResult; inputs: PlanInputs; expanded?: boolean }) {
   const all = generate(inputs, r);
-  const list = expanded ? all : all.filter((ins, i) => i === 0 || ins.tone === "warning");
+  const list = expanded ? all : all.filter((ins, i) => i === 0 || ins.tone === "warning" || ins.tone === "negative");
   return (
     <div className="flex flex-col gap-2.5">
       {list.map((ins, i) => (
