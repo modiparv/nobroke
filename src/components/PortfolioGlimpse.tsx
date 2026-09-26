@@ -6,7 +6,7 @@ import { GAP_LABEL, gapLevel, gapTone } from "../lib/gap";
 import { categoryCode } from "../lib/holdings";
 import { equityShare, mixLabel } from "../lib/portfolios";
 import { squarify } from "../lib/treemap";
-import { actions, goalShareFraction, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
+import { actions, capitalForGoal, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
 import { sectionLabel } from "../ui";
 import RiskMeter from "./RiskMeter";
 
@@ -143,7 +143,7 @@ export default function PortfolioGlimpse() {
   // View 2 — the same money, split by the goal it serves.
   const capital = totalCapital(s);
   const goalItems: TreemapItem[] = goalsByPriority(s).map((g) => {
-    const amount = capital * goalShareFraction(s, g.id);
+    const amount = capitalForGoal(s, g.id);
     const level = gapLevel(computePlan(planInputsForGoal(s, g)));
     const tone = gapTone(level);
     return {

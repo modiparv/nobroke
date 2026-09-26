@@ -1,12 +1,14 @@
 # NoBroke: UX and product fixes (brief for Claude Code)
 
-Source: persona testing of `main` at `6238043` (25 Sep 2026) with a 20-year-old student and a 40-year-old salaried parent, on 360px and 390px phone screens with the real fonts. Every issue below was reproduced in the app or in the code. File paths and line numbers are from that commit; line numbers are approximate.
+**Status (26 Sep 2026): Phase 1 shipped in #11 and verified.** All 293 tests pass, and all six Phase 1 fixes show correctly on screen. Next: Phase 1b (below), then Phase 2.
+
+Source: persona testing of `main` at `6238043` (25 Sep 2026), re-checked at `a0f550e` (26 Sep) with a 20-year-old student and a 40-year-old salaried parent, on 360px and 390px phone screens with the real fonts. Every issue below was reproduced in the app or in the code. File paths and line numbers are from that commit; line numbers are approximate.
 
 ## How to use this brief
 
-1. Save this file in the repo as `docs/ux-brief.md`.
+1. Replace `docs/ux-brief.md` in the repo with this file.
 2. In Claude Code, start with:
-   > Read docs/ux-brief.md. Do Phase 1 only, one task per commit. Run `npm test` and `npm run build` after each task. Stop and report when Phase 1 is done.
+   > Read docs/ux-brief.md. Phase 1 is done. Do Phase 1b, one task per commit. Run `npm test` and `npm run build` after each task. Stop and report when Phase 1b is done.
 3. Review, then ask for the next phase. Phases 4 to 6 change structure, so review each step before continuing.
 
 ## Ground rules
@@ -39,17 +41,20 @@ Use these for every acceptance check.
 | Goals | New phone or laptop, Big trip, Study abroad or upskill | Emergency fund, New phone or laptop, Big trip | Child's education, Retire early, Parents' care |
 | First goal | Within 2 years | Within 2 years | 6 to 10 years |
 
-What these personas show today:
-- **Aarav:** opens on "0 of 3 goals on track", monthly ₹2,900.
-- **Riya:** monthly ₹10,000, emergency fund ₹25,000. Both are correct now; keep them that way.
+What these personas show at `a0f550e`:
+- **Aarav:**
+  - opens on "0 of 3 goals on track", with all three goals marked "Far short", on the default goal prices (trip ₹2 L, laptop ₹1 L);
+  - with his real prices (trip ₹20,000, laptop ₹70,000) he gets "1 of 3", although 2 of 3 is reachable (task 1b.1).
+- **Riya:** monthly ₹10,000, emergency fund ₹25,000. Both correct; keep them that way.
 - **Rajesh:**
-  - monthly ₹37,000, "Cover 2.9 mo", "1 of 3 on track";
-  - Child's education ₹65 L by 2034 offers "Move to 2046";
-  - the reason card says "A little short" for a ₹54.69 L gap.
+  - "Cash runway 2.9 mo", "1 of 3 on track";
+  - Child's education reads "Far short" with no date move;
+  - "Needs ₹53,969/mo" matches the reason card.
+  - All correct; keep them that way.
 
 ---
 
-## Phase 1: correct numbers and honest words (small; do first)
+## Phase 1: correct numbers and honest words (done in #11, verified 26 Sep)
 
 ### 1.1 Don't offer "Move to {year}" for goals whose date can't move
 - **Problem:** Rajesh's Child's education (₹65 L by 2034) offers "Move to 2046". His daughter would be 30.
@@ -113,6 +118,48 @@ What these personas show today:
   - Add `course`: "Upskill or a course", ₹50,000, 1 year.
   - Rename `education` to "Study abroad". Keep the id `education` so saved plans keep working, and migrate the stored goal name.
 - **Accept:** the intake goal grid shows the new tiles, the AI tool enum includes the new ids, and tests and evals are updated.
+
+---
+
+## Phase 1b: follow-ups found while verifying Phase 1 (do next)
+
+### 1b.1 Split money by what each goal still needs
+- **Problem:**
+  - After Aarav sets his trip to ₹20,000 and his laptop to ₹70,000, the trip keeps all the money: "₹28,000 saved, reaches ₹67,866" for a ₹20,000 goal. The laptop gets ₹0 and reads "Far short".
+  - Tapping "Use recommended split" still over-funds the trip (reaches ₹39,077) and leaves the laptop "Short".
+- **Cause:** `recommendShares` in `src/store.ts` (around lines 363 to 395) computes each goal's monthly need with `requiredSip(reqCorpus, 0, …)`. It ignores the money already saved for that goal, so a goal that savings already cover still gets its full monthly share.
+- **Change:**
+  - Put saved money into the nearest goals first, only up to what each needs.
+  - Then compute each goal's monthly need net of the saved money it holds.
+  - Re-run the split automatically when a goal's amount or date changes, unless the person has customised it (`goalSharesCustom`).
+- **Accept:**
+  - With Aarav's plan, trip ₹20,000 and laptop ₹70,000:
+    - the trip is covered from savings with ₹0 a month;
+    - the laptop reads "On track";
+    - the band reads "2 of 3 goals on track".
+  - Check the maths with the engine: covering the trip takes about ₹19,200 of savings. The remaining ₹8,800 plus ₹2,900 a month projects to ₹88,465 against ₹78,652 needed.
+  - Tests in `src/lib/` for the split.
+
+### 1b.2 Ask what each goal costs when it's picked
+- **Problem:** default prices (trip ₹2 L, laptop ₹1 L) put every goal of a student at "Far short" on the first screen.
+- **Change:**
+  - Right after the goal grid in the intake, show one money field per picked goal, prefilled with the default and skippable.
+  - Use the entered amounts as the goals' targets.
+- **Accept:** Aarav can enter ₹20,000 and ₹70,000 during the intake. With 1b.1 done, his plan opens on "2 of 3 goals on track".
+
+### 1b.3 College fees have a fixed date
+- **Where:** `src/lib/goals.ts`, the `college` entry.
+- **Change:** set `dateFixed: true`, because fees fall due on a date.
+- **Accept:** College fees never shows "Move to {year}". Test in `options.test.ts`.
+
+### 1b.4 A calmer "Far short"
+- **Where:** `src/components/Insights.tsx` line 26 uses 🚨 for `far_short`.
+- **Change:** replace the siren with a plain alert icon. The full status icon set comes in task 2.3.
+- **Accept:** no siren emoji anywhere in the app.
+
+### 1b.5 One line of context for education goals that are far short
+- **Change:** under the moves for Child's education and College fees, add one line: "An education loan or scholarship can cover part of this." This is general information, not a product recommendation.
+- **Accept:** shown only for those goals when they're far short.
 
 ---
 
@@ -314,7 +361,7 @@ What these personas show today:
 - **Password reset:** the sign-in sheet says "Password reset coming soon". Reset needs an email provider; Google or phone-OTP sign-in needs OAuth or SMS keys.
 - **Pricing copy:** free tier and student price.
 - **Registration wording** for the trust block.
-- **Production deploy:** nobroke.in still served the old page title and share image when fetched on 25 Sep. Check that production deploys from `main`.
+- **Production deploy:** fixed. nobroke.in now serves the 25 Sep title and share image. Confirm that #11 (Phase 1) is live too.
 - **In-app investing:** needs a partner or licence decision.
 
 ## Definition of done (every phase)

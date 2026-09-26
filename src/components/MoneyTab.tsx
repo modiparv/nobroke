@@ -4,6 +4,7 @@ import { formatINR } from "../lib/format";
 import { categoryCode } from "../lib/holdings";
 import {
   actions,
+  capitalForGoal,
   goalMonthly,
   goalShareFraction,
   goalsByPriority,
@@ -189,7 +190,7 @@ export default function MoneyTab() {
                           </span>
                           <span className="flex flex-none items-center gap-2 text-right">
                             <span>
-                              <span className="num block text-support font-medium text-text">{formatINR(totalCapital(s) * share)}</span>
+                              <span className="num block text-support font-medium text-text">{formatINR(capitalForGoal(s, g.id))}</span>
                               <span className="num block text-caption text-text-2">{formatINR(goalMonthly(s, g.id))}/mo</span>
                             </span>
                             <span aria-hidden className="text-text-3">
