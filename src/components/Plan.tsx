@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { GOALS } from "../lib/goals";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
+import { runwayLabel, runwayMonths } from "../lib/runway";
 import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
 import { btnPrimary, card, sectionLabel } from "../ui";
 import AdvisorNote from "./AdvisorNote";
@@ -189,17 +190,10 @@ export default function Plan() {
                 { label: "Invested", text: formatINR(holdingsTotal(s)) },
                 { label: "Added every month", text: formatINR(s.monthlySip) },
                 // Months of expenses the cash would carry: the Protect layer
-                // as a number, same arithmetic as the advisor note.
+                // as a number, the same rule as the advisor note and the
+                // cash sheet (lib/runway).
                 ...(s.monthlyExpenses > 0
-                  ? [
-                      {
-                        label: "Cash lasts",
-                        text:
-                          s.currentSavings / s.monthlyExpenses >= 12
-                            ? "12+ months"
-                            : `${(s.currentSavings / s.monthlyExpenses).toFixed(1)} months`,
-                      },
-                    ]
+                  ? [{ label: "Cash lasts", text: runwayLabel(runwayMonths(s.currentSavings, s.monthlyExpenses)) }]
                   : []),
               ].map(({ label, text }) => (
                 <div key={label}>
@@ -210,7 +204,7 @@ export default function Plan() {
             </dl>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              <Pill label="Add money" onBand onClick={() => actions.setTab("money")} />
+              <Pill label="Add money" onBand onClick={() => actions.openSheet({ kind: "add_money" })} />
               <AddGoal onAdd={addGoal} onBand />
               {firstOffTrack && (
                 <Pill label={`Fix ${firstOffTrack.name.toLowerCase()}`} accent onClick={() => openGoal(firstOffTrack.id)} />

@@ -3,6 +3,8 @@ import type { PlanGoal } from "../lib/types";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
 import { GAP_LABEL, gapLevel } from "../lib/gap";
+import { FOCUS } from "../lib/links";
+import { useFocus } from "../lib/useFocus";
 import { actions, capitalForGoal, goalMonthly, goalShareFraction, goalsByPriority, planInputsForGoal, useStore } from "../store";
 import { GAP_DOT, GAP_PILL, GAP_TEXT, sectionLabel } from "../ui";
 import Chart from "./Chart";
@@ -136,9 +138,11 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
   const ahead = goalsByPriority(s)
     .filter((x) => x.id !== g.id && goalMonthly(s, x.id) > 0)
     .map((x) => ({ name: x.name, year: BASE_YEAR + x.horizonYears }));
+  // A row on Money's "By goal" lands here.
+  const focus = useFocus(FOCUS.goalDetail);
 
   return (
-    <section className="overflow-hidden rounded-card border border-line bg-surface">
+    <section ref={focus.ref} className={`overflow-hidden rounded-card border border-line bg-surface ${focus.active ? "focus-flash" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-b border-line px-3 py-3 sm:px-4">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-section font-medium tracking-[-0.015em]">{g.name}</span>
@@ -219,7 +223,18 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
         />
 
         <div>
-          <span className={sectionLabel}>How {g.name} grows</span>
+          <div className="flex items-baseline justify-between gap-3">
+            <span className={sectionLabel}>How {g.name} grows</span>
+            {/* Every goal is funded from the one mix: the funds list on the
+                Portfolio tab is where this money is invested today. */}
+            <button
+              type="button"
+              onClick={() => actions.setTab("portfolio", { focus: FOCUS.funds })}
+              className="text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+            >
+              Where this money is invested →
+            </button>
+          </div>
           <Chart r={r} />
         </div>
 

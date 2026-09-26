@@ -4,6 +4,7 @@ import { ASSET_CLASSES } from "../lib/funds";
 import { formatINR } from "../lib/format";
 import { GAP_LABEL, gapLevel, gapTone } from "../lib/gap";
 import { categoryCode } from "../lib/holdings";
+import { FOCUS, holdingFocus } from "../lib/links";
 import { equityShare, mixLabel } from "../lib/portfolios";
 import { squarify } from "../lib/treemap";
 import { actions, capitalForGoal, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
@@ -82,8 +83,10 @@ export default function PortfolioGlimpse() {
   const s = useStore();
   const [view, setView] = useState<"holdings" | "goals">("holdings");
   const total = allocationTotal(s.portfolio);
-  const openPortfolio = () => actions.setTab("portfolio");
-  const openMoney = () => actions.setTab("money");
+  // Every link lands on the exact thing: the mix on Portfolio, or one
+  // holding (or the cash field, or the investments list) on Money.
+  const openPortfolio = () => actions.setTab("portfolio", { focus: FOCUS.mix });
+  const openMoney = (focus: string = FOCUS.investments) => actions.setTab("money", { focus });
 
   if (total <= 0) {
     return (
@@ -119,7 +122,7 @@ export default function PortfolioGlimpse() {
             amount: s.currentSavings,
             ...categoryCode("Cash"),
             title: `Cash: ${formatINR(s.currentSavings)} in the bank`,
-            onClick: openMoney,
+            onClick: () => openMoney(FOCUS.cash),
           },
         ]
       : []),
@@ -133,7 +136,7 @@ export default function PortfolioGlimpse() {
           amount: h.amount,
           ...tone,
           title: `${h.name}: ${formatINR(h.amount)} (${h.type})`,
-          onClick: openMoney,
+          onClick: () => openMoney(holdingFocus(h.id)),
         };
       }),
   ];
@@ -173,7 +176,7 @@ export default function PortfolioGlimpse() {
           onClick={openPortfolio}
           className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
         >
-          Manage →
+          Change your mix →
         </button>
       </div>
 
@@ -253,8 +256,8 @@ export default function PortfolioGlimpse() {
         <div className="mt-4 border-t border-line pt-3">
           <div className="flex items-baseline justify-between gap-3">
             <span className={sectionLabel}>Share of portfolio</span>
-            <button onClick={openMoney} className="text-caption text-text-2 transition hover:text-text">
-              Manage holdings →
+            <button onClick={() => openMoney()} className="text-caption text-text-2 transition hover:text-text">
+              Edit your investments →
             </button>
           </div>
           {/* One bar, the whole portfolio: each segment a holding, carrying
@@ -283,7 +286,7 @@ export default function PortfolioGlimpse() {
             ))}
           </ul>
           {listed.length > 5 && (
-            <button onClick={openMoney} className="mt-2 text-caption text-text-2 transition hover:text-text">
+            <button onClick={() => openMoney()} className="mt-2 text-caption text-text-2 transition hover:text-text">
               +{listed.length - 5} more in Money →
             </button>
           )}

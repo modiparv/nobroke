@@ -4,8 +4,11 @@ import { fundFromLiveScheme, getLiveSchemeDetail, searchLiveSchemes, type LiveSc
 import { MODEL_PORTFOLIOS } from "../lib/portfolios";
 import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
 import { formatINR, formatPct } from "../lib/format";
+import { FOCUS, holdingForFund, holdingFocus } from "../lib/links";
+import { onTrackCount, outlook } from "../lib/outlook";
 import type { Allocation, AssetClassId, RiskProfile } from "../lib/types";
-import { actions, recommendedPortfolio, useStore } from "../store";
+import { useFocus } from "../lib/useFocus";
+import { actions, planShape, recommendedPortfolio, useStore } from "../store";
 import { appetiteCeiling } from "../lib/risk";
 import RiskMeter from "./RiskMeter";
 import { sectionLabel } from "../ui";
@@ -51,6 +54,9 @@ export default function PortfolioBuilder() {
   const [search, setSearch] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [riskOpen, setRiskOpen] = useState(false);
+  // Links from the plan land on the mix, or on the funds in it.
+  const mixFocus = useFocus(FOCUS.mix);
+  const fundsFocus = useFocus(FOCUS.funds);
 
   // Live universe search (AMFI via /api/instruments), debounced. Failures are
   // silent: the built-in list keeps working without the network.
@@ -156,6 +162,10 @@ export default function PortfolioBuilder() {
     setAlloc(normalizeTo100(next), null);
   };
   const applyPreset = (key: RiskProfile) => setAlloc(normalizeTo100(MODEL_PORTFOLIOS[key].allocation), key);
+  // What each ready-made mix would do to the goals, before it is applied:
+  // the same money, the same split, only the mix changed.
+  const previewFor = (key: RiskProfile) =>
+    s.goals.length ? onTrackCount(outlook({ ...planShape(s), allocation: normalizeTo100(MODEL_PORTFOLIOS[key].allocation) })) : null;
 
   const holdings = Object.keys(alloc).sort(
     (a, b) => CLASS_ORDER.indexOf(FUND_MAP[a]?.assetClass) - CLASS_ORDER.indexOf(FUND_MAP[b]?.assetClass),
@@ -308,7 +318,10 @@ export default function PortfolioBuilder() {
 
         {/* ---- Basket (drop zone) ---- */}
         <div
-          className={`order-1 min-w-0 rounded-card border bg-surface p-3.5 transition ${dragOver ? "border-accent ring-2 ring-accent/40" : "border-line"}`}
+          ref={mixFocus.ref}
+          className={`order-1 min-w-0 rounded-card border bg-surface p-3.5 transition ${dragOver ? "border-accent ring-2 ring-accent/40" : "border-line"} ${
+            mixFocus.active ? "focus-flash" : ""
+          }`}
           onDragOver={(e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";
@@ -393,6 +406,7 @@ export default function PortfolioBuilder() {
                 const active = s.portfolioProfile === key;
                 const order: RiskProfile[] = ["steady", "balanced", "bold"];
                 const beyond = order.indexOf(key) > order.indexOf(appetiteCeiling(s.riskAppetite));
+                const preview = previewFor(key);
                 return (
                   <button
                     key={key}
@@ -406,6 +420,11 @@ export default function PortfolioBuilder() {
                     <div className={`mt-0.5 text-index leading-tight ${active ? "text-text-2" : "text-muted"}`}>
                       {MODEL_PORTFOLIOS[key].tagline}
                     </div>
+                    {preview !== null && (
+                      <div className="num mt-1 text-index leading-tight text-text-2">
+                        {preview} of {s.goals.length} on track
+                      </div>
+                    )}
                     {beyond && (
                       <div className="mt-1 text-index leading-tight text-cau">Riskier than you said you're OK with</div>
                     )}
@@ -425,7 +444,7 @@ export default function PortfolioBuilder() {
           {/* What's in your mix: compact dot rows in a fixed-height, scrollable
               basket so adding more funds never makes the pane grow. */}
           {holdings.length > 0 && (
-            <div className="mt-5">
+            <div ref={fundsFocus.ref} className={`mt-5 rounded-control ${fundsFocus.active ? "focus-flash" : ""}`}>
               <span className={`inline-flex items-center gap-1.5 ${sectionLabel}`}>
                 <Marker /> The {holdings.length} {holdings.length === 1 ? "fund" : "funds"} in your mix
               </span>
@@ -436,10 +455,23 @@ export default function PortfolioBuilder() {
                   const ac = ASSET_CLASSES[f.assetClass];
                   const pctOfTotal = total > 0 ? Math.round(((alloc[id] ?? 0) / total) * 100) : 0;
                   const amt = amountFor(id);
+                  // A fund the person already holds links to that holding on Money.
+                  const owned = holdingForFund(f.name, s.externalHoldings);
                   return (
                     <div key={id} className="flex items-center gap-1.5 rounded-control bg-surface-2/40 px-2 py-1.5">
                       <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: ac.color }} title={ac.label} />
-                      <span className="min-w-0 flex-1 truncate text-support font-medium leading-tight">{f.name}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-support font-medium leading-tight">{f.name}</span>
+                        {owned && (
+                          <button
+                            type="button"
+                            onClick={() => actions.setTab("money", { focus: holdingFocus(owned.id) })}
+                            className="num block truncate text-index text-text-2 underline underline-offset-2 transition hover:text-text"
+                          >
+                            You hold {formatINR(owned.amount)} of this. See it in Money →
+                          </button>
+                        )}
+                      </span>
                       <span className="hidden flex-none text-index tabular-nums text-muted sm:inline">{formatINR(amt)} a month</span>
                       <button
                         onClick={() => setWeight(id, (alloc[id] ?? 0) - 5)}

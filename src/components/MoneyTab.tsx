@@ -14,6 +14,8 @@ import {
   useStore,
 } from "../store";
 import { GAP_LABEL, gapLevel } from "../lib/gap";
+import { FOCUS } from "../lib/links";
+import { useFocus } from "../lib/useFocus";
 import { GAP_PILL, card, sectionLabel } from "../ui";
 import Holdings from "./Holdings";
 import MoneyInput from "./MoneyInput";
@@ -60,6 +62,9 @@ export default function MoneyTab() {
   // left with no plan. The last sentence only appears when it is above zero.
   const leftover = Math.max(0, s.monthlyIncome - s.monthlyExpenses);
   const unplanned = Math.max(0, leftover - s.monthlySip);
+  // Links from the plan land on the cash field or the monthly numbers.
+  const cashFocus = useFocus(FOCUS.cash);
+  const monthFocus = useFocus(FOCUS.everyMonth);
 
   const series = projectionSeries(
     {
@@ -170,12 +175,13 @@ export default function MoneyTab() {
                     const level = gapLevel(computePlan(planInputsForGoal(s, g)));
                     return (
                       <li key={g.id}>
-                        {/* The row IS the link: this goal's workbench on the plan. */}
+                        {/* The row IS the link: this goal's workbench on the plan,
+                            scrolled to and lit up. */}
                         <button
                           type="button"
                           onClick={() => {
                             actions.setCurrentGoal(g.id);
-                            actions.setTab("plan");
+                            actions.setTab("plan", { focus: FOCUS.goalDetail });
                           }}
                           title={`Open ${g.name} on the plan`}
                           className="flex w-full items-center justify-between gap-3 py-2.5 text-left transition hover:text-text-2"
@@ -224,7 +230,7 @@ export default function MoneyTab() {
         </div>
 
         <aside className="flex flex-col gap-4">
-          <section className={card}>
+          <section ref={monthFocus.ref} className={`${card} ${monthFocus.active ? "focus-flash" : ""}`}>
             <span className={sectionLabel}>Every month</span>
             <div className="mt-3" />
             <MoneyInput label="Money in" value={s.monthlyIncome} onChange={actions.setIncome} step={5000} min={0} max={10000000} compact />
@@ -243,9 +249,20 @@ export default function MoneyTab() {
                   {unplanned > 0 ? ` ${formatINR(unplanned)} has no plan yet.` : ""}
                 </p>
               ))}
+            {/* The money with no plan yet, into the monthly sheet: every
+                goal's new verdict shows before it is saved. */}
+            {s.monthlyIncome > 0 && unplanned > 0 && (
+              <button
+                type="button"
+                onClick={() => actions.openSheet({ kind: "monthly", prefill: s.monthlySip + unplanned })}
+                className="num mt-2 text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+              >
+                Invest the {formatINR(unplanned)} →
+              </button>
+            )}
           </section>
 
-          <section className={card}>
+          <section ref={cashFocus.ref} className={`${card} ${cashFocus.active ? "focus-flash" : ""}`}>
             <span className={sectionLabel}>In the bank</span>
             <div className="mt-3" />
             <MoneyInput label="Cash" value={s.currentSavings} onChange={actions.setSavings} step={25000} min={0} max={50000000} compact />

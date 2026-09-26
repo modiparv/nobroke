@@ -27,7 +27,7 @@ export default function PortfolioTab() {
           onClick={() => actions.setTab("plan")}
           className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
         >
-          See the plan →
+          See your goals →
         </button>
       </div>
       <div className="grid items-start gap-5 lg:grid-cols-2">

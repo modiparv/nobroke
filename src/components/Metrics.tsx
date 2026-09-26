@@ -109,7 +109,15 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
               To get there, put in {formatINR(options.monthly)} a month. You have {formatINR(available)} free after your other goals.{" "}
               <button
                 type="button"
-                onClick={() => actions.setTab("money")}
+                // The monthly sheet, prefilled so this goal gets what it
+                // needs, with every goal's new date shown before saving.
+                onClick={() =>
+                  actions.openSheet({
+                    kind: "monthly",
+                    goalId: goal.id,
+                    prefill: Math.max(0, Math.round(monthlyPool + options.monthly - monthly)),
+                  })
+                }
                 className="font-medium text-text underline underline-offset-2 transition hover:text-text-2"
               >
                 Put in more

@@ -4,6 +4,7 @@ import { GOAL_MAP, refreshGoalNames } from "./lib/goals";
 import { INTAKE_HOLDING_ID, INTAKE_HOLDING_NAME, UNSORTED_CATEGORY, UNSORTED_TYPE, refreshHoldingLabels } from "./lib/holdings";
 import { applyGoalCosts } from "./lib/onboarding";
 import { splitCapital, splitMonthly } from "./lib/split";
+import type { PlanShape } from "./lib/outlook";
 import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios";
 import { adjustedTarget, emergencyTarget, emptyProfile, suggestedSip } from "./lib/profile";
 import { assessRiskAppetite, capProfile, riskBandLabel } from "./lib/risk";
@@ -88,6 +89,29 @@ export interface AppState {
   /** True while a full-screen overlay (auth sheet, account menu) is open, so
       the copilot bar can step out of its way. Never persisted. */
   modalOpen: boolean;
+  /** The sheet open over the plan, if any: a small form for one change,
+      showing its effect on the goals before it is saved. Never persisted. */
+  sheet: Sheet | null;
+  /** A section a link asked to land on. The page scrolls there and lights
+      it up once, then clears it. Never persisted. */
+  focus: Focus | null;
+}
+
+/** The sheets a link can open. Each is one change, with its effect shown
+    live: add money (a choice of cash or an investment), cash in the bank,
+    the monthly amount (optionally for one goal, optionally prefilled), or
+    a new investment. */
+export type Sheet =
+  | { kind: "add_money" }
+  | { kind: "cash" }
+  | { kind: "monthly"; goalId?: string; prefill?: number }
+  | { kind: "add_investment" };
+
+export interface Focus {
+  id: string;
+  /** Bumped on every request, so landing on the same section twice still
+      scrolls and flashes twice. */
+  stamp: number;
 }
 
 /** The durable financial plan: exactly the fields that sync to an account.
@@ -153,6 +177,8 @@ const defaults: AppState = {
   user: null,
   planUpdatedAt: 0,
   modalOpen: false,
+  sheet: null,
+  focus: null,
 };
 
 /**
@@ -175,7 +201,16 @@ function loadPersisted(): Partial<AppState> | null {
   }
 }
 
-let state: AppState = { ...defaults, ...loadPersisted(), chatOpen: false, chat: [], chatTyping: false, modalOpen: false };
+let state: AppState = {
+  ...defaults,
+  ...loadPersisted(),
+  chatOpen: false,
+  chat: [],
+  chatTyping: false,
+  modalOpen: false,
+  sheet: null,
+  focus: null,
+};
 
 const nowMs = () => Date.now();
 
@@ -185,9 +220,10 @@ const nowMs = () => Date.now();
 let syncReady = false;
 
 /** What persists to localStorage: everything except chat and the transient
-    modal flag. Keeps `user` so a reload remembers the session to re-validate. */
+    overlay state (modal flag, open sheet, focus). Keeps `user` so a reload
+    remembers the session to re-validate. */
 function localBlob(): Record<string, unknown> {
-  const { chat: _c, chatOpen: _o, chatTyping: _t, modalOpen: _m, ...rest } = state;
+  const { chat: _c, chatOpen: _o, chatTyping: _t, modalOpen: _m, sheet: _s, focus: _f, ...rest } = state;
   return rest;
 }
 
@@ -320,6 +356,21 @@ export function capitalByGoal(s: AppState = state): Record<string, number> {
 export function capitalForGoal(s: AppState, id: string): number {
   return capitalByGoal(s)[id] ?? 0;
 }
+/** The plan as lib/outlook reads it, for a sheet's live preview. `resplit`
+    lets the monthly split follow need (what setSip does when the split is
+    not pinned). Off, the current shares stand (what setSavings does). */
+export function planShape(s: AppState, opts: { resplit?: boolean } = {}): PlanShape {
+  const follow = opts.resplit && !s.goalSharesCustom;
+  return {
+    goals: s.goals,
+    goalOrder: s.goalOrder,
+    goalShares: follow ? null : s.goalShares,
+    monthlySip: s.monthlySip,
+    capital: totalCapital(s),
+    inflation: s.inflation,
+    allocation: s.portfolio,
+  };
+}
 /** Goals in priority order (falls back to declaration order). */
 /** The climb: how much of everything the goals need today's pace reaches,
     0..1 (lib/climb). The avatar's height, from the same engine as every
@@ -438,7 +489,17 @@ export function recommendedPortfolio(
 export const actions = {
   goLanding: () => set({ screen: "landing" }),
   goPlan: () => set({ screen: "plan" }),
-  setTab: (tab: AppState["tab"]) => set({ tab }),
+  /** Show a tab. With `focus`, land on that section of it: the page scrolls
+      there and lights it up for a moment (lib/links names the sections). */
+  setTab: (tab: AppState["tab"], opts: { focus?: string } = {}) =>
+    set({ tab, focus: opts.focus ? { id: opts.focus, stamp: nowMs() } : null, sheet: null }),
+  clearFocus: () => {
+    if (state.focus) set({ focus: null });
+  },
+  /** One change in a small sheet over the plan, its effect on the goals
+      shown before it is saved. */
+  openSheet: (sheet: Sheet) => set({ sheet }),
+  closeSheet: () => set({ sheet: null }),
 
   // ---- Account ----
   /**

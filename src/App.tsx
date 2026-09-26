@@ -7,6 +7,7 @@ import Landing from "./components/Landing";
 import Onboarding from "./components/Onboarding";
 import Plan from "./components/Plan";
 import CopilotBar from "./components/CopilotBar";
+import Sheets from "./components/Sheets";
 
 export default function App() {
   const s = useStore();
@@ -63,10 +64,12 @@ export default function App() {
       {s.screen === "landing" && <Landing />}
       {s.screen === "onboarding" && <Onboarding />}
       {s.screen === "plan" && <Plan />}
+      {/* One change at a time, in a sheet over whichever tab is showing. */}
+      {s.screen === "plan" && s.sheet && <Sheets />}
       {/* The copilot steps aside while an overlay is open so it cannot paint
           or capture clicks over the modal (it lives outside the header's
           stacking context). */}
-      {s.screen === "plan" && !s.modalOpen && <CopilotBar />}
+      {s.screen === "plan" && !s.modalOpen && !s.sheet && <CopilotBar />}
     </>
   );
 }
