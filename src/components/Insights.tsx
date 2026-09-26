@@ -23,7 +23,7 @@ function generate(inputs: PlanInputs, r: PlanResult): Insight[] {
     const level = gapLevel(r);
     const monthly = neededMonthly(r);
     const extra = Math.max(0, monthly - Math.round(inputs.monthlySip));
-    out.push({ tone: level === "far_short" ? "negative" : "warning", icon: level === "far_short" ? "🚨" : "📉", title: GAP_LABEL[level], message: `At today's pace you reach ${formatINR(r.projectedCorpus)}, about ${formatINR(Math.abs(r.gap))} under. Raising your monthly investing to ${formatINR(monthly)}/mo (+${formatINR(extra)}) closes the gap.` });
+    out.push({ tone: level === "far_short" ? "negative" : "warning", icon: level === "far_short" ? "⚠️" : "📉", title: GAP_LABEL[level], message: `At today's pace you reach ${formatINR(r.projectedCorpus)}, about ${formatINR(Math.abs(r.gap))} under. Raising your monthly investing to ${formatINR(monthly)}/mo (+${formatINR(extra)}) closes the gap.` });
   }
 
   const eq = growthWeight(inputs.allocation);
