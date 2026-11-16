@@ -37,45 +37,6 @@ const OFFERINGS = [
   },
 ];
 
-/**
- * Tier names walk the arc of wealth in the old stories: Akshaya, the vessel
- * that never empties; Meru, the golden mountain. The gate that scales with
- * seriousness is the number of goals; the top tier sells the whole-life view
- * plus a named human.
- */
-const TIERS = [
-  {
-    name: "Akshaya",
-    tagline: "The vessel that never empties",
-    price: "₹299",
-    period: "/month",
-    annual: "₹2,999 a year (2 months free)",
-    gate: "Unlimited goals",
-    popular: true,
-    features: [
-      "Full planning, unlimited goals",
-      "Statement import and reconciliation",
-      "Portfolio x-ray and deeper nudges",
-      "Priority copilot",
-    ],
-  },
-  {
-    name: "Meru",
-    tagline: "The golden mountain",
-    price: "₹999",
-    period: "/month",
-    annual: "₹9,999 a year (2 months free)",
-    gate: "Your whole household",
-    popular: false,
-    features: [
-      "Everything in Akshaya, household-wide",
-      "Lifetime Balance Sheet, every calculation shown",
-      "Tax lens on every holding",
-      "A named human wealth manager, 1:1 reviews",
-    ],
-  },
-];
-
 /** Line art for the layer cards: quiet hairlines with the blue doing only
  *  the load-bearing stroke, drawn from tokens. */
 const LAYERS = [
@@ -436,56 +397,6 @@ export default function Landing() {
         </Reveal>
       </section>
 
-      <section id="pricing" className={container}>
-        <Reveal className="border-t border-line py-14 sm:py-20">
-          <div className="text-center">
-            <span className={eyebrow}>Pricing</span>
-            <h2 className="mt-3 text-xl font-medium tracking-[-0.02em] text-text sm:text-2xl">
-              Two tiers. Plain prices.
-            </h2>
-          </div>
-          <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:grid-cols-2">
-            {TIERS.map((t) => (
-              <div
-                key={t.name}
-                className={`relative flex flex-col rounded-card border bg-surface p-5 ${
-                  t.popular ? "border-accent" : "border-line"
-                }`}
-              >
-                {t.popular && (
-                  <span className="absolute -top-2.5 left-5 rounded-full bg-accent px-2.5 py-0.5 text-index font-medium uppercase tracking-wide text-surface">
-                    Start here
-                  </span>
-                )}
-                <div className="flex items-baseline justify-between gap-2">
-                  <h3 className="text-section font-medium">{t.name}</h3>
-                  <span className="rounded-full bg-surface-2 px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
-                    {t.gate}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-caption text-text-2">{t.tagline}</p>
-                <p className="num mt-4 text-2xl font-medium">
-                  {t.price}
-                  {t.period && <span className="text-support font-normal text-text-2">{t.period}</span>}
-                </p>
-                {t.annual && <p className="num mt-0.5 text-caption text-text-2">{t.annual}</p>}
-                <ul className="mt-4 flex-1 space-y-2">
-                  {t.features.map((f) => (
-                    <li key={f} className="flex gap-2 text-support text-text-2">
-                      <span aria-hidden className="relative top-[7px] inline-block h-1 w-1 flex-none rounded-full bg-accent" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <span className="mt-5 inline-flex h-10 w-full items-center justify-center rounded-control border border-line text-support text-text-2">
-                  Early access soon
-                </span>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-      </section>
-
       {/* The one deep moment: brand navy on ruled paper, never black. */}
       <section className="paper-grid-deep">
         <div className={`${container} py-16 text-center sm:py-24`}>
@@ -517,11 +428,6 @@ export default function Landing() {
                   <button onClick={actions.startOnboarding} className="text-text-2 transition hover:text-text">
                     Start
                   </button>
-                </li>
-                <li>
-                  <a href="#pricing" className="text-text-2 transition hover:text-text">
-                    Pricing
-                  </a>
                 </li>
               </ul>
             </div>
