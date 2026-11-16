@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { credentialError, login, register, type AuthUser } from "../lib/authApi";
+import { credentialError, inviteCodeError, login, register, type AuthUser } from "../lib/authApi";
 import { actions, getState } from "../store";
 import { btnIntake } from "../ui";
 import PasswordField from "./PasswordField";
@@ -22,6 +22,7 @@ export default function AuthSheet({
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [invite, setInvite] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -29,7 +30,7 @@ export default function AuthSheet({
     if (busy) return;
     // Instant client-side checks first: no network round trip for a blank or
     // malformed field.
-    const invalid = credentialError(email, password, mode === "register");
+    const invalid = credentialError(email, password, mode === "register") ?? (mode === "register" ? inviteCodeError(invite) : null);
     if (invalid) {
       setError(invalid);
       return;
@@ -43,20 +44,27 @@ export default function AuthSheet({
       existing && existing.email.toLowerCase() === email.trim().toLowerCase()
         ? { ok: true as const, user: existing }
         : mode === "register"
-          ? await register(email, password)
+          ? await register(email, password, invite)
           : await login(email, password);
     // A returning user often types correct credentials into the register
     // form. "Email already exists" with these credentials means they meant to
     // sign in - try that before showing anyone an error.
     let usedLogin = mode === "login";
-    if (mode === "register" && !r.ok && r.status === 409) {
+    // The same goes for a refused invite code (403): someone who already has
+    // an account needs no invitation.
+    if (mode === "register" && !r.ok && (r.status === 409 || r.status === 403)) {
+      const refused = r;
       const asLogin = await login(email, password);
       if (asLogin.ok && asLogin.user) {
         r = asLogin;
         usedLogin = true;
       } else {
         setBusy(false);
-        setError("An account with this email already exists, but this password doesn't match it. Sign in with the password you created earlier.");
+        setError(
+          refused.status === 409
+            ? "An account with this email already exists, but this password doesn't match it. Sign in with the password you created earlier."
+            : (refused.error ?? "That invite code was not accepted."),
+        );
         return;
       }
     }
@@ -83,7 +91,7 @@ export default function AuthSheet({
   // "not yet", never an error after the fact.
   const field =
     "h-14 w-full rounded-2xl border border-line bg-surface px-4 text-base outline-none transition focus:border-text focus:ring-1 focus:ring-text";
-  const invalid = credentialError(email, password, mode === "register") != null;
+  const invalid = credentialError(email, password, mode === "register") != null || (mode === "register" && inviteCodeError(invite) != null);
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4">
@@ -133,6 +141,25 @@ export default function AuthSheet({
               className={field}
             />
           </div>
+          {mode === "register" && (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="as-invite" className="text-caption font-medium text-text-2">
+                Invite code
+              </label>
+              <input
+                id="as-invite"
+                type="text"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={invite}
+                onChange={(e) => setInvite(e.target.value)}
+                placeholder="From your invitation"
+                className={field}
+              />
+              <span className="text-caption text-text-2">Sign-up is by invitation for now.</span>
+            </div>
+          )}
           {error && (
             <p role="alert" aria-live="polite" className="rounded-control bg-neg-bg px-3 py-2 text-support text-neg">
               {error}

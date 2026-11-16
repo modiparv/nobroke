@@ -110,6 +110,7 @@ async function auth(req, res) {
   res.status(200).json({
     ok,
     auth_secret,
+    invite_code: process.env.INVITE_CODE ? "set" : "missing: sign-up is closed until INVITE_CODE is set",
     database,
     tables,
     session,

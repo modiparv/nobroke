@@ -2,7 +2,7 @@ import { useState } from "react";
 import { STEPS, TOTAL_STAGES, goalCostKey, type Step } from "../lib/onboarding";
 import { GOAL_MAP, GOALS } from "../lib/goals";
 import { adjustedTarget } from "../lib/profile";
-import { credentialError, login, register } from "../lib/authApi";
+import { credentialError, inviteCodeError, login, register } from "../lib/authApi";
 import type { Profile } from "../lib/types";
 import { actions, getState, useStore } from "../store";
 import { btnIntake } from "../ui";
@@ -21,6 +21,7 @@ function AccountStep({ step }: { step: Step }) {
   const [mode, setMode] = useState<"register" | "login">("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [invite, setInvite] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -40,7 +41,7 @@ function AccountStep({ step }: { step: Step }) {
 
   const submit = async () => {
     if (busy) return;
-    const invalid = credentialError(email, password, mode === "register");
+    const invalid = credentialError(email, password, mode === "register") ?? (mode === "register" ? inviteCodeError(invite) : null);
     if (invalid) {
       setError(invalid);
       return;
@@ -54,20 +55,27 @@ function AccountStep({ step }: { step: Step }) {
       existing && existing.email.toLowerCase() === email.trim().toLowerCase()
         ? { ok: true as const, user: existing }
         : mode === "register"
-          ? await register(email, password)
+          ? await register(email, password, invite)
           : await login(email, password);
     // A returning user often types correct credentials into the register
     // form. "Email already exists" with these credentials means they meant to
     // sign in - try that before showing anyone an error.
     let usedLogin = mode === "login";
-    if (mode === "register" && !r.ok && r.status === 409) {
+    // The same goes for a refused invite code (403): someone who already has
+    // an account needs no invitation.
+    if (mode === "register" && !r.ok && (r.status === 409 || r.status === 403)) {
+      const refused = r;
       const asLogin = await login(email, password);
       if (asLogin.ok && asLogin.user) {
         r = asLogin;
         usedLogin = true;
       } else {
         setBusy(false);
-        setError("An account with this email already exists, but this password doesn't match it. Sign in with the password you created earlier.");
+        setError(
+          refused.status === 409
+            ? "An account with this email already exists, but this password doesn't match it. Sign in with the password you created earlier."
+            : (refused.error ?? "That invite code was not accepted."),
+        );
         return;
       }
     }
@@ -102,7 +110,7 @@ function AccountStep({ step }: { step: Step }) {
   // the button disabled until the group validates instead of erroring after.
   const field =
     "h-14 w-full rounded-2xl border border-line bg-surface px-4 text-base outline-none transition focus:border-text focus:ring-1 focus:ring-text";
-  const invalid = credentialError(email, password, mode === "register") != null;
+  const invalid = credentialError(email, password, mode === "register") != null || (mode === "register" && inviteCodeError(invite) != null);
 
   return (
     <div className="fade-up mx-auto w-full max-w-md">
@@ -143,6 +151,25 @@ function AccountStep({ step }: { step: Step }) {
             className={field}
           />
         </div>
+        {mode === "register" && (
+          <div className="flex flex-col gap-1.5 text-left">
+            <label htmlFor="ob-invite" className="text-caption font-medium text-text-2">
+              Invite code
+            </label>
+            <input
+              id="ob-invite"
+              type="text"
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              value={invite}
+              onChange={(e) => setInvite(e.target.value)}
+              placeholder="From your invitation"
+              className={field}
+            />
+            <span className="text-caption text-text-2">Sign-up is by invitation for now.</span>
+          </div>
+        )}
         {error && (
           <p role="alert" aria-live="polite" className="rounded-control bg-neg-bg px-3 py-2 text-support text-neg">
             {error}

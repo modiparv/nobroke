@@ -106,6 +106,20 @@ export function requireSession(req, res, message = "Sign in to continue.", now =
   return null;
 }
 
+/**
+ * New accounts are by invitation: the code a person types must match
+ * INVITE_CODE for this deployment. Case and surrounding spaces are ignored,
+ * since codes are typed on phones. No INVITE_CODE configured means sign-up
+ * is closed, which is the safe way to fail. Compared in constant time.
+ */
+export function inviteAccepted(code) {
+  const expected = String(process.env.INVITE_CODE ?? "").trim().toLowerCase();
+  if (!expected) return false;
+  const a = Buffer.from(String(code ?? "").trim().toLowerCase());
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function normalizeEmail(email) {

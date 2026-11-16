@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
-import { credentialError } from "./authApi.ts";
+import { credentialError, inviteCodeError } from "./authApi.ts";
 
 test("credentialError names each bad input, and passes good ones", () => {
   // Empty and malformed email.
@@ -18,4 +18,11 @@ test("credentialError names each bad input, and passes good ones", () => {
   // Valid.
   assert.equal(credentialError("person@example.com", "longenough", true), null);
   assert.equal(credentialError(" person@example.com ", "longenough", true), null, "email is trimmed");
+});
+
+test("inviteCodeError asks for a code and leaves checking it to the server", () => {
+  assert.match(inviteCodeError("")!, /invite code/i);
+  assert.match(inviteCodeError("   ")!, /by invitation/i);
+  assert.equal(inviteCodeError("ANY-CODE"), null);
+  assert.equal(inviteCodeError("  any-code "), null);
 });

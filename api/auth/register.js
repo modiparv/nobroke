@@ -1,5 +1,5 @@
 import { makePool, resolveDatabaseUrl } from "../_data.js";
-import { authSecret, createSession, hashPassword, normalizeEmail, sessionCookie, validPassword } from "../_auth.js";
+import { authSecret, createSession, hashPassword, inviteAccepted, normalizeEmail, sessionCookie, validPassword } from "../_auth.js";
 import { throttled } from "../_ratelimit.js";
 
 // Fifteen sign-ups per address per quarter hour: a household, not a script.
@@ -26,6 +26,13 @@ export default async function handler(req, res) {
   }
   if (!validPassword(password)) {
     res.status(400).json({ ok: false, error: "Password needs at least 8 characters." });
+    return;
+  }
+
+  // By invitation only, checked before the database is touched, so a caller
+  // without the code learns nothing about which emails have accounts.
+  if (!inviteAccepted(req.body?.inviteCode)) {
+    res.status(403).json({ ok: false, error: "Sign-up is by invitation for now. Check your invite code and try again." });
     return;
   }
 

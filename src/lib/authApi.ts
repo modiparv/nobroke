@@ -23,11 +23,16 @@ export function credentialError(email: string, password: string, isRegister: boo
   return null;
 }
 
+/** New accounts are by invitation; the server checks the code itself. */
+export function inviteCodeError(code: string): string | null {
+  return code.trim() ? null : "Enter your invite code. Sign-up is by invitation for now.";
+}
+
 interface AuthResponse {
   ok: boolean;
   user?: AuthUser;
   error?: string;
-  /** HTTP status, so callers can tell "email taken" (409) apart from other failures. */
+  /** HTTP status, so callers can tell "email taken" (409) and "invite refused" (403) apart from other failures. */
   status?: number;
 }
 
@@ -65,8 +70,8 @@ async function post(path: string, body?: unknown): Promise<AuthResponse> {
   return { ...data, status: r.status };
 }
 
-export function register(email: string, password: string): Promise<AuthResponse> {
-  return post("/api/auth/register", { email, password });
+export function register(email: string, password: string, inviteCode: string): Promise<AuthResponse> {
+  return post("/api/auth/register", { email, password, inviteCode: inviteCode.trim() });
 }
 
 export function login(email: string, password: string): Promise<AuthResponse> {
