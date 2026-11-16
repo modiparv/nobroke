@@ -8,7 +8,7 @@ import { FOCUS, holdingForFund, holdingFocus } from "../lib/links";
 import { onTrackCount, outlook } from "../lib/outlook";
 import type { Allocation, AssetClassId, RiskProfile } from "../lib/types";
 import { useFocus } from "../lib/useFocus";
-import { actions, planShape, recommendedPortfolio, useStore } from "../store";
+import { actions, planShape, useStore } from "../store";
 import { appetiteCeiling } from "../lib/risk";
 import RiskMeter from "./RiskMeter";
 import { sectionLabel } from "../ui";
@@ -45,8 +45,8 @@ function Marker() {
 /**
  * The ONE portfolio every goal shares. There's no per-goal basket anymore: the
  * whole monthly amount grows in this single mix, and each goal simply draws
- * its share of that money. We surface an advisor recommendation (a mix
- * matched to the goals' blended horizon) and a near-term mismatch warning.
+ * its share of that money. The person chooses the mix; this screen never
+ * says which one suits them. It only flags a near-term mismatch.
  */
 export default function PortfolioBuilder() {
   const s = useStore();
@@ -169,10 +169,6 @@ export default function PortfolioBuilder() {
   const equityShare = total > 0 ? bands.equity / total : 0;
   const equityHeavy = total > 0 && equityShare > 0.7 && bands.debt / Math.max(total, 1) < 0.1;
 
-  // ---- Advisor overlay: a mix matched to the goals' blended horizon ----
-  const rec = recommendedPortfolio(s.goals, s.riskAppetite);
-  const recLabel = MODEL_PORTFOLIOS[rec.profile].label;
-  const matchesRec = s.portfolioProfile === rec.profile;
   const soonGoal = s.goals.length ? [...s.goals].sort((a, b) => a.horizonYears - b.horizonYears)[0] : undefined;
   const nearTermRisk = !!soonGoal && soonGoal.horizonYears <= 3 && equityShare > 0.55;
 
@@ -187,23 +183,6 @@ export default function PortfolioBuilder() {
   return (
     <div>
       <RiskMeter />
-
-      {/* Advisor pick — match the single mix to the goals' blended horizon */}
-      {s.goals.length > 0 && !matchesRec && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface-2 px-3 py-2.5">
-          <span className="text-support text-ink">
-            A {recLabel.toLowerCase()} mix fits your goals better.
-          </span>
-          {!matchesRec && (
-            <button
-              onClick={actions.recommendPortfolio}
-              className="rounded-full border border-line px-3 py-1.5 text-support text-ink transition hover:border-ink"
-            >
-              Use this
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Near-term risk: one compact line. The reasoning sits behind a tap so
           it never crowds the pane. */}

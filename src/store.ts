@@ -17,7 +17,7 @@ import { FUND_MAP } from "./lib/funds";
 import "./lib/bucket";
 import { allocationTotal, computePlan, blendedReturn } from "./lib/finance";
 import { formatINR } from "./lib/format";
-import { parseCommand, type Command } from "./lib/command";
+import { DECLINE_PICK_REPLY, parseCommand, type Command } from "./lib/command";
 import {
   deleteAccount as apiDeleteAccount,
   loadPlan,
@@ -758,12 +758,6 @@ export const actions = {
     });
   },
 
-  /** Re-tune the single mix to the goals' blended horizon (the ✨ advisor pick). */
-  recommendPortfolio: () => {
-    const { allocation, profile } = recommendedPortfolio(state.goals, state.riskAppetite);
-    set({ portfolio: allocation, portfolioProfile: profile, portfolioCustom: false });
-  },
-
   addGoal: (id: string) => {
     if (state.goals.some((g) => g.id === id)) {
       set({ currentGoalId: id });
@@ -977,8 +971,6 @@ function actionToCommand(a: AiAction): Command | null {
       return { kind: "setCash", amount };
     case "autoSplit":
       return { kind: "autoSplit" };
-    case "recommendPortfolio":
-      return { kind: "recommendPortfolio" };
     default:
       return null;
   }
@@ -1020,9 +1012,8 @@ function runCommand(cmd: Command): string {
     case "autoSplit":
       actions.recommendGoalSplit();
       return `Auto-balanced your money across goals. ✨`;
-    case "recommendPortfolio":
-      actions.recommendPortfolio();
-      return `Matched your portfolio to your goals' timeline. ✨`;
+    case "declinePick":
+      return DECLINE_PICK_REPLY;
     case "newPlan":
       actions.startOnboarding();
       return `Starting a fresh plan. Answer a few quick questions. ✨`;

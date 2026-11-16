@@ -5,7 +5,7 @@
 {"q":"please add an early retirement goal for me","expect":{"type":"action","kind":"addGoal","goalId":"fire"}}
 {"q":"get rid of the travel goal, priorities changed","expect":{"type":"action","kind":"removeGoal","goalId":"travel"}}
 {"q":"spread my monthly money sensibly across my goals","expect":{"type":"action","kind":"autoSplit"}}
-{"q":"retune the portfolio to my goals","expect":{"type":"action","kind":"recommendPortfolio"}}
+{"q":"retune the portfolio to my goals","expect":{"type":"decline"}}
 {"q":"make the first home target sixty lakh","expect":{"type":"action","kind":"setTarget","goalId":"home","amount":6000000}}
 {"q":"am I on track for my first home?","expect":{"type":"contains","any":["not on track","behind","gap","₹","short"]}}
 {"q":"how many months of expenses does my cash cover?","expect":{"type":"contains","any":["3","three"]}}

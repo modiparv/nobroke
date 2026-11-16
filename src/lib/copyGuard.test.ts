@@ -39,3 +39,12 @@ test("no screen claims a wealth manager", () => {
 test("no screen ranks or scores funds", () => {
   assertAbsent(/nobroke score|top score|ranked by/i, "A scored or ranked fund list reads as a pick.");
 });
+
+test("no screen says a mix fits the person, and the copilot cannot re-tune the mix", () => {
+  assertAbsent(/fits your goals better/i, "A mix shown as fitting this person is a recommendation.");
+  // The model has no tool to choose a mix, and the app has no command for it.
+  for (const file of ["api/chat.ts", "src/lib/command.ts", "src/lib/groq.ts", "src/store.ts"]) {
+    const text = readFileSync(`${root}${file}`, "utf8");
+    assert.doesNotMatch(text, /recommend_?portfolio\b/i, `${file} still carries the recommend-portfolio command.`);
+  }
+});

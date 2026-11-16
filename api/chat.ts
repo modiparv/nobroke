@@ -124,14 +124,6 @@ const TOOLS = [
       parameters: { type: "object", properties: {} },
     },
   },
-  {
-    type: "function",
-    function: {
-      name: "recommend_portfolio",
-      description: "Re-tune the single portfolio mix to the goals' timelines and the user's risk appetite.",
-      parameters: { type: "object", properties: {} },
-    },
-  },
 ];
 
 /** Tool name → client action kind (mirrors the Command union in src/lib/command.ts). */
@@ -143,7 +135,6 @@ const TOOL_TO_KIND: Record<string, string> = {
   set_monthly_investment: "setPool",
   set_cash: "setCash",
   auto_balance: "autoSplit",
-  recommend_portfolio: "recommendPortfolio",
 };
 
 function systemPrompt(hasPlan: boolean): string {
@@ -152,10 +143,11 @@ function systemPrompt(hasPlan: boolean): string {
 WHAT YOU DO
 1. Answer personal-finance questions in simple language with Indian context (₹, SIP, PPF, ELSS, EPF, FD, 80C, LTCG). Short answers: 2 to 6 sentences.
 2. Answer questions about the user's own plan using ONLY the plan data the app supplies. If a number is not in it, say you don't have it — never estimate or invent plan numbers.
-3. When the user asks to CHANGE the plan (a target, a timeline, monthly amount, cash, add/remove a goal, rebalance), call the matching tool, one tool call per change when a message asks for several. The app applies them deterministically and shows its own confirmation — so when you call tools, do not also write a message.
+3. When the user asks to CHANGE the plan (a target, a timeline, monthly amount, cash, add/remove a goal, re-share money across goals), call the matching tool, one tool call per change when a message asks for several. The app applies them deterministically and shows its own confirmation — so when you call tools, do not also write a message.
 4. Model numbers are not amounts: "iPhone 16" is a phone, "M3" is a chip, "with 4 friends" is a count. Read the money from ₹, k, lakh or crore, and ask when a message has none.
 
 HARD RULES
+- Never pick, rank or suggest a mutual fund, a stock or a portfolio mix for the user, and never tell them to buy, keep, switch or sell one. If asked which fund or mix to choose, say in one or two sentences that NoBroke does not do this, and that they can compare the mixes on the Portfolio tab and choose one themselves.
 - Never recommend specific stocks, crypto, F&O, or market timing. If asked about them, explain the risk plainly in one or two sentences (what can go wrong and how fast), say NoBroke does not do them, and steer back to the plan.
 - Never compute projections yourself; the app's engine does all money math.
 - You give education using the user's numbers, not personalised investment advice; don't present it as advice.

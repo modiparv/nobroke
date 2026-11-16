@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
-import { amountsINR, parseCommand } from "./command.ts";
+import { DECLINE_PICK_REPLY, amountsINR, parseCommand } from "./command.ts";
 
 /**
  * Golden phrasings for the deterministic command layer: the copilot's fast
@@ -46,9 +46,10 @@ const GOLDENS: Array<[string, Record<string, unknown> | null]> = [
   // portfolio + split
   ["auto-balance my money", { kind: "autoSplit" }],
   ["split money across goals", { kind: "autoSplit" }],
-  ["rebalance my portfolio", { kind: "recommendPortfolio" }],
-  ["fix my mix", { kind: "recommendPortfolio" }],
-  ["recommend funds for me", { kind: "recommendPortfolio" }],
+  // asking NoBroke to choose: a fixed reply, never a change and never the model
+  ["rebalance my portfolio", { kind: "declinePick" }],
+  ["fix my mix", { kind: "declinePick" }],
+  ["recommend funds for me", { kind: "declinePick" }],
   // fresh start
   ["start over", { kind: "newPlan" }],
   ["make a new plan", { kind: "newPlan" }],
@@ -150,4 +151,14 @@ test("command grammar goldens", () => {
       }
     }
   }
+});
+
+test("asking NoBroke to choose funds or a mix gets the fixed reply, and changes nothing", () => {
+  for (const phrase of ["recommend funds for me", "suggest a portfolio", "optimise my mix", "tune my allocation", "match my funds to my goals"]) {
+    assert.deepEqual(parseCommand(phrase, YEAR), { kind: "declinePick" }, `"${phrase}"`);
+  }
+  // The reply says who chooses and where, and names no fund and no mix.
+  assert.match(DECLINE_PICK_REPLY, /does not pick/);
+  assert.match(DECLINE_PICK_REPLY, /choose one yourself/);
+  assert.doesNotMatch(DECLINE_PICK_REPLY, /conservative|balanced|growth|index|equity|debt|gold/i);
 });

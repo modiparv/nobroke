@@ -21,7 +21,9 @@ export type Command =
   /** "trip 25k in 10 months": an amount and a date in one breath, both applied. */
   | { kind: "setTargetAndYears"; goalId: string; name: string; amount: number; years: number; note?: string }
   | { kind: "autoSplit" }
-  | { kind: "recommendPortfolio" }
+  /** "recommend funds for me": NoBroke does not pick, so this is answered
+      with a fixed reply and changes nothing. */
+  | { kind: "declinePick" }
   | { kind: "newPlan" };
 
 // Loose keyword → { id, display name } map (ids match src/lib/goals.ts).
@@ -131,6 +133,11 @@ const GIFT_CONTEXT = /\b(gifts?|presents?|birthday|anniversary|treat)\b/;
 const QUESTION_START = /^(what|why|how|when|which|where|who|is|are|am|do|does|did|should|could|would|can|will|explain|tell me)\b/;
 const POLITE_COMMAND = /^(can you|could you|would you|will you|please)\b/;
 
+/** What the copilot says when asked to choose funds or a mix. Fixed words,
+    written once, so the answer is the same for everyone. */
+export const DECLINE_PICK_REPLY =
+  "NoBroke does not pick funds or a mix for you. Open the Portfolio tab to compare the mixes and choose one yourself.";
+
 export function parseCommand(raw: string, now = new Date().getFullYear()): Command | null {
   const text = raw.toLowerCase().trim();
   if (!text) return null;
@@ -148,9 +155,10 @@ export function parseCommand(raw: string, now = new Date().getFullYear()): Comma
   const goal = findGoal(text);
   const hasPortfolioWord = /\b(portfolio|mix|allocation|funds?|investments?)\b/.test(text);
 
-  // Re-tune the single portfolio to the goals.
+  // Asking NoBroke to choose or re-tune the mix. It does not pick funds or
+  // a mix for anyone, so this gets the fixed reply below, never the model.
   if (hasPortfolioWord && /\b(match|recommend|fix|suggest|optimi[sz]e|rebalance|re-balance|tune|adjust)\b/.test(text))
-    return { kind: "recommendPortfolio" };
+    return { kind: "declinePick" };
 
   // Auto-balance money across goals.
   if (/\bauto.?balance\b/.test(text)) return { kind: "autoSplit" };
