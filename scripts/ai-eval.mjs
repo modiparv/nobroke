@@ -4,7 +4,11 @@
  * a LIVE /api/chat endpoint (so the real model, prompt and tools are what get
  * graded). Run it against a preview or production deployment:
  *
- *   EVAL_URL=https://<your-deployment> node scripts/ai-eval.mjs
+ *   EVAL_URL=https://<your-deployment> EVAL_SESSION=<token> node scripts/ai-eval.mjs
+ *
+ * /api/chat answers only a signed-in person. Sign in on that deployment,
+ * copy the value of the nb_session cookie from the browser, and pass it as
+ * EVAL_SESSION. It is a secret: do not commit it or paste it anywhere.
  *
  * Three expectation types:
  *   action   — the model must propose exactly this tool action
@@ -19,6 +23,12 @@ import { readFileSync } from "node:fs";
 const BASE = process.env.EVAL_URL;
 if (!BASE) {
   console.error("Set EVAL_URL to a deployment, e.g. EVAL_URL=https://nobroke.vercel.app node scripts/ai-eval.mjs");
+  process.exit(1);
+}
+
+const SESSION = process.env.EVAL_SESSION;
+if (!SESSION) {
+  console.error("Set EVAL_SESSION to the nb_session cookie of a signed-in account on that deployment. /api/chat answers 401 without it.");
   process.exit(1);
 }
 
@@ -54,7 +64,7 @@ let pass = 0, fail = 0, review = 0;
 for (const row of rows) {
   const res = await fetch(`${BASE}/api/chat`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", cookie: `nb_session=${SESSION}` },
     body: JSON.stringify({ history: [{ role: "user", text: row.q }], planData: PLAN }),
   });
   const data = await res.json().catch(() => ({}));

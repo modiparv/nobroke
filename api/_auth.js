@@ -92,6 +92,20 @@ export function sessionUserId(req, now = Date.now()) {
   return verifySession(token, secret, now);
 }
 
+/**
+ * The signed-in user's id, or null after answering 401. An endpoint that
+ * costs money or reads private data calls this before doing any work:
+ * `const userId = requireSession(req, res); if (!userId) return;`.
+ * The message is sent as both `error` and `text`, so the chat client can
+ * show it as the reply.
+ */
+export function requireSession(req, res, message = "Sign in to continue.", now = Date.now()) {
+  const userId = sessionUserId(req, now);
+  if (userId) return userId;
+  res.status(401).json({ ok: false, error: message, text: message });
+  return null;
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function normalizeEmail(email) {

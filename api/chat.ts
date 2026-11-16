@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import { requireSession } from "./_auth.js";
 import { throttled } from "./_ratelimit.js";
 
 // Vercel serverless function. The Groq key stays server-side (process.env.GROQ_API_KEY)
@@ -14,6 +15,11 @@ const MAX_MESSAGE_CHARS = 2000;
 const MAX_TURNS = 20;
 const MAX_PLAN_CHARS = 30_000;
 const MAX_ACTIONS = 4;
+
+// Only a signed-in person reaches the model: every call costs money and
+// carries a plan. Simple commands are parsed on the device and never get here.
+const SIGN_IN_TEXT =
+  'Sign in to ask questions in your own words. Simple commands like "add a car goal" work without an account.';
 
 /**
  * NoBroke AI, layer 2: the model is the natural-language layer ONLY. It may
@@ -211,6 +217,7 @@ export default async function handler(req: any, res: any) {
     return;
   }
   if (throttled(req, res, "chat", MESSAGES, WINDOW_MS, "Too many messages in a short time. Give it a minute and try again.")) return;
+  if (!requireSession(req, res, SIGN_IN_TEXT)) return;
   const key = process.env.GROQ_API_KEY;
   if (!key) {
     res.status(200).json({ text: "NoBroke AI isn't switched on yet — add GROQ_API_KEY in Vercel and redeploy." });
