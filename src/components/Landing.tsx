@@ -278,8 +278,7 @@ export default function Landing() {
               We won't let you go broke.
             </h1>
             <p className="mt-5 max-w-xl text-prose text-text-2">
-              Financial planning &amp; wealth management for the Bharat that has goals to reach, but no one to plan
-              them with.
+              Money planning for the Bharat that has goals to reach, but no one to plan them with.
             </p>
             <div className="mt-8 flex flex-wrap gap-2.5">
               {signedIn ? (

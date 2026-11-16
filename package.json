@@ -6,7 +6,7 @@
   "engines": {
     "node": "22.x"
   },
-  "description": "NoBroke: wealth management for people who are still building. Goal planning, one portfolio, honest numbers.",
+  "description": "NoBroke: money planning for people who are still building. Goal planning, one portfolio, honest numbers.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

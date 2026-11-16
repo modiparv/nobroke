@@ -21,7 +21,7 @@ import Holdings from "./Holdings";
 import MoneyInput from "./MoneyInput";
 
 /**
- * Money: the wealth management tab.
+ * Money: the tab for everything you own.
  *
  * Tracks what you have (net worth + breakdown by category, from real data) and
  * where it goes if you keep going like this (a projection line from the real

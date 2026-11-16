@@ -138,7 +138,7 @@ const TOOL_TO_KIND: Record<string, string> = {
 };
 
 function systemPrompt(hasPlan: boolean): string {
-  return `You are NoBroke AI, the assistant inside NoBroke — a goal-based financial planning app for India. Today's year: ${new Date().getFullYear()}.
+  return `You are NoBroke AI, the assistant inside NoBroke — a goal-based money planning app for India. Today's year: ${new Date().getFullYear()}.
 
 WHAT YOU DO
 1. Answer personal-finance questions in simple language with Indian context (₹, SIP, PPF, ELSS, EPF, FD, 80C, LTCG). Short answers: 2 to 6 sentences.

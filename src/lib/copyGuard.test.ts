@@ -32,8 +32,9 @@ test("no screen shows a price", () => {
   assertAbsent(/\/month|a year \(2 months free\)|early access soon/i, "No paid tier may be advertised.");
 });
 
-test("no screen claims a wealth manager", () => {
+test("no screen claims a wealth manager, wealth management or financial planning", () => {
   assertAbsent(/wealth manager/i, "NoBroke has no wealth manager to offer.");
+  assertAbsent(/wealth management|financial planning/i, "Those are the names of regulated services. NoBroke is a planning tool.");
 });
 
 test("no screen ranks or scores funds", () => {
