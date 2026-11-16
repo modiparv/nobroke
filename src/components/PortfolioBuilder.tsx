@@ -76,23 +76,19 @@ export default function PortfolioBuilder() {
     const t = window.setTimeout(() => {
       void searchLiveSchemes(q).then(async (rows) => {
         if (searchSeq.current !== seq) return;
-        // Names first, instantly. Returns stream in per row (each detail call
-        // is edge-cached), then one re-rank by real 5-year performance.
+        // Names first, instantly, in the order the search returned them.
+        // Past returns then fill in per row (each detail call is edge-cached).
+        // Nothing is ranked or scored here: a ranked list reads as a pick.
         const base = rows.slice(0, 8);
         setLiveRows(base);
         setLiveBusy(false);
         const detailed = await Promise.all(
           base.map(async (r) => {
             const d = await getLiveSchemeDetail(r.schemeCode);
-            return d ? { ...r, cagr1y: d.cagr1y, cagr3y: d.cagr3y, cagr5y: d.cagr5y, score: d.score } : r;
+            return d ? { ...r, cagr1y: d.cagr1y, cagr3y: d.cagr3y, cagr5y: d.cagr5y } : r;
           }),
         );
         if (searchSeq.current !== seq) return;
-        // Rank by the NoBroke Score; funds too young to score fall back to
-        // their 5-year return, then to the bottom.
-        detailed.sort(
-          (a, b) => (b.score?.score ?? (b.cagr5y ?? -999) * 0.01) - (a.score?.score ?? (a.cagr5y ?? -999) * 0.01),
-        );
         setLiveRows(detailed);
       });
     }, 400);
@@ -263,40 +259,25 @@ export default function PortfolioBuilder() {
               <div>
                 {liveBusy && <p className="mt-1 text-caption text-muted">Searching every fund…</p>}
                 <div className="mt-1.5 flex flex-col gap-1.5">
-                  {liveRows.map((row, i) => {
+                  {liveRows.map((row) => {
                     const id = `live_${row.schemeCode}`;
                     const added = id in alloc;
                     const busy = addingCode === row.schemeCode;
-                    const isTop = i === 0 && row.score != null && liveRows.length > 1;
-                    const scoreTitle = row.score
-                      ? `NoBroke Score ${row.score.score}: consistency ${row.score.components.consistency}, downside ${row.score.components.downside}, risk-adjusted return ${row.score.components.riskAdjusted}, track record ${row.score.components.track}. From ${row.score.monthsCovered} months of NAV history.`
-                      : undefined;
                     return (
                       <div
                         key={row.schemeCode}
                         onClick={() => (added ? removeFund(id) : void addLive(row))}
-                        title={scoreTitle}
                         className={`flex cursor-pointer select-none items-center gap-2 rounded-control border px-2.5 py-2 transition ${
                           added ? "border-accent bg-surface" : "border-transparent bg-surface-2/50 hover:bg-surface-2"
                         }`}
                       >
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-support font-medium leading-tight">{row.schemeName}</span>
-                          {(row.cagr3y != null || row.cagr5y != null || row.score != null) && (
+                          {(row.cagr3y != null || row.cagr5y != null) && (
                             <span className="num block truncate text-caption text-muted">
-                              {row.score != null && (
-                                <span className="mr-1.5 rounded-full bg-accent-tint px-1.5 py-px text-index font-medium uppercase tracking-wide text-accent">
-                                  {Math.round(row.score.score)} {row.score.grade}
-                                </span>
-                              )}
                               {row.cagr3y != null && <>3Y {formatPct(row.cagr3y, 1)}</>}
                               {row.cagr3y != null && row.cagr5y != null && ", "}
                               {row.cagr5y != null && <>5Y {formatPct(row.cagr5y, 1)}</>}
-                              {isTop && (
-                                <span className="ml-1.5 rounded-full border border-line px-1.5 py-px text-index uppercase tracking-wide text-muted">
-                                  Top score here
-                                </span>
-                              )}
                             </span>
                           )}
                         </span>
@@ -308,8 +289,8 @@ export default function PortfolioBuilder() {
                   })}
                 </div>
                 <p className="mt-1.5 text-caption text-text-2">
-                  Ranked by NoBroke Score: consistency, downside behaviour, risk-adjusted return and track record,
-                  computed from official NAV history. Hover a fund for its breakdown.
+                  3Y and 5Y are past yearly returns from official NAV history. They do not tell you what a fund
+                  will do next, and this list is not ranked.
                 </p>
               </div>
             )}
