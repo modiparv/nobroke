@@ -1,13 +1,16 @@
 import { useState } from "react";
-import { formatINR } from "../lib/format";
+import { inr } from "../lib/glue";
 import { RUNWAY_COMFORT_MONTHS, RUNWAY_FLOOR_MONTHS, runwayMonths } from "../lib/runway";
 import { actions, holdingsTotal, useStore } from "../store";
+import { btnGhost } from "../ui";
 
 /**
- * Proactive advisory nudges, one at a time. Each is a judgement a wealth
- * manager would raise unprompted, computed from the person's own numbers:
- * emergency cover first, idle surplus second, cash drag third. Dismissing
- * one reveals the next; dismissals last for the session.
+ * One note at a time, each a fact worked out from the person's own numbers:
+ * how long the cash lasts, money left over each month that is in no plan,
+ * and cash well beyond the months the plan looks for. A note states what is
+ * true and offers the sheet where the number can be changed. It never says
+ * what to do. Dismissing one shows the next; dismissals last for the
+ * session.
  */
 
 interface Note {
@@ -24,13 +27,14 @@ export default function AdvisorNote() {
   const notes: Note[] = [];
   const surplus = s.monthlyIncome > 0 ? Math.max(0, s.monthlyIncome - s.monthlyExpenses) : 0;
   const coverMonths = runwayMonths(s.currentSavings, s.monthlyExpenses);
+  const band = `${RUNWAY_FLOOR_MONTHS} to ${RUNWAY_COMFORT_MONTHS} months`;
 
   if (coverMonths != null && coverMonths < RUNWAY_FLOOR_MONTHS) {
     const whole = Math.floor(coverMonths);
     const cover = coverMonths < 1 ? "under a month" : `only ${whole} ${whole === 1 ? "month" : "months"}`;
     notes.push({
       id: "emergency",
-      text: `Your cash covers ${cover} of expenses. Keep ${RUNWAY_FLOOR_MONTHS} to ${RUNWAY_COMFORT_MONTHS} months in the bank before you invest more.`,
+      text: `Your cash covers ${cover} of expenses. The plan looks for ${band} in the bank. For you that is ${inr(RUNWAY_FLOOR_MONTHS * s.monthlyExpenses)} to ${inr(RUNWAY_COMFORT_MONTHS * s.monthlyExpenses)}.`,
       cta: "Add to cash",
       // The cash sheet, with how long the cash lasts shown live.
       onCta: () => actions.openSheet({ kind: "cash" }),
@@ -39,7 +43,7 @@ export default function AdvisorNote() {
   if (surplus > 0 && s.monthlySip < surplus * 0.5) {
     notes.push({
       id: "idle_surplus",
-      text: `${formatINR(surplus - s.monthlySip)} a month is left over and not invested. Even part of it, invested every month, adds up.`,
+      text: `${inr(surplus - s.monthlySip)} a month is left after expenses and is not invested.`,
       cta: "Put in more",
       // The monthly sheet, prefilled with the whole surplus and every goal's
       // new verdict shown before saving.
@@ -49,36 +53,36 @@ export default function AdvisorNote() {
   if (coverMonths != null && coverMonths > 8 && s.currentSavings > holdingsTotal(s)) {
     notes.push({
       id: "cash_drag",
-      text: "You hold more cash than you need. Cash loses value to inflation every year.",
+      text: `Your cash covers ${coverMonths >= 12 ? "more than 12" : Math.floor(coverMonths)} months of expenses. The plan looks for ${band}. Cash buys a little less each year as prices rise.`,
     });
   }
 
   const note = notes.find((n) => !dismissed.includes(n.id));
   if (!note) return null;
 
+  // A tinted strip, not another white card: it is a remark beside the plan,
+  // and it should not compete with the goal it sits above.
   return (
-    <div className="flex items-start justify-between gap-3 rounded-card border border-line bg-surface px-4 py-3">
-      <div className="min-w-0">
-        <span className="text-eyebrow text-text-3">Advisor note</span>
-        <p className="mt-1 text-support text-text">{note.text}</p>
+    <div role="note" className="relative rounded-control bg-surface-2 py-3 pl-4 pr-12 sm:flex sm:items-center sm:gap-4">
+      <div className="min-w-0 flex-1">
+        <span className="text-support font-medium text-text-2">Note</span>
+        <p className="num mt-0.5 text-body text-text">{note.text}</p>
       </div>
-      <div className="flex flex-none items-center gap-2">
-        {note.cta && (
-          <button
-            onClick={note.onCta}
-            className="rounded-full border border-line px-3 py-1.5 text-support text-text transition hover:border-line-2"
-          >
-            {note.cta}
-          </button>
-        )}
-        <button
-          onClick={() => setDismissed((d) => [...d, note.id])}
-          aria-label="Dismiss note"
-          className="px-1 text-text-2 transition hover:text-text"
-        >
-          ✕
+      {note.cta && (
+        <button type="button" onClick={note.onCta} className={`${btnGhost} mt-3 flex-none bg-surface sm:mt-0`}>
+          {note.cta}
         </button>
-      </div>
+      )}
+      <button
+        type="button"
+        onClick={() => setDismissed((d) => [...d, note.id])}
+        aria-label="Dismiss note"
+        className="absolute right-0.5 top-0.5 grid h-11 w-11 place-items-center rounded-control text-text-2 transition hover:text-text"
+      >
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+          <path d="M4 4l8 8M12 4l-8 8" />
+        </svg>
+      </button>
     </div>
   );
 }
