@@ -65,7 +65,7 @@ function Treemap({ items, ariaLabel }: { items: TreemapItem[]; ariaLabel: string
               style={{ background: item.bg, color: item.ink }}
             >
               {showLabel && <span className="max-w-full truncate text-index font-medium leading-tight">{item.label}</span>}
-              {showFigure && <span className="num text-caption font-medium">{formatINR(item.amount)}</span>}
+              {showFigure && <span className="num text-support font-medium">{formatINR(item.amount)}</span>}
             </Tag>
           </div>
         );
@@ -170,7 +170,7 @@ export default function PortfolioGlimpse() {
       <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
         <span className="flex min-w-0 items-baseline gap-2">
           <span className="text-support text-text">{mixLabel(s.portfolio)} portfolio</span>
-          <span className="num text-caption text-text-2">{Math.round(equityShare(s.portfolio) * 100)}% in stocks</span>
+          <span className="num text-support text-text-2">{Math.round(equityShare(s.portfolio) * 100)}% in stocks</span>
         </span>
         <button
           onClick={openPortfolio}
@@ -184,15 +184,15 @@ export default function PortfolioGlimpse() {
         {/* Highlights: value, growth, progress. The client's first three. */}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
           <div>
-            <dt className="text-eyebrow uppercase text-text-3">Portfolio value</dt>
+            <dt className="text-eyebrow text-text-3">Portfolio value</dt>
             <dd className="num mt-0.5 text-row font-medium">{formatINR(capital)}</dd>
           </div>
           <div>
-            <dt className="text-eyebrow uppercase text-text-3">Expected growth</dt>
+            <dt className="text-eyebrow text-text-3">Expected growth</dt>
             <dd className="num mt-0.5 text-row font-medium">About {expected}% a year</dd>
           </div>
           <div>
-            <dt className="text-eyebrow uppercase text-text-3">Goals on track</dt>
+            <dt className="text-eyebrow text-text-3">Goals on track</dt>
             <dd className="num mt-0.5 text-row font-medium">
               {onTrackCount} of {goalItems.length}
             </dd>
@@ -209,7 +209,7 @@ export default function PortfolioGlimpse() {
             <div key={x.label} style={{ width: `${x.v}%`, background: x.color }} />
           ))}
         </div>
-        <p className="num mt-1.5 text-caption text-text-2">
+        <p className="num mt-1.5 text-support text-text-2">
           {segs.map((x, i) => (
             <span key={x.label}>
               <span className="font-medium text-text">{Math.round(x.v)}%</span> {x.label}
@@ -236,7 +236,7 @@ export default function PortfolioGlimpse() {
                   key={v}
                   type="button"
                   onClick={() => setView(v)}
-                  className={`inline-flex h-6 items-center rounded-full px-2.5 text-caption transition ${
+                  className={`inline-flex h-6 items-center rounded-full px-2.5 text-support transition ${
                     view === v ? "bg-surface text-text" : "text-text-2 hover:text-text"
                   }`}
                 >
@@ -244,11 +244,11 @@ export default function PortfolioGlimpse() {
                 </button>
               ))}
             </div>
-            {view === "goals" && <span className="truncate text-caption text-text-2">Green is on track, amber needs a change</span>}
+            {view === "goals" && <span className="truncate text-support text-text-2">Green is on track, amber needs a change</span>}
           </div>
           {/* A goal with nothing set aside has no tile. It is named, never lost. */}
           {view === "goals" && unfunded.length > 0 && (
-            <p className="mt-1.5 text-caption text-text-2">Nothing set aside yet: {unfunded.join(", ")}.</p>
+            <p className="mt-1.5 text-support text-text-2">Nothing set aside yet: {unfunded.join(", ")}.</p>
           )}
         </div>
 
@@ -256,7 +256,7 @@ export default function PortfolioGlimpse() {
         <div className="mt-4 border-t border-line pt-3">
           <div className="flex items-baseline justify-between gap-3">
             <span className={sectionLabel}>Share of portfolio</span>
-            <button onClick={() => openMoney()} className="text-caption text-text-2 transition hover:text-text">
+            <button onClick={() => openMoney()} className="text-support text-text-2 transition hover:text-text">
               Edit your investments →
             </button>
           </div>
@@ -286,7 +286,7 @@ export default function PortfolioGlimpse() {
             ))}
           </ul>
           {listed.length > 5 && (
-            <button onClick={() => openMoney()} className="mt-2 text-caption text-text-2 transition hover:text-text">
+            <button onClick={() => openMoney()} className="mt-2 text-support text-text-2 transition hover:text-text">
               +{listed.length - 5} more in Money →
             </button>
           )}

@@ -194,13 +194,13 @@ export default function PortfolioBuilder() {
             title={`${soonGoal.name} is ${soonGoal.horizonYears} ${soonGoal.horizonYears === 1 ? "year" : "years"} away and this mix leans on stocks.`}
             className="flex w-full items-center justify-between gap-2 rounded-control bg-surface-2 px-2.5 py-1.5 text-left"
           >
-            <span className="truncate text-xs text-ink">
+            <span className="truncate text-support text-ink">
               ⚠️ <span className="font-medium">{soonGoal.name}</span> is close. Check this mix.
             </span>
-            <span className="flex-none text-caption text-muted">{riskOpen ? "Hide" : "Why"}</span>
+            <span className="flex-none text-support text-muted">{riskOpen ? "Hide" : "Why"}</span>
           </button>
           {riskOpen && (
-            <p className="mt-1.5 px-1 text-xs text-muted">
+            <p className="mt-1.5 px-1 text-support text-muted">
               {soonGoal.name} is {soonGoal.horizonYears} {soonGoal.horizonYears === 1 ? "year" : "years"} away and this
               mix leans on stocks, which can drop a lot in a short time. Money needed soon is usually kept in bonds
               or cash.
@@ -226,7 +226,7 @@ export default function PortfolioBuilder() {
 
           <div className="no-scrollbar mt-3 flex max-h-[22rem] flex-col gap-1.5 overflow-y-auto pr-0.5">
             {search.trim().length < 3 && !liveBusy && liveRows.length === 0 && (
-              <p className="py-4 text-center text-caption text-muted">
+              <p className="py-4 text-center text-support text-muted">
                 Every mutual fund in India, from the official AMFI list.
               </p>
             )}
@@ -236,7 +236,7 @@ export default function PortfolioBuilder() {
 
             {(liveBusy || liveRows.length > 0) && (
               <div>
-                {liveBusy && <p className="mt-1 text-caption text-muted">Searching every fund…</p>}
+                {liveBusy && <p className="mt-1 text-support text-muted">Searching every fund…</p>}
                 <div className="mt-1.5 flex flex-col gap-1.5">
                   {liveRows.map((row) => {
                     const id = `live_${row.schemeCode}`;
@@ -253,21 +253,21 @@ export default function PortfolioBuilder() {
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-support font-medium leading-tight">{row.schemeName}</span>
                           {(row.cagr3y != null || row.cagr5y != null) && (
-                            <span className="num block truncate text-caption text-muted">
+                            <span className="num block truncate text-support text-muted">
                               {row.cagr3y != null && <>3Y {formatPct(row.cagr3y, 1)}</>}
                               {row.cagr3y != null && row.cagr5y != null && ", "}
                               {row.cagr5y != null && <>5Y {formatPct(row.cagr5y, 1)}</>}
                             </span>
                           )}
                         </span>
-                        <span className={`flex-none rounded-full px-2 py-0.5 text-index font-medium uppercase tracking-wide ${added ? "bg-brand text-on-accent" : "border border-line text-muted"}`}>
+                        <span className={`flex-none rounded-full px-2 py-0.5 text-index font-medium ${added ? "bg-brand text-on-accent" : "border border-line text-muted"}`}>
                           {busy ? "…" : added ? "Added" : "Add"}
                         </span>
                       </div>
                     );
                   })}
                 </div>
-                <p className="mt-1.5 text-caption text-text-2">
+                <p className="mt-1.5 text-support text-text-2">
                   3Y and 5Y are past yearly returns from official NAV history. They do not tell you what a fund
                   will do next, and this list is not ranked.
                 </p>
@@ -313,7 +313,7 @@ export default function PortfolioBuilder() {
           </div>
           {/* One sentence: where each month's money goes. */}
           {total > 0 && (
-            <p className="num mt-2 text-caption text-text-2">
+            <p className="num mt-2 text-support text-text-2">
               {sip > 0 ? (
                 <>
                   Your <span className="font-medium text-text">{formatINR(sip)}</span> a month goes:{" "}
@@ -340,13 +340,13 @@ export default function PortfolioBuilder() {
           {total === 0 && (
             <div className="mt-3 rounded-xl border border-dashed border-line bg-surface-2 px-4 py-5 text-center">
               <p className="text-sm font-medium text-ink">Your mix is empty</p>
-              <p className="mt-1 text-caption text-muted">Pick a mix below, or add a fund.</p>
+              <p className="mt-1 text-support text-muted">Pick a mix below, or add a fund.</p>
             </div>
           )}
 
           {/* Ranges, never point estimates (section 5): one plain paragraph. */}
           {total > 0 && (
-            <p className="num mt-4 rounded-control bg-surface-2 px-3.5 py-3 text-caption text-text-2">
+            <p className="num mt-4 rounded-control bg-surface-2 px-3.5 py-3 text-support text-text-2">
               In the past this mix grew{" "}
               <span className="font-medium text-text">
                 {formatPct(band.low, 0)} to {formatPct(band.high, 0)}
@@ -376,7 +376,7 @@ export default function PortfolioBuilder() {
                       active ? "border-ink bg-surface-2 text-text" : "border-line hover:border-ink/40 hover:bg-surface-2/40"
                     }`}
                   >
-                    <div className="text-xs font-medium">{MODEL_PORTFOLIOS[key].label}</div>
+                    <div className="text-support font-medium">{MODEL_PORTFOLIOS[key].label}</div>
                     <div className={`mt-0.5 text-index leading-tight ${active ? "text-text-2" : "text-muted"}`}>
                       {MODEL_PORTFOLIOS[key].tagline}
                     </div>
@@ -392,11 +392,11 @@ export default function PortfolioBuilder() {
                 );
               })}
             </div>
-            {total === 0 && <p className="mt-2 text-center text-caption text-muted">Tap one to fill your mix.</p>}
+            {total === 0 && <p className="mt-2 text-center text-support text-muted">Tap one to fill your mix.</p>}
           </div>
 
           {equityHeavy && (
-            <p className="mt-3 rounded-control bg-surface-2 px-3 py-2 text-center text-xs text-ink">
+            <p className="mt-3 rounded-control bg-surface-2 px-3 py-2 text-center text-support text-ink">
               Almost all of this is in stocks. Stocks can fall a lot in a short time.
             </p>
           )}
@@ -440,7 +440,7 @@ export default function PortfolioBuilder() {
                       >
                         −
                       </button>
-                      <span className="w-9 flex-none text-center text-caption font-medium tabular-nums">{pctOfTotal}%</span>
+                      <span className="w-9 flex-none text-center text-support font-medium tabular-nums">{pctOfTotal}%</span>
                       <button
                         onClick={() => setWeight(id, (alloc[id] ?? 0) + 5)}
                         aria-label={`Raise ${f.name} share`}

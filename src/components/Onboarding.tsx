@@ -125,7 +125,7 @@ function AccountStep({ step }: { step: Step }) {
         }}
       >
         <div className="flex flex-col gap-1.5 text-left">
-          <label htmlFor="ob-email" className="text-caption font-medium text-text-2">
+          <label htmlFor="ob-email" className="text-support font-medium text-text-2">
             Email
           </label>
           <input
@@ -139,7 +139,7 @@ function AccountStep({ step }: { step: Step }) {
           />
         </div>
         <div className="flex flex-col gap-1.5 text-left">
-          <label htmlFor="ob-password" className="text-caption font-medium text-text-2">
+          <label htmlFor="ob-password" className="text-support font-medium text-text-2">
             Password
           </label>
           <PasswordField
@@ -153,7 +153,7 @@ function AccountStep({ step }: { step: Step }) {
         </div>
         {mode === "register" && (
           <div className="flex flex-col gap-1.5 text-left">
-            <label htmlFor="ob-invite" className="text-caption font-medium text-text-2">
+            <label htmlFor="ob-invite" className="text-support font-medium text-text-2">
               Invite code
             </label>
             <input
@@ -167,7 +167,7 @@ function AccountStep({ step }: { step: Step }) {
               placeholder="From your invitation"
               className={field}
             />
-            <span className="text-caption text-text-2">Sign-up is by invitation for now.</span>
+            <span className="text-support text-text-2">Sign-up is by invitation for now.</span>
           </div>
         )}
         {error && (
@@ -194,7 +194,7 @@ function AccountStep({ step }: { step: Step }) {
         <button
           type="button"
           onClick={() => actions.finishOnboarding()}
-          className="text-caption text-text-2 transition hover:text-text"
+          className="text-support text-text-2 transition hover:text-text"
         >
           Skip for now, just show my plan
         </button>
@@ -295,10 +295,10 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
         />
       </div>
       {min > 0 && raw !== "" && !ok && (
-        <p className="mt-3 text-caption text-muted">Enter at least ₹{min.toLocaleString("en-IN")}.</p>
+        <p className="mt-3 text-support text-muted">Enter at least ₹{min.toLocaleString("en-IN")}.</p>
       )}
       {challenge && (
-        <p className="mx-auto mt-5 max-w-[46ch] rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-left text-caption text-text">
+        <p className="mx-auto mt-5 max-w-[46ch] rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-left text-support text-text">
           {challenge}
         </p>
       )}
@@ -366,7 +366,7 @@ function CostsStep({ step, onContinue }: { step: Step; onContinue: () => void })
       <button className={`${btnIntake} mx-auto mt-6 w-full max-w-sm`} onClick={commit} disabled={!ok}>
         Continue
       </button>
-      <button type="button" onClick={keep} className="mt-3 block w-full text-caption text-text-2 transition hover:text-text">
+      <button type="button" onClick={keep} className="mt-3 block w-full text-support text-text-2 transition hover:text-text">
         Keep these estimates
       </button>
     </div>
@@ -430,7 +430,7 @@ function StageRail({ current, allDone }: { current: number; allDone: boolean }) 
                 {st.label}
                 {state === "done" && <span className="sr-only"> (completed)</span>}
               </p>
-              {state === "active" && <p className="mt-1 text-caption text-text-2">{st.desc}</p>}
+              {state === "active" && <p className="mt-1 text-support text-text-2">{st.desc}</p>}
             </li>
           );
         })}
@@ -500,7 +500,7 @@ export default function Onboarding() {
             <div className="h-full rounded-full bg-brand-deep transition-all duration-300" style={{ width: `${progress}%` }} />
           </div>
           {step.stage > 0 && (
-            <span className="whitespace-nowrap text-xs font-medium text-muted">
+            <span className="whitespace-nowrap text-support font-medium text-muted">
               {step.stageLabel} · {step.stage} of {TOTAL_STAGES}
             </span>
           )}
@@ -547,7 +547,7 @@ export default function Onboarding() {
                     <span aria-hidden="true" className="text-base leading-none">
                       {g.emoji}
                     </span>
-                    <span className="text-caption font-medium leading-tight">{g.name}</span>
+                    <span className="text-support font-medium leading-tight">{g.name}</span>
                   </button>
                 );
               })}
@@ -590,7 +590,7 @@ export default function Onboarding() {
                     }`}
                   >
                     <span className="text-base font-medium">{opt.label}</span>
-                    {opt.hint && <span className={`text-xs ${sel ? "text-on-accent/70" : "text-muted"}`}>{opt.hint}</span>}
+                    {opt.hint && <span className={`text-support ${sel ? "text-on-accent/70" : "text-muted"}`}>{opt.hint}</span>}
                   </button>
                 );
               })}
@@ -610,9 +610,9 @@ export default function Onboarding() {
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-support font-medium text-text">{c.name}</p>
-                      <p className="truncate text-caption text-text-2">{c.via}</p>
+                      <p className="truncate text-support text-text-2">{c.via}</p>
                     </div>
-                    <span className="flex-none rounded-full bg-surface-2 px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
+                    <span className="flex-none rounded-full bg-surface-2 px-2 py-0.5 text-index text-text-2">
                       Soon
                     </span>
                   </div>

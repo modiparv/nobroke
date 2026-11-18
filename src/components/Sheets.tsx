@@ -33,7 +33,7 @@ function Frame({ title, intro, onClose, children }: { title: string; intro?: str
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-section font-medium text-display">{title}</h2>
-            {intro && <p className="mt-0.5 text-caption text-text-2">{intro}</p>}
+            {intro && <p className="mt-0.5 text-support text-text-2">{intro}</p>}
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="px-1 text-text-2 transition hover:text-text">
             ✕
@@ -83,10 +83,10 @@ function GoalLines({ items, was, highlight }: { items: GoalOutlook[]; was: GoalO
             <li key={o.id} className={`flex items-center justify-between gap-3 px-3 py-2 ${o.id === highlight ? "bg-surface-2" : ""}`}>
               <span className="min-w-0">
                 <span className="block truncate text-support font-medium text-text">{o.name}</span>
-                <span className="num block text-caption text-text-2">{goalLine(o)}</span>
+                <span className="num block text-support text-text-2">{goalLine(o)}</span>
               </span>
               <span className="flex flex-none flex-col items-end gap-0.5">
-                <span className={`rounded-full px-2 py-0.5 text-caption ${GAP_PILL[o.level]}`}>{GAP_LABEL[o.level]}</span>
+                <span className={`rounded-full px-2 py-0.5 text-support ${GAP_PILL[o.level]}`}>{GAP_LABEL[o.level]}</span>
                 {wasLabel && <span className="text-index text-text-2">was {wasLabel.toLowerCase()}</span>}
               </span>
             </li>
@@ -103,11 +103,11 @@ function AddMoneySheet() {
     <Frame title="Add money" intro="Where is it going?" onClose={actions.closeSheet}>
       <button type="button" onClick={() => actions.openSheet({ kind: "cash" })} className={choice}>
         <span className="text-support font-medium text-text">Add to cash</span>
-        <span className="mt-0.5 text-caption text-text-2">Money in the bank. It covers your nearest goals first.</span>
+        <span className="mt-0.5 text-support text-text-2">Money in the bank. It covers your nearest goals first.</span>
       </button>
       <button type="button" onClick={() => actions.openSheet({ kind: "add_investment" })} className={choice}>
         <span className="text-support font-medium text-text">Add an investment</span>
-        <span className="mt-0.5 text-caption text-text-2">Something you already hold: a fund, an FD, EPF, gold.</span>
+        <span className="mt-0.5 text-support text-text-2">Something you already hold: a fund, an FD, EPF, gold.</span>
       </button>
     </Frame>
   );
@@ -141,7 +141,7 @@ function CashSheet() {
               key={add}
               type="button"
               onClick={() => setCash((c) => Math.min(50000000, c + add))}
-              className="num rounded-full border border-line px-2.5 py-1 text-caption text-text-2 transition hover:border-line-2 hover:text-text"
+              className="num rounded-full border border-line px-2.5 py-1 text-support text-text-2 transition hover:border-line-2 hover:text-text"
             >
               + {formatINR(add)}
             </button>
@@ -200,7 +200,7 @@ function MonthlySheet({ goalId, prefill }: { goalId?: string; prefill?: number }
       <div>
         <MoneyInput label="Invested every month" value={sip} onChange={setSip} step={500} min={0} max={1000000} />
         {leftover !== null && (
-          <p className={`num mt-1.5 text-caption ${sip > leftover ? "text-cau" : "text-text-2"}`}>
+          <p className={`num mt-1.5 text-support ${sip > leftover ? "text-cau" : "text-text-2"}`}>
             {sip > leftover
               ? `That is more than the ${formatINR(leftover)} left after expenses.`
               : `${formatINR(leftover)} is left after expenses.`}

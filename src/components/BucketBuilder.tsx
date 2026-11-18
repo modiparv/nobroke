@@ -55,7 +55,7 @@ export default function BucketBuilder() {
     <section className="min-w-0 rounded-card border border-line bg-surface">
       <div className="flex items-baseline justify-between gap-3 border-b border-line px-4 py-3">
         <span className="text-support text-text">Build your own mix (advanced)</span>
-        <span className="text-caption text-text-2">
+        <span className="text-support text-text-2">
           {ids.length ? `${ids.length} ${ids.length === 1 ? "fund" : "funds"} picked` : "Nothing changes until you tap Apply"}
         </span>
       </div>
@@ -113,7 +113,7 @@ export default function BucketBuilder() {
           <div className="flex items-baseline justify-between gap-2">
             <span className={sectionLabel}>Your mix</span>
             {total > 0 && (
-              <span className="num text-caption text-text-2">
+              <span className="num text-support text-text-2">
                 Grew about <span className="font-medium text-text">{formatPct(ret, 1)}</span> a year in the past
               </span>
             )}
@@ -122,7 +122,7 @@ export default function BucketBuilder() {
           {ids.length === 0 ? (
             <div className="mt-3 px-3 py-6 text-center">
               <p className="text-support font-medium text-text">Your mix is empty.</p>
-              <p className="mt-1 text-caption text-text-2">Tap a fund below to add it.</p>
+              <p className="mt-1 text-support text-text-2">Tap a fund below to add it.</p>
             </div>
           ) : (
             <>
@@ -146,7 +146,7 @@ export default function BucketBuilder() {
                       >
                         −
                       </button>
-                      <span className="num w-9 flex-none text-center text-caption font-medium">{pct}%</span>
+                      <span className="num w-9 flex-none text-center text-support font-medium">{pct}%</span>
                       <button
                         onClick={() => nudge(id, 5)}
                         aria-label={`Raise ${f.name} share`}
@@ -176,7 +176,7 @@ export default function BucketBuilder() {
                   />
                 ))}
               </div>
-              <div className="num mt-2 flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-2">
+              <div className="num mt-2 flex flex-wrap gap-x-4 gap-y-1 text-support text-text-2">
                 {segs.map((l) => (
                   <span key={l.label} className="inline-flex items-center gap-1.5">
                     <span className="inline-block h-2 w-2 rounded-sm" style={{ background: l.color }} />
@@ -193,7 +193,7 @@ export default function BucketBuilder() {
               >
                 {isLive ? "This is your mix now" : "Apply this mix"}
               </button>
-              <p className="mt-1.5 text-center text-caption text-text-2">
+              <p className="mt-1.5 text-center text-support text-text-2">
                 {isLive ? (
                   <>
                     Your portfolio is running exactly this mix.{" "}
@@ -219,12 +219,12 @@ export default function BucketBuilder() {
         <div className="mt-5">
           <div className="flex items-baseline justify-between gap-2">
             <span className={sectionLabel}>All options</span>
-            <span className="text-caption text-text-2">Tap to add</span>
+            <span className="text-support text-text-2">Tap to add</span>
           </div>
           <div className="mt-2 flex flex-col gap-3">
             {POOL_GROUPS.map((group) => (
               <div key={group.label}>
-                <p className="px-2 text-index uppercase tracking-wide text-text-3">{group.label}</p>
+                <p className="px-2 text-index text-text-3">{group.label}</p>
                 <div className="mt-1 flex flex-col">
                   {group.items.map((item) => {
                     const f = FUND_MAP[item.id];
@@ -259,9 +259,9 @@ export default function BucketBuilder() {
                           title={ASSET_CLASSES[f.assetClass].label}
                         />
                         <span className="min-w-0 flex-1 truncate text-support font-medium text-text">{f.name}</span>
-                        <span className="hidden flex-none text-caption text-text-2 sm:inline">{item.kind}</span>
+                        <span className="hidden flex-none text-support text-text-2 sm:inline">{item.kind}</span>
                         <span
-                          className={`flex-none rounded-full px-2 py-0.5 text-index font-medium uppercase tracking-wide ${
+                          className={`flex-none rounded-full px-2 py-0.5 text-index font-medium ${
                             inBucket ? "bg-accent-fill text-on-accent" : "border border-line text-text-2"
                           }`}
                         >
@@ -274,7 +274,7 @@ export default function BucketBuilder() {
               </div>
             ))}
           </div>
-          <p className="mt-2 px-2 text-caption text-text-2">Can't find your fund? Use the search.</p>
+          <p className="mt-2 px-2 text-support text-text-2">Can't find your fund? Use the search.</p>
         </div>
       </div>
     </section>

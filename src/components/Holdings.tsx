@@ -22,7 +22,7 @@ function HoldingRow({ h }: { h: Holding }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-support font-medium">{h.name}</div>
-        <div className="text-caption text-muted">
+        <div className="text-support text-muted">
           {h.type === UNSORTED_TYPE ? "Not sorted yet. Add each investment below to split it." : h.type}
         </div>
       </div>
@@ -50,7 +50,7 @@ export default function Holdings() {
         <span className={sectionLabel}>Your investments</span>
         <button
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-line px-3 py-1.5 text-caption font-medium text-muted transition hover:border-accent hover:text-ink"
+          className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-line px-3 py-1.5 text-support font-medium text-muted transition hover:border-accent hover:text-ink"
         >
           ＋ Add investment
         </button>
@@ -61,12 +61,12 @@ export default function Holdings() {
           {s.externalHoldings.map((h) => (
             <HoldingRow key={h.id} h={h} />
           ))}
-          <div className="mt-1 text-caption text-muted">
+          <div className="mt-1 text-support text-muted">
             Invested <span className="num font-medium text-ink">{formatINR(sum)}</span>
           </div>
         </div>
       ) : (
-        <p className="mt-1.5 text-caption text-muted">Stocks, MFs, FDs, NPS, PPF and more.</p>
+        <p className="mt-1.5 text-support text-muted">Stocks, MFs, FDs, NPS, PPF and more.</p>
       )}
 
       {open && <AddInvestment onClose={() => setOpen(false)} />}

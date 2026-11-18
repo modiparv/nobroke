@@ -79,11 +79,11 @@ export default function CopilotBar() {
               <div className="flex items-center gap-1.5 text-support font-medium">
                 NoBroke AI <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-positive" />
               </div>
-              <div className="text-index uppercase tracking-wide text-muted">looking after your goals</div>
+              <div className="text-index text-muted">Looking after your goals</div>
             </div>
             <button
               onClick={actions.closeChat}
-              className="text-index uppercase tracking-wide text-muted transition hover:text-ink"
+              className="text-index text-muted transition hover:text-ink"
             >
               Clear
             </button>
@@ -157,7 +157,7 @@ export default function CopilotBar() {
                       e.preventDefault();
                       send(q);
                     }}
-                    className="flex-none whitespace-nowrap rounded-full bg-surface-2 px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-line"
+                    className="flex-none whitespace-nowrap rounded-full bg-surface-2 px-3 py-1.5 text-support font-medium text-ink transition hover:bg-line"
                   >
                     {q}
                   </button>

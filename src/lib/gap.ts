@@ -30,3 +30,11 @@ export type GapTone = "pos" | "cau" | "neg";
 export function gapTone(level: GapLevel): GapTone {
   return level === "on_track" ? "pos" : level === "far_short" ? "neg" : "cau";
 }
+
+/** The icon a level carries, so a status never rests on colour alone
+    (brief 2.3): a tick when on track, an alert when far short, a clock for
+    anything in between. */
+export type GapIcon = "tick" | "clock" | "alert";
+export function gapIcon(level: GapLevel): GapIcon {
+  return level === "on_track" ? "tick" : level === "far_short" ? "alert" : "clock";
+}

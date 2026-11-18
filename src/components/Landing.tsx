@@ -51,7 +51,7 @@ const LAYERS = [
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--accent-text))" strokeWidth="1.6">
             <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
           </svg>
-          <span className="text-index uppercase tracking-[0.13em] text-text-2">Safety net</span>
+          <span className="text-index text-text-2">Safety net</span>
         </div>
       </div>
     ),
@@ -61,7 +61,7 @@ const LAYERS = [
     body: "Every goal gets a target in today's money, a date, and the monthly it truly needs. Inflation is priced in.",
     art: (
       <div className="flex flex-col items-center gap-1" aria-hidden>
-        <span className="text-index uppercase tracking-[0.13em] text-text-3">Goals</span>
+        <span className="text-index text-text-3">Goals</span>
         <svg viewBox="0 0 200 78" className="w-44 text-text-2">
           <path d="M22 74 A 78 78 0 0 1 178 74" fill="none" stroke="rgb(var(--text-3))" strokeDasharray="3 4" />
           <g fill="rgb(var(--surface))" stroke="rgb(var(--accent-text))">
@@ -135,8 +135,8 @@ function HeroPath() {
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="text-eyebrow uppercase text-accent">One plan, every goal</span>
-        <span className="num text-caption text-text-2">₹25,000 a month</span>
+        <span className="text-eyebrow text-accent">One plan, every goal</span>
+        <span className="num text-support text-text-2">₹25,000 a month</span>
       </div>
       <svg
         viewBox="0 0 720 216"
@@ -186,7 +186,7 @@ function HeroPath() {
       </svg>
       <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-line pt-3.5">
         <span className="num text-section font-medium text-text">₹2.0Cr</span>
-        <span className="text-caption text-text-2">
+        <span className="text-support text-text-2">
           together by 2046 · put in <span className="num font-medium text-text">₹60.0L</span> · growth{" "}
           <span className="num font-medium text-text">₹1.4Cr</span>
         </span>
@@ -242,7 +242,7 @@ export default function Landing() {
     "inline-flex h-12 items-center justify-center whitespace-nowrap rounded-control bg-accent px-7 text-sm font-medium text-surface transition hover:bg-accent-hi";
 
   const container = "mx-auto max-w-page px-4 sm:px-6";
-  const eyebrow = "text-eyebrow uppercase text-accent";
+  const eyebrow = "text-eyebrow text-accent";
 
   return (
     <div className="min-h-screen bg-bg">
@@ -386,7 +386,7 @@ export default function Landing() {
               <div key={l.title} className="overflow-hidden rounded-card border border-line bg-surface">
                 <div className="paper-grid flex h-44 items-center justify-center border-b border-line">{l.art}</div>
                 <div className="p-5">
-                  <span className="num text-index uppercase tracking-[0.13em] text-accent">Layer {idx + 1}</span>
+                  <span className="num text-index text-accent">Layer {idx + 1}</span>
                   <h3 className="mt-2 text-section font-medium">{l.title}</h3>
                   <p className="mt-2 text-body text-text-2">{l.body}</p>
                 </div>
@@ -418,10 +418,10 @@ export default function Landing() {
           <div className="grid gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-20">
             <div>
               <Logo />
-              <p className="mt-3 max-w-xs text-caption text-text-2">Wealth, minus the noise. Built in Bharat.</p>
+              <p className="mt-3 max-w-xs text-support text-text-2">Wealth, minus the noise. Built in Bharat.</p>
             </div>
             <div>
-              <span className="text-eyebrow uppercase text-text-3">Product</span>
+              <span className="text-eyebrow text-text-3">Product</span>
               <ul className="mt-3 space-y-2 text-support">
                 <li>
                   <button onClick={actions.startOnboarding} className="text-text-2 transition hover:text-text">
@@ -431,7 +431,7 @@ export default function Landing() {
               </ul>
             </div>
             <div>
-              <span className="text-eyebrow uppercase text-text-3">About</span>
+              <span className="text-eyebrow text-text-3">About</span>
               <ul className="mt-3 space-y-2 text-support">
                 <li className="text-text-2">Parv Modi · Founder</li>
                 {FOUNDER_LINKEDIN && (
@@ -450,7 +450,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="mt-10 border-t border-line pt-6">
-            <p className="max-w-2xl text-caption text-text-2">
+            <p className="max-w-2xl text-support text-text-2">
               NoBroke is an early prototype and is not a SEBI-registered investment adviser. Projections are
               illustrative, use simplified assumptions, and are not investment advice.
             </p>

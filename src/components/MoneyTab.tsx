@@ -106,15 +106,15 @@ export default function MoneyTab() {
           <section className={card}>
             <span className={sectionLabel}>Net worth</span>
             <div className="num mt-1.5 text-hero font-medium">{formatINR(total)}</div>
-            <div className="num mt-1 flex flex-wrap gap-x-4 text-caption text-text-2">
+            <div className="num mt-1 flex flex-wrap gap-x-4 text-support text-text-2">
               <span>{formatINR(s.currentSavings)} in the bank</span>
               <span>{formatINR(invested)} invested</span>
               <span>{formatINR(s.monthlySip)} added every month</span>
             </div>
             <WealthPath series={series} />
             <div className="mt-1 flex items-baseline justify-between">
-              <span className="text-caption text-text-3">Today</span>
-              <span className="text-caption text-text-2">
+              <span className="text-support text-text-3">Today</span>
+              <span className="text-support text-text-2">
                 Keep this up and it could be <span className="num text-text">{formatINR(projected)}</span> in {YEARS_AHEAD} years.
               </span>
             </div>
@@ -131,7 +131,7 @@ export default function MoneyTab() {
                       key={v}
                       type="button"
                       onClick={() => setView(v)}
-                      className={`inline-flex h-6 items-center rounded-full px-2.5 text-caption transition ${
+                      className={`inline-flex h-6 items-center rounded-full px-2.5 text-support transition ${
                         view === v ? "bg-surface text-text" : "text-text-2 hover:text-text"
                       }`}
                     >
@@ -165,7 +165,7 @@ export default function MoneyTab() {
                     </li>
                   ))}
                   {breakdown.length === 0 && (
-                    <p className="text-caption text-text-2">Add cash under In the bank, or an investment below, to see this.</p>
+                    <p className="text-support text-text-2">Add cash under In the bank, or an investment below, to see this.</p>
                   )}
                 </ul>
               ) : (
@@ -189,16 +189,16 @@ export default function MoneyTab() {
                           <span className="min-w-0">
                             <span className="flex items-center gap-2">
                               <span className="truncate text-support font-medium text-text">{g.name}</span>
-                              <span className={`flex-none rounded-full px-1.5 py-px text-index uppercase tracking-wide ${GAP_PILL[level]}`}>
+                              <span className={`flex-none rounded-full px-1.5 py-px text-index ${GAP_PILL[level]}`}>
                                 {GAP_LABEL[level]}
                               </span>
                             </span>
-                            <span className="num block text-caption text-text-2">{Math.round(share * 100)}% of your monthly amount</span>
+                            <span className="num block text-support text-text-2">{Math.round(share * 100)}% of your monthly amount</span>
                           </span>
                           <span className="flex flex-none items-center gap-2 text-right">
                             <span>
                               <span className="num block text-support font-medium text-text">{formatINR(capitalForGoal(s, g.id))}</span>
-                              <span className="num block text-caption text-text-2">{formatINR(goalMonthly(s, g.id))} a month</span>
+                              <span className="num block text-support text-text-2">{formatINR(goalMonthly(s, g.id))} a month</span>
                             </span>
                             <span aria-hidden className="text-text-3">
                               →
@@ -213,7 +213,7 @@ export default function MoneyTab() {
                       <button
                         type="button"
                         onClick={() => actions.setTab("plan")}
-                        className="text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+                        className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
                       >
                         Add a goal on the plan →
                       </button>
@@ -242,9 +242,9 @@ export default function MoneyTab() {
             </div>
             {s.monthlyIncome > 0 &&
               (s.monthlySip > leftover ? (
-                <p className="mt-3 text-caption text-cau">You invest more than what is left after expenses. Check these numbers.</p>
+                <p className="mt-3 text-support text-cau">You invest more than what is left after expenses. Check these numbers.</p>
               ) : (
-                <p className="num mt-3 text-caption text-text-2">
+                <p className="num mt-3 text-support text-text-2">
                   {formatINR(leftover)} is left after expenses. {formatINR(s.monthlySip)} goes into investments.
                   {unplanned > 0 ? ` ${formatINR(unplanned)} has no plan yet.` : ""}
                 </p>
@@ -255,7 +255,7 @@ export default function MoneyTab() {
               <button
                 type="button"
                 onClick={() => actions.openSheet({ kind: "monthly", prefill: s.monthlySip + unplanned })}
-                className="num mt-2 text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+                className="num mt-2 text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
               >
                 Invest the {formatINR(unplanned)} →
               </button>
@@ -270,7 +270,7 @@ export default function MoneyTab() {
         </aside>
       </div>
 
-      <p className="pb-2 text-center text-caption text-text-2">Projections are illustrative and not investment advice.</p>
+      <p className="pb-2 text-center text-support text-text-2">Projections are illustrative and not investment advice.</p>
     </div>
   );
 }

@@ -73,7 +73,7 @@ export default function Insights({ r, inputs, expanded = true }: { r: PlanResult
           <span className="text-lg leading-tight">{ins.icon}</span>
           <div>
             <div className="text-support font-medium">{ins.title}</div>
-            <div className="text-xs text-muted">{ins.message}</div>
+            <div className="text-support text-muted">{ins.message}</div>
           </div>
         </div>
       ))}

@@ -102,7 +102,7 @@ export function GoalTile({
         <span className="sr-only">{GAP_LABEL[level]}</span>
       </span>
       <span className="mt-1.5 block truncate text-row font-medium tracking-[-0.005em]">{g.name}</span>
-      <span className="num mt-0.5 block truncate text-caption text-muted">
+      <span className="num mt-0.5 block truncate text-support text-muted">
         {formatINR(g.targetToday)} by {year}
       </span>
       {/* One bar, one meaning: what is set aside against what the goal will
@@ -116,7 +116,7 @@ export function GoalTile({
           style={{ width: `${savedPct}%` }}
         />
       </span>
-      <span className="num mt-1.5 flex items-baseline justify-between gap-2 text-caption">
+      <span className="num mt-1.5 flex items-baseline justify-between gap-2 text-support">
         <span className="font-medium text-text">{formatINR(savedForGoal)} saved</span>
         <span className={GAP_TEXT[level]}>
           {r.onTrack ? `will reach ${formatINR(r.projectedCorpus)}` : `short ${formatINR(Math.abs(r.gap))}`}
@@ -148,12 +148,12 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
           <span className="truncate text-section font-medium tracking-[-0.015em]">{g.name}</span>
           <span
             // Status is carried by the pill, never by a coloured number.
-            className={`flex-none rounded-full px-2 py-0.5 text-caption ${GAP_PILL[gapLevel(r)]}`}
+            className={`flex-none rounded-full px-2 py-0.5 text-support ${GAP_PILL[gapLevel(r)]}`}
           >
             {GAP_LABEL[gapLevel(r)]}
           </span>
         </span>
-        <span className="num text-caption text-text-2">
+        <span className="num text-support text-text-2">
           {formatINR(g.targetToday)} by {year}
         </span>
       </div>
@@ -230,7 +230,7 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             <button
               type="button"
               onClick={() => actions.setTab("portfolio", { focus: FOCUS.funds })}
-              className="text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+              className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
             >
               Where this money is invested →
             </button>

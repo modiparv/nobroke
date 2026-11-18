@@ -38,7 +38,7 @@ export default function MoneyInput({
       {(label || hint) && (
         <div className="mb-1 flex items-center justify-between gap-2">
           {label && <span className="text-support text-muted">{label}</span>}
-          {hint && <span className="text-index uppercase tracking-wide text-muted">{hint}</span>}
+          {hint && <span className="text-index text-muted">{hint}</span>}
         </div>
       )}
       <div
@@ -89,7 +89,7 @@ export default function MoneyInput({
               type="button"
               disabled={disabled}
               onClick={() => set(q)}
-              className={`rounded-full border px-2 py-0.5 text-index uppercase tracking-wide transition ${
+              className={`rounded-full border px-2 py-0.5 text-index transition ${
                 value === clamp(q) ? "border-brand bg-brand text-on-accent" : "border-line text-muted hover:border-accent hover:text-ink"
               }`}
             >

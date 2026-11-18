@@ -32,9 +32,9 @@ interface Props {
   ahead: Array<{ name: string; year: number }>;
 }
 
-const chip = "num rounded-full border border-line px-2.5 py-1 text-caption text-text-2";
-const fill = "num inline-flex h-8 items-center rounded-full bg-accent-fill px-3 text-caption font-medium text-on-accent transition hover:bg-accent-fill-hi";
-const pill = "num inline-flex h-8 items-center rounded-full border border-line px-3 text-caption font-medium text-text transition hover:border-line-2";
+const chip = "num rounded-full border border-line px-2.5 py-1 text-support text-text-2";
+const fill = "num inline-flex h-8 items-center rounded-full bg-accent-fill px-3 text-support font-medium text-on-accent transition hover:bg-accent-fill-hi";
+const pill = "num inline-flex h-8 items-center rounded-full border border-line px-3 text-support font-medium text-text transition hover:border-line-2";
 
 function listNames(items: Array<{ name: string }>): string {
   const names = items.map((i) => i.name);
@@ -72,7 +72,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
             {formatINR(saved)} saved <span className="font-normal text-text-2">of {formatINR(need)}</span>
           </span>
           <span
-            className="num text-caption text-text-2"
+            className="num text-support text-text-2"
             title={`${formatINR(goal.targetToday)} today, at ${formatPct(inflation, 0)} inflation a year`}
           >
             needed by {year}
@@ -105,7 +105,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
               Put in {formatINR(options.monthly)} a month
             </button>
           ) : (
-            <span className="num text-caption text-text-2">
+            <span className="num text-support text-text-2">
               To get there, put in {formatINR(options.monthly)} a month. You have {formatINR(available)} free after your other goals.{" "}
               <button
                 type="button"
@@ -146,12 +146,12 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
           )}
         </div>
       )}
-      {context && <p className="text-caption text-text-2">{context}</p>}
+      {context && <p className="text-support text-text-2">{context}</p>}
 
       {/* Why a goal is getting nothing: the money is going to nearer goals
           first. Said plainly, with the year the first of them is done. */}
       {starved && (
-        <p className="text-caption text-text-2">
+        <p className="text-support text-text-2">
           Nothing flows here yet: your {formatINR(monthlyPool)} a month goes to {listNames(ahead)} first. It starts here when
           you raise the monthly amount, or once {ahead[0].name} is done ({ahead[0].year}).
         </p>
@@ -171,7 +171,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
         <button
           type="button"
           onClick={() => setShowNumbers((v) => !v)}
-          className="rounded-full border border-dashed border-line px-2.5 py-1 text-caption text-text-2 transition hover:border-line-2 hover:text-text"
+          className="rounded-full border border-dashed border-line px-2.5 py-1 text-support text-text-2 transition hover:border-line-2 hover:text-text"
         >
           {showNumbers ? "Hide the maths" : "Show the maths"}
         </button>
@@ -184,7 +184,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
             { label: "Volatility", value: formatPct(r.blendedVolatility, 0), hint: "Higher means bigger ups and downs along the way" },
           ].map((f) => (
             <div key={f.label} className="min-w-0" title={f.hint}>
-              <dt className="truncate text-eyebrow uppercase text-text-3">{f.label}</dt>
+              <dt className="truncate text-eyebrow text-text-3">{f.label}</dt>
               <dd className="num mt-0.5 truncate text-row font-medium text-text">{f.value}</dd>
             </div>
           ))}

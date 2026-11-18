@@ -37,8 +37,8 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
         base: "rgb(var(--on-night-3))",
         tick: "rgb(var(--on-night-3))",
         hollow: "rgb(var(--night))",
-        eyebrow: "text-eyebrow uppercase text-on-night-3",
-        aside: "text-caption text-on-night-2",
+        eyebrow: "text-eyebrow text-on-night-3",
+        aside: "text-support text-on-night-2",
         name: "text-support text-on-night",
       }
     : {
@@ -47,7 +47,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
         tick: "rgb(var(--text-3))",
         hollow: "rgb(var(--surface))",
         eyebrow: sectionLabel,
-        aside: "text-caption text-text-2",
+        aside: "text-support text-text-2",
         name: "text-support text-text",
       };
   if (goals.length === 0) return null;
@@ -137,7 +137,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
           <li key={sr.goal.id} className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: palette[i % palette.length] }} />
             <span className={tone.name}>{sr.goal.name}</span>
-            <span className={`rounded-full px-1.5 py-px text-index uppercase tracking-wide ${GAP_PILL[sr.level]}`}>
+            <span className={`rounded-full px-1.5 py-px text-index ${GAP_PILL[sr.level]}`}>
               {GAP_LABEL[sr.level]}
             </span>
           </li>

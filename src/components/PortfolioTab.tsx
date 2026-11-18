@@ -34,7 +34,7 @@ export default function PortfolioTab() {
         <section className="min-w-0 rounded-card border border-line bg-surface">
           <div className="flex items-baseline justify-between gap-3 border-b border-line px-4 py-3">
             <span className="text-support text-text">Your portfolio</span>
-            <span className="text-caption text-text-2">{mixLabel(s.portfolio)}</span>
+            <span className="text-support text-text-2">{mixLabel(s.portfolio)}</span>
           </div>
           <div className="p-3.5 sm:p-4">
             <PortfolioBuilder />
@@ -45,7 +45,7 @@ export default function PortfolioTab() {
         <BucketBuilder />
       </div>
 
-      <p className="pb-2 pt-5 text-center text-caption text-text-2">
+      <p className="pb-2 pt-5 text-center text-support text-text-2">
         Projections are illustrative and not investment advice.
       </p>
     </div>

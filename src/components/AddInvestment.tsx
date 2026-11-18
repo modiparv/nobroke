@@ -42,10 +42,10 @@ export default function AddInvestment({ onClose }: { onClose: () => void }) {
             ✕
           </button>
         </div>
-        <p className="mb-4 text-xs text-muted">It rolls into your total at once, and your goals update.</p>
+        <p className="mb-4 text-support text-muted">It rolls into your total at once, and your goals update.</p>
 
         <label className="mb-3 block">
-          <span className="text-caption text-muted">Type</span>
+          <span className="text-support text-muted">Type</span>
           <select
             value={typeId}
             onChange={(e) => setTypeId(e.target.value)}
@@ -64,7 +64,7 @@ export default function AddInvestment({ onClose }: { onClose: () => void }) {
         </label>
 
         <label className="mb-3 block">
-          <span className="text-caption text-muted">Name</span>
+          <span className="text-support text-muted">Name</span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -74,7 +74,7 @@ export default function AddInvestment({ onClose }: { onClose: () => void }) {
         </label>
 
         <label className="mb-5 block">
-          <span className="text-caption text-muted">Amount (₹)</span>
+          <span className="text-support text-muted">Amount (₹)</span>
           <input
             type="number"
             min={0}

@@ -100,7 +100,7 @@ export default function AuthSheet({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-section font-medium text-display">{mode === "register" ? "Create your account" : "Welcome back"}</h2>
-            <p className="mt-0.5 text-caption text-text-2">Your plan follows you to any device.</p>
+            <p className="mt-0.5 text-support text-text-2">Your plan follows you to any device.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="px-1 text-text-2 transition hover:text-text">
             ✕
@@ -115,7 +115,7 @@ export default function AuthSheet({
           }}
         >
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="as-email" className="text-caption font-medium text-text-2">
+            <label htmlFor="as-email" className="text-support font-medium text-text-2">
               Email
             </label>
             <input
@@ -129,7 +129,7 @@ export default function AuthSheet({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="as-password" className="text-caption font-medium text-text-2">
+            <label htmlFor="as-password" className="text-support font-medium text-text-2">
               Password
             </label>
             <PasswordField
@@ -143,7 +143,7 @@ export default function AuthSheet({
           </div>
           {mode === "register" && (
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="as-invite" className="text-caption font-medium text-text-2">
+              <label htmlFor="as-invite" className="text-support font-medium text-text-2">
                 Invite code
               </label>
               <input
@@ -157,7 +157,7 @@ export default function AuthSheet({
                 placeholder="From your invitation"
                 className={field}
               />
-              <span className="text-caption text-text-2">Sign-up is by invitation for now.</span>
+              <span className="text-support text-text-2">Sign-up is by invitation for now.</span>
             </div>
           )}
           {error && (
@@ -177,11 +177,11 @@ export default function AuthSheet({
               setMode(mode === "register" ? "login" : "register");
               setError(null);
             }}
-            className="text-caption font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+            className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
           >
             {mode === "register" ? "Have an account? Sign in" : "New here? Create an account"}
           </button>
-          {mode === "login" && <span className="text-caption text-text-2">Password reset coming soon.</span>}
+          {mode === "login" && <span className="text-support text-text-2">Password reset coming soon.</span>}
         </div>
       </div>
     </div>

@@ -67,9 +67,9 @@ function AddGoal({ onAdd, onBand }: { onAdd: (id: string) => void; onBand?: bool
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-support font-medium text-text">{g.name}</span>
-                  <span className="block text-caption text-text-2">{g.blurb}</span>
+                  <span className="block text-support text-text-2">{g.blurb}</span>
                 </span>
-                <span className="num flex-none pt-px text-caption text-text-2">
+                <span className="num flex-none pt-px text-support text-text-2">
                   {formatINR(g.targetToday)}, {g.horizonYears} {g.horizonYears === 1 ? "year" : "years"}
                 </span>
               </button>
@@ -164,7 +164,7 @@ export default function Plan() {
         <div className="mx-auto grid max-w-page gap-x-10 gap-y-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-stretch">
           <div className="flex h-full flex-col">
             <div>
-              <span className="text-eyebrow uppercase text-on-night-2">Saved so far</span>
+              <span className="text-eyebrow text-on-night-2">Saved so far</span>
               <HeroAmount value={totalCapital(s)} />
               <p className="mt-2 flex items-center gap-2 text-support text-on-night-2">
                 {s.goals.length > 0 && (
@@ -197,7 +197,7 @@ export default function Plan() {
                   : []),
               ].map(({ label, text }) => (
                 <div key={label}>
-                  <dt className="text-eyebrow uppercase text-on-night-3">{label}</dt>
+                  <dt className="text-eyebrow text-on-night-3">{label}</dt>
                   <dd className="num mt-0.5 text-support font-medium text-on-night">{text}</dd>
                 </div>
               ))}
@@ -286,7 +286,7 @@ export default function Plan() {
           )}
         </div>
 
-        <p className="pb-2 text-center text-caption text-text-2">
+        <p className="pb-2 text-center text-support text-text-2">
           Projections are illustrative and not investment advice.
         </p>
       </div>

@@ -78,7 +78,7 @@ export default function Chart({ r }: { r: PlanResult }) {
       </svg>
 
       {/* All the numbers live here, so the chart itself stays uncluttered. */}
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-index uppercase text-text-3">
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-index text-text-3">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-1 w-3.5 rounded" style={{ background: C.brand }} /> Your money{" "}
           <span className="font-medium text-ink">{formatINR(r.projectedCorpus)}</span>

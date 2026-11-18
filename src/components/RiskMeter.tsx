@@ -34,7 +34,7 @@ export default function RiskMeter({ readOnly = false }: { readOnly?: boolean }) 
       }
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-eyebrow uppercase text-text-3">Your risk level</span>
+        <span className="text-eyebrow text-text-3">Your risk level</span>
         <span className="text-support font-medium">{riskBandLabel(v)}</span>
       </div>
 
@@ -50,7 +50,7 @@ export default function RiskMeter({ readOnly = false }: { readOnly?: boolean }) 
         </div>
         <span
           aria-hidden
-          className="absolute top-3 text-[9px] leading-none text-text"
+          className="absolute top-3 text-index leading-none text-text"
           style={{ left: `${v}%`, transform: "translateX(-50%)" }}
         >
           ▲

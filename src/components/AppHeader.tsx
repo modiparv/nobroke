@@ -39,7 +39,7 @@ export default function AppHeader() {
               key={t}
               onClick={() => actions.setTab(t)}
               aria-current={s.tab === t ? "page" : undefined}
-              className={`inline-flex h-7 items-center rounded-full px-2.5 text-caption capitalize transition sm:px-3.5 sm:text-support ${
+              className={`inline-flex h-7 items-center rounded-full px-2.5 text-support capitalize transition sm:px-3.5 sm:text-support ${
                 s.tab === t ? "bg-accent-fill text-on-accent" : "text-text-2 hover:text-text"
               }`}
             >
@@ -63,7 +63,7 @@ export default function AppHeader() {
                 onClick={() => setMenuOpen((o) => !o)}
                 aria-label="Account menu"
                 aria-expanded={menuOpen}
-                className="grid h-8 w-8 place-items-center rounded-full bg-accent-fill text-caption font-medium uppercase text-on-accent"
+                className="grid h-8 w-8 place-items-center rounded-full bg-accent-fill text-support font-medium uppercase text-on-accent"
               >
                 {s.user.email[0]}
               </button>
@@ -71,7 +71,7 @@ export default function AppHeader() {
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
                   <div className="absolute right-0 top-[calc(100%+8px)] z-20 w-60 rounded-card border border-line bg-surface p-1.5">
-                    <p className="truncate px-3 py-2 text-caption text-text-2">{s.user.email}</p>
+                    <p className="truncate px-3 py-2 text-support text-text-2">{s.user.email}</p>
                     <button
                       type="button"
                       onClick={() => {

@@ -59,7 +59,7 @@ export default function AdvisorNote() {
   return (
     <div className="flex items-start justify-between gap-3 rounded-card border border-line bg-surface px-4 py-3">
       <div className="min-w-0">
-        <span className="text-eyebrow uppercase text-text-3">Advisor note</span>
+        <span className="text-eyebrow text-text-3">Advisor note</span>
         <p className="mt-1 text-support text-text">{note.text}</p>
       </div>
       <div className="flex flex-none items-center gap-2">

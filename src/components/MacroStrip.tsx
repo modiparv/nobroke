@@ -18,8 +18,8 @@ export default function MacroStrip() {
       className="border-t border-line px-4 py-2.5"
       title={`${source}. Inflation here sets your plan's default.`}
     >
-      <p className="num truncate text-caption text-text-2">
-        <span className="mr-2 text-index uppercase tracking-[0.13em] text-text-3">Macro</span>
+      <p className="num truncate text-support text-text-2">
+        <span className="mr-2 text-index text-text-3">Macro</span>
         {macro.indicators.map((i, idx) => (
           <span key={i.key}>
             {idx > 0 && <span className="mx-1.5 text-text-3">·</span>}
