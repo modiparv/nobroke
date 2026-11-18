@@ -2,15 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { actions, useStore } from "../store";
 import { LogoMark } from "./Logo";
 
-/** Example prompts that show the copilot can DO things, not just answer. */
-const SUGGESTIONS = [
-  "Add a car goal",
-  "I can invest ₹40k a month",
-  "Set home target to ₹60L",
-  "Buy a home in 6 years",
-  "Auto-balance my money",
-  "What's an emergency fund?",
-];
+/** Example prompts that show the copilot can DO things, not just answer.
+ *  Commands are understood on the device and work for everyone. Questions
+ *  go to the model, which answers only a signed-in person, so the question
+ *  chip and the "ask anything" hint are shown only when signed in. */
+const COMMANDS = ["Add a car goal", "I can invest ₹40k a month", "Set home target to ₹60L", "Buy a home in 6 years", "Auto-balance my money"];
+const QUESTIONS = ["What's an emergency fund?"];
+export const copilotSuggestions = (signedIn: boolean) => (signedIn ? [...COMMANDS, ...QUESTIONS] : COMMANDS);
+export const copilotPlaceholder = (signedIn: boolean) =>
+  signedIn ? "Tell me to change a goal, or ask anything…" : "Tell me to change a goal…";
 
 function TypingDots() {
   return (
@@ -128,7 +128,7 @@ export default function CopilotBar() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               disabled={s.chatTyping}
-              placeholder="Tell me to change a goal, or ask anything…"
+              placeholder={copilotPlaceholder(!!s.user)}
               aria-label="Ask NoBroke AI"
               className="h-9 flex-1 rounded-control bg-surface-2 px-3 text-body outline-none placeholder:text-muted disabled:opacity-60"
             />
@@ -150,7 +150,7 @@ export default function CopilotBar() {
             {/* Suggestion chips — only while the bar is focused */}
             {focused && (
               <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto">
-                {SUGGESTIONS.map((q) => (
+                {copilotSuggestions(!!s.user).map((q) => (
                   <button
                     key={q}
                     onMouseDown={(e) => {
@@ -186,7 +186,7 @@ export default function CopilotBar() {
                 }}
                 onBlur={() => window.setTimeout(() => setFocused(false), 120)}
                 disabled={s.chatTyping}
-                placeholder="Tell me to change a goal, or ask anything…"
+                placeholder={copilotPlaceholder(!!s.user)}
                 aria-label="Ask NoBroke AI"
                 className="h-8 flex-1 bg-transparent text-body outline-none placeholder:text-muted disabled:opacity-60"
               />

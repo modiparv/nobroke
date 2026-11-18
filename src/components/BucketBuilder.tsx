@@ -5,7 +5,6 @@ import {
   POOL_GROUPS,
   isPoolInstrument,
   sameMix,
-  suggestedInstruments,
   withInstrument,
   withWeight,
   withoutInstrument,
@@ -44,7 +43,6 @@ export default function BucketBuilder() {
   const remove = (id: string) => actions.setBucket(withoutInstrument(bucket, id));
   const nudge = (id: string, delta: number) => actions.setBucket(withWeight(bucket, id, (bucket[id] ?? 0) + delta));
 
-  const suggestions = suggestedInstruments(s.riskAppetite).filter((p) => !(p.id in bucket));
   const goalName = s.bucketGoalId ? s.goals.find((g) => g.id === s.bucketGoalId)?.name : undefined;
 
   const segs = [
@@ -216,32 +214,6 @@ export default function BucketBuilder() {
             </>
           )}
         </div>
-
-        {/* ---- A starting hand, matched to the risk level ---- */}
-        {suggestions.length > 0 && (
-          <div className="mt-4">
-            <span className={sectionLabel}>Good fits for your risk level</span>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {suggestions.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => add(p.id)}
-                  title={p.note}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-support text-text transition hover:border-ink"
-                >
-                  <span
-                    className="h-2 w-2 flex-none rounded-full"
-                    style={{ background: ASSET_CLASSES[FUND_MAP[p.id]?.assetClass ?? "equity"].color }}
-                    aria-hidden
-                  />
-                  {FUND_MAP[p.id]?.name}
-                  <span className="text-text-2">+</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* ---- All options ---- */}
         <div className="mt-5">

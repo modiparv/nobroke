@@ -30,7 +30,7 @@ export default function RiskMeter({ readOnly = false }: { readOnly?: boolean }) 
           ? "Your risk level. Change it on the Portfolio tab."
           : s.riskAppetiteSource === "assessed"
             ? "Worked out from your income, how long your cash lasts, your dependants and your goal dates. Slide it if it feels wrong."
-            : "Set by you. Recommendations stay within it."
+            : "Set by you. The starting mix stays within it."
       }
     >
       <div className="flex items-baseline justify-between gap-2">

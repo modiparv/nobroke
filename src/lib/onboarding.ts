@@ -73,7 +73,7 @@ export const STEPS: Step[] = [
     field: "takeHome",
     min: 100,
     title: "What comes in each month?",
-    subtitle: "Salary after tax, stipend, freelance income or pocket money: what actually lands with you. Every recommendation is anchored to this number.",
+    subtitle: "Salary after tax, stipend, freelance income or pocket money: what actually lands with you. Every number in your plan starts from this.",
   },
 
   // ---- Stage 2: Spending ----

@@ -29,7 +29,7 @@ const OFFERINGS = [
   },
   {
     title: "One portfolio funds every goal",
-    paras: ["A single portfolio, matched to the risk you can live with, carries the house, the wedding and the retirement together."],
+    paras: ["You choose one mix. It carries the house, the wedding and the retirement together."],
   },
   {
     title: "Ask. It runs the numbers.",
@@ -118,7 +118,7 @@ const HUMAN_ROWS = [
 const AI_ROWS = [
   "Recomputes every number in seconds",
   "Prices inflation into every target",
-  "Keeps the portfolio matched to your risk",
+  "Shows what each mix does to every goal",
   "Answers from your plan, instantly",
 ];
 

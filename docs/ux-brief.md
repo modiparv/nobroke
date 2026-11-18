@@ -336,7 +336,7 @@ What these personas show at `a0f550e`:
 - Cut to 150 words or fewer, at most 2.5 screens on a 390px phone.
 - Hero example gets a toggle: "Student · ₹3,000 a month" and "Family · ₹37,000 a month". The current ₹25,000-a-month figures are set up around line 169.
 - Put trust above pricing: who's behind NoBroke, what it is and isn't registered as, and how data is kept safe.
-- Pricing (`TIERS`, around lines 41 to 71) gets the free tier, using copy from the founders.
+- Pricing (`TIERS`, around lines 41 to 71) gets the free tier, using copy from the founders. **On hold:** the pricing section and `TIERS` were removed from the landing page in November 2026, because nothing is charged and NoBroke is not registered. Do not bring prices back without a founder decision.
 - Keep the footer disclaimer.
 
 **Accept:** the word-count and height targets are met, and the page passes an automated accessibility check (axe or Lighthouse, if available).

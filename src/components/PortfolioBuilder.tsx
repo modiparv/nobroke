@@ -202,8 +202,8 @@ export default function PortfolioBuilder() {
           {riskOpen && (
             <p className="mt-1.5 px-1 text-xs text-muted">
               {soonGoal.name} is {soonGoal.horizonYears} {soonGoal.horizonYears === 1 ? "year" : "years"} away and this
-              mix leans on stocks, which can drop a lot in a short time. For money you need soon, hold safer funds or
-              put in a little more each month.
+              mix leans on stocks, which can drop a lot in a short time. Money needed soon is usually kept in bonds
+              or cash.
             </p>
           )}
         </div>
@@ -397,7 +397,7 @@ export default function PortfolioBuilder() {
 
           {equityHeavy && (
             <p className="mt-3 rounded-control bg-surface-2 px-3 py-2 text-center text-xs text-ink">
-              Almost all of this is in stocks. Add some bonds to smooth it out.
+              Almost all of this is in stocks. Stocks can fall a lot in a short time.
             </p>
           )}
 

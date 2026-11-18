@@ -17,7 +17,8 @@ function screens(): Array<{ file: string; text: string }> {
   const files = (readdirSync(dir, { recursive: true }) as string[])
     .filter((f) => f.endsWith(".tsx"))
     .map((f) => `src/components/${f}`);
-  return [...files, "index.html"].map((file) => ({ file, text: readFileSync(`${root}${file}`, "utf8") }));
+  // The intake's questions live in a lib file, and a person reads every word of them.
+  return [...files, "src/lib/onboarding.ts", "index.html"].map((file) => ({ file, text: readFileSync(`${root}${file}`, "utf8") }));
 }
 
 function assertAbsent(pattern: RegExp, why: string) {
@@ -29,7 +30,7 @@ function assertAbsent(pattern: RegExp, why: string) {
 
 test("no screen shows a price", () => {
   assertAbsent(/₹\s?(299|999|2,999|9,999)\b/i, "Nothing is charged, so no price may be shown.");
-  assertAbsent(/\/month|a year \(2 months free\)|early access soon/i, "No paid tier may be advertised.");
+  assertAbsent(/a year \(2 months free\)|early access soon|unlimited goals/i, "No paid tier may be advertised.");
 });
 
 test("no screen claims a wealth manager, wealth management or financial planning", () => {
@@ -48,4 +49,8 @@ test("no screen says a mix fits the person, and the copilot cannot re-tune the m
     const text = readFileSync(`${root}${file}`, "utf8");
     assert.doesNotMatch(text, /recommend_?portfolio\b/i, `${file} still carries the recommend-portfolio command.`);
   }
+});
+
+test("no screen calls what the app shows a recommendation, or says a mix is matched to the person", () => {
+  assertAbsent(/every recommendation|recommendations stay|matched to (your|the) risk|good fits for your/i, "The app shows arithmetic and choices, not recommendations.");
 });

@@ -154,8 +154,34 @@ test("command grammar goldens", () => {
 });
 
 test("asking NoBroke to choose funds or a mix gets the fixed reply, and changes nothing", () => {
-  for (const phrase of ["recommend funds for me", "suggest a portfolio", "optimise my mix", "tune my allocation", "match my funds to my goals"]) {
+  const asks = [
+    "recommend funds for me", "suggest a portfolio", "optimise my mix", "tune my allocation", "match my funds to my goals",
+    "pick funds for me", "choose a mix for me", "select stocks for me", "recommend investments", "suggest some etfs", "fix my mix",
+    // Asked as a question, it still gets the fixed reply: it never reaches the model.
+    "which fund should i buy", "which fund should i buy?", "best mutual fund to invest in", "what stocks should i buy?",
+    "where should i invest", "what should i invest in?", "give me your best funds",
+  ];
+  for (const phrase of asks) {
     assert.deepEqual(parseCommand(phrase, YEAR), { kind: "declinePick" }, `"${phrase}"`);
+  }
+  // Edits and ordinary questions that share a word with the asks are left alone.
+  const notAsks: Array<[string, string | null]> = [
+    ["adjust my emergency fund to 3 lakh", "setTarget"],
+    ["set emergency fund target to 2 lakh", "setTarget"],
+    ["add an emergency fund goal", "addGoal"],
+    ["adjust my monthly investment to 20000", "setPool"],
+    ["invest 40k a month", "setPool"],
+    ["i want to buy a house", "addGoal"],
+    ["fix my monthly investment", null],
+    ["top up my emergency fund", null],
+    ["what is an index fund", null],
+    ["should i rebalance my portfolio?", null],
+    ["which funds am i in?", null],
+    ["what is the best way to build an emergency fund?", null],
+  ];
+  for (const [phrase, kind] of notAsks) {
+    const got = parseCommand(phrase, YEAR);
+    assert.equal(got?.kind ?? null, kind, `"${phrase}" gave ${JSON.stringify(got)}`);
   }
   // The reply says who chooses and where, and names no fund and no mix.
   assert.match(DECLINE_PICK_REPLY, /does not pick/);
