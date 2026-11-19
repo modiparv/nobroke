@@ -329,7 +329,7 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
           className="num h-full w-full min-w-0 bg-transparent text-[1.75rem] font-medium tracking-tight text-text outline-none"
         />
       </label>
-      <p aria-live="polite" className="num mt-2 min-h-[1.25rem] max-w-sm text-support text-text-2">
+      <p aria-live="polite" className="mt-2 min-h-[1.25rem] max-w-sm text-support text-text-2">
         {tooLow ? `Enter at least ₹${min.toLocaleString("en-IN")}.` : echo}
       </p>
       {/* Amber, a mark and the words: a question back to the person, not an error. */}
@@ -466,7 +466,7 @@ function GoalsStep({ step, onContinue }: { step: Step; onContinue: () => void })
       </div>
       <div className="sticky bottom-0 -mx-5 mt-4 flex items-center justify-between gap-4 border-t border-line bg-bg px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:static sm:mx-0 sm:mt-6 sm:flex-row-reverse sm:justify-end sm:border-0 sm:p-0">
         <p aria-live="polite" className="text-support text-text-2">
-          <span className="num block text-body font-medium text-text">{count} of 3 picked</span>
+          <span className="block text-body font-medium text-text">{count} of 3 picked</span>
           {full && <span className="block">Remove one to pick another.</span>}
         </p>
         <button className={`${btnIntake} flex-none`} disabled={count === 0} onClick={onContinue}>
@@ -672,7 +672,7 @@ function ProgressRail({ index }: { index: number }) {
       {step.stage > 0 && (
         <p className="mt-2 flex items-baseline justify-between gap-3 text-support">
           <span className="font-medium text-text">{step.stageLabel}</span>
-          <span className="num whitespace-nowrap text-text-2">
+          <span className="whitespace-nowrap text-text-2">
             Section {step.stage} of {TOTAL_STAGES}
           </span>
         </p>

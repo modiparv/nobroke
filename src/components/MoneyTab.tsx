@@ -223,11 +223,11 @@ export default function MoneyTab() {
         <section className="min-w-0 pt-2 lg:pt-0">
           {total > 0 || s.monthlySip > 0 ? (
             <>
-              <h2 className="text-pretty text-body text-text">
+              <p className="text-pretty text-body text-text">
                 Keep this up and it could be <span className="num font-medium">{inr(projected)}</span> in{NBSP}
                 {YEARS_AHEAD}
                 {NBSP}years.
-              </h2>
+              </p>
               <p className="num mt-1 text-pretty text-support text-text-2">
                 {s.monthlySip > 0
                   ? `Assumes ${inr(s.monthlySip)} added every month and ${formatPct(growth, 1)} growth a year.`

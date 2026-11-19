@@ -189,7 +189,13 @@ export default function CopilotBar() {
               }}
             >
               {focused && (
-                <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-line px-2 py-2" role="group" aria-label="Examples">
+                // The row scrolls sideways with no scrollbar. Its right edge
+                // fades out, which is the sign that there is more to scroll to.
+                <div
+                  className="no-scrollbar flex scroll-px-8 gap-2 overflow-x-auto border-b border-line py-2 pl-2 pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
+                  role="group"
+                  aria-label="Examples"
+                >
                   {copilotSuggestions(!!s.user).map((q) => (
                     <button
                       key={q}
