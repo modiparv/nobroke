@@ -130,9 +130,13 @@ html {
   scroll-behavior: smooth;
 }
 
-:focus-visible {
-  outline: 2px solid rgb(var(--text));
-  outline-offset: 2px;
+/* In the base layer, so a control that draws its own focus border can switch
+   this one off with `outline-none` instead of showing two. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid rgb(var(--text));
+    outline-offset: 2px;
+  }
 }
 
 body {
@@ -206,13 +210,6 @@ input[type="range"] {
     linear-gradient(90deg, rgb(var(--accent-text) / 0.08) 1px, transparent 1px);
   background-size: 28px 28px;
 }
-.paper-grid-deep {
-  background-color: rgb(var(--band));
-  background-image: linear-gradient(rgb(var(--on-band-3) / 0.22) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--on-band-3) / 0.22) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-
 /* ---------- Animations ---------- */
 @keyframes blink {
   0%, 100% { opacity: 1; }
@@ -234,22 +231,6 @@ input[type="range"] {
 .fade-up { animation: fadeUp 0.32s ease both; }
 @media (prefers-reduced-motion: reduce) {
   .fade-up { animation: none; }
-}
-
-/* The landing hero's chart labels live inside a scaling viewBox, so on a
-   phone they would shrink to ~5px. Below the sm breakpoint they double in
-   user units, which renders at roughly 10px. */
-.hero-path text { font-size: 11px; }
-@media (max-width: 639px) {
-  .hero-path text { font-size: 20px; }
-}
-
-/* Scroll reveal: sections drift in once. Motion-reduced users see content
-   immediately with no transition. */
-.reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.6s ease, transform 0.6s ease; }
-.reveal.is-in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) {
-  .reveal { opacity: 1; transform: none; transition: none; }
 }
 
 .live-dot { animation: blink 1.4s ease-in-out infinite; }

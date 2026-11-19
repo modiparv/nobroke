@@ -16,8 +16,8 @@ export const btnGhost =
 export const card = "rounded-card border border-line bg-surface p-4 sm:p-5";
 export const paneTop = card;
 
-/** A section's label: small, sentence case, the readable grey. */
-export const sectionLabel = "text-eyebrow font-medium text-text-2";
+/** A section's label: 14px, sentence case, the readable grey. */
+export const sectionLabel = "text-support font-medium text-text-2";
 
 /** A goal's status in colour: the pill, the dot, the text, one family per
     gap level (lib/gap). Literal class names, so Tailwind sees them. */
