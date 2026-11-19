@@ -217,7 +217,7 @@ export function parseCommand(raw: string, now = new Date().getFullYear()): Comma
       const months = Number(inMonths[1]);
       if (months > 0) {
         years = Math.max(1, Math.round(months / 12));
-        if (months % 12) note = `${months} months rounds to ${years} ${years === 1 ? "year" : "years"}; the plan works in whole years.`;
+        if (months % 12) note = `${months} months rounds to ${years} ${years === 1 ? "year" : "years"}. The plan works in whole years.`;
       }
     }
     if (years != null && years > 0 && years <= 60) {

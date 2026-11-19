@@ -23,7 +23,8 @@ function HoldingRow({ h }: { h: Holding }) {
       {focus.active && <span aria-hidden className="focus-flash pointer-events-none absolute -inset-x-2 inset-y-0 rounded-control" />}
       <span className="h-2.5 w-2.5 flex-none rounded-[3px]" style={{ background: categoryCode(h.category).ink }} aria-hidden />
       <div className="min-w-0 flex-1 sm:flex sm:items-baseline sm:gap-4">
-        <div className="truncate text-row text-text sm:min-w-0 sm:flex-1">{h.name}</div>
+        {/* Two lines on a phone: the end of a fund's name is what tells two plans of one fund apart. */}
+        <div className="line-clamp-2 break-words text-row text-text sm:line-clamp-none sm:block sm:min-w-0 sm:flex-1 sm:truncate">{h.name}</div>
         <div className="truncate text-support text-text-2 sm:w-44 sm:flex-none">{h.type}</div>
       </div>
       <span className="num flex-none whitespace-nowrap text-row font-medium text-text sm:min-w-[5.5rem] sm:text-right">{formatINR(h.amount)}</span>

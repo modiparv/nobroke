@@ -110,8 +110,10 @@ export function GoalTile({
       <span className="grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-x-2 md:grid-cols-[1.25rem_minmax(0,5fr)_minmax(0,7fr)_7.5rem] md:gap-x-5">
         <span className="num col-start-1 row-start-1 text-support text-text-2">{rank}</span>
         <span className="col-span-2 col-start-2 row-start-1 break-words text-row font-medium text-text md:col-span-1 md:col-start-2">{g.name}</span>
+        {/* The cost by its date, in that year's rupees: the figure the bar and
+            the shortfall beside it are measured against. */}
         <span className="num col-start-2 row-start-2 mt-0.5 whitespace-nowrap text-support text-text-2">
-          {formatINR(g.targetToday)} by {year}
+          {formatINR(r.requiredCorpus)} by {year}
         </span>
         <StatusPill level={level} className="col-start-3 row-start-2 justify-self-end md:col-start-4 md:row-span-2 md:row-start-1" />
         {/* One bar, one meaning: what is set aside against what the goal
@@ -168,8 +170,11 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
           {/* Status is carried by the pill (icon and word), never by a coloured number. */}
           <StatusPill level={gapLevel(r)} />
         </span>
-        <span className="num whitespace-nowrap text-support text-text-2">
-          {formatINR(g.targetToday)} by {year}
+        <span className="num text-support text-text-2">
+          <span className="whitespace-nowrap">{formatINR(g.targetToday)} today,</span>{" "}
+          <span className="whitespace-nowrap">
+            {formatINR(r.requiredCorpus)} by {year}
+          </span>
         </span>
       </div>
 

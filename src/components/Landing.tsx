@@ -162,9 +162,11 @@ function Example() {
           ))}
         </div>
       </div>
+      {/* The picture shows dates, not a promise that the amount is enough. */}
+      <p className="mt-2 text-support text-text-2">The lines show when each goal is due, not that this amount is enough for it.</p>
 
       {/* The sum, set as a sum: two lines and a rule above the total. */}
-      <dl>
+      <dl className="mt-3">
         <div className="flex items-baseline justify-between gap-4 border-b border-line py-2.5">
           <dt className="text-support text-text-2">Put in over {figures.years} years</dt>
           <dd className="num whitespace-nowrap text-body font-medium text-text">{formatINR(figures.putIn)}</dd>
@@ -178,6 +180,7 @@ function Example() {
           <dd className="num whitespace-nowrap text-headline font-medium text-text">{formatINR(figures.total)}</dd>
         </div>
       </dl>
+      <p className="mt-2 text-support text-text-2">Not adjusted for rising prices.</p>
     </section>
   );
 }
@@ -193,8 +196,11 @@ export default function Landing() {
     if (getState().goals.length > 0) actions.goPlan();
     else actions.startOnboarding();
   };
-  const start = signedIn ? afterAuth : actions.startOnboarding;
-  const startLabel = signedIn ? "Go to my plan" : "Start your plan";
+  // A plan already saved in this browser is opened, never started over: the
+  // intake clears the answers it is about to ask for again.
+  const hasPlan = s.goals.length > 0;
+  const start = hasPlan ? actions.goPlan : signedIn ? afterAuth : actions.startOnboarding;
+  const startLabel = hasPlan || signedIn ? "Go to my plan" : "Start your plan";
 
   // One main button in view at a time: the header carries it only once the
   // hero's own button has scrolled away under the header.
@@ -294,6 +300,10 @@ export default function Landing() {
                   <ul className="space-y-2">
                     <li>Without an account, your plan stays in your browser.</li>
                     <li>With one, it is saved to NoBroke's database and follows you to other devices.</li>
+                    <li>
+                      Questions you ask NoBroke AI in your own words are sent with your plan, including goal notes and
+                      holding names, to Groq, the company that runs the AI model.
+                    </li>
                     <li>Passwords are stored hashed, never as typed.</li>
                     <li>NoBroke does not connect to your bank or broker and cannot move your money.</li>
                   </ul>

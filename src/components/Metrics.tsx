@@ -55,8 +55,8 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
   const reachedEarly = r.onTrack && r.goalReachedMonth !== null && r.goalReachedMonth < r.months;
   // The moves that close a gap, each computed by the engine: the monthly
   // that gets there (one tap, if that much is free after the other goals),
-  // the year today's pace does get there, and the smaller target today's
-  // pace reaches by the date. The choice is theirs.
+  // the year today's rate does get there, and the smaller target today's
+  // rate reaches by the date. The choice is theirs.
   const options = useMemo(
     () => (r.onTrack ? null : goalOptions(inputs, r, { dateFixed: GOAL_MAP[goal.id]?.dateFixed ?? false })),
     [goal.id, r.onTrack, r.requiredSip, r.realProjectedCorpus, inputs.targetToday, inputs.horizonYears, inputs.currentSavings, inputs.monthlySip, inputs.inflation, inputs.allocation],
@@ -66,11 +66,10 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
   const level = gapLevel(r);
   const context = educationNote(goal.id, level);
   const starved = monthly <= 0 && monthlyPool > 0 && ahead.length > 0;
-  // A projected XIRR of nothing is noise, not a number: it appears once money is in.
-  const hasXirr = r.totalInvested > 0 && Number.isFinite(r.xirr) && r.xirr !== 0;
   const maths = [
-    { label: "Growth a year", value: formatPct(r.blendedReturn), hint: "The yearly growth this plan assumes for your mix. It is an assumption, not a forecast." },
-    ...(hasXirr ? [{ label: "Your return (XIRR)", value: formatPct(r.xirr), hint: "The yearly return once the timing of each deposit is counted." }] : []),
+    // One yearly figure only. A second "return" row restated this assumption
+    // with monthly compounding and read as money already earned.
+    { label: "Growth a year", value: formatPct(r.blendedReturn), hint: "The yearly growth this plan assumes for your mix, added monthly. It is an assumption, not a forecast." },
     { label: "Ups and downs (volatility)", value: formatPct(r.blendedVolatility, 0), hint: "Higher means bigger swings along the way." },
     { label: "Share of your monthly amount", value: `${Math.round(monthlyShare * 100)}%`, hint: `Of the ${formatINR(monthlyPool)} you add every month.` },
   ];

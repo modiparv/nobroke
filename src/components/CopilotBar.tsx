@@ -1,18 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { glueAmounts } from "../lib/glue";
+import { copilotPlaceholder, copilotSuggestions } from "../lib/suggestions";
 import { useIsPhone } from "../lib/usePhone";
 import { actions, useStore } from "../store";
 import { LogoMark } from "./Logo";
-
-/** Example prompts that show the copilot can DO things, not just answer.
- *  Commands are understood on the device and work for everyone. Questions
- *  go to the model, which answers only a signed-in person, so the question
- *  chip and the "ask anything" hint are shown only when signed in. */
-const COMMANDS = ["Add a car goal", "I can invest ₹40k a month", "Set home target to ₹60L", "Buy a home in 6 years", "Auto-balance my money"];
-const QUESTIONS = ["What's an emergency fund?"];
-export const copilotSuggestions = (signedIn: boolean) => (signedIn ? [...COMMANDS, ...QUESTIONS] : COMMANDS);
-export const copilotPlaceholder = (signedIn: boolean) =>
-  signedIn ? "Tell me to change a goal, or ask anything…" : "Tell me to change a goal…";
 
 /** The typed text is 16px, so an iPhone does not zoom the page on focus. */
 const field = "h-11 min-w-0 flex-1 bg-transparent text-body text-text outline-none placeholder:text-text-2 disabled:opacity-60";
@@ -134,6 +125,11 @@ export default function CopilotBar() {
               </svg>
             </button>
           </header>
+          {/* The one place where the words are not fixed in the code. On a
+              phone the panel covers the page's own line, so it carries one. */}
+          <p className="flex-none border-b border-line px-4 py-2 text-support text-text-2">
+            NoBroke AI can be wrong. Its answers are not investment advice.
+          </p>
           <div ref={scrollRef} className="flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-3 py-4">
             {s.chat.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -199,7 +195,7 @@ export default function CopilotBar() {
                   role="group"
                   aria-label="Examples"
                 >
-                  {copilotSuggestions(!!s.user).map((q) => (
+                  {copilotSuggestions(!!s.user, s.monthlySip).map((q) => (
                     <button
                       key={q}
                       type="button"

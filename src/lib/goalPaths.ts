@@ -275,7 +275,9 @@ const ON_A_LINE = 12;
 /** Another goal's line runs between the name and its own dot, so the name
     reads as that line's. Costs more than a second-row place with a leader. */
 const LINE_BETWEEN = 15;
-const ON_A_RULE = 3;
+/** A name set on the 100% rule reads as struck through, so that place costs
+    more than moving the name above or below the rule. */
+const ON_A_RULE = 8;
 const SEARCH_LIMIT = 20000;
 
 /** Two names collide if they overlap, or sit side by side with less than a word's space between. */

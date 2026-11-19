@@ -1,15 +1,15 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
-import { equityShare, mixLabel } from "./portfolios.ts";
+import { MODEL_PORTFOLIOS, equityShare, mixName } from "./portfolios.ts";
 
-test("the portfolio style speaks fund-category words, cut on the share of stocks", () => {
-  assert.equal(mixLabel({}), "Not invested yet");
-  // All-debt and all-gold portfolios are conservative; hybrids count their stock half.
-  assert.equal(mixLabel({ hdfc_corp_bond: 70, icici_gold: 30 }), "Conservative");
-  assert.equal(mixLabel({ icici_nifty: 15, hdfc_corp_bond: 70, icici_gold: 15 }), "Conservative");
-  assert.equal(mixLabel({ icici_nifty: 50, hdfc_corp_bond: 50 }), "Balanced");
-  assert.equal(mixLabel({ parag_flexi: 60, mirae_hybrid: 20, icici_gold: 20 }), "Growth");
-  assert.equal(mixLabel({ nippon_small: 100 }), "Growth");
+test("the mix is named as the Portfolio tab names it", () => {
+  // An empty mix comes first: a plan with no goals carries a profile and no funds.
+  assert.equal(mixName({}, "balanced"), "Not invested yet");
+  assert.equal(mixName(MODEL_PORTFOLIOS.steady.allocation, "steady"), "Steady");
+  assert.equal(mixName(MODEL_PORTFOLIOS.balanced.allocation, "balanced"), "Balanced");
+  assert.equal(mixName(MODEL_PORTFOLIOS.bold.allocation, "bold"), "Bold");
+  // Edited by hand: no ready-made name fits.
+  assert.equal(mixName({ icici_nifty: 50, hdfc_corp_bond: 50 }, null), "Your own mix");
 });
 
 test("equityShare is a clean fraction, zero when empty", () => {

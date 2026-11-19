@@ -46,7 +46,7 @@ const PLAN = {
   monthsOfCover: 3.0,
   riskAppetite: "Growth",
   inflationPct: 6,
-  expectedReturnPct: 11.2,
+  assumedGrowthPct: 11.2,
   allocationPct: { "Nifty 50 Index Fund": 40, "Flexi Cap Fund": 20, "Short Duration Debt Fund": 30, "Gold ETF": 10 },
   holdings: [{ name: "PPF", type: "debt", amountINR: 180000 }, { name: "Nifty Index Fund", type: "equity", amountINR: 100000 }],
 };

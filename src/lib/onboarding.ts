@@ -229,8 +229,8 @@ export const STEPS: Step[] = [
     kind: "account",
     stage: 0,
     stageLabel: "",
-    title: "Your plan is ready. Save it.",
-    subtitle: "Create an account to save your plan and open it on any device.",
+    title: "Your plan is ready.",
+    subtitle: "You can see it now. To save it and open it on any device, create an account. Accounts are by invitation for now.",
     cta: "See my plan",
   },
 ];
@@ -281,6 +281,7 @@ export function firstUnanswered(profile: Profile, answers: Record<string, string
   const stored = profile as unknown as Record<string, string | number | null | undefined>;
   const at = STEPS.findIndex((step) => {
     if (step.kind === "goals") return goalIds.length === 0;
+    if (step.kind === "costs") return goalIds.some((id) => !(goalCostKey(id) in answers));
     if (!step.field) return false;
     const v = step.field in stored ? stored[step.field] : answers[step.field];
     if (step.kind === "single") return v == null || v === "";

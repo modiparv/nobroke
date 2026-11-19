@@ -6,6 +6,7 @@ import { GAP_LABEL, gapLevel, gapTone, type GapLevel, type GapTone } from "../li
 import { inr } from "../lib/glue";
 import { neededMonthly } from "../lib/options";
 import { reachedMonth } from "../lib/reached";
+import { onTrackMessage, shortMessage } from "../lib/verdict";
 import { StatusIcon } from "./StatusPill";
 
 /**
@@ -37,7 +38,7 @@ function generate(inputs: PlanInputs, r: PlanResult): Reason[] {
       kind: "verdict",
       level,
       title: "You're on track",
-      message: `You'll reach ${inr(r.projectedCorpus)}. That's ${inr(r.gap)} more than the ${inr(r.requiredCorpus)} you need.`,
+      message: onTrackMessage(r),
     });
     if (r.goalReachedMonth !== null && r.goalReachedMonth < r.months) {
       out.push({
@@ -52,13 +53,11 @@ function generate(inputs: PlanInputs, r: PlanResult): Reason[] {
   } else {
     // The title matches the size of the gap: "A little short" for a gap of
     // more than half the goal would mislead.
-    const monthly = neededMonthly(r);
-    const extra = Math.max(0, monthly - Math.round(inputs.monthlySip));
     out.push({
       kind: "verdict",
       level,
       title: GAP_LABEL[level],
-      message: `You'll reach ${inr(r.projectedCorpus)}. That's ${inr(Math.abs(r.gap))} short. ${inr(extra)} more a month (${inr(monthly)} in total) would close the gap.`,
+      message: shortMessage(r, inputs.monthlySip, neededMonthly(r)),
     });
   }
 

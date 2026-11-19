@@ -146,6 +146,8 @@ test("a saved step number that no longer exists lands on a real step", () => {
 
 test("a saved intake never resumes past a question that has no answer", () => {
   const goals = ["child", "fire", "parents"];
+  // What passing the cost step stores: a key for every picked goal, blank when the estimate was kept.
+  const costs = { "cost:child": "", "cost:fire": "", "cost:parents": "" };
   // Saved on the old list at step 9, the city question, not yet answered.
   // Step 9 is now the career question; resuming goes back to the city one.
   const onCity = answered({ cityTier: null, careerStage: null, dependents: null });
@@ -153,17 +155,19 @@ test("a saved intake never resumes past a question that has no answer", () => {
   // Saved on the old list at step 12, the goals step, with nothing picked.
   assert.equal(resumeStepIndex(12, answered(), {}, []), indexOf("goals"));
   // Saved on the old list's timeline step (14), which is now the account step.
-  assert.equal(resumeStepIndex(14, answered(), {}, goals), indexOf("timeline"));
+  assert.equal(resumeStepIndex(14, answered(), costs, goals), indexOf("timeline"));
+  // Saved on the old list's cost step (13), which is now the timeline step: the prices were never confirmed.
+  assert.equal(resumeStepIndex(13, answered(), {}, goals), indexOf("costs"));
   // Everything answered: the saved place stands, and one past the end is the last step.
-  assert.equal(resumeStepIndex(15, answered(), { timeline: "8" }, goals), STEPS.length - 1);
+  assert.equal(resumeStepIndex(15, answered(), { ...costs, timeline: "8" }, goals), STEPS.length - 1);
   assert.equal(resumeStepIndex(indexOf("costs"), answered(), {}, goals), indexOf("costs"));
   // Resuming never moves a person forward.
-  assert.equal(resumeStepIndex(3, answered(), { timeline: "8" }, goals), 3);
+  assert.equal(resumeStepIndex(3, answered(), { ...costs, timeline: "8" }, goals), 3);
   // A fresh intake starts on the intro.
   assert.equal(resumeStepIndex(0, emptyProfile(), {}, []), 0);
   // A typed 0 is an answer to rent, EMIs, spend, cash and investments, but not to income.
   const zeros = answered({ rent: 0, emi: 0, monthlySpend: 0, cashOnHand: 0, investedValue: 0 });
-  assert.equal(firstUnanswered(zeros, { timeline: "2" }, ["travel"]), STEPS.length - 1);
+  assert.equal(firstUnanswered(zeros, { "cost:travel": "", timeline: "2" }, ["travel"]), STEPS.length - 1);
   assert.equal(firstUnanswered(answered({ takeHome: 0 }), { timeline: "2" }, ["travel"]), indexOf("takeHome"));
 });
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { goalEstimate } from "../lib/onboarding";
 import { GOALS } from "../lib/goals";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
@@ -63,7 +64,7 @@ function AddGoal({ onAdd }: { onAdd: (id: string) => void }) {
                   >
                     <span className="min-w-0 text-body font-medium text-text">{g.name}</span>
                     <span className="num flex-none whitespace-nowrap text-support text-text-2">
-                      {formatINR(g.targetToday)} in {g.horizonYears} {g.horizonYears === 1 ? "year" : "years"}
+                      {formatINR(goalEstimate(g, s.profile))} in {g.horizonYears} {g.horizonYears === 1 ? "year" : "years"}
                     </span>
                   </button>
                 </li>
@@ -297,6 +298,18 @@ export default function Plan() {
             )}
           </div>
 
+          {/* On a phone, someone without an account has no other control to start over. */}
+          {!s.user && (
+            <p className="text-center sm:hidden">
+              <button
+                type="button"
+                onClick={actions.startOnboarding}
+                className="inline-flex min-h-11 items-center text-support font-medium text-text underline underline-offset-2 hover:text-text-2"
+              >
+                Start a new plan
+              </button>
+            </p>
+          )}
           <p className="pb-2 text-center text-support text-text-2">Projections are illustrative and not investment advice.</p>
         </div>
       </div>

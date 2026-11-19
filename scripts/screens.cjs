@@ -17,8 +17,8 @@ const screens = screensArg.split(',');
 const BASE = 'http://127.0.0.1:5173';
 const STORE = "import(performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.split('?')[0].endsWith('/src/store.ts')).pop() || '/src/store.ts')";
 const PEOPLE = {
-  rajesh: { p: { employment: 'salaried', takeHome: 160000, rent: 0, emi: 38000, monthlySpend: 65000, cashOnHand: 300000, investedValue: 1800000, city: 'tier1', stage: 'stable', dependents: 'kids' }, goals: ['child', 'fire', 'parents'], answers: { timeline: '8' } },
-  aarav: { p: { employment: 'student', takeHome: 8000, rent: 0, emi: 0, monthlySpend: 3500, cashOnHand: 22000, investedValue: 6000, city: 'tier1', stage: 'studying', dependents: 'none' }, goals: ['gadget', 'travel', 'course'], answers: { timeline: '2', 'cost:travel': '20000', 'cost:gadget': '70000' } },
+  rajesh: { p: { employment: 'salaried', takeHome: 160000, rent: 0, emi: 38000, monthlySpend: 65000, cashOnHand: 300000, investedValue: 1800000, cityTier: 'tier1', careerStage: 'stable', dependents: 'kids' }, goals: ['child', 'fire', 'parents'], answers: { timeline: '8', 'cost:child': '', 'cost:fire': '', 'cost:parents': '' } },
+  aarav: { p: { employment: 'student', takeHome: 8000, rent: 0, emi: 0, monthlySpend: 3500, cashOnHand: 22000, investedValue: 6000, cityTier: 'tier1', careerStage: 'studying', dependents: 'none' }, goals: ['gadget', 'travel', 'course'], answers: { timeline: '2', 'cost:travel': '20000', 'cost:gadget': '70000', 'cost:course': '' } },
 };
 const seed = (who) => `(async () => {
   const m = await import(performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.split('?')[0].endsWith('/src/store.ts')).pop() || '/src/store.ts'); const a = m.actions; const d = ${JSON.stringify(PEOPLE[who])};

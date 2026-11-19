@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ASSET_CLASSES, FUND_MAP, registerFund } from "../lib/funds";
+import { ASSET_CLASSES, FUND_MAP } from "../lib/funds";
 import { fundFromLiveScheme, getLiveSchemeDetail, searchLiveSchemes, type LiveSchemeRow } from "../lib/instrumentsApi";
 import { MODEL_PORTFOLIOS } from "../lib/portfolios";
 import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
@@ -291,7 +291,7 @@ export default function PortfolioBuilder() {
     const detail = await getLiveSchemeDetail(row.schemeCode);
     setAddingCode(null);
     if (!detail) return;
-    registerFund(fundFromLiveScheme(detail));
+    actions.addLiveFund(fundFromLiveScheme(detail));
     addFund(id);
   };
 
@@ -396,11 +396,12 @@ export default function PortfolioBuilder() {
               </p>
               {/* Ranges, never point estimates (section 5): one plain paragraph. */}
               <p className="num text-pretty text-support text-text-2">
-                This plan assumes this mix grows{" "}
-                <span className="whitespace-nowrap font-medium text-text">
+                This plan assumes this mix grows about{" "}
+                <span className="whitespace-nowrap font-medium text-text">{formatPct(ret, 1)}</span> a year. If it grew{" "}
+                <span className="whitespace-nowrap">
                   {formatPct(band.low, 0)} to {formatPct(band.high, 0)}
                 </span>{" "}
-                a year. At that pace ₹1 lakh becomes {range(band.threeYearLow, band.threeYearHigh)} in 3 years and{" "}
+                a year instead, ₹1 lakh would become {range(band.threeYearLow, band.threeYearHigh)} in 3 years and{" "}
                 {range(band.tenYearLow, band.tenYearHigh)} in 10. These are assumptions, not past returns and not a forecast.
               </p>
             </div>
@@ -646,7 +647,13 @@ export default function PortfolioBuilder() {
                         {preview} of {s.goals.length} {s.goals.length === 1 ? "goal" : "goals"} on track with this mix
                       </span>
                     )}
-                    {beyond && <span className="mt-1 block text-pretty text-support text-text-2">Riskier than you said you're OK with</span>}
+                    {/* The level is worked out from the intake until the person moves the
+                        slider. Only then is it something they said. */}
+                    {beyond && (
+                      <span className="mt-1 block text-pretty text-support text-text-2">
+                        {s.riskAppetiteSource === "user" ? "Riskier than you said you're OK with" : "Riskier than the level worked out from your answers"}
+                      </span>
+                    )}
                   </span>
                 </button>
               );

@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 import { MODEL_PORTFOLIOS } from "./portfolios.ts";
-import { inPriority, onTrackCount, outlook, type PlanShape } from "./outlook.ts";
+import { inPriority, monthlyToPutOnTrack, onTrackCount, outlook, type PlanShape } from "./outlook.ts";
 import type { PlanGoal } from "./types";
 
 // Aarav, with his real prices: trip ₹20,000 in a year, laptop ₹70,000 in
@@ -99,4 +99,29 @@ test("priority order tolerates ids the order does not name, and unknown ids", ()
     ["travel", "gadget"],
   );
   assert.deepEqual(outlook({ ...base, goals: [], goalOrder: [] }), []);
+});
+
+test("the amount offered for one goal is enough once nearer goals have taken their part", () => {
+  // Two goals short at once: the nearer one is paid first, so an amount
+  // worked out for the later goal alone leaves it short.
+  const course = goal("course", 60000, 1);
+  const shape: PlanShape = { ...base, goals: [course, laptop], goalOrder: ["course", "gadget"], monthlySip: 1000, capital: 0 };
+  const short = outlook(shape).find((i) => i.id === "gadget")!;
+  assert.notEqual(short.level, "on_track");
+  const offered = monthlyToPutOnTrack(shape, "gadget", 1500);
+  assert.ok(offered > 1500, "a start that leaves the goal short is stepped up");
+  assert.equal(outlook({ ...shape, monthlySip: offered }).find((i) => i.id === "gadget")!.level, "on_track");
+  // One step less is not enough: the answer is the first amount that works.
+  assert.notEqual(outlook({ ...shape, monthlySip: offered - 500 }).find((i) => i.id === "gadget")!.level, "on_track");
+});
+
+test("an amount that already puts the goal on track is kept to the rupee", () => {
+  const shape: PlanShape = { ...base, goals: [trip], goalOrder: ["travel"], monthlySip: 0, capital: 0 };
+  const enough = monthlyToPutOnTrack(shape, "travel", 0, 1);
+  assert.equal(monthlyToPutOnTrack(shape, "travel", enough + 137), enough + 137);
+});
+
+test("a goal no amount within the limit can reach keeps the starting figure", () => {
+  const shape: PlanShape = { ...base, goals: [abroad], goalOrder: ["education"], monthlySip: 0, capital: 0 };
+  assert.equal(monthlyToPutOnTrack(shape, "education", 4000, 500, 6000), 4000);
 });

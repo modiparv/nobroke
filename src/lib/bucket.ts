@@ -70,7 +70,7 @@ export const POOL_GROUPS: PoolGroup[] = [
   {
     label: "Gold and silver",
     items: [
-      { id: "nippon_gold", kind: "Gold ETF", note: "Gold in demat form, no locker." },
+      { id: "nippon_gold", kind: "Gold fund", note: "Follows the price of gold. No locker and no demat account." },
       { id: "inst_silver_etf", kind: "Silver ETF", note: "Silver moves more than gold, both ways." },
       { id: "inst_sgb", kind: "Govt bond", note: "Gold price plus a 2.5% yearly coupon, from the RBI." },
     ],

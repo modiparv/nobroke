@@ -5,7 +5,7 @@ import { formatINR } from "../lib/format";
 import { GAP_LABEL, gapLevel, gapTone, type GapLevel, type GapTone } from "../lib/gap";
 import { categoryCode } from "../lib/holdings";
 import { FOCUS, holdingFocus } from "../lib/links";
-import { equityShare, mixLabel } from "../lib/portfolios";
+import { equityShare, mixName } from "../lib/portfolios";
 import { riskBandLabel } from "../lib/risk";
 import { squarify } from "../lib/treemap";
 import { actions, capitalForGoal, goalsByPriority, planInputsForGoal, totalCapital, useStore } from "../store";
@@ -190,7 +190,7 @@ export default function PortfolioGlimpse() {
           </button>
         </div>
         <p className="num -mt-1.5 text-support text-text-2">
-          {mixLabel(s.portfolio)}, {Math.round(equityShare(s.portfolio) * 100)}% in stocks
+          {mixName(s.portfolio, s.portfolioProfile)}, {Math.round(equityShare(s.portfolio) * 100)}% in stocks
         </p>
       </div>
 
@@ -222,8 +222,8 @@ export default function PortfolioGlimpse() {
             <dd className="whitespace-nowrap text-row font-medium text-text">{riskBandLabel(s.riskAppetite)}</dd>
           </div>
           <div className="flex items-baseline justify-between gap-4 py-2.5">
-            <dt className="text-support text-text-2">Expected growth</dt>
-            <dd className="num whitespace-nowrap text-row font-medium text-text">About {expected}% a year</dd>
+            <dt className="text-support text-text-2">Assumed growth</dt>
+            <dd className="num whitespace-nowrap text-row font-medium text-text">{expected}% a year</dd>
           </div>
           <div className="flex items-baseline justify-between gap-4 py-2.5">
             <dt className="text-support text-text-2">Cash and investments</dt>

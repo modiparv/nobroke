@@ -64,7 +64,9 @@ async function post(path: string, body?: unknown): Promise<AuthResponse> {
     return {
       ...data,
       status: 503,
-      error: "Sign-in is not set up on this deployment yet (no AUTH_SECRET or database). Check /api/health/auth.",
+      // The cause is a missing server setting, which /api/health/auth names
+      // for whoever runs the site. The person signing in gets plain words.
+      error: "Sign-in is not available right now. Try again in a little while.",
     };
   }
   return { ...data, status: r.status };

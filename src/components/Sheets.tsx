@@ -2,7 +2,7 @@ import { useState } from "react";
 import { formatINR } from "../lib/format";
 import { GAP_LABEL } from "../lib/gap";
 import { inr } from "../lib/glue";
-import { onTrackCount, outlook, type GoalOutlook } from "../lib/outlook";
+import { monthlyToPutOnTrack, onTrackCount, outlook, type GoalOutlook } from "../lib/outlook";
 import { reachedText } from "../lib/reached";
 import { RUNWAY_COMFORT_MONTHS, RUNWAY_FLOOR_MONTHS, runwayLabel, runwayMonths } from "../lib/runway";
 import { actions, holdingsTotal, planShape, useStore } from "../store";
@@ -177,7 +177,12 @@ function CashSheet() {
 
 function MonthlySheet({ goalId, prefill }: { goalId?: string; prefill?: number }) {
   const s = useStore();
-  const [sip, setSip] = useState(Math.max(0, Math.round(prefill ?? s.monthlySip)));
+  // Opened for one goal: start at the amount that puts that goal on track
+  // under this sheet's own sharing, so the title's promise holds.
+  const [sip, setSip] = useState(() => {
+    const start = Math.max(0, Math.round(prefill ?? s.monthlySip));
+    return goalId ? monthlyToPutOnTrack(planShape(s, { resplit: true }), goalId, start) : start;
+  });
   const now = outlook(planShape(s));
   const next = outlook({ ...planShape(s, { resplit: true }), monthlySip: sip });
   const goal = goalId ? s.goals.find((g) => g.id === goalId) : undefined;

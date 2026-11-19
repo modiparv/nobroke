@@ -107,13 +107,14 @@ function AccountStep({ step }: { step: Step }) {
 
   // Already signed in (they signed in earlier, or chose "New plan"): no auth
   // form, just save this plan to their account and show it.
-  if (s.user) {
+  if (s.user && !busy && !s.owedAccountPlan) {
     return (
       <div>
         <h1 id="intake-question" tabIndex={-1} className={question}>
           Your plan is ready.
         </h1>
-        <p className={helper}>You are signed in as {s.user.email}. The plan is saved to your account.</p>
+        {/* A long email has no natural break: let it wrap anywhere so it never runs off a phone. */}
+        <p className={`${helper} [overflow-wrap:anywhere]`}>You are signed in as {s.user.email}. The plan is saved to your account.</p>
         <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
           {step.cta}
         </button>
@@ -199,9 +200,18 @@ function AccountStep({ step }: { step: Step }) {
         {step.title}
       </h1>
       <p className={helper}>{step.subtitle}</p>
+      {/* Sign-up is by invitation, so for most people this is the way on. It
+          sits above the form, where it is seen without scrolling on a short phone. */}
+      <button
+        type="button"
+        onClick={() => actions.finishOnboarding()}
+        className={`${quietLink} mt-2 font-medium text-text underline underline-offset-2 hover:text-text-2`}
+      >
+        See my plan without an account
+      </button>
 
       <form
-        className="mt-6 flex w-full max-w-sm flex-col gap-3"
+        className="mt-4 flex w-full max-w-sm flex-col gap-3"
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
@@ -236,9 +246,6 @@ function AccountStep({ step }: { step: Step }) {
           className={`${quietLink} font-medium text-text underline underline-offset-2 hover:text-text-2`}
         >
           {mode === "register" ? "Already have an account? Sign in" : "New here? Create an account"}
-        </button>
-        <button type="button" onClick={() => actions.finishOnboarding()} className={`${quietLink} text-text-2 hover:text-text`}>
-          Skip for now and show my plan
         </button>
       </div>
     </div>
@@ -724,10 +731,10 @@ export default function Onboarding() {
   }, []);
 
   const next = () => actions.setStep(Math.min(i + 1, STEPS.length - 1));
-  const back = () => (i > 0 ? actions.setStep(i - 1) : actions.goPlan());
+  const back = () => (i > 0 ? actions.setStep(i - 1) : actions.leaveOnboarding());
   // Step 0 with an existing plan offers the way back out: "New plan" from
   // the app must never trap someone in the intake.
-  const canGoBack = (i > 0 && step.kind !== "account") || (i === 0 && s.goals.length > 0);
+  const canGoBack = i > 0 || (i === 0 && s.goals.length > 0);
 
   // A new question starts at the top of the page (the goal list can be
   // scrolled) and takes keyboard focus, so a screen reader reads it. A money
@@ -758,7 +765,7 @@ export default function Onboarding() {
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <path d="M16 17l5-5-5-5M21 12H9" />
             </svg>
-            Log out of account
+            Sign out
           </button>
         )}
       </aside>

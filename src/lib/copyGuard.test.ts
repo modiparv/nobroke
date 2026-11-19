@@ -67,3 +67,17 @@ test("the ready-made mixes are built from kinds of fund, never named schemes", (
 test("no screen presents an assumption as past returns", () => {
   assertAbsent(/in the past this mix|how it grew in the past/i, "The growth range is an assumption, not a record of past returns.");
 });
+
+test("no screen and no link preview says NoBroke grows money, or calls an assumption expected", () => {
+  // The page title and the text a shared link shows are in index.html.
+  assertAbsent(/grow it all|grows? your money/i, "NoBroke shows arithmetic. It does not grow anyone's money.");
+  assertAbsent(/expected (growth|return)|your return \(xirr\)/i, "The growth rate is the plan's assumption, not something the person will get or has earned.");
+  // The plan data handed to the model must not name the assumption an expected return either.
+  for (const file of ["src/store.ts", "api/chat.ts", "scripts/ai-eval.mjs"]) {
+    assert.doesNotMatch(readFileSync(`${root}${file}`, "utf8"), /expectedReturnPct/, `${file} still calls the assumed growth an expected return.`);
+  }
+});
+
+test("no screen uses the word pace for growth", () => {
+  assertAbsent(/\bpace\b/i, "The brief replaces pace with growth or rate.");
+});

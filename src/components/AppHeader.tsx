@@ -120,6 +120,17 @@ export default function AppHeader() {
                     <p className="truncate px-3 pb-1.5 pt-2 text-support text-text-2" title={s.user.email}>
                       {s.user.email}
                     </p>
+                    {/* Below 640px the header has no room for "New plan", so it lives here. */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        actions.startOnboarding();
+                      }}
+                      className="flex min-h-11 w-full items-center rounded-control px-3 text-left text-body text-text transition-colors hover:bg-surface-2 focus-visible:-outline-offset-2 sm:hidden"
+                    >
+                      New plan
+                    </button>
                     <button
                       type="button"
                       onClick={() => {

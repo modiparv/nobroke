@@ -96,3 +96,19 @@ export function outlook(p: PlanShape): GoalOutlook[] {
 export function onTrackCount(items: GoalOutlook[]): number {
   return items.filter((i) => i.level === "on_track").length;
 }
+
+/**
+ * The monthly amount at which the named goal reads on track, for the
+ * "Put in more" sheet. The sheet shares money out again as the amount
+ * changes, so nearer goals take their part first and a figure worked out
+ * for this goal alone can leave it short. This starts at that figure and
+ * steps up until the outlook itself says on track. If no amount within the
+ * limit does it, the starting figure stands and the sheet shows the result.
+ */
+export function monthlyToPutOnTrack(shape: PlanShape, goalId: string, start: number, step = 500, max = 1_000_000): number {
+  const from = Math.max(0, Math.round(start));
+  for (let monthly = from; monthly <= max; monthly += step) {
+    if (outlook({ ...shape, monthlySip: monthly }).find((i) => i.id === goalId)?.level === "on_track") return monthly;
+  }
+  return from;
+}

@@ -129,6 +129,11 @@
 
 html {
   scroll-behavior: smooth;
+  /* A control that takes keyboard focus is scrolled clear of the sticky
+     header above and the copilot bar below, so its focus ring is never
+     hidden under either. */
+  scroll-padding-top: 4.5rem;
+  scroll-padding-bottom: 6rem;
 }
 
 /* In the base layer, so a control that draws its own focus border can switch

@@ -6,13 +6,6 @@ import type { AssetClassId, Fund } from "./types";
  * working from its built-in fund list, so the builder never breaks offline.
  */
 
-export interface FundScore {
-  score: number;
-  components: { consistency: number; downside: number; riskAdjusted: number; track: number };
-  monthsCovered: number;
-  grade: "Strong" | "Solid" | "Mixed" | "Weak";
-}
-
 export interface LiveSchemeRow {
   schemeCode: number;
   schemeName: string;
@@ -21,8 +14,6 @@ export interface LiveSchemeRow {
   cagr1y?: number | null;
   cagr3y?: number | null;
   cagr5y?: number | null;
-  /** The NoBroke Score, computed transparently from the same history. */
-  score?: FundScore | null;
 }
 
 export interface LiveSchemeDetail {
@@ -35,7 +26,6 @@ export interface LiveSchemeDetail {
   cagr1y: number | null;
   cagr3y: number | null;
   cagr5y: number | null;
-  score: FundScore | null;
 }
 
 export async function searchLiveSchemes(q: string): Promise<LiveSchemeRow[]> {
@@ -96,4 +86,19 @@ export function fundFromLiveScheme(detail: LiveSchemeDetail): Fund {
     expReturn: est.expReturn,
     volatility: est.volatility,
   };
+}
+
+/** A live fund read back from a saved plan. Only its id, name and band are
+    taken from the save; the planning figures always come from the band, so a
+    stored row can never carry its own growth rate. */
+export function savedLiveFund(raw: unknown): Fund | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.id !== "string" || !/^live_\d+$/.test(r.id) || typeof r.name !== "string" || !r.name) return null;
+  // Own keys only: "toString" is "in" every object and is not an asset class.
+  if (typeof r.assetClass !== "string" || !Object.prototype.hasOwnProperty.call(BAND_ESTIMATES, r.assetClass)) return null;
+  const assetClass = r.assetClass as AssetClassId;
+  const est = BAND_ESTIMATES[assetClass];
+  const fiveYr = typeof r.fiveYr === "number" && Number.isFinite(r.fiveYr) ? r.fiveYr : 0;
+  return { id: r.id, name: r.name.slice(0, 200), assetClass, risk: est.risk, fiveYr, expense: 0, expReturn: est.expReturn, volatility: est.volatility };
 }
