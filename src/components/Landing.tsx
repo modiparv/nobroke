@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatINR, formatPct } from "../lib/format";
-import { HERO_EXAMPLES, HERO_GROWTH, heroExampleFigures, heroLabel, heroLines, type HeroExample } from "../lib/heroExample";
+import { HERO_EXAMPLES, heroExampleFigures, heroLabel, heroLines, type HeroExample } from "../lib/heroExample";
 import { actions, getState, useStore } from "../store";
 import AuthSheet from "./AuthSheet";
 import Logo from "./Logo";
@@ -170,11 +170,11 @@ function Example() {
           <dd className="num whitespace-nowrap text-body font-medium text-text">{formatINR(figures.putIn)}</dd>
         </div>
         <div className="flex items-baseline justify-between gap-4 py-2.5">
-          <dt className="text-support text-text-2">Growth, assumed at {formatPct(HERO_GROWTH)} a year</dt>
+          <dt className="text-support text-text-2">Growth, assumed at {formatPct(figures.rate)} a year</dt>
           <dd className="num whitespace-nowrap text-body font-medium text-text">{formatINR(figures.growth)}</dd>
         </div>
         <div className="flex items-baseline justify-between gap-4 border-t border-text pt-3">
-          <dt className="text-body font-medium text-text">Total by {figures.endYear}</dt>
+          <dt className="text-body font-medium text-text">Total by {figures.endYear}, if nothing is spent</dt>
           <dd className="num whitespace-nowrap text-headline font-medium text-text">{formatINR(figures.total)}</dd>
         </div>
       </dl>

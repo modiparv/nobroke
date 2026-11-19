@@ -8,6 +8,7 @@ import {
   HERO_LINE_STEPS,
   heroExampleFigures,
   heroFigures,
+  heroGrowth,
   heroLabel,
   heroLines,
   heroYears,
@@ -49,6 +50,21 @@ test("the growth assumed is the Balanced starting mix's, to one decimal", () => 
   assert.ok(Math.abs(balanced - HERO_GROWTH) < 0.0005, `Balanced assumes ${balanced}, the example ${HERO_GROWTH}`);
 });
 
+test("near goals assume the Steady mix's growth, far goals the Balanced mix's, and never more", () => {
+  const steady = blendedReturn(MODEL_PORTFOLIOS.steady.allocation);
+  const bold = blendedReturn(MODEL_PORTFOLIOS.bold.allocation);
+  // A student's goals are one to four years away: money needed that soon is not assumed to grow like stocks.
+  assert.equal(heroGrowth(student.goals), 0.078);
+  assert.ok(Math.abs(heroGrowth(student.goals) - steady) < 0.0005);
+  assert.equal(heroGrowth(family.goals), HERO_GROWTH);
+  // Thirty years away would start on the Bold mix in the app; the public example stops at Balanced.
+  assert.equal(heroGrowth([{ name: "Far", years: 30 }]), HERO_GROWTH);
+  assert.ok(heroGrowth([{ name: "Far", years: 30 }]) < bold);
+  // The printed rate is the rate the sums use.
+  assert.equal(heroExampleFigures(student, 2026).rate, 0.078);
+  assert.equal(heroExampleFigures(family, 2026).rate, 0.104);
+});
+
 test("the toggle labels are the brief's, built from the amounts the sums use", () => {
   assert.deepEqual(HERO_EXAMPLES.map(heroLabel), ["Student · ₹3,000 a month", "Family · ₹37,000 a month"]);
 });
@@ -57,7 +73,7 @@ test("each example runs to its last goal, and prints these amounts", () => {
   assert.equal(heroYears(student.goals), 4);
   const s = heroExampleFigures(student, 2026);
   assert.deepEqual([s.years, s.endYear], [4, 2030]);
-  assert.deepEqual([formatINR(s.putIn), formatINR(s.growth), formatINR(s.total)], ["₹1.44 L", "₹35,176", "₹1.79 L"]);
+  assert.deepEqual([formatINR(s.putIn), formatINR(s.growth), formatINR(s.total)], ["₹1.44 L", "₹25,453", "₹1.69 L"]);
 
   assert.equal(heroYears(family.goals), 20);
   const f = heroExampleFigures(family, 2026);
