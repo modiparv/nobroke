@@ -54,7 +54,7 @@ export const POOL_GROUPS: PoolGroup[] = [
     items: [
       { id: "parag_flexi", kind: "Flexi cap", note: "Goes wherever the manager sees value, across company sizes." },
       { id: "icici_nifty", kind: "Index fund", note: "The 50 largest listed companies, at index cost." },
-      { id: "nippon_small", kind: "Small cap", note: "Small companies: the most growth, the biggest swings." },
+      { id: "nippon_small", kind: "Small cap", note: "Small companies. Bigger swings, up and down." },
       { id: "mirae_hybrid", kind: "Hybrid", note: "Stocks and bonds pre-blended in one fund." },
     ],
   },

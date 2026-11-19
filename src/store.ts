@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { Allocation, ChatMessage, Holding, PlanGoal, PlanInputs, Profile, RiskProfile } from "./lib/types";
 import { GOAL_MAP, refreshGoalNames } from "./lib/goals";
 import { INTAKE_HOLDING_ID, INTAKE_HOLDING_NAME, UNSORTED_CATEGORY, UNSORTED_TYPE, refreshHoldingLabels } from "./lib/holdings";
-import { applyGoalCosts } from "./lib/onboarding";
+import { STEPS, applyGoalCosts } from "./lib/onboarding";
 import { splitCapital, splitMonthly } from "./lib/split";
 import type { PlanShape } from "./lib/outlook";
 import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios";
@@ -604,7 +604,7 @@ export const actions = {
   startOnboarding: () =>
     set({ screen: "onboarding", onboardingStepIndex: 0, onboardingAnswers: {}, selectedGoalIds: [], profile: emptyProfile() }),
 
-  setStep: (i: number) => set({ onboardingStepIndex: Math.max(0, i) }),
+  setStep: (i: number) => set({ onboardingStepIndex: Math.min(STEPS.length - 1, Math.max(0, Math.round(i) || 0)) }),
 
   setProfileField: (field: keyof Profile, value: string | number) =>
     set({ profile: { ...state.profile, [field]: value } as Profile }),

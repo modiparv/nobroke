@@ -74,6 +74,11 @@ const MARKS: Array<[string, string]> = [
   ["chartn-3", "night"],
   ["primary", "bg"],
   ["primary", "night"],
+  ["risk-1", "surface"],
+  ["risk-2", "surface"],
+  ["risk-3", "surface"],
+  ["risk-4", "surface"],
+  ["risk-5", "surface"],
 ];
 
 test("text tokens meet 4.5:1 on their grounds", () => {

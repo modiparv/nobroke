@@ -72,9 +72,10 @@
   --hero-line: transparent;
   /* Risk appetite ramp: the familiar green-to-red arc, calm to bold. */
   --risk-1: #2f9e5b;
-  --risk-2: #8fae3b;
-  --risk-3: #d9a521;
-  --risk-4: #e07b39;
+  /* Each step reaches 3:1 on white, so the ramp reads without the knob. */
+  --risk-2: #6f8f1f;
+  --risk-3: #b8860b;
+  --risk-4: #cf6a22;
   --risk-5: #d64545;
   --risk-unfilled: #e7e5e0;
   /* Categorical series for the goals chart, in draw order. */
@@ -166,7 +167,8 @@ h3 {
 
 /* Placeholders sit in an interactive control, so they use the readable muted
    step, not the decorative one. */
-::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: rgb(var(--text-2));
 }
 
