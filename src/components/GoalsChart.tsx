@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { blendedReturn, computePlan, projectionSeries, requiredCorpus } from "../lib/finance";
-import { formatINR } from "../lib/format";
 import { GAP_LABEL, gapLevel } from "../lib/gap";
+import { inr } from "../lib/glue";
 import { SHARE_CAP, niceTicks, placeLabels, shareAxis, shareLabel, sharePath, shortName, yearTicks, type Box } from "../lib/goalPaths";
 import { goalsByPriority, planInputsForGoal, useStore } from "../store";
 import { sectionLabel } from "../ui";
@@ -31,9 +31,10 @@ const VIEWS: Array<{ id: View; label: string }> = [
   { id: "rupees", label: "Rupees" },
 ];
 
+// Axis ticks are 12px. Everything a person reads as words is 14px.
 const TICK_REM = 0.75;
 const NAME_REM = 0.875;
-const CAPTION_REM = 0.8125;
+const CAPTION_REM = 0.875;
 /** The dot at a line's end, and the clear space a name keeps from it. */
 const DOT = 4.5;
 const MARKER = DOT + 1;
@@ -50,7 +51,7 @@ function LineKey({ color, dash }: { color: string; dash?: string }) {
 }
 
 /** An amount that never breaks from its unit ("₹9.33" on one line, "Cr" on the next). */
-const rupees = (v: number) => formatINR(v).replace(/ /g, " ");
+const rupees = inr;
 
 export default function GoalsChart({ variant = "card" }: { variant?: "card" | "night" }) {
   const s = useStore();
@@ -267,7 +268,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
               type="button"
               onClick={() => setView(v.id)}
               aria-pressed={view === v.id}
-              className={`inline-flex h-11 items-center whitespace-nowrap rounded-full px-4 text-support transition-colors ${tone.focus} ${
+              className={`inline-flex h-11 items-center whitespace-nowrap rounded-full px-4 text-support transition-colors motion-reduce:transition-none ${tone.focus} ${
                 view === v.id ? tone.on : tone.off
               }`}
             >
