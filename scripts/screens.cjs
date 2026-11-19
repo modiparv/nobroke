@@ -7,17 +7,21 @@
 // Usage: node scripts/screens.cjs <tag> [persona=rajesh|aarav] [widths=390,1280] [screens=landing,intake,plan,portfolio,money]
 // Writes <tag>-<screen>-<width>-<n>.png into the CURRENT directory (slices of at most 1500px, 3 per screen)
 // and prints one JSON line per screen: share of text below 14px, capital-letter labels, sideways overflow, clipped elements.
+// The store is imported from the URL the page itself loaded. After a hot reload Vite serves
+// /src/store.ts with a ?t= stamp; importing the bare path would create a second, empty store
+// and every app screen would silently be the landing page.
 const { chromium } = require('playwright');
 const [tag = 'shot', persona = 'rajesh', widthsArg = '390,1280', screensArg = 'landing,intake,plan,portfolio,money'] = process.argv.slice(2);
 const widths = widthsArg.split(',').map(Number);
 const screens = screensArg.split(',');
 const BASE = 'http://127.0.0.1:5173';
+const STORE = "import(performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.split('?')[0].endsWith('/src/store.ts')).pop() || '/src/store.ts')";
 const PEOPLE = {
   rajesh: { p: { employment: 'salaried', takeHome: 160000, rent: 0, emi: 38000, monthlySpend: 65000, cashOnHand: 300000, investedValue: 1800000, city: 'tier1', stage: 'stable', dependents: 'kids' }, goals: ['child', 'fire', 'parents'], answers: { timeline: '8' } },
   aarav: { p: { employment: 'student', takeHome: 8000, rent: 0, emi: 0, monthlySpend: 3500, cashOnHand: 22000, investedValue: 6000, city: 'tier1', stage: 'studying', dependents: 'none' }, goals: ['gadget', 'travel', 'course'], answers: { timeline: '2', 'cost:travel': '20000', 'cost:gadget': '70000' } },
 };
 const seed = (who) => `(async () => {
-  const m = await import('/src/store.ts'); const a = m.actions; const d = ${JSON.stringify(PEOPLE[who])};
+  const m = await import(performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.split('?')[0].endsWith('/src/store.ts')).pop() || '/src/store.ts'); const a = m.actions; const d = ${JSON.stringify(PEOPLE[who])};
   a.startOnboarding();
   for (const [k, v] of Object.entries(d.p)) a.setProfileField(k, v);
   for (const g of d.goals) a.toggleGoal(g);
@@ -60,7 +64,7 @@ async function slices(page, name, w, h = 1500, max = 3) {
     await page.setViewportSize({ width: w, height: hgt });
     if (screens.includes('intake')) {
       for (const step of [1, 2, 12]) {
-        await page.evaluate(`(async()=>{const m=await import('/src/store.ts');m.actions.startOnboarding();m.actions.setStep(${step});})()`);
+        await page.evaluate(`(async()=>{const m=await import(performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.split('?')[0].endsWith('/src/store.ts')).pop() || '/src/store.ts');m.actions.startOnboarding();m.actions.setStep(${step});})()`);
         await page.waitForTimeout(400);
         await page.screenshot({ path: `${tag}-intake${step}-${w}-1.png` });
         console.log(JSON.stringify({ screen: 'intake step ' + step, width: w, ...(await page.evaluate(STATS)) }));
@@ -70,8 +74,10 @@ async function slices(page, name, w, h = 1500, max = 3) {
     for (const tab of ['plan', 'portfolio', 'money']) {
       if (!screens.includes(tab)) continue;
       await page.setViewportSize({ width: w, height: hgt });
-      await page.evaluate(`(async()=>{const m=await import('/src/store.ts');m.actions.setTab('${tab}');})()`);
+      await page.evaluate(`(async()=>{const m=await import(performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.split('?')[0].endsWith('/src/store.ts')).pop() || '/src/store.ts');m.actions.setTab('${tab}');})()`);
       await page.waitForTimeout(600);
+      const onScreen = await page.evaluate(`(async()=>{const m=await ${STORE};return m.getState().screen + '/' + m.getState().tab;})()`);
+      if (onScreen !== 'plan/' + tab) throw new Error('the app is showing ' + onScreen + ', not plan/' + tab + ': the store import is stale');
       const st = await page.evaluate(STATS);
       console.log(JSON.stringify({ screen: tab, width: w, persona, ...st, heightPx: await slices(page, tab, w) }));
     }

@@ -95,7 +95,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
         need: requiredCorpus(g.targetToday, s.inflation, g.horizonYears),
         projected: points[points.length - 1]?.value ?? 0,
         endShare: shares[shares.length - 1]?.share ?? 0,
-        endYear: baseYear + g.horizonYears,
+        endYear: baseYear + Math.round(g.horizonYears),
         level: gapLevel(computePlan(inputs)),
       };
     });
@@ -146,7 +146,8 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
   const nameH = Math.round(NAME_REM * rootPx * 1.3);
   const captionH = Math.round(CAPTION_REM * rootPx * 1.3);
   const top = 8;
-  const bottom = Math.round(tickPx * 1.3) + 14;
+  // Room below the baseline for the year ticks, set clear of the 0 tick beside them.
+  const bottom = Math.round(tickPx * 1.3) + 16;
   const plotH = H - top - bottom;
 
   // The time axis hugs the real horizons (2-year floor only), so short-dated
@@ -154,9 +155,16 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
   const maxYears = Math.max(2, ...goals.map((g) => g.horizonYears));
 
   // The value axis. Share view: 0% at the bottom, the 100% rule, and above
-  // it a zone tall enough for its caption and one row of goal names.
+  // it a zone tall enough for its caption and one row of goal names. The
+  // caption has a strip of its own at the top that no line reaches, however
+  // far ahead a goal is.
   const zonePx = captionH + nameH + MARKER + GAP + 8;
-  const axis = shareAxis(Math.max(0, ...series.flatMap((sr) => sr.shares.map((p) => p.share))), 1 / (1 - zonePx / plotH));
+  const stripPx = 4 + captionH + MARKER + 4;
+  const axis = shareAxis(
+    Math.max(0, ...series.flatMap((sr) => sr.shares.map((p) => p.share))),
+    1 / (1 - zonePx / plotH),
+    stripPx / plotH,
+  );
   const peak = Math.max(0, ...series.flatMap((sr) => [sr.need, sr.projected]));
   // With nothing to plot, the rupee axis stays blank rather than reading ₹0 / ₹1 / ₹1.
   const hasValues = peak > 0;
@@ -220,7 +228,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
   const summary = series.map((sr) => `${sr.goal.name}: ${figure(sr)}, ${GAP_LABEL[sr.level].toLowerCase()}.`).join(" ");
 
   // The readout: every goal's figure in the year under the pointer.
-  const lastYear = Math.max(...goals.map((g) => g.horizonYears));
+  const lastYear = Math.floor(Math.max(...goals.map((g) => g.horizonYears)));
   const pick = (e: ReactPointerEvent<SVGSVGElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
     const px = (e.clientX - box.left) * (width / Math.max(1, box.width));
@@ -337,7 +345,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
             <text
               key={t.year}
               x={x(t.offset)}
-              y={top + plotH + 11 + tickPx * 0.8}
+              y={top + plotH + 13 + tickPx * 0.8}
               textAnchor="middle"
               fill={tone.tick}
               className="num"
@@ -375,6 +383,14 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
                 <circle cx={needs[i].x} cy={needs[i].y} r={DOT} fill={tone.ground} stroke={sr.color} strokeWidth="2" />
               </g>
             ))}
+
+          {/* A name that had to sit a row away from its line's end is joined to it. */}
+          {labels.map(
+            (l) =>
+              l.leader && (
+                <line key={l.id} x1={l.leader.from.x} y1={l.leader.from.y} x2={l.leader.to.x} y2={l.leader.to.y} stroke={tone.tick} strokeWidth="1" />
+              ),
+          )}
 
           {/* Where each line ends */}
           {series.map((sr, i) => (

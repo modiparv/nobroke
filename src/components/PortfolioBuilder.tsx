@@ -4,6 +4,7 @@ import { fundFromLiveScheme, getLiveSchemeDetail, searchLiveSchemes, type LiveSc
 import { MODEL_PORTFOLIOS } from "../lib/portfolios";
 import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
 import { formatINR, formatPct } from "../lib/format";
+import { inr } from "../lib/glue";
 import { FOCUS, holdingForFund, holdingFocus } from "../lib/links";
 import { onTrackCount, outlook } from "../lib/outlook";
 import type { Allocation, AssetClassId, RiskProfile } from "../lib/types";
@@ -14,6 +15,15 @@ import RiskMeter from "./RiskMeter";
 import { card } from "../ui";
 
 const CLASS_ORDER: AssetClassId[] = ["equity", "hybrid", "gold", "debt"];
+/** What kind of money a fund is, in the words the mix's key uses. Written
+    under each fund's name, so the dot's colour is never the only thing
+    that says it. */
+const CLASS_WORD: Record<AssetClassId, string> = {
+  equity: "Stocks",
+  hybrid: "Stocks and bonds",
+  gold: "Gold",
+  debt: "Bonds",
+};
 const PRESETS: RiskProfile[] = ["steady", "balanced", "bold"];
 
 /**
@@ -40,7 +50,6 @@ function growthBand(ret: number) {
 }
 
 const paneTitle = "text-section font-medium text-text";
-const textLink = "text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2";
 
 /* ------------------------------------------------------------------ */
 /* The pieces every mix on this page is drawn with: the live mix, the  */
@@ -96,7 +105,7 @@ export function MixKey({ alloc, swatches = false }: { alloc: Allocation; swatche
       {parts.map((p, i) => (
         <span key={p.id}>
           <span className="whitespace-nowrap">
-            {swatches && <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: p.color }} />}
+            {swatches && <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full" style={{ background: p.color }} />}
             <span className="font-medium text-text">{Math.round(p.pct)}%</span> {p.word}
             {i < parts.length - 1 ? "," : ""}
           </span>
@@ -120,15 +129,16 @@ const stepButton =
   "grid w-11 flex-none place-items-center text-text-2 transition hover:bg-surface-2 hover:text-text focus-visible:-outline-offset-2 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-2";
 
 /**
- * One fund in a mix: its name in full, what it gets, and its share with a
- * minus and a plus that are each a full 44px to tap. On a phone the name
- * has the first line to itself and the share sits under it. From the sm
- * breakpoint up it is one line.
+ * One fund in a mix: its name in full, what kind of money it is, what it
+ * gets, and its share with a minus and a plus that are each a full 44px to
+ * tap. On a phone the name has the first lines to itself and the share
+ * sits under it. From the sm breakpoint up it is one row.
  */
 export function MixRow({
   name,
   color,
   kind,
+  sub,
   pct,
   note,
   solo,
@@ -140,6 +150,8 @@ export function MixRow({
   /** The asset class: its colour, and its name for the dot's tooltip. */
   color: string;
   kind: string;
+  /** A quiet line under the name: what kind of money it is ("Stocks"). */
+  sub?: string;
   pct: number;
   /** One quiet fact beside the share: what the fund gets ("₹9,250 a
       month"), or what kind of thing it is ("Gilt fund"). */
@@ -156,6 +168,7 @@ export function MixRow({
         <span className="mt-[0.4375rem] h-2.5 w-2.5 flex-none rounded-full" style={{ background: color }} title={kind} />
         <div className="min-w-0">
           <p className="break-words text-row font-medium text-text">{name}</p>
+          {sub && <p className="text-support text-text-2">{sub}</p>}
           {children}
         </div>
       </div>
@@ -221,9 +234,9 @@ export function AddMark({ on, busy }: { on: boolean; busy?: boolean }) {
  * mix itself across the top, then on a wide screen what the mix holds on
  * the left and the ways to change it on the right. On a phone they stack in
  * the order a person meets them: the mix, the risk level, the ready-made
- * mixes, the funds, the search.
+ * mixes, then the funds with the search that adds one more.
  */
-export default function PortfolioBuilder({ fundsFooter }: { fundsFooter?: ReactNode }) {
+export default function PortfolioBuilder() {
   const s = useStore();
   const alloc: Allocation = s.portfolio;
   const [search, setSearch] = useState("");
@@ -238,6 +251,7 @@ export default function PortfolioBuilder({ fundsFooter }: { fundsFooter?: ReactN
   const [liveBusy, setLiveBusy] = useState(false);
   const [addingCode, setAddingCode] = useState<number | null>(null);
   const searchSeq = useRef(0);
+  const searchInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const q = search.trim();
     if (q.length < 3) {
@@ -415,100 +429,126 @@ export default function PortfolioBuilder({ fundsFooter }: { fundsFooter?: ReactN
       </section>
 
       {/* ---- What the mix holds (a drop zone for a dragged option), and
-          the search that adds one more fund to it ---- */}
-      <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
-        <section
-          ref={fundsFocus.ref}
-          className={`order-4 min-w-0 rounded-card border bg-surface transition-colors ${
-            dragOver ? "border-text ring-2 ring-text/20" : "border-line"
-          } ${fundsFocus.active ? "focus-flash" : ""}`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = "copy";
-            if (!dragOver) setDragOver(true);
-          }}
-          onDragLeave={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
-          }}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            const id = e.dataTransfer.getData("text/plain");
-            if (FUND_MAP[id]) addFund(id);
-          }}
-        >
-          <div className="px-4 pb-2 pt-4 sm:px-5 sm:pb-3 sm:pt-5">
-            <h2 className={paneTitle}>
-              {holdings.length > 0
-                ? `The ${holdings.length} ${holdings.length === 1 ? "fund" : "funds"} in your mix`
-                : "The funds in your mix"}
-            </h2>
-            {holdings.length > 0 ? (
-              <>
-                {holdings.length > 1 && (
-                  <p className="mt-1 text-support text-text-2">
-                    Minus and plus move a fund's share by 5%. The other funds adjust so the mix stays at 100%.
-                  </p>
-                )}
-                <ul className="mt-2 divide-y divide-line">
-                  {holdings.map((id) => {
-                    const f = FUND_MAP[id];
-                    const pctOfTotal = total > 0 ? Math.round(((alloc[id] ?? 0) / total) * 100) : 0;
-                    // A fund the person already holds links to that holding on Money.
-                    const owned = holdingForFund(f.name, s.externalHoldings);
-                    return (
-                      <MixRow
-                        key={id}
-                        name={f.name}
-                        color={ASSET_CLASSES[f.assetClass].color}
-                        kind={ASSET_CLASSES[f.assetClass].label}
-                        pct={pctOfTotal}
-                        note={sip > 0 ? `${formatINR(amountFor(id))} a month` : undefined}
-                        solo={holdings.length <= 1}
-                        onStep={(delta) => setWeight(id, (alloc[id] ?? 0) + delta)}
-                        onRemove={() => removeFund(id)}
-                      >
-                        {owned && (
-                          <button
-                            type="button"
-                            onClick={() => actions.setTab("money", { focus: holdingFocus(owned.id) })}
-                            className={`${textLink} num inline-flex min-h-11 items-center text-left font-normal`}
-                          >
-                            You hold {formatINR(owned.amount)} of this. See it in Money
-                          </button>
-                        )}
-                      </MixRow>
-                    );
-                  })}
-                </ul>
-              </>
-            ) : (
-              <p className="mt-1 pb-2 text-support text-text-2">No funds yet.</p>
-            )}
-          </div>
-          {fundsFooter}
-        </section>
+          in the same pane the search that adds one more fund to it: a fund
+          added from the search shows up in the list right above it. ---- */}
+      <section
+        ref={fundsFocus.ref}
+        className={`order-4 min-w-0 self-start rounded-card border bg-surface transition-colors lg:order-none ${
+          dragOver ? "border-text ring-2 ring-text/20" : "border-line"
+        } ${fundsFocus.active ? "focus-flash" : ""}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+          if (!dragOver) setDragOver(true);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          const id = e.dataTransfer.getData("text/plain");
+          if (FUND_MAP[id]) addFund(id);
+        }}
+      >
+        <div className="px-4 pb-2 pt-4 sm:px-5 sm:pb-3 sm:pt-5">
+          <h2 className={paneTitle}>
+            {holdings.length > 0
+              ? `The ${holdings.length} ${holdings.length === 1 ? "fund" : "funds"} in your mix`
+              : "The funds in your mix"}
+          </h2>
+          {holdings.length > 0 ? (
+            <>
+              {holdings.length > 1 && (
+                <p className="mt-1 text-pretty text-support text-text-2">
+                  Minus and plus move a fund's share by 5%. The other funds adjust so the mix stays at 100%.
+                </p>
+              )}
+              <ul className="mt-2 divide-y divide-line">
+                {holdings.map((id) => {
+                  const f = FUND_MAP[id];
+                  const pctOfTotal = total > 0 ? Math.round(((alloc[id] ?? 0) / total) * 100) : 0;
+                  // A fund the person already holds links to that holding on Money.
+                  const owned = holdingForFund(f.name, s.externalHoldings);
+                  return (
+                    <MixRow
+                      key={id}
+                      name={f.name}
+                      color={ASSET_CLASSES[f.assetClass].color}
+                      kind={ASSET_CLASSES[f.assetClass].label}
+                      sub={CLASS_WORD[f.assetClass]}
+                      pct={pctOfTotal}
+                      note={sip > 0 ? `${formatINR(amountFor(id))} a month` : undefined}
+                      solo={holdings.length <= 1}
+                      onStep={(delta) => setWeight(id, (alloc[id] ?? 0) + delta)}
+                      onRemove={() => removeFund(id)}
+                    >
+                      {owned && (
+                        <button
+                          type="button"
+                          onClick={() => actions.setTab("money", { focus: holdingFocus(owned.id) })}
+                          className="group num inline-flex min-h-11 flex-wrap content-center items-center gap-x-1.5 text-left text-support"
+                        >
+                          {/* The fact, then the link. A line may break between
+                              the two, never inside one. */}
+                          <span className="whitespace-nowrap text-text-2">You hold {inr(owned.amount)} of this.</span>
+                          <span className="whitespace-nowrap font-medium text-text underline underline-offset-2 transition group-hover:text-text-2">
+                            See it in Money
+                          </span>
+                        </button>
+                      )}
+                    </MixRow>
+                  );
+                })}
+              </ul>
+            </>
+          ) : (
+            <p className="mt-1 pb-2 text-support text-text-2">No funds yet.</p>
+          )}
+        </div>
 
         {/* ---- Fund search: the live AMFI universe only ---- */}
-        <section className={`${card} order-5 min-w-0`}>
-          <h2 className={paneTitle}>Want a specific fund?</h2>
-          <label htmlFor="fund-search" className="mt-1 block text-support text-text-2">
+        <div className="border-t border-line px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
+          <h3 className="text-row font-medium text-text">Want a specific fund?</h3>
+          <label htmlFor="fund-search" className="mt-0.5 block text-support text-text-2">
             Search any mutual fund (type 3 letters)
           </label>
-          <input
-            id="fund-search"
-            type="search"
-            enterKeyHint="search"
-            autoComplete="off"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Fund name"
-            className="mt-2 h-12 w-full rounded-control border border-line-2 bg-surface px-3 text-body text-text outline-none transition focus:border-text focus:ring-1 focus:ring-text focus-visible:outline-none"
-          />
+          {/* The browser's own small clear mark is switched off: the one
+              here is a full 44px to tap. */}
+          <div className="relative mt-2">
+            <input
+              id="fund-search"
+              ref={searchInput}
+              type="search"
+              enterKeyHint="search"
+              autoComplete="off"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Fund name"
+              className={`h-12 w-full rounded-control border border-line-2 bg-surface pl-3 text-body text-text outline-none transition focus:border-text focus:ring-1 focus:ring-text [&::-webkit-search-cancel-button]:appearance-none ${
+                search ? "pr-12" : "pr-3"
+              }`}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  searchInput.current?.focus();
+                }}
+                aria-label="Clear the search"
+                className="absolute right-0.5 top-0.5 grid h-11 w-11 place-items-center rounded-control text-text-2 transition hover:text-text focus-visible:-outline-offset-2"
+              >
+                <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+                  <path d="M4 4l8 8M12 4l-8 8" />
+                </svg>
+              </button>
+            )}
+          </div>
 
           <div aria-live="polite">
             {typed.length < 3 && !liveBusy && liveRows.length === 0 && (
-              <p className="mt-2 text-support text-text-2">Every mutual fund in India, from the official AMFI list.</p>
+              <p className="mt-2 text-pretty text-support text-text-2">Every mutual fund in India, from the official AMFI list.</p>
             )}
             {typed.length >= 3 && !liveBusy && liveRows.length === 0 && (
               <p className="mt-2 text-support text-text-2">No fund matches “{typed}”.</p>
@@ -546,14 +586,14 @@ export default function PortfolioBuilder({ fundsFooter }: { fundsFooter?: ReactN
                   );
                 })}
               </ul>
-              <p className="mt-2 text-support text-text-2">
+              <p className="mt-2 text-pretty text-support text-text-2">
                 Past returns are yearly, from official NAV history. They do not tell you what a fund will do next. This
                 list is not ranked.
               </p>
             </>
           )}
-        </section>
-      </div>
+        </div>
+      </section>
 
       {/* ---- The ways to change it ---- */}
       <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
@@ -563,7 +603,7 @@ export default function PortfolioBuilder({ fundsFooter }: { fundsFooter?: ReactN
             in the same order, and nothing that points at one of them. */}
         <section ref={mixFocus.ref} className={`${card} order-3 min-w-0 ${mixFocus.active ? "focus-flash" : ""}`}>
           <h2 className={paneTitle}>Pick a mix</h2>
-          <p className="mt-1 text-support text-text-2">Three ready-made mixes. Tap one and it replaces the funds in your mix.</p>
+          <p className="mt-1 text-pretty text-support text-text-2">Three ready-made mixes. Tap one and it replaces the funds in your mix.</p>
           <div className="mt-3 divide-y divide-line overflow-hidden rounded-control border border-line" role="group" aria-label="Ready-made mixes">
             {PRESETS.map((key) => {
               const active = s.portfolioProfile === key;
@@ -602,11 +642,11 @@ export default function PortfolioBuilder({ fundsFooter }: { fundsFooter?: ReactN
                       <MixKey alloc={preset} />
                     </span>
                     {preview !== null && (
-                      <span className="num mt-1 block text-support text-text">
+                      <span className="num mt-1 block text-pretty text-support text-text">
                         {preview} of {s.goals.length} {s.goals.length === 1 ? "goal" : "goals"} on track with this mix
                       </span>
                     )}
-                    {beyond && <span className="mt-1 block text-support text-text-2">Riskier than you said you're OK with</span>}
+                    {beyond && <span className="mt-1 block text-pretty text-support text-text-2">Riskier than you said you're OK with</span>}
                   </span>
                 </button>
               );

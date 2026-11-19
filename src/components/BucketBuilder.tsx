@@ -23,6 +23,18 @@ function splitLabel(label: string): { short: string; note: string | null } {
   return m ? { short: m[1], note: `${m[1]} ${m[2]}.` } : { short: label, note: null };
 }
 
+const textLink =
+  "inline-flex min-h-11 items-center text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2";
+
+/** The fund search sits in the funds pane, above this one on every screen.
+    The link scrolls to it and puts the cursor in it. */
+function goToSearch() {
+  const field = document.getElementById("fund-search");
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  field?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+  field?.focus({ preventScroll: true });
+}
+
 /** What each option is, in a word or two: "Gilt fund", "Equity ETF". */
 const KIND: Record<string, string> = Object.fromEntries(POOL_ITEMS.map((i) => [i.id, i.kind]));
 /** Each option's place in the list of all options. The draft is shown in
@@ -53,7 +65,7 @@ export default function BucketBuilder({ className = "" }: { className?: string }
   const remove = (id: string) => actions.setBucket(withoutInstrument(bucket, id));
   const nudge = (id: string, delta: number) => actions.setBucket(withWeight(bucket, id, (bucket[id] ?? 0) + delta));
 
-  const picked = `${ids.length} ${ids.length === 1 ? "fund" : "funds"} picked.`;
+  const picked = `${ids.length} ${ids.length === 1 ? "fund" : "funds"} in your draft.`;
   const summary =
     ids.length === 0
       ? "Add funds, set how much goes to each, then apply. Nothing changes until you tap Apply."
@@ -73,7 +85,7 @@ export default function BucketBuilder({ className = "" }: { className?: string }
         >
           <span className="min-w-0">
             <span className="block text-section font-medium text-text">Build your own mix (advanced)</span>
-            <span className="mt-0.5 block text-support font-normal tracking-normal text-text-2">{summary}</span>
+            <span className="mt-0.5 block text-pretty text-support font-normal tracking-normal text-text-2">{summary}</span>
           </span>
           <span className="flex flex-none items-center gap-1.5 text-support font-medium tracking-normal text-text">
             {open ? "Hide" : "Show"}
@@ -164,9 +176,10 @@ export default function BucketBuilder({ className = "" }: { className?: string }
                 );
               })}
             </ul>
-            <p className="mt-3 text-support text-text-2">
-              Can't find your fund? Use the search. It adds a fund straight to your mix.
-            </p>
+            <p className="mt-3 text-pretty text-support text-text-2">Can't find your fund? The search adds a fund straight to your mix.</p>
+            <button type="button" onClick={goToSearch} className={textLink}>
+              Use the search
+            </button>
           </div>
 
           {/* ---- The draft (a drop zone for a dragged option) ---- */}
@@ -230,15 +243,8 @@ export default function BucketBuilder({ className = "" }: { className?: string }
 
                 {isLive ? (
                   <>
-                    <p className="mt-4 text-support text-text-2">
-                      <span className="font-medium text-text">This is your mix now.</span> Your portfolio is running exactly
-                      this mix.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => actions.setTab("plan")}
-                      className="inline-flex min-h-11 items-center text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
-                    >
+                    <p className="mt-4 text-support font-medium text-text">This is your mix now.</p>
+                    <button type="button" onClick={() => actions.setTab("plan")} className={textLink}>
                       See your goals
                     </button>
                   </>
@@ -247,7 +253,7 @@ export default function BucketBuilder({ className = "" }: { className?: string }
                     <button type="button" onClick={actions.applyBucketAsMix} className={`${btnPrimary} mt-4 w-full`}>
                       Apply this mix
                     </button>
-                    <p className="mt-2 text-support text-text-2">Replaces your current mix. All goals share one mix.</p>
+                    <p className="mt-2 text-pretty text-support text-text-2">Replaces your current mix. All goals share one mix.</p>
                   </>
                 )}
               </>

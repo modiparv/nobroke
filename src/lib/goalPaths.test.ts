@@ -77,16 +77,27 @@ test("money that grows slower than prices loses ground", () => {
   assert.ok(last(path).share < path[0].share);
 });
 
-test("share labels round down and never hide a sliver", () => {
-  assert.equal(shareLabel(0.996), "99%");
-  assert.equal(shareLabel(1), "100%");
-  assert.equal(shareLabel(0.9999999999), "100%");
-  assert.equal(shareLabel(1.004), "100%");
+test("share labels round to the nearest percent, as the plan's own figure does", () => {
+  assert.equal(shareLabel(0.8558), "86%");
+  assert.equal(shareLabel(0.854), "85%");
   assert.equal(shareLabel(0.03), "3%");
+  assert.equal(shareLabel(1), "100%");
+  assert.equal(shareLabel(1.004), "100%");
+  assert.equal(shareLabel(1.886), "189%");
+  assert.equal(shareLabel(20), "2,000%");
+  // The same rounding the single-goal chart has always shown.
+  for (const share of [0.031, 0.2749, 0.5, 0.8558, 0.994, 1.234, 2.47]) assert.equal(shareLabel(share), `${Math.round(share * 100)}%`);
+});
+
+test("a goal that is short never reads 100%, and a sliver never reads 0%", () => {
+  assert.equal(shareLabel(0.996), "99%");
+  assert.equal(shareLabel(0.99999), "99%");
+  // Covered to within rounding error of the arithmetic is covered.
+  assert.equal(shareLabel(0.9999999999), "100%");
   assert.equal(shareLabel(0.004), "Under 1%");
   assert.equal(shareLabel(0), "0%");
   assert.equal(shareLabel(-0.2), "0%");
-  assert.equal(shareLabel(20), "2,000%");
+  assert.equal(shareLabel(Number.NaN), "0%");
 });
 
 test("the share axis always shows 100% and never grows past the cap", () => {
@@ -106,6 +117,24 @@ test("the share axis always shows 100% and never grows past the cap", () => {
 
   assert.deepEqual(shareAxis(0, 1.3).ticks, [0, 0.5, 1]);
   assert.deepEqual(shareAxis(Number.NaN).ticks, [0, 0.5, 1]);
+});
+
+test("a strip at the top of the share axis stays clear of every line and tick", () => {
+  // The caption for the zone above 100% sits in this strip, so a goal that is
+  // far ahead can never run its line through the words.
+  for (const headroom of [0.08, 0.13, 0.2]) {
+    for (const peak of [0, 0.4, 1, 1.02, 1.2, 1.45, 1.88, 2, 2.47, 20]) {
+      const axis = shareAxis(peak, 1.27, headroom);
+      const floor = 1 - headroom + 1e-9;
+      assert.ok(Math.min(peak, SHARE_CAP) / axis.top <= floor, `a line at ${peak} enters the strip`);
+      for (const t of axis.ticks) assert.ok(t / axis.top <= floor, `the ${t} tick enters the strip`);
+      assert.ok(axis.ticks.includes(1), `no 100% tick at ${peak}`);
+      assert.ok(axis.top >= 1.27);
+    }
+  }
+  // Headroom that makes no sense is ignored rather than breaking the axis.
+  assert.deepEqual(shareAxis(1, 1.3, Number.NaN).ticks, [0, 0.5, 1]);
+  assert.ok(Number.isFinite(shareAxis(1.5, 1.3, 5).top));
 });
 
 test("the calendar-year ticks are whole years", () => {
@@ -171,8 +200,32 @@ const H = 18;
 const R = 4.5;
 const marksOf = (t: LabelTarget): Box[] => [t, ...(t.alt ?? [])].map((p) => ({ x: p.x - R, y: p.y - R, w: 2 * R, h: 2 * R }));
 
+const gapTo = (p: { x: number; y: number }, b: Box) =>
+  Math.hypot(Math.max(b.x - p.x, 0, p.x - (b.x + b.w)), Math.max(b.y - p.y, 0, p.y - (b.y + b.h)));
+const pointsOf = (t: LabelTarget) => [{ x: t.x, y: t.y }, ...(t.alt ?? [])];
+
+/** Every placed name is nearer to its own goal's mark than to any other
+    goal's, so it cannot be read as the neighbour's name, unless a leader
+    joins it to its mark. Marks that share a dot (within its radius) are one
+    mark to the eye and are not compared. */
+function assertOwnMarkNearest(targets: LabelTarget[], placed: ReturnType<typeof placeLabels>) {
+  for (const p of placed) {
+    if (p.leader) continue;
+    const own = pointsOf(targets.find((t) => t.id === p.id)!);
+    const mine = Math.min(...own.map((m) => gapTo(m, p.box)));
+    for (const t of targets) {
+      if (t.id === p.id) continue;
+      for (const m of pointsOf(t)) {
+        if (own.some((o) => Math.hypot(o.x - m.x, o.y - m.y) <= R)) continue;
+        assert.ok(gapTo(m, p.box) > mine, `${p.id} sits as near to ${t.id}'s mark as to its own`);
+      }
+    }
+  }
+}
+
 /** The promises the chart relies on: inside the bounds, clear of each other,
-    clear of every other line's end marker, clear of the obstacles. */
+    clear of every other line's end marker, clear of the obstacles, and
+    beside its own goal's mark rather than a neighbour's. */
 function assertClean(targets: LabelTarget[], bounds: Box, obstacles: Box[] = []) {
   const placed = placeLabels(targets, { bounds, h: H, marker: R, obstacles });
   for (const p of placed) {
@@ -180,8 +233,15 @@ function assertClean(targets: LabelTarget[], bounds: Box, obstacles: Box[] = [])
     assert.ok(p.box.y >= bounds.y && p.box.y + p.box.h <= bounds.y + bounds.h, `${p.id} leaves the top or bottom`);
     for (const o of obstacles) assert.ok(!boxesOverlap(p.box, o), `${p.id} touches an obstacle`);
     for (const t of targets) for (const m of marksOf(t)) assert.ok(!boxesOverlap(p.box, m), `${p.id} covers a mark of ${t.id}`);
-    for (const q of placed) if (q !== p) assert.ok(!boxesOverlap(p.box, q.box), `${p.id} collides with ${q.id}`);
+    for (const q of placed) {
+      if (q === p) continue;
+      assert.ok(!boxesOverlap(p.box, q.box), `${p.id} collides with ${q.id}`);
+      // Side by side on one row, two names keep a word's space between them.
+      const sameRow = p.box.y < q.box.y + q.box.h && q.box.y < p.box.y + p.box.h;
+      if (sameRow) assert.ok(Math.max(q.box.x - (p.box.x + p.box.w), p.box.x - (q.box.x + q.box.w)) >= 8 - 1e-9, `${p.id} runs into ${q.id}`);
+    }
   }
+  assertOwnMarkNearest(targets, placed);
   return placed;
 }
 
@@ -220,6 +280,55 @@ test("two lines ending on the very same point still get two names", () => {
   const placed = placeLabels(targets, { bounds: PHONE, h: H, marker: R });
   assert.equal(placed.length, 2);
   assert.ok(!boxesOverlap(placed[0].box, placed[1].box));
+});
+
+test("a name is never written above a neighbour's dot", () => {
+  // Desktop, seven goals: five end on the 100% line a year or two apart, 32px
+  // between dots. A name that ends at its own dot would lie over the dot before it.
+  const wide: Box = { x: 2, y: 2, w: 670, h: 246 };
+  const y100 = 84;
+  const names = [60, 62, 64, 92, 128];
+  const targets: LabelTarget[] = names.map((w, i) => ({ id: `g${i}`, x: 77 + i * 32, y: y100, w }));
+  targets.push({ id: "far", x: 655, y: 180, w: 84 });
+  const placed = assertClean(targets, wide);
+  // The ends of the row and the far goal have clear ground and keep their names.
+  for (const id of ["g0", "g4", "far"]) assert.ok(placed.some((p) => p.id === id), `${id} lost its name`);
+  // No bare name on the row above the dots spans a dot that is not its own.
+  // A name a row higher may, because a leader joins it to its own dot.
+  for (const p of placed) {
+    if (p.leader) {
+      const own = targets.find((t) => t.id === p.id)!;
+      assert.ok(Math.abs(p.leader.to.x - own.x) < 0.01, `${p.id}'s leader ends at another dot`);
+      continue;
+    }
+    for (const t of targets) {
+      if (t.id === p.id || p.box.y + p.box.h > t.y) continue;
+      assert.ok(t.x < p.box.x || t.x > p.box.x + p.box.w, `${p.id} is written over ${t.id}'s dot`);
+    }
+  }
+});
+
+test("two dots one above the other are named above and below, never beside", () => {
+  // Same year, 98% and 100%: the dots are 6px apart.
+  const targets: LabelTarget[] = [
+    { id: "upper", x: 180, y: 60, w: 70 },
+    { id: "lower", x: 180, y: 66, w: 90 },
+  ];
+  const placed = assertClean(targets, PHONE);
+  assert.equal(placed.length, 2);
+  const upper = placed.find((p) => p.id === "upper")!;
+  const lower = placed.find((p) => p.id === "lower")!;
+  assert.ok(upper.box.y + upper.box.h <= 60, "the upper name sits above its dot");
+  assert.ok(lower.box.y >= 66, "the lower name sits below its dot");
+});
+
+test("dots that all but coincide still both get names", () => {
+  const targets: LabelTarget[] = [
+    { id: "a", x: 180, y: 60, w: 70 },
+    { id: "b", x: 181, y: 62, w: 90 },
+  ];
+  const placed = assertClean(targets, PHONE);
+  assert.equal(placed.length, 2);
 });
 
 test("a name at the right edge is written leftward, inside the chart", () => {
@@ -263,6 +372,107 @@ test("a name can sit beside its goal's other mark when the line's end is crowded
     assert.ok(near, `${p.id} floats away from its marks`);
   }
   assert.ok(placed.find((p) => p.id === "retire")!.y < 100, "retirement is named at its ring");
+});
+
+test("a name another goal's line would cut off from its dot moves up a row and is joined by a leader", () => {
+  // Rupee view on a 360px phone (Rajesh): the first goal's line ends low, and
+  // the second goal's line passes just above its dot. A name in the usual
+  // place would sit on that second line and read as its name.
+  const first = [{ x: 45, y: 406 }, { x: 114, y: 404 }];
+  const second = [{ x: 45, y: 405 }, { x: 114, y: 397 }, { x: 153, y: 388 }];
+  const third = [{ x: 45, y: 408 }, { x: 310, y: 401 }];
+  const ring = { x: 310, y: 184 };
+  const targets: LabelTarget[] = [
+    { id: "first", x: 114, y: 404, w: 88 },
+    { id: "second", x: 153, y: 388, w: 118 },
+    { id: "third", x: 310, y: 401, w: 82, alt: [ring] },
+  ];
+  const marker = 5.5;
+  const placed = placeLabels(targets, {
+    bounds: { x: 2, y: 2, w: 324, h: 404 },
+    h: H,
+    marker,
+    lines: [first, second, third, [{ x: 310, y: 401 }, ring]],
+  });
+  assert.equal(placed.length, 3);
+  const name = placed.find((p) => p.id === "first")!;
+  assert.ok(name.leader, "the name has a leader");
+  // The name is clear above the second goal's line, and the leader runs from
+  // it straight down to the edge of its own dot.
+  assert.ok(name.box.y + name.box.h < 388);
+  assert.equal(name.leader!.from.y, name.box.y + name.box.h);
+  assert.ok(Math.abs(name.leader!.to.x - 114) < 0.01);
+  assert.ok(name.leader!.to.y < 404 - marker && name.leader!.to.y > 404 - marker - 3);
+  // The others sit beside their own marks and need none.
+  for (const id of ["second", "third"]) assert.equal(placed.find((p) => p.id === id)!.leader, undefined);
+});
+
+test("a name with a leader may stand near a neighbour's dot", () => {
+  // The same plan on a chart 294px wide: the dots are closer, and the row
+  // above is nearly as near to the second goal's dot as to the first's. The
+  // leader says whose name it is, so the name is kept rather than left off.
+  const first = [{ x: 49, y: 246.2 }, { x: 77.4, y: 245.6 }, { x: 105.8, y: 244.9 }];
+  const second = [{ x: 49, y: 245 }, { x: 94.4, y: 238.9 }, { x: 139.8, y: 229.6 }];
+  const third = [{ x: 49, y: 248 }, { x: 162.5, y: 246.2 }, { x: 276, y: 241.2 }];
+  const ring = { x: 276, y: 25.8 };
+  const targets: LabelTarget[] = [
+    { id: "first", x: 105.8, y: 244.9, w: 88 },
+    { id: "second", x: 139.8, y: 229.6, w: 118 },
+    { id: "third", x: 276, y: 241.2, w: 82, alt: [ring] },
+  ];
+  const placed = placeLabels(targets, {
+    bounds: { x: 2, y: 2, w: 290, h: 244 },
+    h: H,
+    marker: 5.5,
+    lines: [first, second, third, [{ x: 276, y: 241.2 }, ring]],
+  });
+  assert.equal(placed.length, 3);
+  for (const p of placed) for (const q of placed) if (p !== q) assert.ok(!boxesOverlap(p.box, q.box));
+  const name = placed.find((p) => p.id === "first")!;
+  assert.ok(name.leader, "the first goal's name has a leader");
+  assert.ok(Math.abs(name.leader!.to.x - 105.8) < 0.01);
+  assertOwnMarkNearest(targets, placed);
+});
+
+test("names side by side keep a word's space between them", () => {
+  // Two lines end low, a year apart (13px), each cut off from the row above
+  // by a third line: both names want the second row, one ending at its dot
+  // and one starting at the next, which would leave 2px between the words.
+  const across = [{ x: 45, y: 400 }, { x: 160, y: 390 }];
+  const targets: LabelTarget[] = [
+    { id: "car", x: 101, y: 404, w: 54 },
+    { id: "parents", x: 114, y: 404, w: 88 },
+  ];
+  const placed = placeLabels(targets, {
+    bounds: { x: 2, y: 2, w: 324, h: 404 },
+    h: H,
+    marker: 5.5,
+    lines: [[{ x: 45, y: 406 }, { x: 101, y: 404 }], [{ x: 45, y: 407 }, { x: 114, y: 404 }], across],
+  });
+  assert.equal(placed.length, 2);
+  const [a, b] = placed;
+  const sameRow = a.box.y < b.box.y + b.box.h && b.box.y < a.box.y + a.box.h;
+  const between = Math.max(b.box.x - (a.box.x + a.box.w), a.box.x - (b.box.x + b.box.w));
+  assert.ok(!sameRow || between >= 8, `only ${between}px between the names`);
+});
+
+test("a name beside its dot has no leader, and a leader never runs through another name", () => {
+  const [beside] = placeLabels([{ id: "only", x: 100, y: 120, w: 80 }], { bounds: PHONE, h: H, marker: R });
+  assert.equal(beside.leader, undefined);
+  // Two lines end on one dot at the right edge, with no room below: one name
+  // takes the row above the dot and the other the row above that. A leader
+  // from the upper name would cut through the lower one, so it is left out.
+  const corner: Box = { x: 0, y: 0, w: 100, h: 66 };
+  const stacked = placeLabels(
+    [
+      { id: "a", x: 95, y: 60, w: 90 },
+      { id: "b", x: 95, y: 60, w: 90 },
+    ],
+    { bounds: corner, h: H, marker: R },
+  );
+  assert.equal(stacked.length, 2);
+  assert.ok(!boxesOverlap(stacked[0].box, stacked[1].box));
+  for (const p of stacked) assert.equal(p.leader, undefined);
 });
 
 test("a crowded chart can refuse places that sit on a line", () => {

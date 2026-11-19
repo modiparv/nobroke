@@ -1,14 +1,157 @@
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { credentialError, inviteCodeError, login, register, type AuthUser } from "../lib/authApi";
 import { actions, getState } from "../store";
-import { btnIntake } from "../ui";
+import { btnPrimary } from "../ui";
 import PasswordField from "./PasswordField";
+import { StatusIcon } from "./StatusPill";
 
 /**
- * Sign in / create account, as one small sheet. Password reset is manual
- * during early access (there is no email pipeline yet), and the copy says
- * so instead of pretending. onAuthed fires after the plan has been
- * reconciled, so the caller can navigate to the right screen.
+ * The typed fields of signing in or creating an account: email, password
+ * and, for a new account, the invite code. Used by the sheet below and by
+ * the intake's last step, so both ask in the same words.
+ *
+ * What a field expects sits beside its label, where it stays readable while
+ * typing. Every field is 16px text, so an iPhone does not zoom the page.
+ */
+const FIELD_SHAPE = {
+  /** In a sheet: 48px, the same field the other sheets use. */
+  sheet: "h-12 rounded-control px-3",
+  /** In the intake: 56px, the height of its Continue button. */
+  intake: "h-14 rounded-2xl px-4",
+} as const;
+
+const fieldBase =
+  "w-full border border-line-2 bg-surface text-body text-text outline-none transition-colors focus:border-text focus:ring-1 focus:ring-text";
+
+function Field({ id, label, hint, children }: { id: string; label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5 text-left">
+      <div className="flex items-baseline justify-between gap-3">
+        <label htmlFor={id} className="text-support font-medium text-text">
+          {label}
+        </label>
+        {hint && (
+          <span id={`${id}-hint`} className="text-right text-support text-text-2">
+            {hint}
+          </span>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function CredentialFields({
+  idPrefix,
+  mode,
+  size,
+  email,
+  password,
+  invite,
+  onEmail,
+  onPassword,
+  onInvite,
+  error,
+  emailRef,
+}: {
+  /** "as" in the sheet, "ob" in the intake: the field ids are as-email, ob-email and so on. */
+  idPrefix: string;
+  mode: "login" | "register";
+  size: keyof typeof FIELD_SHAPE;
+  email: string;
+  password: string;
+  invite: string;
+  onEmail: (v: string) => void;
+  onPassword: (v: string) => void;
+  onInvite: (v: string) => void;
+  error: string | null;
+  emailRef?: React.Ref<HTMLInputElement>;
+}) {
+  const field = `${fieldBase} ${FIELD_SHAPE[size]}`;
+  const isNew = mode === "register";
+  return (
+    <>
+      <Field id={`${idPrefix}-email`} label="Email">
+        <input
+          ref={emailRef}
+          id={`${idPrefix}-email`}
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          spellCheck={false}
+          value={email}
+          onChange={(e) => onEmail(e.target.value)}
+          className={field}
+        />
+      </Field>
+      <Field id={`${idPrefix}-password`} label="Password" hint={isNew ? "8 or more characters" : undefined}>
+        <PasswordField
+          id={`${idPrefix}-password`}
+          value={password}
+          onChange={onPassword}
+          autoComplete={isNew ? "new-password" : "current-password"}
+          describedBy={isNew ? `${idPrefix}-password-hint` : undefined}
+          className={field}
+        />
+      </Field>
+      {isNew && (
+        <Field id={`${idPrefix}-invite`} label="Invite code" hint="By invitation for now">
+          <input
+            id={`${idPrefix}-invite`}
+            type="text"
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            value={invite}
+            onChange={(e) => onInvite(e.target.value)}
+            aria-describedby={`${idPrefix}-invite-hint`}
+            className={field}
+          />
+        </Field>
+      )}
+      {/* Red, an alert mark and the words: never colour alone. */}
+      {error && (
+        <p role="alert" className="flex items-start gap-2 rounded-control bg-neg-bg px-3 py-2.5 text-left text-support text-neg">
+          <StatusIcon level="far_short" size={16} className="mt-0.5" />
+          <span>{error}</span>
+        </p>
+      )}
+    </>
+  );
+}
+
+/**
+ * The part of the screen a person can actually see. On a phone the keyboard
+ * covers the lower half without resizing the page, so a sheet sized to the
+ * page would sit under it. The visual viewport is what is left above the
+ * keyboard, and the sheet is laid out inside that.
+ */
+function useVisibleArea(): { top: number; height: number } | null {
+  const [area, setArea] = useState<{ top: number; height: number } | null>(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const read = () => setArea({ top: vv.offsetTop, height: vv.height });
+    read();
+    vv.addEventListener("resize", read);
+    vv.addEventListener("scroll", read);
+    return () => {
+      vv.removeEventListener("resize", read);
+      vv.removeEventListener("scroll", read);
+    };
+  }, []);
+  return area;
+}
+
+/**
+ * Sign in or create an account, as one small sheet: from the bottom of a
+ * phone, centred on a wider screen. It never grows past the visible screen.
+ * With the keyboard open it scrolls inside itself, and its one button stays
+ * in view. There is no password reset yet, so the sheet does not mention one.
+ * onAuthed fires after the plan has been reconciled, so the caller can
+ * navigate to the right screen.
  */
 export default function AuthSheet({
   onClose,
@@ -25,6 +168,29 @@ export default function AuthSheet({
   const [invite, setInvite] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const area = useVisibleArea();
+  const titleId = useId();
+  const panel = useRef<HTMLDivElement>(null);
+  const emailField = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // Keyboard focus starts inside the sheet and goes back to where it was.
+  // With a mouse or trackpad it starts in the email field. On a touch screen
+  // that would throw the keyboard up before the sheet has been seen, so
+  // there the sheet itself takes focus.
+  useEffect(() => {
+    const before = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const first = window.matchMedia("(pointer: fine)").matches ? emailField.current : panel.current;
+    first?.focus({ preventScroll: true });
+    return () => before?.focus({ preventScroll: true });
+  }, []);
 
   const submit = async () => {
     if (busy) return;
@@ -86,104 +252,90 @@ export default function AuthSheet({
     onClose();
   };
 
-  // 56px fields with the format hint living in the placeholder, and the
-  // primary button disabled until the group validates: the affordance is
+  // The button stays disabled until the fields validate: the affordance is
   // "not yet", never an error after the fact.
-  const field =
-    "h-14 w-full rounded-2xl border border-line bg-surface px-4 text-base outline-none transition focus:border-text focus:ring-1 focus:ring-text";
   const invalid = credentialError(email, password, mode === "register") != null || (mode === "register" && inviteCodeError(invite) != null);
+  const isNew = mode === "register";
 
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center p-4">
-      <div className="absolute inset-0 bg-night/50" onClick={onClose} />
-      <div className="relative w-full max-w-sm rounded-card border border-line bg-surface p-5">
+  return createPortal(
+    <div
+      className="fixed inset-x-0 top-0 z-50 flex h-[100dvh] items-end justify-center sm:items-center sm:p-4"
+      style={area ? { top: area.top, height: area.height } : undefined}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+    >
+      <div className="fixed inset-0 bg-night/50" onClick={onClose} />
+      {/* Opening is the answer to a tap, so the sheet eases in (and does not
+          when motion is reduced). The whole sheet is the scroller: when the
+          visible screen is shorter than the form, the fields scroll and the
+          button holds to the bottom edge. */}
+      <div
+        ref={panel}
+        tabIndex={-1}
+        className="fade-up relative max-h-[calc(100%-0.5rem)] w-full scroll-pb-24 overflow-y-auto overscroll-contain rounded-t-screen border border-line bg-surface px-5 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3 outline-none focus-visible:outline-none sm:max-h-full sm:max-w-sm sm:rounded-card"
+      >
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-section font-medium text-display">{mode === "register" ? "Create your account" : "Welcome back"}</h2>
-            <p className="mt-0.5 text-support text-text-2">Your plan follows you to any device.</p>
+          <div className="min-w-0 pt-2">
+            <h2 id={titleId} className="text-headline font-medium text-text">
+              {isNew ? "Create your account" : "Sign in"}
+            </h2>
+            <p className="mt-1 text-support text-text-2">
+              {isNew ? "Save your plan and open it on any device." : "Open the plan saved to your account."}
+            </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="px-1 text-text-2 transition hover:text-text">
-            ✕
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="-mr-2.5 grid h-11 w-11 flex-none place-items-center rounded-control text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
           </button>
         </div>
 
         <form
           className="mt-4 flex flex-col gap-3"
+          noValidate
           onSubmit={(e) => {
             e.preventDefault();
             void submit();
           }}
         >
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="as-email" className="text-support font-medium text-text-2">
-              Email
-            </label>
-            <input
-              id="as-email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@email.com"
-              className={field}
-            />
+          <CredentialFields
+            idPrefix="as"
+            mode={mode}
+            size="sheet"
+            email={email}
+            password={password}
+            invite={invite}
+            onEmail={setEmail}
+            onPassword={setPassword}
+            onInvite={setInvite}
+            error={error}
+            emailRef={emailField}
+          />
+          <div className="sticky bottom-0 -mx-5 bg-surface px-5 pb-1 pt-1">
+            <button type="submit" disabled={busy || invalid} className={`${btnPrimary} w-full`}>
+              {busy ? "One moment…" : isNew ? "Create account" : "Sign in"}
+            </button>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="as-password" className="text-support font-medium text-text-2">
-              Password
-            </label>
-            <PasswordField
-              id="as-password"
-              value={password}
-              onChange={setPassword}
-              autoComplete={mode === "register" ? "new-password" : "current-password"}
-              placeholder={mode === "register" ? "Password (8+ characters)" : "Password"}
-              className={field}
-            />
-          </div>
-          {mode === "register" && (
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="as-invite" className="text-support font-medium text-text-2">
-                Invite code
-              </label>
-              <input
-                id="as-invite"
-                type="text"
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                value={invite}
-                onChange={(e) => setInvite(e.target.value)}
-                placeholder="From your invitation"
-                className={field}
-              />
-              <span className="text-support text-text-2">Sign-up is by invitation for now.</span>
-            </div>
-          )}
-          {error && (
-            <p role="alert" aria-live="polite" className="rounded-control bg-neg-bg px-3 py-2 text-support text-neg">
-              {error}
-            </p>
-          )}
-          <button type="submit" disabled={busy || invalid} className={`${btnIntake} w-full`}>
-            {busy ? "One moment…" : mode === "register" ? "Create account" : "Sign in"}
-          </button>
         </form>
 
-        <div className="mt-3 flex items-baseline justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setMode(mode === "register" ? "login" : "register");
-              setError(null);
-            }}
-            className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
-          >
-            {mode === "register" ? "Have an account? Sign in" : "New here? Create an account"}
-          </button>
-          {mode === "login" && <span className="text-support text-text-2">Password reset coming soon.</span>}
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setMode(isNew ? "login" : "register");
+            setError(null);
+          }}
+          className="mx-auto flex min-h-11 items-center text-support font-medium text-text underline underline-offset-2 transition-colors hover:text-text-2"
+        >
+          {isNew ? "Have an account? Sign in" : "New here? Create an account"}
+        </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

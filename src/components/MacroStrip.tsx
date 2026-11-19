@@ -2,31 +2,37 @@ import { useEffect, useState } from "react";
 import { fetchMacro, type MacroData } from "../lib/macroApi";
 
 /**
- * The macro numbers behind the plan's assumptions, as one quiet line in the
- * portfolio pane's footer. The full provenance lives in the hover. Renders
- * nothing until data exists.
+ * The published numbers behind the plan's assumptions (inflation, the RBI
+ * rate and so on), as one quiet line of text. Where each number comes from
+ * and its date are in the hover. It draws nothing at all while the numbers
+ * are loading or when they cannot be fetched: there is no loading state to
+ * get stuck on.
  */
 export default function MacroStrip() {
   const [macro, setMacro] = useState<MacroData | null>(null);
   useEffect(() => {
-    void fetchMacro().then(setMacro);
+    let live = true;
+    void fetchMacro().then((m) => {
+      if (live) setMacro(m);
+    });
+    return () => {
+      live = false;
+    };
   }, []);
-  if (!macro) return null;
-  const source = [...new Set(macro.indicators.map((i) => i.source))].join(" \u00b7 ");
+  if (!macro || macro.indicators.length === 0) return null;
+  const sources = macro.indicators.map((i) => `${i.label}: ${i.source}${i.as_of ? `, ${i.as_of}` : ""}`).join(". ");
   return (
-    <div
-      className="border-t border-line px-4 py-2.5"
-      title={`${source}. Inflation here sets your plan's default.`}
-    >
-      <p className="num truncate text-support text-text-2">
-        <span className="mr-2 text-index text-text-3">Macro</span>
-        {macro.indicators.map((i, idx) => (
-          <span key={i.key}>
-            {idx > 0 && <span className="mx-1.5 text-text-3">·</span>}
-            {i.label} <span className="font-medium text-text">{i.value}{i.unit}</span>
+    <p className="num flex flex-wrap gap-x-4 gap-y-0.5 border-t border-line px-4 py-2.5 text-support text-text-2" title={`${sources}. Inflation here sets your plan's default.`}>
+      {macro.indicators.map((i) => (
+        // Each figure stays on one line with its name, so a wrap never splits them.
+        <span key={i.key} className="whitespace-nowrap">
+          {i.label}{" "}
+          <span className="font-medium text-text">
+            {i.value}
+            {i.unit}
           </span>
-        ))}
-      </p>
-    </div>
+        </span>
+      ))}
+    </p>
   );
 }

@@ -109,7 +109,8 @@ export default function Chart({ r }: { r: PlanResult }) {
     t: 12,
     // Room for the end dot and half of the last year's label.
     r: Math.max(18, Math.ceil(measure(String(endYear), TICK_REM) / 2) + 3),
-    b: Math.round(tickPx * 1.3) + 14,
+    // Room for the year ticks, set clear of the ₹0 tick beside them.
+    b: Math.round(tickPx * 1.3) + 16,
     // Room for the value ticks, or at least for half of the first year.
     l: Math.max(22, Math.ceil(Math.max(0, ...yTickText.map((t) => measure(t, TICK_REM)))) + 14),
   };
@@ -158,7 +159,7 @@ export default function Chart({ r }: { r: PlanResult }) {
             <text
               key={t.year}
               x={x(t.offset * 12)}
-              y={PAD.t + PH + 11 + tickPx * 0.8}
+              y={PAD.t + PH + 13 + tickPx * 0.8}
               textAnchor="middle"
               fill={C.muted}
               className="num"

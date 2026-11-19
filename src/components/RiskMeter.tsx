@@ -19,9 +19,7 @@ const UNFILLED = "var(--risk-unfilled)";
     way a native range thumb does, so it never hangs off either end. */
 const KNOB = 24;
 
-/** readOnly: the meter without the slider, for a page that shows the risk
- *  level but may not change it. */
-export default function RiskMeter({ readOnly = false, className = "" }: { readOnly?: boolean; className?: string }) {
+export default function RiskMeter({ className = "" }: { className?: string }) {
   const s = useStore();
   const v = s.riskAppetite;
   const active = riskBandIndex(v);
@@ -53,21 +51,19 @@ export default function RiskMeter({ readOnly = false, className = "" }: { readOn
             />
           ))}
         </div>
-        {!readOnly && (
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={5}
-            value={v}
-            onChange={(e) => actions.setRiskAppetite(Number(e.target.value))}
-            aria-label="Your risk level"
-            aria-valuetext={riskBandLabel(v)}
-            className="peer absolute inset-0 m-0 w-full cursor-pointer opacity-0"
-            // The page's base style sets every range input to 4px tall.
-            style={{ height: "100%" }}
-          />
-        )}
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={v}
+          onChange={(e) => actions.setRiskAppetite(Number(e.target.value))}
+          aria-label="Your risk level"
+          aria-valuetext={`${riskBandLabel(v)}, level ${active + 1} of ${RISK_BANDS.length}`}
+          className="peer absolute inset-0 m-0 w-full cursor-pointer opacity-0"
+          // The page's base style sets every range input to 4px tall.
+          style={{ height: "100%" }}
+        />
         <span
           aria-hidden
           className="pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-text bg-surface peer-focus-visible:ring-2 peer-focus-visible:ring-text peer-focus-visible:ring-offset-2"
@@ -79,12 +75,10 @@ export default function RiskMeter({ readOnly = false, className = "" }: { readOn
         <span>{RISK_BANDS[RISK_BANDS.length - 1]}</span>
       </div>
 
-      {!readOnly && (
-        <p className="mt-3 text-pretty text-support text-text-2">
-          {source}
-          {follows}
-        </p>
-      )}
+      <p className="mt-3 text-pretty text-support text-text-2">
+        {source}
+        {follows}
+      </p>
     </section>
   );
 }

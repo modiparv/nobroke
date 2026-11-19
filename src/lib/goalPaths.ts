@@ -43,11 +43,14 @@ export function sharePath(points: ProjectionPoint[], targetToday: number, inflat
 
 const group = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 
-/** A share in words. Rounds down, so a goal that is a little short never
-    reads "100%"; a sliver of money never reads "0%". */
+/** A share in words, to the nearest whole percent, as the plan's "% there"
+    figure has always been rounded. Two honest exceptions: a goal that is
+    even a little short never reads "100%", and a sliver of money never
+    reads "0%". */
 export function shareLabel(share: number): string {
   if (!Number.isFinite(share) || share <= 0) return "0%";
-  const pct = Math.floor(share * 100 + 1e-6);
+  const covered = share >= 1 - 1e-9;
+  const pct = covered ? Math.round(share * 100) : Math.min(99, Math.round(share * 100));
   if (pct === 0) return "Under 1%";
   return `${group.format(pct)}%`;
 }
@@ -61,13 +64,19 @@ export interface ShareAxis {
 }
 
 /** The share axis: 0 at the bottom, room above 100% for the names, and never
-    taller than SHARE_CAP however far ahead one goal is. */
-export function shareAxis(maxShare: number, minTop = 1.25): ShareAxis {
+    taller than SHARE_CAP however far ahead one goal is. `headroom` is the
+    part of the plot's height, at the top, that no line and no tick may enter:
+    the caption for the zone above 100% sits there, clear of everything. */
+export function shareAxis(maxShare: number, minTop = 1.25, headroom = 0.08): ShareAxis {
   const peak = Number.isFinite(maxShare) ? Math.max(0, maxShare) : 0;
   const capped = peak > SHARE_CAP;
-  const top = Math.max(minTop, 1.05, Math.min(peak, SHARE_CAP) * 1.08);
+  const clear = Math.min(Math.max(Number.isFinite(headroom) ? headroom : 0, 0), 0.5);
+  // The highest thing drawn is a line's top or, failing that, the 100% rule.
+  const highest = Math.max(1, Math.min(peak, SHARE_CAP));
+  const top = Math.max(minTop, 1.05, highest / (1 - clear));
+  const ceiling = Math.min(top * (1 - clear), SHARE_CAP);
   const ticks: number[] = [];
-  for (let i = 0; i * 0.5 <= Math.min(top, SHARE_CAP) + 1e-9; i++) ticks.push(i * 0.5);
+  for (let i = 0; i * 0.5 <= ceiling + 1e-9; i++) ticks.push(i * 0.5);
   return { top, ticks, capped };
 }
 
@@ -162,6 +171,9 @@ export interface PlacedLabel {
   y: number;
   anchor: "start" | "end";
   box: Box;
+  /** Set when the name sits a row away from its mark: a short line to draw
+      from the name to the mark, so the two still read as one. */
+  leader?: { from: Pt; to: Pt };
 }
 
 export interface LabelLayout {
@@ -218,18 +230,58 @@ function lineHitsBox(line: Pt[], box: Box): boolean {
   return false;
 }
 
+/** The point of a box nearest to p. */
+function nearestOnBox(p: Pt, box: Box): Pt {
+  return { x: Math.min(Math.max(p.x, box.x), box.x + box.w), y: Math.min(Math.max(p.y, box.y), box.y + box.h) };
+}
+
+/** How far a point is from a box: 0 inside it, else the gap to its nearest edge. */
+function distanceToBox(p: Pt, box: Box): number {
+  const q = nearestOnBox(p, box);
+  return Math.hypot(q.x - p.x, q.y - p.y);
+}
+
+function segmentsCross(a: Pt, b: Pt, c: Pt, d: Pt): boolean {
+  const side = (p: Pt, q: Pt, o: Pt) => Math.sign((q.x - p.x) * (o.y - p.y) - (q.y - p.y) * (o.x - p.x));
+  return side(a, b, c) !== side(a, b, d) && side(c, d, a) !== side(c, d, b);
+}
+
+function lineCrosses(line: Pt[], a: Pt, b: Pt): boolean {
+  for (let i = 1; i < line.length; i++) if (segmentsCross(line[i - 1], line[i], a, b)) return true;
+  return false;
+}
+
 interface Candidate {
   box: Box;
   anchor: "start" | "end";
   cost: number;
+  /** The mark this place is beside. */
+  mark: Pt;
+  /** A row away from the mark: drawn with a leader. */
+  far: boolean;
+  /** Only the leader says whose name this is: without one it must go. */
+  needsLeader?: boolean;
 }
 
 const PAD = 2;
+/** Two names side by side keep a word's space apart, or they read as one. */
+const BETWEEN_NAMES = 8;
 const SKIP_COST = 1000;
+/** A name must sit this much nearer to its own goal's mark than to any other
+    goal's, or it reads as the other goal's name. */
+const CLEARLY_NEARER = 3;
 const AT_ANOTHER_MARK = 3;
 const ON_A_LINE = 12;
+/** Another goal's line runs between the name and its own dot, so the name
+    reads as that line's. Costs more than a second-row place with a leader. */
+const LINE_BETWEEN = 15;
 const ON_A_RULE = 3;
 const SEARCH_LIMIT = 20000;
+
+/** Two names collide if they overlap, or sit side by side with less than a word's space between. */
+function namesTouch(a: Box, b: Box): boolean {
+  return a.x < b.x + b.w + BETWEEN_NAMES && b.x < a.x + a.w + BETWEEN_NAMES && a.y < b.y + b.h + PAD && b.y < a.y + a.h + PAD;
+}
 
 /**
  * Put each name beside the end of its line without any two colliding.
@@ -237,11 +289,16 @@ const SEARCH_LIMIT = 20000;
  * Each label tries a short list of places around its point, nearest first:
  * to the right, above (ending or starting at the point), to the left,
  * below, then a second row above; then the same places around the goal's
- * other mark, if it has one. A place is ruled out if it leaves the bounds
- * or touches an obstacle or any other mark; sitting on a drawn line or a
- * rule is allowed but costs more. A small search then picks the cheapest
- * set of places with no two labels touching. A label with nowhere to go is
- * left off (the legend still names it) rather than drawn over another.
+ * other mark, if it has one. A place is ruled out if it leaves the bounds,
+ * touches an obstacle or any other mark, or lies as near to another goal's
+ * mark as to its own (a name right above a neighbour's dot reads as the
+ * neighbour's name). Sitting on a drawn line or a rule is allowed but costs
+ * more, and so does a place that another goal's line cuts off from the
+ * mark: then the name moves up a row and is joined to its mark by a leader,
+ * which also lets it stand nearer a neighbour's dot than a bare name may.
+ * A small search then picks the cheapest set of places with no two labels
+ * touching. A label with nowhere to go is left off (the legend still names
+ * it) rather than drawn over another or beside the wrong line.
  */
 export function placeLabels(targets: LabelTarget[], layout: LabelLayout): PlacedLabel[] {
   const { bounds, h } = layout;
@@ -259,6 +316,20 @@ export function placeLabels(targets: LabelTarget[], layout: LabelLayout): Placed
   const allMarks = targets.flatMap(marksOf);
 
   const candidatesFor = (t: LabelTarget): Candidate[] => {
+    const own = marksOf(t);
+    // Other goals' marks. One that sits within a marker's radius of this
+    // goal's is the same dot to the eye: both names belong beside it.
+    const foreign = targets
+      .filter((o) => o !== t)
+      .flatMap(marksOf)
+      .filter((m) => !own.some((p) => Math.hypot(m.x - p.x, m.y - p.y) <= r));
+    const readsAsAnother = (box: Box): boolean => {
+      const mine = Math.min(...own.map((p) => distanceToBox(p, box)));
+      return foreign.some((m) => distanceToBox(m, box) < mine + CLEARLY_NEARER);
+    };
+    // Lines that neither start nor end on one of this goal's marks are other goals'.
+    const isOwnMark = (q: Pt | undefined) => !!q && own.some((p) => Math.hypot(q.x - p.x, q.y - p.y) < 0.5);
+    const otherLines = lines.filter((line) => !isOwnMark(line[0]) && !isOwnMark(line[line.length - 1]));
     const around = (p: Pt, extra: number): Candidate[] => {
       // Rows: level with the mark, just above it, just below it, a second row above.
       const level = p.y - h / 2;
@@ -272,7 +343,13 @@ export function placeLabels(targets: LabelTarget[], layout: LabelLayout): Placed
       const centred = Math.min(Math.max(p.x - t.w / 2, bounds.x), right - t.w);
       const leftOf = p.x - r - gap - t.w;
       const rightOf = p.x + r + gap;
-      const at = (x: number, y: number, anchor: "start" | "end", cost: number): Candidate => ({ box: { x, y, w: t.w, h }, anchor, cost: cost + extra });
+      const at = (x: number, y: number, anchor: "start" | "end", cost: number): Candidate => ({
+        box: { x, y, w: t.w, h },
+        anchor,
+        cost: cost + extra,
+        mark: p,
+        far: y === above2,
+      });
       // Every other mark on the chart, this goal's own other mark included.
       const others = allMarks.filter((m) => m.x !== p.x || m.y !== p.y).map(markerAt);
       return [
@@ -296,10 +373,15 @@ export function placeLabels(targets: LabelTarget[], layout: LabelLayout): Placed
     return [...around({ x: t.x, y: t.y }, 0), ...(t.alt ?? []).flatMap((p) => around(p, AT_ANOTHER_MARK))]
       .filter(({ box }) => box.x >= bounds.x && box.x + box.w <= right && box.y >= bounds.y && box.y + box.h <= bottom)
       .filter(({ box }) => !obstacles.some((o) => boxesOverlap(box, o, PAD)))
+      // A name with a leader is tied to its mark by the leader, so it may
+      // sit where a bare name would be taken for a neighbour's.
+      .map((c) => ({ ...c, needsLeader: readsAsAnother(c.box) }))
+      .filter((c) => c.far || !c.needsLeader)
       .map((c) => {
         let cost = c.cost;
         for (const line of lines) if (lineHitsBox(line, c.box)) cost += ON_A_LINE;
         for (const y of rules) if (y > c.box.y + 1 && y < c.box.y + c.box.h - 1) cost += ON_A_RULE;
+        if (!c.far && otherLines.some((line) => lineCrosses(line, c.mark, nearestOnBox(c.mark, c.box)))) cost += LINE_BETWEEN;
         return { ...c, cost };
       })
       .filter((c) => c.cost <= maxCost)
@@ -324,7 +406,7 @@ export function placeLabels(targets: LabelTarget[], layout: LabelLayout): Placed
     }
     if (++visited > SEARCH_LIMIT && cheapest.cost < Infinity) return;
     for (const c of options[k]) {
-      if (picks.some((p) => p && boxesOverlap(p.box, c.box, PAD))) continue;
+      if (picks.some((p) => p && namesTouch(p.box, c.box))) continue;
       picks.push(c);
       walk(k + 1, cost + c.cost);
       picks.pop();
@@ -339,13 +421,24 @@ export function placeLabels(targets: LabelTarget[], layout: LabelLayout): Placed
   targets.forEach((t, i) => {
     const pick = cheapest.picks[order.indexOf(i)];
     if (!pick) return;
-    placed.push({
+    const label: PlacedLabel = {
       id: t.id,
       x: pick.anchor === "start" ? pick.box.x : pick.box.x + pick.box.w,
       y: pick.box.y + pick.box.h / 2,
       anchor: pick.anchor,
       box: pick.box,
-    });
+    };
+    if (pick.far) {
+      // From the name down to the edge of its marker, unless another name is in the way.
+      const from = nearestOnBox(pick.mark, pick.box);
+      const length = Math.hypot(pick.mark.x - from.x, pick.mark.y - from.y);
+      const reach = Math.max(0, length - r - 1) / (length || 1);
+      const to = { x: from.x + (pick.mark.x - from.x) * reach, y: from.y + (pick.mark.y - from.y) * reach };
+      const blocked = cheapest.picks.some((other) => other && other !== pick && segmentHitsBox(from, to, other.box));
+      if (!blocked) label.leader = { from, to };
+      else if (pick.needsLeader) return;
+    }
+    placed.push(label);
   });
   return placed;
 }
