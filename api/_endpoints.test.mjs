@@ -269,6 +269,21 @@ test("logout clears the cookie; delete needs a session, then clears it too", asy
   assert.match(db.calls.at(-1).sql, /delete from app_user/);
 });
 
+test("a crafted body is refused, not thrown: the email and the invite code must be text", async () => {
+  reset();
+  // An object whose text form cannot be taken used to throw out of both handlers.
+  const odd = { toString: 1, valueOf: 1 };
+  for (const body of [{ ...signup(EMAIL, PW.ok), email: odd }, { ...signup(EMAIL, PW.ok), email: ["a@b.co"] }]) {
+    assert.equal((await call(register, { body })).status, 400);
+    assert.equal((await call(login, { body })).status, 400);
+  }
+  for (const inviteCode of [odd, ["TEST-INVITE"], 12345, true]) {
+    assert.equal((await call(register, { body: signup(EMAIL, PW.ok, inviteCode) })).status, 403);
+  }
+  assert.equal(db.calls.length, 0);
+  reset();
+});
+
 // ---- health/[kind] ----
 // One function serves every health check (the Hobby plan allows twelve per
 // deployment, and the app uses all twelve); the path segment picks the check.
@@ -286,6 +301,22 @@ test("health/auth reports what is provisioned, and never a secret", async () => 
   assert.deepEqual(r.body.tables, { app_user: true, user_plan: true });
   assert.equal(r.body.session, "valid");
   assert.equal(JSON.stringify(r.body).includes(SECRET), false);
+
+  assert.equal(r.body.invite_code, "set");
+  assert.equal(r.body.hint, "Sign-in is fully provisioned here.");
+
+  // Sign-up closed: the check still passes for sign-in, and says so in the hint.
+  // A code of spaces is no code, here as in the sign-up handler.
+  for (const code of [undefined, "   "]) {
+    if (code === undefined) delete process.env.INVITE_CODE;
+    else process.env.INVITE_CODE = code;
+    db.rows = [{ app_user: "app_user", user_plan: "user_plan" }];
+    const closed = await healthAuth();
+    assert.equal(closed.body.ok, true);
+    assert.match(closed.body.invite_code, /^missing/);
+    assert.equal(closed.body.hint, "Sign-in works, but sign-up is closed until INVITE_CODE is set.");
+  }
+  process.env.INVITE_CODE = INVITE;
 
   delete process.env.AUTH_SECRET;
   process.env.CRON_SECRET = "cron";

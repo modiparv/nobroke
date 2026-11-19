@@ -57,6 +57,9 @@ test("email and password validation hold the line", () => {
   assert.equal(normalizeEmail("bad"), null);
   assert.equal(normalizeEmail("a@b"), null);
   assert.equal(normalizeEmail(null), null);
+  // Only text is an email: anything else is refused before it is read.
+  assert.equal(normalizeEmail(["person@example.com"]), null);
+  assert.equal(normalizeEmail({ toString: 1, valueOf: 1 }), null);
   assert.ok(validPassword("longenough"));
   assert.ok(!validPassword("short"));
   assert.ok(!validPassword(42));

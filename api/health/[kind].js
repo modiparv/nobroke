@@ -107,16 +107,20 @@ async function auth(req, res) {
   }
 
   const ok = !!secret && database && !!tables && tables.app_user && tables.user_plan;
+  // Spaces alone are not a code: sign-up treats them as missing, so this does too.
+  const invite = !!String(process.env.INVITE_CODE ?? "").trim();
   res.status(200).json({
     ok,
     auth_secret,
-    invite_code: process.env.INVITE_CODE ? "set" : "missing: sign-up is closed until INVITE_CODE is set",
+    invite_code: invite ? "set" : "missing: sign-up is closed until INVITE_CODE is set",
     database,
     tables,
     session,
     ...(warning ? { warning } : {}),
     hint: ok
-      ? "Sign-in is fully provisioned here."
+      ? invite
+        ? "Sign-in is fully provisioned here."
+        : "Sign-in works, but sign-up is closed until INVITE_CODE is set."
       : !secret
         ? "Set AUTH_SECRET for this environment (Production and Preview are separate)."
         : !database

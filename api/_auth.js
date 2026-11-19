@@ -113,6 +113,8 @@ export function requireSession(req, res, message = "Sign in to continue.", now =
  * is closed, which is the safe way to fail. Compared in constant time.
  */
 export function inviteAccepted(code) {
+  // Anything but text is refused outright, so a crafted body cannot make this throw.
+  if (typeof code !== "string") return false;
   const expected = String(process.env.INVITE_CODE ?? "").trim().toLowerCase();
   if (!expected) return false;
   const a = Buffer.from(String(code ?? "").trim().toLowerCase());
@@ -123,6 +125,7 @@ export function inviteAccepted(code) {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function normalizeEmail(email) {
+  if (typeof email !== "string") return null;
   const v = String(email ?? "").trim().toLowerCase();
   return EMAIL_RE.test(v) && v.length <= 254 ? v : null;
 }
