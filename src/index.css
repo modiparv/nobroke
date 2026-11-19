@@ -211,10 +211,6 @@ input[type="range"] {
   background-size: 28px 28px;
 }
 /* ---------- Animations ---------- */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
 @keyframes slideIn {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
@@ -233,8 +229,10 @@ input[type="range"] {
   .fade-up { animation: none; }
 }
 
-.live-dot { animation: blink 1.4s ease-in-out infinite; }
 .typing-dot { animation: typing 1.2s infinite ease-in-out; }
+@media (prefers-reduced-motion: reduce) {
+  .typing-dot { animation: none; }
+}
 
 /* A link from another page lands here: the section lights up for a moment
    (a 3px ring in the chart blue, 3:1 or better on every ground) and then

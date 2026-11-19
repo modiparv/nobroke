@@ -985,7 +985,7 @@ function runCommand(cmd: Command): string {
         return `${cmd.name} is already in your plan.`;
       }
       actions.addGoal(cmd.goalId);
-      return `Added ${cmd.name} to your goals. ✨`;
+      return `Added ${cmd.name} to your goals.`;
     case "removeGoal":
       if (!state.goals.some((g) => g.id === cmd.goalId)) return `${cmd.name} isn't in your plan.`;
       actions.removeGoal(cmd.goalId);
@@ -1011,12 +1011,12 @@ function runCommand(cmd: Command): string {
       return `Set ${cmd.name} to ${formatINR(cmd.amount)} in today's money, ${cmd.years} ${cmd.years === 1 ? "year" : "years"} away.${cmd.note ? ` ${cmd.note}` : ""}`;
     case "autoSplit":
       actions.recommendGoalSplit();
-      return `Auto-balanced your money across goals. ✨`;
+      return `Auto-balanced your money across goals.`;
     case "declinePick":
       return DECLINE_PICK_REPLY;
     case "newPlan":
       actions.startOnboarding();
-      return `Starting a fresh plan. Answer a few quick questions. ✨`;
+      return `Starting a fresh plan. Answer a few quick questions.`;
   }
 }
 

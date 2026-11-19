@@ -273,10 +273,36 @@ export function clampStepIndex(i: unknown): number {
   return Math.min(Math.max(0, n), STEPS.length - 1);
 }
 
+/** The first question that plainly has no answer yet: a choice never made,
+    an income never entered, no goal picked. A typed 0 is a real answer to
+    most money questions ("Enter 0 if none"), so those are never counted as
+    blank. Returns the last step when nothing is missing. */
+export function firstUnanswered(profile: Profile, answers: Record<string, string>, goalIds: string[]): number {
+  const stored = profile as unknown as Record<string, string | number | null | undefined>;
+  const at = STEPS.findIndex((step) => {
+    if (step.kind === "goals") return goalIds.length === 0;
+    if (!step.field) return false;
+    const v = step.field in stored ? stored[step.field] : answers[step.field];
+    if (step.kind === "single") return v == null || v === "";
+    if (step.kind === "money") return (step.min ?? 0) > 0 && !(Number(v) >= step.min!);
+    return false;
+  });
+  return at === -1 ? STEPS.length - 1 : at;
+}
+
+/** Where an intake saved in the browser picks up again. The saved step
+    number can be ahead of the answers, because it counts steps and the step
+    list has changed since it was saved. Resuming never lands past a question
+    that has no answer, so none is skipped. */
+export function resumeStepIndex(storedIndex: unknown, profile: Profile, answers: Record<string, string>, goalIds: string[]): number {
+  return Math.min(clampStepIndex(storedIndex), firstUnanswered(profile, answers, goalIds));
+}
+
 /** How full each section's segment of the progress rail is at a step: 1 for
-    sections already passed, the share of its questions reached for the
-    current one, 0 for those ahead. The intro shows an empty rail and the
-    account step a full one. */
+    sections already passed, 0 for those ahead. The current section counts
+    the questions answered plus half of the one on screen, so its segment has
+    visibly started on the first question and is not yet full on the last.
+    The intro shows an empty rail and the account step a full one. */
 export function stageFill(stepIndex: number): number[] {
   const step = STEPS[clampStepIndex(stepIndex)];
   if (step.kind === "account") return STAGES.map(() => 1);
@@ -284,6 +310,6 @@ export function stageFill(stepIndex: number): number[] {
     if (st.n < step.stage) return 1;
     if (st.n > step.stage) return 0;
     const inStage = STEPS.filter((s) => s.stage === st.n);
-    return (inStage.indexOf(step) + 1) / inStage.length;
+    return (inStage.indexOf(step) + 0.5) / inStage.length;
   });
 }

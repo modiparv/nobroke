@@ -227,7 +227,7 @@ export default function Landing() {
             )}
             {!signedIn && (
               <button className={quietButton} onClick={() => setShowAuth(true)}>
-                Login
+                Sign in
               </button>
             )}
           </div>

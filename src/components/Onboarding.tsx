@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   STAGES,
   STEPS,
@@ -7,6 +7,7 @@ import {
   goalCostAnswer,
   goalCostKey,
   goalEstimate,
+  resumeStepIndex,
   stageFill,
   type Step,
 } from "../lib/onboarding";
@@ -219,7 +220,7 @@ function AccountStep({ step }: { step: Step }) {
           onInvite={setInvite}
           error={error}
         />
-        <button type="submit" disabled={busy || invalid} className={`${btnIntake} mt-1 w-full`}>
+        <button type="submit" disabled={invalid} aria-disabled={busy} className={`${btnIntake} mt-1 w-full`}>
           {busy ? "One moment…" : mode === "register" ? "Create account and see plan" : "Sign in and see plan"}
         </button>
       </form>
@@ -360,6 +361,10 @@ function SingleStep({ step, onContinue }: { step: Step; onContinue: () => void }
   const s = useStore();
   const current = String(storedAnswer(step.field!) ?? "");
   const [hadAnswer] = useState(current !== "");
+  // The chosen answer shows for a moment before the next question. If the
+  // person presses Back in that moment, the move forward is dropped.
+  const moveOn = useRef<number>();
+  useEffect(() => () => window.clearTimeout(moveOn.current), []);
   // "The first one" is the first goal picked, and the plan uses the answer
   // for that goal alone. The screen says which goal that is.
   const firstGoal = step.field === "timeline" ? GOAL_MAP[s.selectedGoalIds[0]] : undefined;
@@ -386,7 +391,8 @@ function SingleStep({ step, onContinue }: { step: Step; onContinue: () => void }
               aria-pressed={sel}
               onClick={() => {
                 setAnswer(step.field!, opt.value);
-                window.setTimeout(onContinue, 200);
+                window.clearTimeout(moveOn.current);
+                moveOn.current = window.setTimeout(onContinue, 200);
               }}
               className={`flex min-h-16 items-center justify-between gap-3 rounded-2xl border bg-surface px-4 py-3 text-left transition-colors ${
                 sel ? "border-text ring-1 ring-text" : "border-line-2 hover:border-text-3"
@@ -464,7 +470,10 @@ function GoalsStep({ step, onContinue }: { step: Step; onContinue: () => void })
           );
         })}
       </div>
-      <div className="sticky bottom-0 -mx-5 mt-4 flex items-center justify-between gap-4 border-t border-line bg-bg px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:static sm:mx-0 sm:mt-6 sm:flex-row-reverse sm:justify-end sm:border-0 sm:p-0">
+      {/* On a phone this bar is held to the bottom of the screen, and at the
+          end of the list it sits flush on the bottom edge (the negative margin
+          takes back the page's own bottom padding). */}
+      <div className="sticky bottom-0 -mx-5 -mb-10 mt-4 flex items-center justify-between gap-4 border-t border-line bg-bg px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:static sm:mx-0 sm:mb-0 sm:mt-6 sm:flex-row-reverse sm:justify-end sm:border-0 sm:p-0">
         <p aria-live="polite" className="text-support text-text-2">
           <span className="block text-body font-medium text-text">{count} of 3 picked</span>
           {full && <span className="block">Remove one to pick another.</span>}
@@ -565,7 +574,7 @@ function CostsStep({ step, onContinue, onBack }: { step: Step; onContinue: () =>
             onClick={() => setRaw(Object.fromEntries(picked.map((g) => [g.id, String(estimate(g.id))])))}
             className={`${quietLink} mt-1 text-text-2 underline underline-offset-2 hover:text-text`}
           >
-            Go back to the estimates
+            Use our estimates instead
           </button>
         </div>
       )}
@@ -682,12 +691,34 @@ function ProgressRail({ index }: { index: number }) {
   );
 }
 
+/**
+ * True when the page itself opened on the intake: the browser had saved an
+ * intake in progress and has just restored it. The saved place is a step
+ * number, and the list has lost a step since, so it can sit one question
+ * ahead of the answers. In that one case the place is checked against the
+ * answers before the first paint. Moving about inside a running app is never
+ * second-guessed. (In development a hot reload runs this file again, so the
+ * check is remembered as done.)
+ */
+let restoredOnLoad = !import.meta.hot?.data.intakeChecked && getState().screen === "onboarding";
+if (import.meta.hot) import.meta.hot.data.intakeChecked = true;
+
 export default function Onboarding() {
   const s = useStore();
   // The saved index is clamped where it is read: an intake saved before a
   // step was removed can point past the end of the list.
   const i = clampStepIndex(s.onboardingStepIndex);
   const step = STEPS[i];
+
+  // A restored intake never resumes past a question that has no answer.
+  useLayoutEffect(() => {
+    if (!restoredOnLoad) return;
+    restoredOnLoad = false;
+    const st = getState();
+    const at = resumeStepIndex(st.onboardingStepIndex, st.profile, st.onboardingAnswers, st.selectedGoalIds);
+    if (at !== st.onboardingStepIndex) actions.setStep(at);
+  }, []);
+
   const next = () => actions.setStep(Math.min(i + 1, STEPS.length - 1));
   const back = () => (i > 0 ? actions.setStep(i - 1) : actions.goPlan());
   // Step 0 with an existing plan offers the way back out: "New plan" from

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { glueAmounts } from "../lib/glue";
 import { useIsPhone } from "../lib/usePhone";
 import { actions, useStore } from "../store";
 import { LogoMark } from "./Logo";
@@ -141,7 +142,8 @@ export default function CopilotBar() {
                     m.role === "user" ? "rounded-br-sm bg-night text-on-night" : "rounded-bl-sm bg-surface-2 text-text"
                   }`}
                 >
-                  {m.text}
+                  {/* An amount keeps its unit on the same line ("₹60 L"), wherever the reply wraps. */}
+                  {glueAmounts(m.text)}
                 </span>
               </div>
             ))}
@@ -191,8 +193,9 @@ export default function CopilotBar() {
               {focused && (
                 // The row scrolls sideways with no scrollbar. Its right edge
                 // fades out, which is the sign that there is more to scroll to.
+                // (The rule under it belongs to the form, so it does not fade.)
                 <div
-                  className="no-scrollbar flex scroll-px-8 gap-2 overflow-x-auto border-b border-line py-2 pl-2 pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
+                  className="no-scrollbar flex scroll-px-8 gap-2 overflow-x-auto py-2 pl-2 pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
                   role="group"
                   aria-label="Examples"
                 >
@@ -216,7 +219,7 @@ export default function CopilotBar() {
                   e.preventDefault();
                   send(text);
                 }}
-                className="flex items-center gap-2 p-1.5"
+                className={`flex items-center gap-2 p-1.5 ${focused ? "border-t border-line" : ""}`}
               >
                 <Mark />
                 <input

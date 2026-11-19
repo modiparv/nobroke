@@ -70,6 +70,12 @@ export function CredentialFields({
 }) {
   const field = `${fieldBase} ${FIELD_SHAPE[size]}`;
   const isNew = mode === "register";
+  // A new error is brought into view: with the keyboard open it can appear
+  // below the visible part of the sheet.
+  const errorBox = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (error) errorBox.current?.scrollIntoView({ block: "nearest" });
+  }, [error]);
   return (
     <>
       <Field id={`${idPrefix}-email`} label="Email">
@@ -113,7 +119,7 @@ export function CredentialFields({
       )}
       {/* Red, an alert mark and the words: never colour alone. */}
       {error && (
-        <p role="alert" className="flex items-start gap-2 rounded-control bg-neg-bg px-3 py-2.5 text-left text-support text-neg">
+        <p ref={errorBox} role="alert" className="flex items-start gap-2 rounded-control bg-neg-bg px-3 py-2.5 text-left text-support text-neg">
           <StatusIcon level="far_short" size={16} className="mt-0.5" />
           <span>{error}</span>
         </p>
@@ -273,7 +279,7 @@ export default function AuthSheet({
       <div
         ref={panel}
         tabIndex={-1}
-        className="fade-up relative max-h-[calc(100%-0.5rem)] w-full scroll-pb-24 overflow-y-auto overscroll-contain rounded-t-screen border border-line bg-surface px-5 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3 outline-none focus-visible:outline-none sm:max-h-full sm:max-w-sm sm:rounded-card"
+        className="fade-up relative max-h-[calc(100%-0.5rem)] w-full scroll-pb-24 overflow-y-auto overscroll-contain rounded-t-screen border border-line bg-surface px-5 pt-3 outline-none focus-visible:outline-none sm:max-h-full sm:max-w-sm sm:rounded-card"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 pt-2">
@@ -317,23 +323,27 @@ export default function AuthSheet({
             error={error}
             emailRef={emailField}
           />
-          <div className="sticky bottom-0 -mx-5 bg-surface px-5 pb-1 pt-1">
-            <button type="submit" disabled={busy || invalid} className={`${btnPrimary} w-full`}>
+          <div className="sticky bottom-0 -mx-5 bg-surface px-5 pb-2 pt-1">
+            <button type="submit" disabled={invalid} aria-disabled={busy} className={`${btnPrimary} w-full`}>
               {busy ? "One moment…" : isNew ? "Create account" : "Sign in"}
             </button>
           </div>
         </form>
 
-        <button
-          type="button"
-          onClick={() => {
-            setMode(isNew ? "login" : "register");
-            setError(null);
-          }}
-          className="mx-auto flex min-h-11 items-center text-support font-medium text-text underline underline-offset-2 transition-colors hover:text-text-2"
-        >
-          {isNew ? "Have an account? Sign in" : "New here? Create an account"}
-        </button>
+        {/* The bottom padding lives here, not on the scroller, so the button
+            above sits flush on the sheet's bottom edge while it is held there. */}
+        <div className="flex justify-center pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <button
+            type="button"
+            onClick={() => {
+              setMode(isNew ? "login" : "register");
+              setError(null);
+            }}
+            className="flex min-h-11 items-center text-support font-medium text-text underline underline-offset-2 transition-colors hover:text-text-2"
+          >
+            {isNew ? "Have an account? Sign in" : "New here? Create an account"}
+          </button>
+        </div>
       </div>
     </div>,
     document.body,
