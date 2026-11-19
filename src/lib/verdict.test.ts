@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
-import { onTrackMessage, shortMessage } from "./verdict.ts";
+import { onTrackMessage, reachFigure, shortMessage } from "./verdict.ts";
 
 const plain = (s: string) => s.replace(/ /g, " ");
 
@@ -28,4 +28,13 @@ test("a goal that already gets money shows the extra and the total", () => {
     plain(shortMessage({ projectedCorpus: 500000, gap: -100000 }, 2000, 3020)),
     "You'll reach ₹5 L. That's ₹1 L short. ₹1,020 more a month (₹3,020 in total) would close the gap.",
   );
+});
+
+test("the amount a goal reaches is shown as the goal's own figure when the difference is rounding", () => {
+  // The row reads "₹21,200 by 2027": it must not go on to say "will reach ₹21,201".
+  assert.equal(reachFigure({ projectedCorpus: 21201, requiredCorpus: 21200, gap: 1 }), 21200);
+  // A real surplus and a shortfall are shown as they are.
+  assert.equal(reachFigure({ projectedCorpus: 120000, requiredCorpus: 100000, gap: 20000 }), 120000);
+  assert.equal(reachFigure({ projectedCorpus: 99999, requiredCorpus: 100000, gap: -1 }), 99999);
+  assert.equal(reachFigure({ projectedCorpus: 0, requiredCorpus: 100000, gap: -100000 }), 0);
 });

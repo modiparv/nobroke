@@ -5,6 +5,7 @@ import { formatINR } from "../lib/format";
 import { gapLevel } from "../lib/gap";
 import { FOCUS } from "../lib/links";
 import { useFocus } from "../lib/useFocus";
+import { reachFigure } from "../lib/verdict";
 import { actions, capitalForGoal, goalMonthly, goalShareFraction, goalsByPriority, planInputsForGoal, useStore } from "../store";
 import { GAP_TEXT } from "../ui";
 import Chart from "./Chart";
@@ -132,7 +133,7 @@ export function GoalTile({
           <span className="num mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 text-support">
             <span className="whitespace-nowrap font-medium text-text">{formatINR(savedForGoal)} saved</span>
             <span className={`whitespace-nowrap ${GAP_TEXT[level]}`}>
-              {r.onTrack ? `will reach ${formatINR(r.projectedCorpus)}` : `short ${formatINR(Math.abs(r.gap))}`}
+              {r.onTrack ? `will reach ${formatINR(reachFigure(r))}` : `short ${formatINR(Math.abs(r.gap))}`}
             </span>
           </span>
         </span>

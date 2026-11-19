@@ -129,11 +129,20 @@
 
 html {
   scroll-behavior: smooth;
-  /* A control that takes keyboard focus is scrolled clear of the sticky
-     header above and the copilot bar below, so its focus ring is never
-     hidden under either. */
-  scroll-padding-top: 4.5rem;
-  scroll-padding-bottom: 6rem;
+}
+
+/* A control that takes keyboard focus is scrolled clear of the sticky
+   header above and the copilot bar below, so its focus ring is never
+   hidden under either. The clearance sits on the controls, not on the
+   page: a control inside a sticky bar can never be scrolled clear of the
+   bar it lives in, and page-level scroll padding made the browser move
+   the page on every key typed into the copilot field. */
+:where(a, button, input, select, textarea, summary, [tabindex]) {
+  scroll-margin-top: 4.5rem;
+  scroll-margin-bottom: 6rem;
+}
+:where(.sticky) :where(a, button, input, select, textarea, summary, [tabindex]) {
+  scroll-margin: 0;
 }
 
 /* In the base layer, so a control that draws its own focus border can switch

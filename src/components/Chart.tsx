@@ -3,6 +3,7 @@ import type { PlanResult } from "../lib/types";
 import { formatINR } from "../lib/format";
 import { estimateTextWidth, niceTicks, shareLabel, yearTicks } from "../lib/goalPaths";
 import { C } from "../lib/theme";
+import { reachFigure } from "../lib/verdict";
 
 /**
  * The width a chart has to draw in, in real pixels. Charts draw at 1:1
@@ -144,7 +145,7 @@ export default function Chart({ r }: { r: PlanResult }) {
           viewBox={`0 0 ${width} ${H}`}
           className="block h-auto w-full"
           role="img"
-          aria-label={`Your money grows to about ${formatINR(r.projectedCorpus)} by ${endYear}. You will have put in ${formatINR(r.totalInvested)}. The goal needs ${formatINR(r.requiredCorpus)}.`}
+          aria-label={`Your money grows to about ${formatINR(reachFigure(r))} by ${endYear}. You will have put in ${formatINR(r.totalInvested)}. The goal needs ${formatINR(r.requiredCorpus)}.`}
         >
           {yTicks.map((v, i) => (
             <g key={v}>
@@ -214,7 +215,7 @@ export default function Chart({ r }: { r: PlanResult }) {
         <li className="inline-flex items-center gap-2 whitespace-nowrap">
           <Key stroke={C.brand} width={2.5} />
           Your money
-          <span className="num font-medium text-text">{formatINR(r.projectedCorpus)}</span>
+          <span className="num font-medium text-text">{formatINR(reachFigure(r))}</span>
         </li>
         <li className="inline-flex items-center gap-2 whitespace-nowrap">
           <Key stroke={C.invested} dash="4 4" />

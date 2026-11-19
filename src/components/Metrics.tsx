@@ -6,6 +6,7 @@ import { inr } from "../lib/glue";
 import { GOAL_MAP } from "../lib/goals";
 import { educationNote, goalOptions } from "../lib/options";
 import { reachedText } from "../lib/reached";
+import { reachFigure } from "../lib/verdict";
 import { actions } from "../store";
 import { btnGhost } from "../ui";
 import { StatusIcon } from "./StatusPill";
@@ -96,7 +97,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
 
       {/* The projection in one sentence, ending in the status. */}
       <p className="num text-body text-text">
-        At this rate: <span className="font-medium">{inr(r.projectedCorpus)}</span> by {year}.{" "}
+        At this rate: <span className="font-medium">{inr(reachFigure(r))}</span> by {year}.{" "}
         <span className={`inline-flex items-center gap-1 whitespace-nowrap align-bottom font-medium ${TONE_TEXT[gapTone(level)]}`}>
           <StatusIcon level={level} size={16} />
           {r.onTrack ? "On track." : `${formatINR(Math.abs(r.gap))} short.`}
