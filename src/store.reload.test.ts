@@ -189,3 +189,22 @@ test("New plan here, then the account's plan arrives from another device: this b
   assert.deepEqual(second.getState().goals.map((g) => g.id).sort(), ["course", "gadget", "travel"]);
   assert.equal(second.getState().profile.takeHome, 8000, "the plan and its answers stay a pair");
 });
+
+test("a mix saved in this browser under a name the app does not know opens as the person's own mix", async () => {
+  newBrowser();
+  const first = await openPage();
+  intake(first, rajesh);
+  first.actions.flushNow();
+  // An older version of the app saved names like this one.
+  const key = [...saved.keys()][0];
+  const blob = JSON.parse(saved.get(key) ?? "{}");
+  blob.state.portfolioProfile = "aggressive";
+  saved.set(key, JSON.stringify(blob));
+
+  const second = await openPage();
+  assert.equal(second.getState().portfolioProfile, null);
+  assert.equal(second.getState().portfolioCustom, true);
+  const kept = { ...second.getState().portfolio };
+  second.actions.setRiskAppetite(second.getState().riskAppetite - 5);
+  assert.deepEqual(second.getState().portfolio, kept, "a step on the risk level leaves it alone");
+});

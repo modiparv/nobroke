@@ -184,8 +184,7 @@ function AccountStep({ step }: { step: Step }) {
         setError("You're signed in, but your saved plan couldn't be loaded. Check your connection and try again.");
         return;
       }
-      if (getState().goals.length === 0) actions.finishOnboarding();
-      else actions.goPlan();
+      actions.finishIntakeAfterSignIn();
     }
   };
 

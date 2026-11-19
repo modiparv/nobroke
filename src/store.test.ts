@@ -42,12 +42,16 @@ const aarav: Person = {
   answers: { timeline: "2", "cost:travel": "20000", "cost:gadget": "70000" },
 };
 
-/** Take a person through the intake, as the screens do. */
-function intake(who: Person) {
+/** Answer the intake as a person does, up to its last step. */
+function answerIntake(who: Person) {
   actions.startOnboarding();
   for (const [k, v] of Object.entries(who.p)) actions.setProfileField(k as keyof Profile, v as string | number);
   for (const g of who.goals) actions.toggleGoal(g);
   for (const [k, v] of Object.entries(who.answers)) actions.setAnswer(k, v);
+}
+/** Take a person through the whole intake, as the screens do. */
+function intake(who: Person) {
+  answerIntake(who);
   actions.finishOnboarding();
 }
 
@@ -247,6 +251,23 @@ test("after the goals change, a step on the risk level never moves the mix the o
   assert.equal(getState().portfolioProfile, "bold");
   actions.setRiskAppetite(0);
   assert.equal(getState().portfolioProfile, "steady");
+
+  // The mirror: a bold mix, then the long goal goes. A higher level must not bring a calmer mix.
+  intake(aarav);
+  actions.addGoal("fire");
+  const base = getState().riskAppetite;
+  actions.setRiskAppetite(base + 5);
+  assert.equal(getState().portfolioProfile, "bold");
+  actions.removeGoal("fire");
+  assert.equal(getState().portfolioProfile, "bold", "removing a goal leaves the mix alone");
+  const bold = { ...getState().portfolio };
+  actions.setRiskAppetite(base + 10);
+  assert.equal(getState().riskAppetite, base + 10);
+  assert.equal(getState().portfolioProfile, "bold", "a higher level must not bring a calmer mix");
+  assert.deepEqual(getState().portfolio, bold);
+  // Downwards the level still does its job.
+  actions.setRiskAppetite(0);
+  assert.equal(getState().portfolioProfile, "steady");
 });
 
 test("a fund lookup or the inflation feed at boot never makes an old copy look newer than the account's", async (t) => {
@@ -324,6 +345,11 @@ test("a saved plan whose mix has a name the app does not know opens as a mix of 
   assert.equal(await settle(t, actions.completeAuth({ id: "u4", email: "g@h.co" })), "ok");
   assert.equal(getState().portfolioProfile, null);
   assert.equal(mixName(getState().portfolio, getState().portfolioProfile), "Your own mix");
+  // It is kept as the person's own: a step on the risk level does not swap it for a ready-made mix.
+  assert.equal(getState().portfolioCustom, true);
+  const kept = { ...getState().portfolio };
+  actions.setRiskAppetite(getState().riskAppetite - 5);
+  assert.deepEqual(getState().portfolio, kept);
 
   // A mix the person built by hand on another device has no name: this device's old name must not stick to it.
   await freshBrowser();
@@ -348,4 +374,123 @@ test("a new plan starts with the split following need, even after the last plan'
   const before = { ...getState().goalShares };
   actions.setSip(getState().monthlySip * 4);
   assert.notDeepEqual(getState().goalShares, before);
+});
+
+test("the account's copy does not undo the inflation feed when the feed answers before the plan is read", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  await freshBrowser();
+  intake(rajesh);
+  const stamp = getState().planUpdatedAt;
+  // The account holds this browser's own copy, saved while last year's figure was in use.
+  let accountPlan: Record<string, unknown> = { ...planAsSaved(stamp), inflation: 0.05, inflationSource: "macro" };
+  answer = (call) => (call.url === "/api/plan" && call.method === "GET" ? { status: 200, body: { ok: true, state: accountPlan } } : { status: 200, body: { ok: true } });
+  actions.applyMacroInflation(4.2);
+  assert.equal(await settle(t, actions.completeAuth({ id: "u5", email: "i@j.co" })), "ok");
+  assert.equal(getState().inflation, 0.042, "this year's figure stays");
+  assert.equal(getState().inflationSource, "macro");
+  assert.equal(getState().planUpdatedAt, stamp, "and it is still not an edit");
+
+  // A rate the person set by hand on the account wins over the feed.
+  await freshBrowser();
+  intake(rajesh);
+  accountPlan = { ...planAsSaved(getState().planUpdatedAt), inflation: 0.07, inflationSource: "user" };
+  answer = (call) => (call.url === "/api/plan" && call.method === "GET" ? { status: 200, body: { ok: true, state: accountPlan } } : { status: 200, body: { ok: true } });
+  actions.applyMacroInflation(4.2);
+  assert.equal(await settle(t, actions.completeAuth({ id: "u5", email: "i@j.co" })), "ok");
+  assert.equal(getState().inflation, 0.07);
+  assert.equal(getState().inflationSource, "user");
+});
+
+test("a second read that fails after the sign-in's own read landed leaves nothing owed", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const user = { id: "u6", email: "k@l.co" };
+  await freshBrowser();
+  intake(rajesh);
+  const accountPlan = planAsSaved(getState().planUpdatedAt);
+  await freshBrowser();
+  // The plan's reads answer, in the order they arrive: fail, fail, the plan, fail, fail.
+  let planReads = 0;
+  answer = (call) => {
+    if (call.url === "/api/auth/me") return { status: 200, body: { ok: true, user } };
+    if (call.url === "/api/plan" && call.method === "GET")
+      return ++planReads === 3 ? { status: 200, body: { ok: true, state: accountPlan } } : { status: 500, body: { ok: false } };
+    return { status: 200, body: { ok: true } };
+  };
+  const signIn = actions.completeAuth(user, { preferServer: true });
+  await turn();
+  // The window regains focus while the sign-in waits to try again: a second run with reads of its own.
+  await actions.revalidateSession();
+  await turn();
+  assert.equal(await settle(t, signIn), "ok");
+  for (let i = 0; i < 4; i++) {
+    t.mock.timers.tick(3000);
+    await turn();
+  }
+  assert.equal(planReads, 5);
+  assert.deepEqual(goalIds(), ["child", "fire", "parents"]);
+  assert.equal(getState().owedAccountPlan, null, "a device that has read the plan and is syncing is owed nothing");
+});
+
+test("a search fund looked up before the plan is read is still saved with the plan", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  await freshBrowser();
+  intake(rajesh);
+  actions.setPortfolio({ icici_nifty: 50, live_999003: 50 }, null);
+  const stamp = getState().planUpdatedAt;
+  // The account holds this browser's own copy, saved before the fund could be looked up.
+  const accountPlan = { ...planAsSaved(stamp), liveFunds: {} };
+  answer = (call) => {
+    if (call.url.includes("/api/instruments?code=999003"))
+      return { status: 200, body: { code: "999003", name: "Another Liquid Fund - Direct - Growth", category: "Debt Scheme - Liquid Fund", fundHouse: "", nav: 10, navDate: null, cagr1y: null, cagr3y: null, cagr5y: null } };
+    if (call.url === "/api/plan" && call.method === "GET") return { status: 200, body: { ok: true, state: accountPlan } };
+    return { status: 200, body: { ok: true } };
+  };
+  await actions.restoreLiveFunds();
+  assert.ok(getState().liveFunds.live_999003);
+  assert.equal(await settle(t, actions.completeAuth({ id: "u7", email: "m@n.co" })), "ok");
+  await turn();
+  assert.ok(getState().liveFunds.live_999003, "the fund stays in the plan after the account's copy is adopted");
+  assert.equal(getState().planUpdatedAt, stamp, "and it is still not an edit");
+  t.mock.timers.tick(5000);
+  await turn();
+  const sent = puts().map((p) => Object.keys(JSON.parse(p.body ?? "{}").state.liveFunds ?? {}));
+  assert.deepEqual(sent[sent.length - 1], ["live_999003"], "and it reaches the account");
+});
+
+test("signing in at the end of a New plan intake builds the plan from that intake when the account has none", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const user = { id: "u8", email: "o@p.co" };
+  // The family's plan is in this browser. New plan, the student's answers, then Sign in on the last step.
+  await freshBrowser();
+  intake(rajesh);
+  answerIntake(aarav);
+  answer = (call) => (call.url === "/api/plan" && call.method === "GET" ? { status: 200, body: { ok: true, state: null } } : { status: 200, body: { ok: true } });
+  assert.equal(await settle(t, actions.completeAuth(user, { preferServer: true })), "ok");
+  actions.finishIntakeAfterSignIn();
+  assert.equal(getState().screen, "plan");
+  assert.deepEqual(goalIds(), ["course", "gadget", "travel"], "not the older plan's goals under the new answers");
+  assert.equal(getState().profile.takeHome, 8000);
+  assert.equal(getState().intakeBackup, null);
+
+  // An account that has a plan: that plan is shown, and the intake's answers are dropped.
+  await freshBrowser();
+  intake(rajesh);
+  const accountPlan = planAsSaved(getState().planUpdatedAt - 60_000);
+  await freshBrowser();
+  intake(aarav);
+  answerIntake(aarav);
+  answer = (call) => (call.url === "/api/plan" && call.method === "GET" ? { status: 200, body: { ok: true, state: accountPlan } } : { status: 200, body: { ok: true } });
+  assert.equal(await settle(t, actions.completeAuth(user, { preferServer: true })), "ok");
+  actions.finishIntakeAfterSignIn();
+  assert.equal(getState().screen, "plan");
+  assert.deepEqual(goalIds(), ["child", "fire", "parents"]);
+  assert.equal(getState().profile.takeHome, 160000);
+
+  // A first intake, with no older plan in the browser, still builds its plan.
+  await freshBrowser();
+  answerIntake(aarav);
+  answer = (call) => (call.url === "/api/plan" && call.method === "GET" ? { status: 200, body: { ok: true, state: null } } : { status: 200, body: { ok: true } });
+  assert.equal(await settle(t, actions.completeAuth(user, { preferServer: true })), "ok");
+  actions.finishIntakeAfterSignIn();
+  assert.deepEqual(goalIds(), ["course", "gadget", "travel"]);
 });

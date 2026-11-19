@@ -238,6 +238,11 @@ let state: AppState = {
   focus: null,
 };
 state.liveFunds = readLiveFunds(state.liveFunds);
+// A saved mix under a name the app does not know is kept as the person's own, as coercePlan does for the account's copy.
+if (typeof state.portfolioProfile === "string" && !Object.prototype.hasOwnProperty.call(MODEL_PORTFOLIOS, state.portfolioProfile)) {
+  state.portfolioProfile = null;
+  state.portfolioCustom = true;
+}
 
 const nowMs = () => Date.now();
 
@@ -306,6 +311,8 @@ function coercePlan(raw: unknown): Partial<AppState> {
     const v = bool(r[k]);
     if (v !== undefined) out[k] = v;
   }
+  // A mix under a name the app does not know is kept as the person's own: the risk level never replaces it.
+  if (typeof r.portfolioProfile === "string" && out.portfolioProfile === null) out.portfolioCustom = true;
   return out;
 }
 
@@ -523,6 +530,9 @@ export function recommendedPortfolio(
 export const SIGN_IN_TEXT =
   'Sign in to ask questions in your own words. Simple commands like "add a car goal" work without an account.';
 
+/** This session's figure from the inflation feed, once it has answered. An adopted copy never undoes it. */
+let feedInflation: number | null = null;
+
 /** Leaving the intake unfinished puts back the answers "New plan" set aside. */
 function leftIntake(): Partial<AppState> {
   const kept = state.screen === "onboarding" ? state.intakeBackup : null;
@@ -578,15 +588,17 @@ export const actions = {
     // Still unknown: report it instead of pretending. The caller surfaces the
     // failure (or revalidateSession heals it later); sync stays off so local
     // work can never overwrite an unread account plan.
-    if (result.status === "error") {
-      if (preferServer) set({ owedAccountPlan: user.id });
-      return "sync-failed";
-    }
+    if (result.status === "error") return "sync-failed";
 
     if (result.status === "ok") {
       const serverRev = Number((result.state as Record<string, unknown>).planUpdatedAt) || 0;
       if (preferServer || serverRev >= state.planUpdatedAt) {
         const adopted = coercePlan(result.state);
+        // The account's copy never undoes this session's inflation feed, unless the person set the rate by hand.
+        if (feedInflation !== null && (adopted.inflationSource ?? state.inflationSource) !== "user") {
+          adopted.inflation = feedInflation;
+          adopted.inflationSource = "macro";
+        }
         // A healed sign-in from the intake shows the account's plan, as the sign-in itself would have.
         const toPlan = owed && state.screen === "onboarding" && (adopted.goals?.length ?? 0) > 0;
         // The answers "New plan" set aside survive only when the account's copy is this browser's own
@@ -669,6 +681,14 @@ export const actions = {
         ? state.intakeBackup
         : { profile: state.profile, selectedGoalIds: state.selectedGoalIds, onboardingAnswers: state.onboardingAnswers };
     set({ screen: "onboarding", onboardingStepIndex: 0, onboardingAnswers: {}, selectedGoalIds: [], profile: emptyProfile(), intakeBackup });
+  },
+  /** After a sign-in on the intake's last step. The account's plan is shown if
+      it has one. If it has none, the plan is built from this intake, also when
+      "New plan" was started over an older plan in this browser (its answers
+      are still set aside then, and its goals are not this intake's). */
+  finishIntakeAfterSignIn: () => {
+    if (state.goals.length === 0 || state.intakeBackup) actions.finishOnboarding();
+    else actions.goPlan();
   },
   /** "My plan" on the intake's first screen: back to the plan as it was. */
   leaveOnboarding: () => set({ screen: "plan", ...leftIntake() }),
@@ -815,7 +835,12 @@ export const actions = {
   restoreLiveFunds: async () => {
     const ids = [...new Set([...Object.keys(state.portfolio), ...Object.keys(state.bucket)])];
     for (const id of ids) {
-      if (!/^live_\d+$/.test(id) || FUND_MAP[id]) continue;
+      if (!/^live_\d+$/.test(id)) continue;
+      if (FUND_MAP[id]) {
+        // Looked up this session, then dropped by the account's copy: put it back in the plan, still not an edit.
+        if (!state.liveFunds[id]) set({ liveFunds: { ...state.liveFunds, [id]: FUND_MAP[id] }, planUpdatedAt: state.planUpdatedAt });
+        continue;
+      }
       const detail = await getLiveSchemeDetail(id.slice(5));
       if (!detail || !detail.name) continue;
       const f = fundFromLiveScheme(detail);
@@ -901,10 +926,11 @@ export const actions = {
   /** Live CPI from the macro feed becomes the planning default, but never
       tramples an inflation rate the user set by hand. */
   applyMacroInflation: (annualPct: number) => {
-    if (state.inflationSource === "user") return;
     if (!(annualPct > 0) || annualPct > 25) return;
+    feedInflation = Math.round(annualPct * 10) / 1000;
+    if (state.inflationSource === "user") return;
     // The feed is not an edit by the person: the plan keeps its stamp.
-    set({ inflation: Math.round(annualPct * 10) / 1000, inflationSource: "macro", planUpdatedAt: state.planUpdatedAt });
+    set({ inflation: feedInflation, inflationSource: "macro", planUpdatedAt: state.planUpdatedAt });
   },
 
   // ---- Goal-based waterfall: target year, priority, money split ----
