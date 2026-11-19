@@ -21,7 +21,9 @@ export type Command =
   /** "trip 25k in 10 months": an amount and a date in one breath, both applied. */
   | { kind: "setTargetAndYears"; goalId: string; name: string; amount: number; years: number; note?: string }
   | { kind: "autoSplit" }
-  | { kind: "recommendPortfolio" }
+  /** "recommend funds for me": NoBroke does not pick, so this is answered
+      with a fixed reply and changes nothing. */
+  | { kind: "declinePick" }
   | { kind: "newPlan" };
 
 // Loose keyword → { id, display name } map (ids match src/lib/goals.ts).
@@ -131,27 +133,62 @@ const GIFT_CONTEXT = /\b(gifts?|presents?|birthday|anniversary|treat)\b/;
 const QUESTION_START = /^(what|why|how|when|which|where|who|is|are|am|do|does|did|should|could|would|can|will|explain|tell me)\b/;
 const POLITE_COMMAND = /^(can you|could you|would you|will you|please)\b/;
 
+/** The things NoBroke will not choose for anyone. "Emergency fund" is a goal,
+    not a fund to pick, so it is removed from the text before this is tested.
+    "Investment" in the singular is the monthly investment, so only the plural
+    counts. */
+const PICK_THING = /\b(portfolio|mix|allocation|mutual funds?|funds?|stocks?|shares?|etfs?|elss|schemes?|investments)\b/;
+const PICK_VERB = /\b(match|recommend|recommendations?|suggest|suggestions?|optimi[sz]e|rebalance|re-balance|re-?tune|tune|pick|choose|select)\b/;
+const PICK_BEST = /\bbest\b|\btop\b(?! ?up)/;
+const PICK_WHICH = /\b(which|what|good|right)\b/;
+const PICK_BUY = /\b(buy|invest|pick|choose|go for|start with|get into)\b/;
+const WHERE_TO_INVEST = /\bwhere (should|do|can|to) (i |we )?invest\b|\bwhat (should|do|can) (i|we) invest in\b/;
+
+/**
+ * True when the message asks NoBroke to choose funds, stocks or a mix:
+ * "recommend funds for me", "which fund should I buy?", "where should I
+ * invest". These get one fixed reply, signed in or not, and never reach the
+ * model. A message with an amount is an edit to the plan ("adjust my
+ * emergency fund to 3 lakh"), and any other question is answered as a
+ * question ("should I rebalance my portfolio?", "what is an index fund").
+ */
+export function asksNoBrokeToPick(raw: string, isQuestion: boolean, hasAmount: boolean): boolean {
+  if (hasAmount) return false;
+  const text = raw.toLowerCase().replace(/\bemergency funds?\b/g, " ");
+  if (WHERE_TO_INVEST.test(text)) return true;
+  const thing = PICK_THING.test(text);
+  if (thing && (PICK_BEST.test(text) || (PICK_WHICH.test(text) && PICK_BUY.test(text)))) return true;
+  if (isQuestion) return false;
+  if (thing && PICK_VERB.test(text)) return true;
+  return /\b(fix|adjust)\b/.test(text) && /\b(portfolio|mix|allocation)\b/.test(text);
+}
+
+/** What the copilot says when asked to choose funds or a mix. Fixed words,
+    written once, so the answer is the same for everyone. */
+export const DECLINE_PICK_REPLY =
+  "NoBroke does not pick funds or a mix for you. Open the Portfolio tab to compare the mixes and choose one yourself.";
+
 export function parseCommand(raw: string, now = new Date().getFullYear()): Command | null {
   const text = raw.toLowerCase().trim();
   if (!text) return null;
 
-  // Questions are answered, never executed.
-  if ((QUESTION_START.test(text) || text.endsWith("?")) && !POLITE_COMMAND.test(text)) return null;
+  const isQuestion = (QUESTION_START.test(text) || text.endsWith("?")) && !POLITE_COMMAND.test(text);
+  const amounts = amountsINR(text);
+
+  // Asking NoBroke to choose funds, stocks or a mix. It does not pick for
+  // anyone, so this gets the fixed reply, never the model, even as a question.
+  if (asksNoBrokeToPick(text, isQuestion, amounts.length > 0)) return { kind: "declinePick" };
+
+  // Every other question is answered, never executed.
+  if (isQuestion) return null;
 
   // Two amounts in one breath ("laptop 70k and trip 20k"), or a sentence about
   // income or spending: the AI sorts out which number is which.
-  const amounts = amountsINR(text);
   if (amounts.length > 1) return null;
   if (INCOME_CONTEXT.test(text) || SPEND_CONTEXT.test(text) || GIFT_CONTEXT.test(text)) return null;
   const amount = amounts[0] ?? null;
 
   const goal = findGoal(text);
-  const hasPortfolioWord = /\b(portfolio|mix|allocation|funds?|investments?)\b/.test(text);
-
-  // Re-tune the single portfolio to the goals.
-  if (hasPortfolioWord && /\b(match|recommend|fix|suggest|optimi[sz]e|rebalance|re-balance|tune|adjust)\b/.test(text))
-    return { kind: "recommendPortfolio" };
-
   // Auto-balance money across goals.
   if (/\bauto.?balance\b/.test(text)) return { kind: "autoSplit" };
   if (/\b(balance|split|distribute|spread|divide|allocate)\b/.test(text) && /\b(money|across goals|between goals|goals)\b/.test(text))
@@ -180,7 +217,7 @@ export function parseCommand(raw: string, now = new Date().getFullYear()): Comma
       const months = Number(inMonths[1]);
       if (months > 0) {
         years = Math.max(1, Math.round(months / 12));
-        if (months % 12) note = `${months} months rounds to ${years} ${years === 1 ? "year" : "years"}; the plan works in whole years.`;
+        if (months % 12) note = `${months} months rounds to ${years} ${years === 1 ? "year" : "years"}. The plan works in whole years.`;
       }
     }
     if (years != null && years > 0 && years <= 60) {

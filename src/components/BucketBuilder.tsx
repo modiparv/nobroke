@@ -1,310 +1,266 @@
 import { useState } from "react";
 import { ASSET_CLASSES, FUND_MAP } from "../lib/funds";
-import { allocationTotal, bandWeights, blendedReturn } from "../lib/finance";
-import {
-  POOL_GROUPS,
-  isPoolInstrument,
-  sameMix,
-  suggestedInstruments,
-  withInstrument,
-  withWeight,
-  withoutInstrument,
-} from "../lib/bucket";
+import { allocationTotal, blendedReturn } from "../lib/finance";
+import { POOL_GROUPS, POOL_ITEMS, isPoolInstrument, sameMix, withInstrument, withWeight, withoutInstrument } from "../lib/bucket";
 import { formatPct } from "../lib/format";
 import { actions, useStore } from "../store";
-import { sectionLabel } from "../ui";
+import { btnPrimary } from "../ui";
+import { AddMark, MixBar, MixKey, MixRow } from "./PortfolioBuilder";
 
 /**
- * Build your own mix: the right half of the portfolio room. A drafting
- * table (add funds from every option, weight them, name the goal it is
- * for) that touches nothing until "Apply this mix" hands the draft to the
- * engine. The left pane is the live portfolio. This is the sketchbook.
+ * Build your own mix: the advanced corner of the Portfolio tab, closed
+ * until it is asked for (or until a draft is waiting in it). It follows
+ * its own one-line instruction from start to end: add funds from every
+ * option, set how much goes to each, then apply. Nothing touches the live
+ * mix until "Apply this mix", the one main button on this tab.
  */
 
-function Grip() {
-  return (
-    <svg width="7" height="12" viewBox="0 0 7 12" fill="currentColor" aria-hidden className="flex-none">
-      {[0, 5].map((x) => [0, 5, 10].map((y) => <circle key={`${x}${y}`} cx={x + 1} cy={y + 1} r="1" />))}
-    </svg>
-  );
+/** A group's label may carry a note in brackets: "ETFs (need a demat
+    account)". The chip shows the short name. The note is said in full
+    under the chips when that group is open. */
+function splitLabel(label: string): { short: string; note: string | null } {
+  const m = label.match(/^(.*?)\s*\((.*)\)$/);
+  return m ? { short: m[1], note: `${m[1]} ${m[2]}.` } : { short: label, note: null };
 }
 
-export default function BucketBuilder() {
+const textLink =
+  "inline-flex min-h-11 items-center text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2";
+
+/** The fund search sits in the funds pane, above this one on every screen.
+    The link scrolls to it and puts the cursor in it. */
+function goToSearch() {
+  const field = document.getElementById("fund-search");
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  field?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+  field?.focus({ preventScroll: true });
+}
+
+/** What each option is, in a word or two: "Gilt fund", "Equity ETF". */
+const KIND: Record<string, string> = Object.fromEntries(POOL_ITEMS.map((i) => [i.id, i.kind]));
+/** Each option's place in the list of all options. The draft is shown in
+    this order, so a row never moves when its share is stepped. */
+const PLACE: Record<string, number> = Object.fromEntries(POOL_ITEMS.map((i, n) => [i.id, n]));
+
+export default function BucketBuilder({ className = "" }: { className?: string }) {
   const s = useStore();
   const bucket = s.bucket;
   const [dragOver, setDragOver] = useState(false);
 
   const total = allocationTotal(bucket);
-  const ids = Object.keys(bucket).filter((k) => (bucket[k] ?? 0) > 0);
-  const bands = bandWeights(bucket);
+  // Every fund in the draft, including one stepped down to 0%: it stays in
+  // the list (the option above still says "Added") until it is removed.
+  const ids = Object.keys(bucket)
+    .filter((k) => FUND_MAP[k])
+    .sort((a, b) => (PLACE[a] ?? POOL_ITEMS.length) - (PLACE[b] ?? POOL_ITEMS.length) || a.localeCompare(b));
   const ret = blendedReturn(bucket);
   const isLive = total > 0 && sameMix(bucket, s.portfolio);
+
+  // Open on arrival only when a draft is already waiting.
+  const [open, setOpen] = useState(ids.length > 0);
+  const [groupLabel, setGroupLabel] = useState(POOL_GROUPS[0].label);
+  const group = POOL_GROUPS.find((g) => g.label === groupLabel) ?? POOL_GROUPS[0];
+  const groupNote = splitLabel(group.label).note;
 
   const add = (id: string) => actions.setBucket(withInstrument(bucket, id));
   const remove = (id: string) => actions.setBucket(withoutInstrument(bucket, id));
   const nudge = (id: string, delta: number) => actions.setBucket(withWeight(bucket, id, (bucket[id] ?? 0) + delta));
 
-  const suggestions = suggestedInstruments(s.riskAppetite).filter((p) => !(p.id in bucket));
-  const goalName = s.bucketGoalId ? s.goals.find((g) => g.id === s.bucketGoalId)?.name : undefined;
-
-  const segs = [
-    { label: "Stocks", v: bands.equity, color: ASSET_CLASSES.equity.color },
-    { label: "Bonds", v: bands.debt, color: ASSET_CLASSES.debt.color },
-    { label: "Gold", v: bands.gold, color: ASSET_CLASSES.gold.color },
-  ].filter((x) => x.v > 0.01);
+  const picked = `${ids.length} ${ids.length === 1 ? "fund" : "funds"} in your draft.`;
+  const summary =
+    ids.length === 0
+      ? "Add funds, set how much goes to each, then apply. Nothing changes until you tap Apply."
+      : isLive
+        ? `${picked} This is your mix now.`
+        : `${picked} Nothing changes until you tap Apply.`;
 
   return (
-    <section className="min-w-0 rounded-card border border-line bg-surface">
-      <div className="flex items-baseline justify-between gap-3 border-b border-line px-4 py-3">
-        <span className="text-support text-text">Build your own mix (advanced)</span>
-        <span className="text-caption text-text-2">
-          {ids.length ? `${ids.length} ${ids.length === 1 ? "fund" : "funds"} picked` : "Nothing changes until you tap Apply"}
-        </span>
-      </div>
+    <section className={`min-w-0 rounded-card border border-line bg-surface ${className}`}>
+      <h2>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls="own-mix"
+          onClick={() => setOpen((v) => !v)}
+          className="flex min-h-[4.25rem] w-full items-center justify-between gap-4 rounded-card px-4 py-3.5 text-left sm:px-5"
+        >
+          <span className="min-w-0">
+            <span className="block text-section font-medium text-text">Build your own mix (advanced)</span>
+            <span className="mt-0.5 block text-pretty text-support font-normal tracking-normal text-text-2">{summary}</span>
+          </span>
+          <span className="flex flex-none items-center gap-1.5 text-support font-medium tracking-normal text-text">
+            {open ? "Hide" : "Show"}
+            <svg
+              viewBox="0 0 16 16"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+              className={`transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+            >
+              <path d="M4 6l4 4 4-4" />
+            </svg>
+          </span>
+        </button>
+      </h2>
 
-      <div className="p-3.5 sm:p-4">
-        <p className="text-support text-text-2">Add funds, set how much goes to each, then apply.</p>
-
-        {/* What this mix is for. Chips wrap. Nothing here ever scrolls. */}
-        {s.goals.length > 0 && (
-          <div className="mt-4">
-            <span className={sectionLabel}>For</span>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {[{ id: null as string | null, name: "All goals" }, ...s.goals].map((g) => {
-                const sel = s.bucketGoalId === g.id;
+      {open && (
+        <div id="own-mix" className="grid gap-x-6 gap-y-5 border-t border-line p-4 sm:p-5 lg:grid-cols-2">
+          {/* ---- All options, one kind at a time ---- */}
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <h3 className="text-row font-medium text-text">All options</h3>
+              <span className="text-support text-text-2">Tap to add</span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Kind of option">
+              {POOL_GROUPS.map((g) => {
+                const on = g.label === group.label;
                 return (
                   <button
-                    key={g.id ?? "all"}
+                    key={g.label}
                     type="button"
-                    onClick={() => actions.setBucketGoal(g.id)}
-                    className={`rounded-full px-3 py-1 text-support transition ${
-                      sel
-                        ? "bg-accent-fill font-medium text-on-accent"
-                        : "border border-line text-text-2 hover:border-line-2 hover:text-text"
+                    aria-pressed={on}
+                    onClick={() => setGroupLabel(g.label)}
+                    className={`inline-flex h-11 items-center whitespace-nowrap rounded-full px-4 text-support transition ${
+                      on ? "bg-accent-fill font-medium text-on-accent" : "border border-line-2 text-text hover:border-text"
                     }`}
                   >
-                    {g.name}
+                    {splitLabel(g.label).short}
                   </button>
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {/* ---- The mix (drop zone) ---- */}
-        <div
-          aria-label="Your mix"
-          className={`mt-4 rounded-card border p-3.5 transition ${
-            dragOver ? "border-text ring-2 ring-text/20" : ids.length === 0 ? "border-dashed border-line-2" : "border-line"
-          }`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = "copy";
-            if (!dragOver) setDragOver(true);
-          }}
-          onDragLeave={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
-          }}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            const id = e.dataTransfer.getData("text/plain");
-            if (isPoolInstrument(id)) add(id);
-          }}
-        >
-          <div className="flex items-baseline justify-between gap-2">
-            <span className={sectionLabel}>Your mix</span>
-            {total > 0 && (
-              <span className="num text-caption text-text-2">
-                Grew about <span className="font-medium text-text">{formatPct(ret, 1)}</span> a year in the past
-              </span>
-            )}
-          </div>
-
-          {ids.length === 0 ? (
-            <div className="mt-3 px-3 py-6 text-center">
-              <p className="text-support font-medium text-text">Your mix is empty.</p>
-              <p className="mt-1 text-caption text-text-2">Tap a fund below to add it.</p>
-            </div>
-          ) : (
-            <>
-              <div className="mt-3 flex flex-col gap-1.5">
-                {ids.map((id) => {
-                  const f = FUND_MAP[id];
-                  if (!f) return null;
-                  const pct = Math.round(((bucket[id] ?? 0) / total) * 100);
-                  return (
-                    <div key={id} className="flex items-center gap-1.5 rounded-control bg-surface-2/40 px-2 py-1.5">
+            {groupNote && <p className="mt-3 text-support text-text-2">{groupNote}</p>}
+            <ul className="mt-2 grid gap-x-6 sm:grid-cols-2 lg:grid-cols-1">
+              {group.items.map((item) => {
+                const f = FUND_MAP[item.id];
+                if (!f) return null;
+                const inBucket = item.id in bucket;
+                return (
+                  <li key={item.id} className="border-b border-line">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={inBucket}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", item.id);
+                        e.dataTransfer.effectAllowed = "copy";
+                      }}
+                      onClick={() => (inBucket ? remove(item.id) : add(item.id))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          (inBucket ? remove : add)(item.id);
+                        }
+                      }}
+                      className="-mx-2 flex h-full min-h-[3.5rem] cursor-pointer select-none items-start gap-2.5 rounded-control px-2 py-2.5 text-left transition-colors [@media(hover:hover)]:hover:bg-surface-2/50"
+                    >
                       <span
-                        className="h-2.5 w-2.5 flex-none rounded-full"
+                        className="mt-[0.4375rem] h-2.5 w-2.5 flex-none rounded-full"
                         style={{ background: ASSET_CLASSES[f.assetClass].color }}
                         title={ASSET_CLASSES[f.assetClass].label}
                       />
-                      <span className="min-w-0 flex-1 truncate text-support font-medium leading-tight">{f.name}</span>
-                      <button
-                        onClick={() => nudge(id, -5)}
-                        aria-label={`Lower ${f.name} share`}
-                        className="grid h-6 w-6 flex-none place-items-center rounded-md border border-line text-muted transition hover:border-ink hover:text-ink"
-                      >
-                        −
-                      </button>
-                      <span className="num w-9 flex-none text-center text-caption font-medium">{pct}%</span>
-                      <button
-                        onClick={() => nudge(id, 5)}
-                        aria-label={`Raise ${f.name} share`}
-                        className="grid h-6 w-6 flex-none place-items-center rounded-md border border-line text-muted transition hover:border-ink hover:text-ink"
-                      >
-                        +
-                      </button>
-                      <button
-                        onClick={() => remove(id)}
-                        aria-label={`Remove ${f.name}`}
-                        className="grid h-6 w-6 flex-none place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-ink"
-                      >
-                        ✕
-                      </button>
+                      <span className="min-w-0 flex-1">
+                        <span className="block break-words text-row font-medium text-text">{f.name}</span>
+                        <span className="block text-support text-text-2">
+                          {item.kind}. {item.note}
+                        </span>
+                      </span>
+                      <AddMark on={inBucket} />
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* How the bucket splits into the three bands */}
-              <div className="mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-line">
-                {segs.map((sg) => (
-                  <div
-                    key={sg.label}
-                    className="h-full transition-[width] duration-500 ease-out"
-                    style={{ width: `${(sg.v / total) * 100}%`, background: sg.color }}
-                  />
-                ))}
-              </div>
-              <div className="num mt-2 flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-2">
-                {segs.map((l) => (
-                  <span key={l.label} className="inline-flex items-center gap-1.5">
-                    <span className="inline-block h-2 w-2 rounded-sm" style={{ background: l.color }} />
-                    {Math.round((l.v / total) * 100)}% {l.label.toLowerCase()}
-                  </span>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                disabled={isLive}
-                onClick={actions.applyBucketAsMix}
-                className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-control bg-accent-fill text-support font-medium text-on-accent transition hover:bg-accent-fill-hi disabled:cursor-not-allowed disabled:bg-line-2 disabled:text-text-2"
-              >
-                {isLive ? "This is your mix now" : "Apply this mix"}
-              </button>
-              <p className="mt-1.5 text-center text-caption text-text-2">
-                {isLive ? (
-                  <>
-                    Your portfolio is running exactly this mix.{" "}
-                    <button
-                      type="button"
-                      onClick={() => actions.setTab("plan")}
-                      className="font-medium text-text underline underline-offset-2 transition hover:text-text-2"
-                    >
-                      See your goals →
-                    </button>
-                  </>
-                ) : goalName ? (
-                  `Replaces your current mix. All goals share one mix, with ${goalName} first.`
-                ) : (
-                  "Replaces your current mix. All goals share one mix."
-                )}
-              </p>
-            </>
-          )}
-        </div>
-
-        {/* ---- A starting hand, matched to the risk level ---- */}
-        {suggestions.length > 0 && (
-          <div className="mt-4">
-            <span className={sectionLabel}>Good fits for your risk level</span>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {suggestions.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => add(p.id)}
-                  title={p.note}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-support text-text transition hover:border-ink"
-                >
-                  <span
-                    className="h-2 w-2 flex-none rounded-full"
-                    style={{ background: ASSET_CLASSES[FUND_MAP[p.id]?.assetClass ?? "equity"].color }}
-                    aria-hidden
-                  />
-                  {FUND_MAP[p.id]?.name}
-                  <span className="text-text-2">+</span>
-                </button>
-              ))}
-            </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-3 text-pretty text-support text-text-2">Can't find your fund? The search adds a fund straight to your mix.</p>
+            <button type="button" onClick={goToSearch} className={textLink}>
+              Use the search
+            </button>
           </div>
-        )}
 
-        {/* ---- All options ---- */}
-        <div className="mt-5">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className={sectionLabel}>All options</span>
-            <span className="text-caption text-text-2">Tap to add</span>
-          </div>
-          <div className="mt-2 flex flex-col gap-3">
-            {POOL_GROUPS.map((group) => (
-              <div key={group.label}>
-                <p className="px-2 text-index uppercase tracking-wide text-text-3">{group.label}</p>
-                <div className="mt-1 flex flex-col">
-                  {group.items.map((item) => {
-                    const f = FUND_MAP[item.id];
-                    if (!f) return null;
-                    const inBucket = item.id in bucket;
+          {/* ---- The draft (a drop zone for a dragged option) ---- */}
+          <div
+            aria-label="Your draft mix"
+            className={`min-w-0 border-t pt-5 transition-colors lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0 ${
+              dragOver ? "border-text" : "border-line"
+            }`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "copy";
+              if (!dragOver) setDragOver(true);
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              const id = e.dataTransfer.getData("text/plain");
+              if (isPoolInstrument(id)) add(id);
+            }}
+          >
+            <h3 className="text-row font-medium text-text">Your draft mix</h3>
+
+            {ids.length === 0 ? (
+              <div className="mt-3 rounded-control border border-dashed border-line-2 px-4 py-6 text-center">
+                <p className="text-support font-medium text-text">Your draft is empty.</p>
+                <p className="mt-1 text-support text-text-2">Tap a fund to add it.</p>
+              </div>
+            ) : (
+              <>
+                <ul className="mt-1 divide-y divide-line">
+                  {ids.map((id) => {
+                    const f = FUND_MAP[id];
                     return (
-                      <div
-                        key={item.id}
-                        role="button"
-                        tabIndex={0}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData("text/plain", item.id);
-                          e.dataTransfer.effectAllowed = "copy";
-                        }}
-                        onClick={() => (inBucket ? remove(item.id) : add(item.id))}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            (inBucket ? remove : add)(item.id);
-                          }
-                        }}
-                        title={item.note}
-                        className="flex cursor-grab select-none items-center gap-2 rounded-control px-2 py-1.5 text-left transition hover:bg-surface-2/60 active:cursor-grabbing"
-                      >
-                        <span className="text-text-3">
-                          <Grip />
-                        </span>
-                        <span
-                          className="h-2 w-2 flex-none rounded-full"
-                          style={{ background: ASSET_CLASSES[f.assetClass].color }}
-                          title={ASSET_CLASSES[f.assetClass].label}
-                        />
-                        <span className="min-w-0 flex-1 truncate text-support font-medium text-text">{f.name}</span>
-                        <span className="hidden flex-none text-caption text-text-2 sm:inline">{item.kind}</span>
-                        <span
-                          className={`flex-none rounded-full px-2 py-0.5 text-index font-medium uppercase tracking-wide ${
-                            inBucket ? "bg-accent-fill text-on-accent" : "border border-line text-text-2"
-                          }`}
-                        >
-                          {inBucket ? "In" : "Add"}
-                        </span>
-                      </div>
+                      <MixRow
+                        key={id}
+                        name={f.name}
+                        color={ASSET_CLASSES[f.assetClass].color}
+                        kind={ASSET_CLASSES[f.assetClass].label}
+                        pct={Math.round(((bucket[id] ?? 0) / total) * 100)}
+                        note={KIND[id] ?? ASSET_CLASSES[f.assetClass].label}
+                        solo={ids.length <= 1}
+                        onStep={(delta) => nudge(id, delta)}
+                        onRemove={() => remove(id)}
+                      />
                     );
                   })}
-                </div>
-              </div>
-            ))}
+                </ul>
+
+                {/* How the draft splits into stocks, bonds and gold. */}
+                <MixBar alloc={bucket} className="mt-3 h-2.5" />
+                <p className="num mt-2 text-support text-text-2">
+                  <MixKey alloc={bucket} />
+                </p>
+                <p className="num mt-1 text-support text-text-2">
+                  With this mix the plan would assume <span className="whitespace-nowrap font-medium text-text">{formatPct(ret, 1)}</span>{" "}
+                  growth a year.
+                </p>
+
+                {isLive ? (
+                  <>
+                    <p className="mt-4 text-support font-medium text-text">This is your mix now.</p>
+                    <button type="button" onClick={() => actions.setTab("plan")} className={textLink}>
+                      See your goals
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" onClick={actions.applyBucketAsMix} className={`${btnPrimary} mt-4 w-full`}>
+                      Apply this mix
+                    </button>
+                    <p className="mt-2 text-pretty text-support text-text-2">Replaces your current mix. All goals share one mix.</p>
+                  </>
+                )}
+              </>
+            )}
           </div>
-          <p className="mt-2 px-2 text-caption text-text-2">Can't find your fund? Use the search.</p>
         </div>
-      </div>
+      )}
     </section>
   );
 }

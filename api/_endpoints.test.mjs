@@ -20,6 +20,9 @@ const EMAIL = "a@b.co";
 /** A request body for the auth endpoints; the two fields are never spelled
  *  out together anywhere else, so a secret scanner has nothing to pair. */
 const creds = (email, pw) => ({ email, password: pw });
+// New accounts are by invitation; the mocked deployment's code is this one.
+const INVITE = "TEST-INVITE";
+const signup = (email, pw, inviteCode = INVITE) => ({ ...creds(email, pw), inviteCode });
 
 const db = { rows: [], fail: null, calls: [], syncs: [] };
 const env = { url: "postgres://mock" };
@@ -58,6 +61,7 @@ function reset() {
   db.syncs = [];
   env.url = "postgres://mock";
   process.env.AUTH_SECRET = SECRET;
+  process.env.INVITE_CODE = INVITE;
   resetRateLimits();
 }
 
@@ -91,26 +95,49 @@ test("register: method and provisioning guards", async () => {
   assert.equal((await call(register, { method: "GET" })).status, 405);
   delete process.env.AUTH_SECRET;
   delete process.env.CRON_SECRET;
-  const r = await call(register, { body: creds(EMAIL, PW.ok) });
+  const r = await call(register, { body: signup(EMAIL, PW.ok) });
   assert.equal(r.status, 503);
   assert.match(r.body.error, /not provisioned/);
   reset();
   env.url = null;
-  assert.equal((await call(register, { body: creds(EMAIL, PW.ok) })).status, 503);
+  assert.equal((await call(register, { body: signup(EMAIL, PW.ok) })).status, 503);
 });
 
 test("register: validates email and password before touching the database", async () => {
   reset();
-  assert.equal((await call(register, { body: creds("nope", PW.ok) })).status, 400);
-  assert.equal((await call(register, { body: creds(EMAIL, PW.short) })).status, 400);
+  assert.equal((await call(register, { body: signup("nope", PW.ok) })).status, 400);
+  assert.equal((await call(register, { body: signup(EMAIL, PW.short) })).status, 400);
   assert.equal((await call(register, { body: {} })).status, 400);
   assert.equal(db.calls.length, 0);
+});
+
+test("register: no account without the invite code, and the database is never asked", async () => {
+  reset();
+  for (const body of [creds(EMAIL, PW.ok), signup(EMAIL, PW.ok, ""), signup(EMAIL, PW.ok, "WRONG-CODE"), signup(EMAIL, PW.ok, "TEST-INVITE-2")]) {
+    const r = await call(register, { body });
+    assert.equal(r.status, 403);
+    assert.match(r.body.error, /by invitation/);
+    assert.equal(r.headers["Set-Cookie"], undefined, "no session without an invitation");
+  }
+  assert.equal(db.calls.length, 0, "a refused sign-up must not reach the database");
+
+  // Typed on a phone: case and stray spaces do not matter.
+  db.rows = [{ id: "u1", email: EMAIL }];
+  assert.equal((await call(register, { body: signup(EMAIL, PW.ok, "  test-invite ") })).status, 200);
+
+  // No code configured on the deployment: sign-up is closed to everyone.
+  reset();
+  delete process.env.INVITE_CODE;
+  assert.equal((await call(register, { body: signup(EMAIL, PW.ok) })).status, 403);
+  assert.equal((await call(register, { body: signup(EMAIL, PW.ok, "") })).status, 403);
+  assert.equal(db.calls.length, 0);
+  reset();
 });
 
 test("register: creates the account and sets the session cookie", async () => {
   reset();
   db.rows = [{ id: "u1", email: "a@b.co" }];
-  const r = await call(register, { body: creds("  A@B.co ", PW.ok) });
+  const r = await call(register, { body: signup("  A@B.co ", PW.ok) });
   assert.equal(r.status, 200);
   assert.deepEqual(r.body.user, { id: "u1", email: "a@b.co" });
   assert.match(r.headers["Set-Cookie"], new RegExp(`^${COOKIE_NAME}=u1\\.\\d+\\.[\\w-]+; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=`));
@@ -122,11 +149,11 @@ test("register: creates the account and sets the session cookie", async () => {
 test("register: an existing email is a 409, a database failure a 500", async () => {
   reset();
   db.rows = [];
-  const dup = await call(register, { body: creds(EMAIL, PW.ok) });
+  const dup = await call(register, { body: signup(EMAIL, PW.ok) });
   assert.equal(dup.status, 409);
   assert.equal(dup.headers["Set-Cookie"], undefined);
   db.fail = new Error("connection refused");
-  assert.equal((await call(register, { body: creds(EMAIL, PW.ok) })).status, 500);
+  assert.equal((await call(register, { body: signup(EMAIL, PW.ok) })).status, 500);
 });
 
 // ---- login ----
@@ -242,6 +269,21 @@ test("logout clears the cookie; delete needs a session, then clears it too", asy
   assert.match(db.calls.at(-1).sql, /delete from app_user/);
 });
 
+test("a crafted body is refused, not thrown: the email and the invite code must be text", async () => {
+  reset();
+  // An object whose text form cannot be taken used to throw out of both handlers.
+  const odd = { toString: 1, valueOf: 1 };
+  for (const body of [{ ...signup(EMAIL, PW.ok), email: odd }, { ...signup(EMAIL, PW.ok), email: ["a@b.co"] }]) {
+    assert.equal((await call(register, { body })).status, 400);
+    assert.equal((await call(login, { body })).status, 400);
+  }
+  for (const inviteCode of [odd, ["TEST-INVITE"], 12345, true]) {
+    assert.equal((await call(register, { body: signup(EMAIL, PW.ok, inviteCode) })).status, 403);
+  }
+  assert.equal(db.calls.length, 0);
+  reset();
+});
+
 // ---- health/[kind] ----
 // One function serves every health check (the Hobby plan allows twelve per
 // deployment, and the app uses all twelve); the path segment picks the check.
@@ -259,6 +301,22 @@ test("health/auth reports what is provisioned, and never a secret", async () => 
   assert.deepEqual(r.body.tables, { app_user: true, user_plan: true });
   assert.equal(r.body.session, "valid");
   assert.equal(JSON.stringify(r.body).includes(SECRET), false);
+
+  assert.equal(r.body.invite_code, "set");
+  assert.equal(r.body.hint, "Sign-in is fully provisioned here.");
+
+  // Sign-up closed: the check still passes for sign-in, and says so in the hint.
+  // A code of spaces is no code, here as in the sign-up handler.
+  for (const code of [undefined, "   "]) {
+    if (code === undefined) delete process.env.INVITE_CODE;
+    else process.env.INVITE_CODE = code;
+    db.rows = [{ app_user: "app_user", user_plan: "user_plan" }];
+    const closed = await healthAuth();
+    assert.equal(closed.body.ok, true);
+    assert.match(closed.body.invite_code, /^missing/);
+    assert.equal(closed.body.hint, "Sign-in works, but sign-up is closed until INVITE_CODE is set.");
+  }
+  process.env.INVITE_CODE = INVITE;
 
   delete process.env.AUTH_SECRET;
   process.env.CRON_SECRET = "cron";

@@ -92,9 +92,40 @@ export function sessionUserId(req, now = Date.now()) {
   return verifySession(token, secret, now);
 }
 
+/**
+ * The signed-in user's id, or null after answering 401. An endpoint that
+ * costs money or reads private data calls this before doing any work:
+ * `const userId = requireSession(req, res); if (!userId) return;`.
+ * The message is sent as both `error` and `text`, so the chat client can
+ * show it as the reply.
+ */
+export function requireSession(req, res, message = "Sign in to continue.", now = Date.now()) {
+  const userId = sessionUserId(req, now);
+  if (userId) return userId;
+  res.status(401).json({ ok: false, error: message, text: message });
+  return null;
+}
+
+/**
+ * New accounts are by invitation: the code a person types must match
+ * INVITE_CODE for this deployment. Case and surrounding spaces are ignored,
+ * since codes are typed on phones. No INVITE_CODE configured means sign-up
+ * is closed, which is the safe way to fail. Compared in constant time.
+ */
+export function inviteAccepted(code) {
+  // Anything but text is refused outright, so a crafted body cannot make this throw.
+  if (typeof code !== "string") return false;
+  const expected = String(process.env.INVITE_CODE ?? "").trim().toLowerCase();
+  if (!expected) return false;
+  const a = Buffer.from(String(code ?? "").trim().toLowerCase());
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function normalizeEmail(email) {
+  if (typeof email !== "string") return null;
   const v = String(email ?? "").trim().toLowerCase();
   return EMAIL_RE.test(v) && v.length <= 254 ? v : null;
 }

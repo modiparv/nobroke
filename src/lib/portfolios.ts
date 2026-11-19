@@ -31,16 +31,13 @@ export function autoAllocation(horizonYears: number): { profile: RiskProfile; al
   return { profile, allocation: { ...MODEL_PORTFOLIOS[profile].allocation } };
 }
 
-/** The portfolio's style, in the words every Indian investor already knows
- *  from fund categories: Conservative, Balanced, Growth. Cut on the share of
- *  stocks. Never a riddle. */
-export function mixLabel(alloc: Allocation): string {
-  const total = allocationTotal(alloc);
-  if (total <= 0) return "Not invested yet";
-  const equityShare = bandWeights(alloc).equity / total;
-  if (equityShare >= 0.65) return "Growth";
-  if (equityShare <= 0.35) return "Conservative";
-  return "Balanced";
+/** The name of the person's mix, in the same words the Portfolio tab uses
+ *  for its three ready-made mixes. A mix edited by hand has no ready-made
+ *  name, so it is simply their own. One vocabulary on both tabs. */
+export function mixName(alloc: Allocation, profile: RiskProfile | null): string {
+  if (allocationTotal(alloc) <= 0) return "Not invested yet";
+  const preset = profile && Object.prototype.hasOwnProperty.call(MODEL_PORTFOLIOS, profile) ? MODEL_PORTFOLIOS[profile] : null;
+  return preset ? preset.label : "Your own mix";
 }
 
 /** Share of the portfolio in stocks, 0..1 (0 when nothing is invested). */

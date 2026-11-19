@@ -3,7 +3,7 @@ import type { ChatMessage } from "./types";
 /** A plan action proposed by NoBroke AI. The client validates it again and
  *  executes it through the same deterministic engine as the command bar. */
 export interface AiAction {
-  kind: "addGoal" | "removeGoal" | "setPool" | "setCash" | "setTarget" | "setYears" | "autoSplit" | "recommendPortfolio";
+  kind: "addGoal" | "removeGoal" | "setPool" | "setCash" | "setTarget" | "setYears" | "autoSplit";
   goalId?: string;
   amount?: number;
   years?: number;

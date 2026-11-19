@@ -19,11 +19,18 @@ export function LogoMark({ size = 24 }: { size?: number }) {
   );
 }
 
+/**
+ * The logo as the way home. The button is 44px tall and at least 44px wide
+ * to tap, while the mark keeps its size: the extra height and width are
+ * padding taken back with equal negative margins, so the logo sits exactly
+ * where a bare 24px mark would and no header or footer around it moves.
+ */
 export default function Logo({ size = 24, variant = "lockup" }: { size?: number; variant?: "mark" | "lockup" }) {
   return (
     <button
+      type="button"
       onClick={actions.goLanding}
-      className="flex items-center"
+      className="-mx-2.5 -my-2.5 flex min-h-11 min-w-11 items-center rounded-control px-2.5 focus-visible:-outline-offset-2"
       style={{ gap: size * 0.42 }}
       aria-label="Go to NoBroke home"
     >

@@ -1,10 +1,38 @@
+import { useState } from "react";
 import { formatINR } from "../lib/format";
+import { typedAmount } from "../lib/typedAmount";
 
 /**
- * A trustworthy money field: you can type the exact ₹ amount (grouped, Indian
- * style) and nudge it with − / + steppers. Replaces the fuzzy range sliders so a
- * number feels precise and editable rather than approximate.
+ * A money field: type the exact rupee amount (grouped the Indian way) or
+ * nudge it with the minus and plus buttons. The label, the rupee sign and
+ * the digits share one left edge; the two steppers sit together on the
+ * right, each a full 44px target.
+ *
+ * The parts are exported so a field that is not money (a goal's year) can
+ * wear the same shell and line up with the money fields beside it.
  */
+
+export const fieldLabel = "text-support text-text-2";
+/** Label beside the field from the sm breakpoint up, above it on a phone:
+    a short form reads as a table, with every field starting on one line. */
+export const fieldRow = "sm:grid sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:items-center sm:gap-x-4";
+export const fieldShell =
+  "relative flex items-stretch overflow-hidden rounded-control border border-line-2 bg-surface";
+/** The compact height: 46px, so the steppers inside the 1px border are a full 44px. */
+export const fieldCompact = "h-[2.875rem]";
+export const fieldStep =
+  "grid w-11 flex-none place-items-center border-l border-line text-text-2 transition hover:bg-surface-2 hover:text-text focus-visible:-outline-offset-2 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-2";
+
+/** The minus and plus marks on a stepper, drawn so both sit on one axis. */
+export function StepGlyph({ plus }: { plus?: boolean }) {
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+      <path d="M3.5 8h9" />
+      {plus && <path d="M8 3.5v9" />}
+    </svg>
+  );
+}
+
 export default function MoneyInput({
   label,
   value,
@@ -16,6 +44,7 @@ export default function MoneyInput({
   quick,
   disabled,
   compact,
+  row,
 }: {
   label?: string;
   value: number;
@@ -27,75 +56,99 @@ export default function MoneyInput({
   quick?: number[];
   disabled?: boolean;
   compact?: boolean;
+  /** Label beside the field on wider screens (see fieldRow). */
+  row?: boolean;
 }) {
   const clamp = (v: number) => Math.max(min, Math.min(max, Math.round(v)));
   const set = (v: number) => onChange(clamp(v));
-  const btn = compact ? "w-9" : "w-11";
-  const field = compact ? "py-1.5 text-row" : "py-2.5 text-section";
+  // Digits typed on the way to an amount can be below the field's minimum.
+  // They are held here and nothing is saved (lib/typedAmount). Leaving the
+  // field drops them and shows the saved amount again.
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = draft ?? (value > 0 ? value.toLocaleString("en-IN") : "");
+  // For the steppers' spoken names: "Decrease cash in the bank".
+  const name = label ? label.charAt(0).toLowerCase() + label.slice(1) : "amount";
 
   return (
-    <div>
+    <div className={`min-w-0 ${row ? fieldRow : ""}`}>
       {(label || hint) && (
-        <div className="mb-1 flex items-center justify-between gap-2">
-          {label && <span className="text-support text-muted">{label}</span>}
-          {hint && <span className="text-index uppercase tracking-wide text-muted">{hint}</span>}
+        <div className={`mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 ${row ? "sm:mb-0" : ""}`}>
+          {label && <span className={fieldLabel}>{label}</span>}
+          {hint && <span className={fieldLabel}>{hint}</span>}
         </div>
       )}
-      <div
-        className={`flex items-stretch overflow-hidden rounded-control border border-line bg-surface transition focus-within:border-accent ${
-          disabled ? "opacity-50" : ""
-        }`}
-      >
-        <button
-          type="button"
-          onClick={() => set(value - step)}
-          disabled={disabled || value <= min}
-          aria-label="Decrease"
-          className={`grid flex-none place-items-center text-lg text-muted transition hover:bg-surface-2 hover:text-ink disabled:opacity-30 ${btn}`}
-        >
-          −
-        </button>
-        <div className="flex flex-1 items-center justify-center gap-1 border-x border-line px-2">
-          <span className="text-row font-medium text-muted">₹</span>
+      <div className={`${fieldShell} ${compact ? fieldCompact : "h-[3.125rem]"} ${disabled ? "opacity-50" : ""}`}>
+        <label className="flex min-w-0 flex-1 cursor-text items-center gap-1.5 pl-3 pr-2">
+          <span className={`flex-none font-medium text-text-2 ${compact ? "text-row" : "text-section"}`} aria-hidden>
+            ₹
+          </span>
           <input
             type="text"
             inputMode="numeric"
             disabled={disabled}
-            value={value > 0 ? value.toLocaleString("en-IN") : ""}
+            value={shown}
             placeholder="0"
             onChange={(e) => {
-              const n = Number(e.target.value.replace(/[^\d]/g, ""));
-              set(Number.isFinite(n) ? n : 0);
+              const typed = typedAmount(e.target.value, min, max);
+              if ("hold" in typed) return setDraft(typed.hold);
+              setDraft(null);
+              onChange(typed.save);
             }}
+            onBlur={() => setDraft(null)}
             aria-label={label}
-            className={`w-full bg-transparent text-center font-medium tabular-nums outline-none ${field}`}
+            className={`peer num h-full w-full min-w-0 bg-transparent font-medium text-text outline-none focus-visible:outline-none ${compact ? "text-row" : "text-section"}`}
           />
-        </div>
+          {/* Typing in the field rings the whole shell in ink. A stepper
+              gets its own ring, so the two never show at once. */}
+          <span aria-hidden className="pointer-events-none absolute inset-0 rounded-control peer-focus:ring-2 peer-focus:ring-inset peer-focus:ring-text" />
+        </label>
         <button
           type="button"
-          onClick={() => set(value + step)}
-          disabled={disabled || value >= max}
-          aria-label="Increase"
-          className={`grid flex-none place-items-center text-lg text-muted transition hover:bg-surface-2 hover:text-ink disabled:opacity-30 ${btn}`}
+          onClick={() => {
+            setDraft(null);
+            set(value - step);
+          }}
+          disabled={disabled || value <= min}
+          aria-label={`Decrease ${name}`}
+          className={fieldStep}
         >
-          +
+          <StepGlyph />
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setDraft(null);
+            set(value + step);
+          }}
+          disabled={disabled || value >= max}
+          aria-label={`Increase ${name}`}
+          className={fieldStep}
+        >
+          <StepGlyph plus />
         </button>
       </div>
       {quick && quick.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {quick.map((q) => (
-            <button
-              key={q}
-              type="button"
-              disabled={disabled}
-              onClick={() => set(q)}
-              className={`rounded-full border px-2 py-0.5 text-index uppercase tracking-wide transition ${
-                value === clamp(q) ? "border-brand bg-brand text-on-accent" : "border-line text-muted hover:border-accent hover:text-ink"
-              }`}
-            >
-              {formatINR(q)}
-            </button>
-          ))}
+        <div className={`mt-2 flex flex-wrap gap-2 ${row ? "sm:col-start-2" : ""}`}>
+          {quick.map((q) => {
+            const on = value === clamp(q);
+            return (
+              <button
+                key={q}
+                type="button"
+                disabled={disabled}
+                aria-pressed={on}
+                onClick={() => {
+                  setDraft(null);
+                  set(q);
+                }}
+                className={`num inline-flex h-11 items-center whitespace-nowrap rounded-full border px-3.5 text-support transition ${
+                  on ? "border-accent-fill bg-accent-fill text-on-accent" : "border-line-2 text-text hover:border-text"
+                }`}
+              >
+                {formatINR(q)}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

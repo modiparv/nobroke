@@ -32,6 +32,13 @@ export default {
         "accent-fill-hi": channel("--accent-fill-hi"),
         "accent-tint": channel("--accent-tint"),
         "on-accent": channel("--on-accent"),
+        // The one colour of a main button (brief 2.2). Ink fills are for
+        // selected states only.
+        primary: channel("--primary"),
+        "primary-hi": channel("--primary-hi"),
+        "on-primary": channel("--on-primary"),
+        // Amber for dots and lines; `cau` is the darker amber for text.
+        "cau-mark": channel("--cau-mark"),
         band: channel("--band"),
         night: channel("--night"),
         "on-night": channel("--on-night"),
@@ -75,19 +82,23 @@ export default {
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       fontSize: {
-        hero: ["26px", { lineHeight: "1.05", letterSpacing: "-0.025em" }],
-        headline: ["18px", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
-        section: ["15px", { lineHeight: "1.3", letterSpacing: "-0.015em" }],
-        row: ["14px", { lineHeight: "1.35", letterSpacing: "-0.005em" }],
-        body: ["13.5px", { lineHeight: "1.5" }],
+        // Every size is in rem, so the phone's own text-size setting scales
+        // the app (brief 2.1). Reading text is 16px, support text 14px; only
+        // captions, axis ticks and index marks sit below 14px.
+        hero: ["1.75rem", { lineHeight: "1.08", letterSpacing: "-0.025em" }],
+        headline: ["1.25rem", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
+        section: ["1.0625rem", { lineHeight: "1.3", letterSpacing: "-0.015em" }],
+        row: ["1rem", { lineHeight: "1.4", letterSpacing: "-0.005em" }],
+        body: ["1rem", { lineHeight: "1.5" }],
         // Marketing reading size: the landing's paragraphs sit one notch above
         // the product's dense body so a 48px headline is not stacked over
         // 13.5px copy. Never used inside the app.
-        prose: ["15px", { lineHeight: "1.6" }],
-        support: ["12.5px", { lineHeight: "1.45" }],
-        caption: ["12px", { lineHeight: "1.4" }],
-        eyebrow: ["10px", { lineHeight: "1.2", letterSpacing: "0.13em" }],
-        index: ["10px", { lineHeight: "1.2", letterSpacing: "0.06em" }],
+        prose: ["1.0625rem", { lineHeight: "1.6" }],
+        support: ["0.875rem", { lineHeight: "1.45" }],
+        caption: ["0.8125rem", { lineHeight: "1.4" }],
+        // Section labels: sentence case, no letter-spacing.
+        eyebrow: ["0.75rem", { lineHeight: "1.3" }],
+        index: ["0.75rem", { lineHeight: "1.3" }],
       },
       borderRadius: {
         screen: "20px",

@@ -1,0 +1,36 @@
+name: ci
+
+# Runs the tests and the production build on every push and pull request,
+# so a failing test or a broken build is seen before it reaches the site.
+# It does nothing until GitHub Actions is turned on for this repository
+# (Settings, Actions, General). To make a failure block a merge, add this
+# job as a required status check in the branch protection rule for main.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # With a committed package-lock.json the install is exact and repeatable.
+      # Until the lockfile is committed, fall back to a plain install.
+      - name: Install
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build

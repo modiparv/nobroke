@@ -1,23 +1,24 @@
 import { useSyncExternalStore } from "react";
-import type { Allocation, ChatMessage, Holding, PlanGoal, PlanInputs, Profile, RiskProfile } from "./lib/types";
-import { GOAL_MAP, refreshGoalNames } from "./lib/goals";
-import { INTAKE_HOLDING_ID, INTAKE_HOLDING_NAME, UNSORTED_CATEGORY, UNSORTED_TYPE, refreshHoldingLabels } from "./lib/holdings";
-import { applyGoalCosts } from "./lib/onboarding";
-import { splitCapital, splitMonthly } from "./lib/split";
+import type { Allocation, ChatMessage, Fund, Holding, PlanGoal, PlanInputs, Profile, RiskProfile } from "./lib/types";
+import { GOAL_MAP, refreshGoalNames } from "./lib/goals.ts";
+import { INTAKE_HOLDING_ID, INTAKE_HOLDING_NAME, UNSORTED_CATEGORY, UNSORTED_TYPE, refreshHoldingLabels } from "./lib/holdings.ts";
+import { STEPS, applyGoalCosts } from "./lib/onboarding.ts";
+import { splitCapital, splitMonthly } from "./lib/split.ts";
 import type { PlanShape } from "./lib/outlook";
-import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios";
-import { adjustedTarget, emergencyTarget, emptyProfile, suggestedSip } from "./lib/profile";
-import { assessRiskAppetite, capProfile, riskBandLabel } from "./lib/risk";
-import { coverageFrom } from "./lib/climb";
-import { askGroq, type AiAction } from "./lib/groq";
-import { FUND_MAP } from "./lib/funds";
+import { autoAllocation, MODEL_PORTFOLIOS } from "./lib/portfolios.ts";
+import { adjustedTarget, emergencyTarget, emptyProfile, suggestedSip } from "./lib/profile.ts";
+import { assessRiskAppetite, capProfile, riskBandLabel } from "./lib/risk.ts";
+import { coverageFrom } from "./lib/climb.ts";
+import { askGroq, type AiAction } from "./lib/groq.ts";
+import { FUND_MAP, registerFund } from "./lib/funds.ts";
+import { fundFromLiveScheme, getLiveSchemeDetail, savedLiveFund } from "./lib/instrumentsApi.ts";
 // Side-effect import: registers the curated instrument catalogue (ETFs,
 // bonds, metals, REIT) into FUND_MAP before any persisted mix or bucket
 // that references those ids is computed.
-import "./lib/bucket";
-import { allocationTotal, computePlan, blendedReturn } from "./lib/finance";
-import { formatINR } from "./lib/format";
-import { parseCommand, type Command } from "./lib/command";
+import "./lib/bucket.ts";
+import { allocationTotal, computePlan, blendedReturn } from "./lib/finance.ts";
+import { formatINR } from "./lib/format.ts";
+import { DECLINE_PICK_REPLY, parseCommand, type Command } from "./lib/command.ts";
 import {
   deleteAccount as apiDeleteAccount,
   loadPlan,
@@ -26,7 +27,7 @@ import {
   savePlan,
   savePlanBeacon,
   type AuthUser,
-} from "./lib/authApi";
+} from "./lib/authApi.ts";
 
 export type Screen = "landing" | "onboarding" | "plan";
 
@@ -75,6 +76,9 @@ export interface AppState {
   bucket: Allocation;
   /** Which goal the bucket is being built toward; null means the whole plan. */
   bucketGoalId: string | null;
+  /** Funds added from the search, saved with the plan so their ids still
+      resolve after a reload, on another device and in a new session. */
+  liveFunds: Record<string, Fund>;
   /** Existing investments the user adds manually; sum can be applied to current savings. */
   externalHoldings: Holding[];
   chatOpen: boolean;
@@ -86,6 +90,11 @@ export interface AppState {
       recency token both sides reconcile on, so no stale copy overwrites a
       newer one. */
   planUpdatedAt: number;
+  /** The account whose saved plan an explicit sign-in asked for and could
+      not read. Until a read lands, that plan still wins over local work. */
+  owedAccountPlan: string | null;
+  /** The answers "New plan" set aside, put back if the intake is left unfinished. Not part of the plan. */
+  intakeBackup: Pick<AppState, "profile" | "selectedGoalIds" | "onboardingAnswers"> | null;
   /** True while a full-screen overlay (auth sheet, account menu) is open, so
       the copilot bar can step out of its way. Never persisted. */
   modalOpen: boolean;
@@ -141,6 +150,7 @@ const PLAN_KEYS = [
   "bucketGoalId",
   "externalHoldings",
   "selectedGoalIds",
+  "liveFunds",
 ] as const;
 const PLAN_KEY_SET = new Set<string>(PLAN_KEYS);
 
@@ -170,12 +180,15 @@ const defaults: AppState = {
   portfolioCustom: false,
   bucket: {},
   bucketGoalId: null,
+  liveFunds: {},
   externalHoldings: [],
   chatOpen: false,
   chat: [],
   chatTyping: false,
   user: null,
   planUpdatedAt: 0,
+  owedAccountPlan: null,
+  intakeBackup: null,
   modalOpen: false,
   sheet: null,
   focus: null,
@@ -201,6 +214,19 @@ function loadPersisted(): Partial<AppState> | null {
   }
 }
 
+/** Saved search funds, checked row by row and registered so every lookup resolves them. */
+function readLiveFunds(raw: unknown): Record<string, Fund> {
+  const out: Record<string, Fund> = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+  for (const v of Object.values(raw)) {
+    const f = savedLiveFund(v);
+    if (!f) continue;
+    out[f.id] = f;
+    registerFund(f);
+  }
+  return out;
+}
+
 let state: AppState = {
   ...defaults,
   ...loadPersisted(),
@@ -211,6 +237,12 @@ let state: AppState = {
   sheet: null,
   focus: null,
 };
+state.liveFunds = readLiveFunds(state.liveFunds);
+// A saved mix under a name the app does not know is kept as the person's own, as coercePlan does for the account's copy.
+if (typeof state.portfolioProfile === "string" && !Object.prototype.hasOwnProperty.call(MODEL_PORTFOLIOS, state.portfolioProfile)) {
+  state.portfolioProfile = null;
+  state.portfolioCustom = true;
+}
 
 const nowMs = () => Date.now();
 
@@ -249,6 +281,7 @@ function coercePlan(raw: unknown): Partial<AppState> {
   if (isObj(r.profile)) out.profile = r.profile;
   if (isObj(r.portfolio)) out.portfolio = r.portfolio;
   if (isObj(r.bucket)) out.bucket = r.bucket;
+  if (isObj(r.liveFunds)) out.liveFunds = readLiveFunds(r.liveFunds);
   if (r.bucketGoalId === null || typeof r.bucketGoalId === "string") out.bucketGoalId = r.bucketGoalId;
   if (isObj(r.goalShares)) out.goalShares = r.goalShares;
   // Goals keep the person's numbers and notes; their names and emoji follow
@@ -265,14 +298,21 @@ function coercePlan(raw: unknown): Partial<AppState> {
     const v = num(r[k]);
     if (v !== undefined) out[k] = v;
   }
-  for (const k of ["inflationSource", "riskAppetiteSource", "currentGoalId", "portfolioProfile"]) {
+  for (const k of ["inflationSource", "riskAppetiteSource", "currentGoalId"]) {
     const v = str(r[k]);
     if (v !== undefined) out[k] = v;
+  }
+  // A mix made by hand has no ready-made name, and a name the app does not know counts as none.
+  if ("portfolioProfile" in r) {
+    const v = r.portfolioProfile;
+    out.portfolioProfile = typeof v === "string" && Object.prototype.hasOwnProperty.call(MODEL_PORTFOLIOS, v) ? v : null;
   }
   for (const k of ["goalOrderCustom", "goalSharesCustom", "portfolioCustom"]) {
     const v = bool(r[k]);
     if (v !== undefined) out[k] = v;
   }
+  // A mix under a name the app does not know is kept as the person's own: the risk level never replaces it.
+  if (typeof r.portfolioProfile === "string" && out.portfolioProfile === null) out.portfolioCustom = true;
   return out;
 }
 
@@ -485,9 +525,24 @@ export function recommendedPortfolio(
   return { allocation: { ...MODEL_PORTFOLIOS[profile].allocation }, profile };
 }
 
+/** What a person without an account reads when they ask a question in their
+    own words. The same words the chat endpoint answers with. */
+export const SIGN_IN_TEXT =
+  'Sign in to ask questions in your own words. Simple commands like "add a car goal" work without an account.';
+
+/** This session's figure from the inflation feed, once it has answered. An adopted copy never undoes it. */
+let feedInflation: number | null = null;
+
+/** Leaving the intake unfinished puts back the answers "New plan" set aside. */
+function leftIntake(): Partial<AppState> {
+  const kept = state.screen === "onboarding" ? state.intakeBackup : null;
+  if (!kept) return {};
+  return { profile: kept.profile, selectedGoalIds: kept.selectedGoalIds, onboardingAnswers: kept.onboardingAnswers, intakeBackup: null };
+}
+
 // ---- Navigation ----
 export const actions = {
-  goLanding: () => set({ screen: "landing" }),
+  goLanding: () => set({ screen: "landing", ...leftIntake() }),
   goPlan: () => set({ screen: "plan" }),
   /** Show a tab. With `focus`, land on that section of it: the page scrolls
       there and lights it up for a moment (lib/links names the sections). */
@@ -515,7 +570,11 @@ export const actions = {
    */
   completeAuth: async (user: AuthUser, opts: { preferServer?: boolean } = {}): Promise<"ok" | "sync-failed"> => {
     syncReady = false;
-    set({ user });
+    // A sign-in whose read failed earlier is still owed the account's plan,
+    // on the heal path and after a reload too.
+    const owed = state.owedAccountPlan === user.id;
+    const preferServer = !!opts.preferServer || owed;
+    set(preferServer ? { user, owedAccountPlan: user.id } : { user });
 
     // A cold serverless function or a paused database must not decide the
     // outcome of a sign-in: retry the read with a little patience, since a
@@ -533,14 +592,27 @@ export const actions = {
 
     if (result.status === "ok") {
       const serverRev = Number((result.state as Record<string, unknown>).planUpdatedAt) || 0;
-      if (opts.preferServer || serverRev >= state.planUpdatedAt) {
-        set({ ...coercePlan(result.state), planUpdatedAt: serverRev, user });
+      if (preferServer || serverRev >= state.planUpdatedAt) {
+        const adopted = coercePlan(result.state);
+        // The account's copy never undoes this session's inflation feed, unless the person set the rate by hand.
+        if (feedInflation !== null && (adopted.inflationSource ?? state.inflationSource) !== "user") {
+          adopted.inflation = feedInflation;
+          adopted.inflationSource = "macro";
+        }
+        // A healed sign-in from the intake shows the account's plan, as the sign-in itself would have.
+        const toPlan = owed && state.screen === "onboarding" && (adopted.goals?.length ?? 0) > 0;
+        // The answers "New plan" set aside survive only when the account's copy is this browser's own
+        // (same stamp: the intake's blanks, synced, then a reload). Any other copy brings its own answers.
+        const intakeBackup = serverRev === state.planUpdatedAt ? state.intakeBackup : null;
+        set({ ...adopted, planUpdatedAt: serverRev, user, owedAccountPlan: null, intakeBackup, ...(toPlan ? { screen: "plan" as const } : {}) });
         syncReady = true;
+        void actions.restoreLiveFunds();
         return "ok";
       }
     }
     // Server empty, or local newer on a non-explicit path: local is the truth.
     syncReady = true;
+    if (state.owedAccountPlan) set({ owedAccountPlan: null });
     if (state.planUpdatedAt > 0) void savePlan(planBlob());
     return "ok";
   },
@@ -562,7 +634,7 @@ export const actions = {
       keep the local plan so the person can keep working or re-sign-in. */
   clearStaleUser: () => {
     syncReady = false;
-    set({ user: null });
+    set({ user: null, owedAccountPlan: null });
   },
 
   setModalOpen: (open: boolean) => set({ modalOpen: open }),
@@ -601,10 +673,27 @@ export const actions = {
     if (syncReady && state.user) savePlanBeacon(planBlob());
   },
 
-  startOnboarding: () =>
-    set({ screen: "onboarding", onboardingStepIndex: 0, onboardingAnswers: {}, selectedGoalIds: [], profile: emptyProfile() }),
+  startOnboarding: () => {
+    // "New plan" over an existing plan: remember its answers, so leaving the intake at once puts them back.
+    const intakeBackup = !state.goals.length
+      ? null
+      : state.screen === "onboarding" && state.intakeBackup
+        ? state.intakeBackup
+        : { profile: state.profile, selectedGoalIds: state.selectedGoalIds, onboardingAnswers: state.onboardingAnswers };
+    set({ screen: "onboarding", onboardingStepIndex: 0, onboardingAnswers: {}, selectedGoalIds: [], profile: emptyProfile(), intakeBackup });
+  },
+  /** After a sign-in on the intake's last step. The account's plan is shown if
+      it has one. If it has none, the plan is built from this intake, also when
+      "New plan" was started over an older plan in this browser (its answers
+      are still set aside then, and its goals are not this intake's). */
+  finishIntakeAfterSignIn: () => {
+    if (state.goals.length === 0 || state.intakeBackup) actions.finishOnboarding();
+    else actions.goPlan();
+  },
+  /** "My plan" on the intake's first screen: back to the plan as it was. */
+  leaveOnboarding: () => set({ screen: "plan", ...leftIntake() }),
 
-  setStep: (i: number) => set({ onboardingStepIndex: Math.max(0, i) }),
+  setStep: (i: number) => set({ onboardingStepIndex: Math.min(STEPS.length - 1, Math.max(0, Math.round(i) || 0)) }),
 
   setProfileField: (field: keyof Profile, value: string | number) =>
     set({ profile: { ...state.profile, [field]: value } as Profile }),
@@ -645,6 +734,8 @@ export const actions = {
       goalOrder: order,
       goalShares: recommendShares(goals, order, monthlySip, state.inflation, portfolio, p.cashOnHand + p.investedValue),
       goalOrderCustom: false,
+      // A new plan starts with the split following need, even if the last plan's split was fixed by hand.
+      goalSharesCustom: false,
       riskAppetite,
       riskAppetiteSource: "assessed",
       monthlySip,
@@ -658,6 +749,7 @@ export const actions = {
       portfolio,
       portfolioProfile,
       portfolioCustom: false,
+      intakeBackup: null,
       // A freshly built plan always opens on the plan, whatever tab was open.
       screen: "plan",
       tab: "plan",
@@ -699,6 +791,7 @@ export const actions = {
       goalOrder: order,
       goalShares: recommendShares(goals, order, monthlySip, state.inflation, portfolio, profile.cashOnHand + profile.investedValue),
       goalOrderCustom: false,
+      goalSharesCustom: false,
       monthlySip,
       monthlyIncome: profile.takeHome,
       monthlyExpenses: profile.rent + profile.emi + profile.monthlySpend,
@@ -709,6 +802,7 @@ export const actions = {
       portfolio,
       portfolioProfile,
       portfolioCustom: false,
+      intakeBackup: null,
       // A freshly built plan always opens on the plan, whatever tab was open.
       screen: "plan",
       tab: "plan",
@@ -732,6 +826,31 @@ export const actions = {
     set({ portfolio, portfolioProfile, portfolioCustom: true }),
 
   // ---- The bucket studio (Portfolio tab, right pane) ----
+  /** A fund from the search joins the plan: registered now, and saved so it resolves next time. */
+  addLiveFund: (f: Fund) => {
+    registerFund(f);
+    set({ liveFunds: { ...state.liveFunds, [f.id]: f } });
+  },
+  /** Plans saved before search funds were stored with them: look up the ones that no longer resolve. */
+  restoreLiveFunds: async () => {
+    const ids = [...new Set([...Object.keys(state.portfolio), ...Object.keys(state.bucket)])];
+    for (const id of ids) {
+      if (!/^live_\d+$/.test(id)) continue;
+      if (FUND_MAP[id]) {
+        // Looked up this session, then dropped by the account's copy: put it back in the plan, still not an edit.
+        if (!state.liveFunds[id]) set({ liveFunds: { ...state.liveFunds, [id]: FUND_MAP[id] }, planUpdatedAt: state.planUpdatedAt });
+        continue;
+      }
+      const detail = await getLiveSchemeDetail(id.slice(5));
+      if (!detail || !detail.name) continue;
+      const f = fundFromLiveScheme(detail);
+      // The plan may have changed while the lookup was out (adopted, signed out).
+      if (f.id !== id || !(id in state.portfolio || id in state.bucket)) continue;
+      registerFund(f);
+      // A lookup is not an edit: the plan keeps its stamp, so an old copy never looks newer than the account's.
+      set({ liveFunds: { ...state.liveFunds, [f.id]: f }, planUpdatedAt: state.planUpdatedAt });
+    }
+  },
   /** The draft bucket. Curating it never touches the live mix. */
   setBucket: (bucket: Allocation) => set({ bucket }),
   setBucketGoal: (bucketGoalId: string | null) => set({ bucketGoalId }),
@@ -750,18 +869,20 @@ export const actions = {
       return;
     }
     const rec = recommendedPortfolio(state.goals, riskAppetite);
+    // Goals may have changed since the mix was picked. A lower level never brings a riskier mix, nor a higher one a calmer mix.
+    const ORDER: RiskProfile[] = ["steady", "balanced", "bold"];
+    const cur = state.portfolioProfile ? ORDER.indexOf(state.portfolioProfile) : -1;
+    const next = ORDER.indexOf(rec.profile);
+    if (cur >= 0 && ((riskAppetite <= state.riskAppetite && next > cur) || (riskAppetite >= state.riskAppetite && next < cur))) {
+      set({ riskAppetite, riskAppetiteSource: "user" });
+      return;
+    }
     set({
       riskAppetite,
       riskAppetiteSource: "user",
       portfolio: rec.allocation,
       portfolioProfile: rec.profile,
     });
-  },
-
-  /** Re-tune the single mix to the goals' blended horizon (the ✨ advisor pick). */
-  recommendPortfolio: () => {
-    const { allocation, profile } = recommendedPortfolio(state.goals, state.riskAppetite);
-    set({ portfolio: allocation, portfolioProfile: profile, portfolioCustom: false });
   },
 
   addGoal: (id: string) => {
@@ -774,9 +895,10 @@ export const actions = {
     const order = state.goalOrderCustom ? [...state.goalOrder, goal.id] : orderByTenure(goals);
     // A new goal can shift the goals' blended horizon, so re-tune the shared
     // portfolio too — unless the user has hand-customized it.
-    const rec = recommendedPortfolio(goals, state.riskAppetite);
-    const portfolio = state.portfolioCustom ? state.portfolio : rec.allocation;
-    const portfolioProfile = state.portfolioCustom ? state.portfolioProfile : rec.profile;
+    const hasMix = allocationTotal(state.portfolio) > 0;
+    const rec = hasMix ? null : recommendedPortfolio(goals, state.riskAppetite);
+    const portfolio = rec ? rec.allocation : state.portfolio;
+    const portfolioProfile = rec ? rec.profile : state.portfolioProfile;
     set({
       goals,
       currentGoalId: goal.id,
@@ -804,9 +926,11 @@ export const actions = {
   /** Live CPI from the macro feed becomes the planning default, but never
       tramples an inflation rate the user set by hand. */
   applyMacroInflation: (annualPct: number) => {
-    if (state.inflationSource === "user") return;
     if (!(annualPct > 0) || annualPct > 25) return;
-    set({ inflation: Math.round(annualPct * 10) / 1000, inflationSource: "macro" });
+    feedInflation = Math.round(annualPct * 10) / 1000;
+    if (state.inflationSource === "user") return;
+    // The feed is not an edit by the person: the plan keeps its stamp.
+    set({ inflation: feedInflation, inflationSource: "macro", planUpdatedAt: state.planUpdatedAt });
   },
 
   // ---- Goal-based waterfall: target year, priority, money split ----
@@ -887,11 +1011,7 @@ export const actions = {
     }
     const currentGoalId = state.currentGoalId === id ? goals[0]?.id ?? "" : state.currentGoalId;
     // Re-tune the shared mix to whatever goals remain (unless hand-customized).
-    const rec = recommendedPortfolio(goals, state.riskAppetite);
-    const keep = state.portfolioCustom || goals.length === 0;
-    const portfolio = keep ? state.portfolio : rec.allocation;
-    const portfolioProfile = keep ? state.portfolioProfile : rec.profile;
-    set({ goals, goalOrder, goalShares, currentGoalId, portfolio, portfolioProfile });
+    set({ goals, goalOrder, goalShares, currentGoalId });
   },
 
   // ---- Existing investments (added manually; sum can feed total current savings) ----
@@ -910,6 +1030,11 @@ export const actions = {
     const t = text.trim();
     if (!t || state.chatTyping) return;
     const history: ChatMessage[] = [...state.chat, { role: "user", text: t }];
+    // No account, no request: the plan stays in this browser, as the landing page says.
+    if (!state.user) {
+      set({ chat: [...history, { role: "ai", text: SIGN_IN_TEXT }] });
+      return;
+    }
     const planData = buildPlanData(state);
     set({ chat: history, chatTyping: true });
     void askGroq(history, planData).then((reply) => {
@@ -977,8 +1102,6 @@ function actionToCommand(a: AiAction): Command | null {
       return { kind: "setCash", amount };
     case "autoSplit":
       return { kind: "autoSplit" };
-    case "recommendPortfolio":
-      return { kind: "recommendPortfolio" };
     default:
       return null;
   }
@@ -993,14 +1116,18 @@ function runCommand(cmd: Command): string {
         return `${cmd.name} is already in your plan.`;
       }
       actions.addGoal(cmd.goalId);
-      return `Added ${cmd.name} to your goals. ✨`;
+      return `Added ${cmd.name} to your goals.`;
     case "removeGoal":
       if (!state.goals.some((g) => g.id === cmd.goalId)) return `${cmd.name} isn't in your plan.`;
       actions.removeGoal(cmd.goalId);
       return `Removed ${cmd.name}. Its money was reshared across your other goals.`;
-    case "setPool":
+    case "setPool": {
       actions.setSip(cmd.amount);
-      return `Set your monthly investment to ${formatINR(cmd.amount)}.`;
+      // The monthly sheet's own warning, so a typed amount gets the same check.
+      const leftover = state.monthlyIncome > 0 ? Math.max(0, state.monthlyIncome - state.monthlyExpenses) : null;
+      const over = leftover !== null && cmd.amount > leftover;
+      return `Set your monthly investment to ${formatINR(cmd.amount)}.${over ? ` That is more than the ${formatINR(leftover)} left after expenses.` : ""}`;
+    }
     case "setCash":
       actions.setSavings(cmd.amount);
       return `Set your cash in hand to ${formatINR(cmd.amount)}.`;
@@ -1019,13 +1146,12 @@ function runCommand(cmd: Command): string {
       return `Set ${cmd.name} to ${formatINR(cmd.amount)} in today's money, ${cmd.years} ${cmd.years === 1 ? "year" : "years"} away.${cmd.note ? ` ${cmd.note}` : ""}`;
     case "autoSplit":
       actions.recommendGoalSplit();
-      return `Auto-balanced your money across goals. ✨`;
-    case "recommendPortfolio":
-      actions.recommendPortfolio();
-      return `Matched your portfolio to your goals' timeline. ✨`;
+      return `Auto-balanced your money across goals.`;
+    case "declinePick":
+      return DECLINE_PICK_REPLY;
     case "newPlan":
       actions.startOnboarding();
-      return `Starting a fresh plan. Answer a few quick questions. ✨`;
+      return `Starting a fresh plan. Answer a few quick questions.`;
   }
 }
 
@@ -1065,7 +1191,7 @@ function buildPlanData(s: AppState): unknown | null {
     monthsOfCover: s.monthlyExpenses > 0 ? Math.round((s.currentSavings / s.monthlyExpenses) * 10) / 10 : null,
     riskAppetite: riskBandLabel(s.riskAppetite),
     inflationPct: Math.round(s.inflation * 100),
-    expectedReturnPct: curPlan ? Math.round(curPlan.blendedReturn * 1000) / 10 : null,
+    assumedGrowthPct: curPlan ? Math.round(curPlan.blendedReturn * 1000) / 10 : null,
     allocationPct,
     holdings: s.externalHoldings.slice(0, 20).map((h) => ({ name: h.name, type: h.type, amountINR: h.amount })),
   };

@@ -37,6 +37,7 @@ export default function App() {
       if (probe.status === "ok") void actions.completeAuth(probe.user);
       else if (probe.status === "unauthed" && getState().user) actions.clearStaleUser();
     });
+    void actions.restoreLiveFunds();
     const heal = () => void actions.revalidateSession();
     window.addEventListener("online", heal);
     window.addEventListener("focus", heal);

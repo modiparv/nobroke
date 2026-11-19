@@ -50,6 +50,10 @@
   --accent-fill-hi: 60 57 52;
   --accent-tint: 237 235 231;
   --on-accent: 247 246 245;
+  /* Main buttons: the brand blue with white text (5.2:1), darker on hover. */
+  --primary: 46 91 255;
+  --primary-hi: 26 68 217;
+  --on-primary: 255 255 255;
   --band: 11 27 51;
   --on-band: 245 243 240;
   --on-band-2: 178 191 214;
@@ -58,6 +62,8 @@
   --pos-bg: 230 244 239;
   --cau: 138 87 7;
   --cau-bg: 250 240 224;
+  /* Amber as a mark (dots, lines): 3.5:1 on white. Text stays on --cau. */
+  --cau-mark: 199 119 0;
   --neg: 179 38 30;
   --neg-bg: 249 232 231;
   /* The hero band: brand navy, sunk into the light page. */
@@ -66,22 +72,25 @@
   --hero-line: transparent;
   /* Risk appetite ramp: the familiar green-to-red arc, calm to bold. */
   --risk-1: #2f9e5b;
-  --risk-2: #8fae3b;
-  --risk-3: #d9a521;
-  --risk-4: #e07b39;
+  /* Each step reaches 3:1 on white, so the ramp reads without the knob. */
+  --risk-2: #6f8f1f;
+  --risk-3: #b8860b;
+  --risk-4: #cf6a22;
   --risk-5: #d64545;
   --risk-unfilled: #e7e5e0;
   /* Categorical series for the goals chart, in draw order. */
-  --chart-1: #2e5bff;
-  --chart-2: #0e7a5a;
-  --chart-3: #9e6408;
+  /* The first three stay apart for people with red-green colour blindness
+     (brief 2.4): blue, vermilion, purple. */
+  --chart-1: #0072b2;
+  --chart-2: #d55e00;
+  --chart-3: #b35c8a;
   --chart-4: #0b1b33;
   --chart-5: #8a8378;
   --chart-6: #b3261e;
   /* The same categorical series, tuned for the night band. */
-  --chartn-1: #5c82ff;
-  --chartn-2: #34c88e;
-  --chartn-3: #e0a23c;
+  --chartn-1: #56b4e9;
+  --chartn-2: #e69f00;
+  --chartn-3: #cc79a7;
   --chartn-4: #e9e5e0;
   --chartn-5: #9b968f;
   --chartn-6: #f0736a;
@@ -90,11 +99,11 @@
      funds the brand navy, bonds the calm green, gold is gold; cash and mixes
      stay warm-neutral. Hues carry dots and bars (3:1+ on surfaces); tints
      ground the treemap tiles with the hue as their ink (AA-checked). */
-  --class-equity: var(--chart-1);
+  --class-equity: #2e5bff;
   --class-equity-bg: #eef2ff;
-  --class-funds: var(--chart-4);
+  --class-funds: #0b1b33;
   --class-funds-bg: #e7eaef;
-  --class-debt: var(--chart-2);
+  --class-debt: #0e7a5a;
   --class-debt-bg: #e2f1eb;
   --class-gold: rgb(var(--cau));
   --class-gold-bg: #f6ecdb;
@@ -122,15 +131,33 @@ html {
   scroll-behavior: smooth;
 }
 
-:focus-visible {
-  outline: 2px solid rgb(var(--text));
-  outline-offset: 2px;
+/* A control that takes keyboard focus is scrolled clear of the sticky
+   header above and the copilot bar below, so its focus ring is never
+   hidden under either. The clearance sits on the controls, not on the
+   page: a control inside a sticky bar can never be scrolled clear of the
+   bar it lives in, and page-level scroll padding made the browser move
+   the page on every key typed into the copilot field. */
+:where(a, button, input, select, textarea, summary, [tabindex]) {
+  scroll-margin-top: 4.5rem;
+  scroll-margin-bottom: 6rem;
+}
+:where(.sticky) :where(a, button, input, select, textarea, summary, [tabindex]) {
+  scroll-margin: 0;
+}
+
+/* In the base layer, so a control that draws its own focus border can switch
+   this one off with `outline-none` instead of showing two. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid rgb(var(--text));
+    outline-offset: 2px;
+  }
 }
 
 body {
   @apply bg-bg text-text font-sans antialiased;
   margin: 0;
-  font-size: 13.5px;
+  font-size: 1rem;
   /* A stray wide popover must never put the page into sideways scroll. */
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
@@ -154,7 +181,8 @@ h3 {
 
 /* Placeholders sit in an interactive control, so they use the readable muted
    step, not the decorative one. */
-::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: rgb(var(--text-2));
 }
 
@@ -198,18 +226,7 @@ input[type="range"] {
     linear-gradient(90deg, rgb(var(--accent-text) / 0.08) 1px, transparent 1px);
   background-size: 28px 28px;
 }
-.paper-grid-deep {
-  background-color: rgb(var(--band));
-  background-image: linear-gradient(rgb(var(--on-band-3) / 0.22) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--on-band-3) / 0.22) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-
 /* ---------- Animations ---------- */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
 @keyframes slideIn {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
@@ -228,24 +245,10 @@ input[type="range"] {
   .fade-up { animation: none; }
 }
 
-/* The landing hero's chart labels live inside a scaling viewBox, so on a
-   phone they would shrink to ~5px. Below the sm breakpoint they double in
-   user units, which renders at roughly 10px. */
-.hero-path text { font-size: 11px; }
-@media (max-width: 639px) {
-  .hero-path text { font-size: 20px; }
-}
-
-/* Scroll reveal: sections drift in once. Motion-reduced users see content
-   immediately with no transition. */
-.reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.6s ease, transform 0.6s ease; }
-.reveal.is-in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) {
-  .reveal { opacity: 1; transform: none; transition: none; }
-}
-
-.live-dot { animation: blink 1.4s ease-in-out infinite; }
 .typing-dot { animation: typing 1.2s infinite ease-in-out; }
+@media (prefers-reduced-motion: reduce) {
+  .typing-dot { animation: none; }
+}
 
 /* A link from another page lands here: the section lights up for a moment
    (a 3px ring in the chart blue, 3:1 or better on every ground) and then

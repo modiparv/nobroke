@@ -1,4 +1,7 @@
-export type StepKind = "intro" | "goals" | "costs" | "single" | "money" | "account" | "connect";
+import { adjustedTarget, emergencyTarget } from "./profile.ts";
+import type { Goal, Profile } from "./types";
+
+export type StepKind = "intro" | "goals" | "costs" | "single" | "money" | "account";
 
 /** The intake answer that holds a picked goal's own price, in today's money. */
 export const goalCostKey = (id: string) => `cost:${id}`;
@@ -11,6 +14,23 @@ export function applyGoalCosts<T extends { id: string; targetToday: number }>(go
     const v = Number(answers[goalCostKey(g.id)]);
     return Number.isFinite(v) && v > 0 ? { ...g, targetToday: Math.round(v) } : g;
   });
+}
+
+/** The price the plan starts a goal at when the person gives none: the
+    catalogue's price for their city, except the emergency fund, which is
+    sized to their own outgoings. The intake shows this number, so what a
+    person sees before the plan is what the plan then uses. */
+export function goalEstimate(goal: Goal, profile: Profile): number {
+  return goal.id === "emergency" ? emergencyTarget(profile) : adjustedTarget(goal, profile.cityTier);
+}
+
+/** What the cost step stores for one goal. Only a price the person changed
+    is an answer. A field left at the estimate, or left empty, stores a blank,
+    so the plan keeps working the estimate out itself. */
+export function goalCostAnswer(typed: number, estimate: number): string {
+  if (!Number.isFinite(typed) || typed <= 0) return "";
+  const v = Math.round(typed);
+  return v === Math.round(estimate) ? "" : String(v);
 }
 
 export interface StepOption {
@@ -35,8 +55,8 @@ export interface Step {
 
 /**
  * The intake. Every question is compulsory: a plan built on blanks is a guess,
- * so there is no skip. Order follows how an advisor works a first meeting:
- * income, then outgoings, then what is already held, then context, then goals.
+ * so there is no skip. The order is income, then outgoings, then what is
+ * already held, then the person's situation, then goals.
  */
 export const STEPS: Step[] = [
   {
@@ -44,9 +64,9 @@ export const STEPS: Step[] = [
     kind: "intro",
     stage: 0,
     stageLabel: "",
-    title: "First, the full picture.",
+    title: "Start with your numbers.",
     subtitle:
-      "A real plan needs real numbers: what comes in, what goes out, and what you already hold. Five short sections. Every answer shapes the plan, so none of them can be skipped.",
+      "A plan needs real numbers: what comes in, what goes out and what you already hold. There are five short sections. Every answer changes the plan, so none can be skipped.",
     cta: "Begin",
   },
 
@@ -60,8 +80,8 @@ export const STEPS: Step[] = [
     title: "How do you earn?",
     options: [
       { value: "salaried", label: "Salaried", hint: "A fixed pay cheque" },
-      { value: "self_employed", label: "Business owner", hint: "You run your own venture" },
-      { value: "freelancer", label: "Freelance or consulting", hint: "Project-based income" },
+      { value: "self_employed", label: "Business owner", hint: "You run your own business" },
+      { value: "freelancer", label: "Freelance or consulting", hint: "Paid by the project" },
       { value: "student", label: "Student", hint: "Stipend or part-time income" },
     ],
   },
@@ -73,7 +93,7 @@ export const STEPS: Step[] = [
     field: "takeHome",
     min: 100,
     title: "What comes in each month?",
-    subtitle: "Salary after tax, stipend, freelance income or pocket money: what actually lands with you. Every recommendation is anchored to this number.",
+    subtitle: "Salary after tax, stipend, freelance income or pocket money. Count what actually reaches you. Every number in your plan starts from this.",
   },
 
   // ---- Stage 2: Spending ----
@@ -93,7 +113,7 @@ export const STEPS: Step[] = [
     stageLabel: "Spending",
     field: "emi",
     title: "Other EMIs each month?",
-    subtitle: "Car, education, personal loans, pay-later. Enter 0 if none.",
+    subtitle: "Car, education and personal loans, and pay-later. Enter 0 if none.",
   },
   {
     id: "monthlySpend",
@@ -101,7 +121,7 @@ export const STEPS: Step[] = [
     stage: 2,
     stageLabel: "Spending",
     field: "monthlySpend",
-    title: "Everything else you spend monthly?",
+    title: "What else do you spend each month?",
     subtitle: "Groceries, bills, transport, eating out, subscriptions. A close estimate is fine.",
   },
 
@@ -112,8 +132,8 @@ export const STEPS: Step[] = [
     stage: 3,
     stageLabel: "What you hold",
     field: "cashOnHand",
-    title: "Cash in bank today?",
-    subtitle: "Savings accounts and deposits you can reach, including your emergency fund.",
+    title: "How much cash is in the bank today?",
+    subtitle: "Savings accounts and deposits you can reach, including any emergency fund.",
   },
   {
     id: "investedValue",
@@ -121,27 +141,19 @@ export const STEPS: Step[] = [
     stage: 3,
     stageLabel: "What you hold",
     field: "investedValue",
-    title: "Current value of your investments?",
-    subtitle: "Mutual funds, stocks, FDs, gold, EPF. Today's value, best estimate. Enter 0 if you are starting fresh.",
-  },
-  {
-    id: "connect",
-    kind: "connect",
-    stage: 3,
-    stageLabel: "What you hold",
-    title: "Connect your accounts",
-    subtitle: "Auto-import is coming soon. Until then, your manual entries carry the plan just as well.",
+    title: "What are your investments worth today?",
+    subtitle: "Mutual funds, stocks, FDs, gold, EPF. A close estimate of today's value is fine. Enter 0 if you have none yet.",
   },
 
-  // ---- Stage 4: Context ----
+  // ---- Stage 4: About you ----
   {
     id: "city",
     kind: "single",
     stage: 4,
-    stageLabel: "Context",
+    stageLabel: "About you",
     field: "cityTier",
-    title: "Where are you based?",
-    subtitle: "Cost of living changes what your goals cost.",
+    title: "Where do you live?",
+    subtitle: "Living costs change what your goals cost.",
     options: [
       { value: "metro", label: "Metro", hint: "Mumbai, Delhi, Bengaluru" },
       { value: "tier1", label: "Tier 1 city", hint: "Pune, Jaipur, Kochi" },
@@ -153,7 +165,7 @@ export const STEPS: Step[] = [
     id: "stage",
     kind: "single",
     stage: 4,
-    stageLabel: "Context",
+    stageLabel: "About you",
     field: "careerStage",
     title: "Where are you in your career?",
     options: [
@@ -167,10 +179,10 @@ export const STEPS: Step[] = [
     id: "dependents",
     kind: "single",
     stage: 4,
-    stageLabel: "Context",
+    stageLabel: "About you",
     field: "dependents",
     title: "Who counts on your income?",
-    subtitle: "Responsibility changes how much risk a plan should carry.",
+    subtitle: "The plan takes less risk when others depend on you.",
     options: [
       { value: "none", label: "Just me", hint: "No dependants" },
       { value: "partner", label: "A partner" },
@@ -185,16 +197,16 @@ export const STEPS: Step[] = [
     kind: "goals",
     stage: 5,
     stageLabel: "Goals",
-    title: "What are you building toward?",
-    subtitle: "Pick up to three.",
+    title: "What do you want to plan for?",
+    subtitle: "Pick up to three. Each amount is an estimate of today's price. You can change it on the next screen.",
   },
   {
     id: "costs",
     kind: "costs",
     stage: 5,
     stageLabel: "Goals",
-    title: "What will each cost?",
-    subtitle: "Today's prices. Change any you know better; the rest are our estimates.",
+    title: "What will each one cost?",
+    subtitle: "Prices today. We have filled in an estimate for each. Change any you know better.",
   },
   {
     id: "timeline",
@@ -203,7 +215,7 @@ export const STEPS: Step[] = [
     stageLabel: "Goals",
     field: "timeline",
     title: "When do you need the first one?",
-    subtitle: "Roughly is fine. You can tune the year later.",
+    subtitle: "A rough answer is fine. You can change the year later.",
     options: [
       { value: "2", label: "Within 2 years" },
       { value: "4", label: "3 to 5 years" },
@@ -217,10 +229,88 @@ export const STEPS: Step[] = [
     kind: "account",
     stage: 0,
     stageLabel: "",
-    title: "Your plan is ready. Save it.",
-    subtitle: "Create an account so your plan is waiting on every device, then see it.",
+    title: "Your plan is ready.",
+    subtitle: "You can see it now. To save it and open it on any device, create an account. Accounts are by invitation for now.",
     cta: "See my plan",
   },
 ];
 
-export const TOTAL_STAGES = 5;
+/** One line on what each section asks for, by its number. */
+const STAGE_DESC: Record<number, string> = {
+  1: "What comes in each month.",
+  2: "Rent, EMIs and everything else that goes out.",
+  3: "Cash and investments you have today.",
+  4: "City, career and who depends on you.",
+  5: "What you want, what it costs and when.",
+};
+
+export interface Stage {
+  n: number;
+  label: string;
+  desc: string;
+  /** How many questions the section holds. */
+  steps: number;
+}
+
+/** The intake's sections, read off the steps themselves, so the rail, the
+    progress bar and the "Section 2 of 5" count can never drift from the
+    questions actually asked. */
+export const STAGES: Stage[] = [...new Set(STEPS.map((s) => s.stage).filter((n) => n > 0))]
+  .sort((a, b) => a - b)
+  .map((n) => {
+    const inStage = STEPS.filter((s) => s.stage === n);
+    return { n, label: inStage[0].stageLabel, desc: STAGE_DESC[n] ?? "", steps: inStage.length };
+  });
+
+export const TOTAL_STAGES = STAGES.length;
+
+/** A stored step index, made safe to read. The index lives in the browser's
+    saved state, and a step has since been removed from the middle of the
+    list, so an older saved intake can point past the end. Anything that is
+    not a step number in range lands on the nearest real step. */
+export function clampStepIndex(i: unknown): number {
+  const n = typeof i === "number" && Number.isFinite(i) ? Math.trunc(i) : 0;
+  return Math.min(Math.max(0, n), STEPS.length - 1);
+}
+
+/** The first question that plainly has no answer yet: a choice never made,
+    an income never entered, no goal picked. A typed 0 is a real answer to
+    most money questions ("Enter 0 if none"), so those are never counted as
+    blank. Returns the last step when nothing is missing. */
+export function firstUnanswered(profile: Profile, answers: Record<string, string>, goalIds: string[]): number {
+  const stored = profile as unknown as Record<string, string | number | null | undefined>;
+  const at = STEPS.findIndex((step) => {
+    if (step.kind === "goals") return goalIds.length === 0;
+    if (step.kind === "costs") return goalIds.some((id) => !(goalCostKey(id) in answers));
+    if (!step.field) return false;
+    const v = step.field in stored ? stored[step.field] : answers[step.field];
+    if (step.kind === "single") return v == null || v === "";
+    if (step.kind === "money") return (step.min ?? 0) > 0 && !(Number(v) >= step.min!);
+    return false;
+  });
+  return at === -1 ? STEPS.length - 1 : at;
+}
+
+/** Where an intake saved in the browser picks up again. The saved step
+    number can be ahead of the answers, because it counts steps and the step
+    list has changed since it was saved. Resuming never lands past a question
+    that has no answer, so none is skipped. */
+export function resumeStepIndex(storedIndex: unknown, profile: Profile, answers: Record<string, string>, goalIds: string[]): number {
+  return Math.min(clampStepIndex(storedIndex), firstUnanswered(profile, answers, goalIds));
+}
+
+/** How full each section's segment of the progress rail is at a step: 1 for
+    sections already passed, 0 for those ahead. The current section counts
+    the questions answered plus half of the one on screen, so its segment has
+    visibly started on the first question and is not yet full on the last.
+    The intro shows an empty rail and the account step a full one. */
+export function stageFill(stepIndex: number): number[] {
+  const step = STEPS[clampStepIndex(stepIndex)];
+  if (step.kind === "account") return STAGES.map(() => 1);
+  return STAGES.map((st) => {
+    if (st.n < step.stage) return 1;
+    if (st.n > step.stage) return 0;
+    const inStage = STEPS.filter((s) => s.stage === st.n);
+    return (inStage.indexOf(step) + 0.5) / inStage.length;
+  });
+}

@@ -1,18 +1,24 @@
 import { useMemo, useState } from "react";
 import type { PlanGoal, PlanInputs, PlanResult } from "../lib/types";
-import { formatINR, formatPct, formatYears } from "../lib/format";
-import { gapLevel } from "../lib/gap";
+import { formatINR, formatPct } from "../lib/format";
+import { gapLevel, gapTone, type GapTone } from "../lib/gap";
+import { inr } from "../lib/glue";
 import { GOAL_MAP } from "../lib/goals";
 import { educationNote, goalOptions } from "../lib/options";
+import { reachedText } from "../lib/reached";
+import { reachFigure } from "../lib/verdict";
 import { actions } from "../store";
+import { btnGhost } from "../ui";
+import { StatusIcon } from "./StatusPill";
 
 const THIS_YEAR = new Date().getFullYear();
 
 /**
  * The goal's status, one meaning per element. The bar is what is set aside
  * against what the goal will cost by its date, nothing else. The projection
- * is one sentence, with the fix as a button beside it. The rest are chips.
- * Technical numbers behind a tap.
+ * is one sentence that ends in the status (icon, word and colour). Under
+ * it, the ways to close a gap, each a button that does the thing. The small
+ * facts are one sentence, and the technical numbers sit behind a tap.
  */
 interface Props {
   r: PlanResult;
@@ -32,9 +38,9 @@ interface Props {
   ahead: Array<{ name: string; year: number }>;
 }
 
-const chip = "num rounded-full border border-line px-2.5 py-1 text-caption text-text-2";
-const fill = "num inline-flex h-8 items-center rounded-full bg-accent-fill px-3 text-caption font-medium text-on-accent transition hover:bg-accent-fill-hi";
-const pill = "num inline-flex h-8 items-center rounded-full border border-line px-3 text-caption font-medium text-text transition hover:border-line-2";
+const label = "text-support font-medium text-text-2";
+const textLink = "text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2";
+const TONE_TEXT: Record<GapTone, string> = { pos: "text-pos", cau: "text-cau", neg: "text-neg" };
 
 function listNames(items: Array<{ name: string }>): string {
   const names = items.map((i) => i.name);
@@ -50,63 +56,70 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
   const reachedEarly = r.onTrack && r.goalReachedMonth !== null && r.goalReachedMonth < r.months;
   // The moves that close a gap, each computed by the engine: the monthly
   // that gets there (one tap, if that much is free after the other goals),
-  // the year today's pace does get there, and the smaller target today's
-  // pace reaches by the date. The choice is theirs.
+  // the year today's rate does get there, and the smaller target today's
+  // rate reaches by the date. The choice is theirs.
   const options = useMemo(
     () => (r.onTrack ? null : goalOptions(inputs, r, { dateFixed: GOAL_MAP[goal.id]?.dateFixed ?? false })),
     [goal.id, r.onTrack, r.requiredSip, r.realProjectedCorpus, inputs.targetToday, inputs.horizonYears, inputs.currentSavings, inputs.monthlySip, inputs.inflation, inputs.allocation],
   );
   const canFix = !r.onTrack && r.requiredSip <= available;
   const canLower = !!options && options.target >= goal.targetToday * 0.25 && options.target < goal.targetToday;
-  const context = educationNote(goal.id, gapLevel(r));
+  const level = gapLevel(r);
+  const context = educationNote(goal.id, level);
   const starved = monthly <= 0 && monthlyPool > 0 && ahead.length > 0;
-  // A projected XIRR of nothing is noise, not a number: it appears once money is in.
-  const hasXirr = r.totalInvested > 0 && Number.isFinite(r.xirr) && r.xirr !== 0;
+  const maths = [
+    // One yearly figure only. A second "return" row restated this assumption
+    // with monthly compounding and read as money already earned.
+    { label: "Growth a year", value: formatPct(r.blendedReturn), hint: "The yearly growth this plan assumes for your mix, added monthly. It is an assumption, not a forecast." },
+    { label: "Ups and downs (volatility)", value: formatPct(r.blendedVolatility, 0), hint: "Higher means bigger swings along the way." },
+    { label: "Share of your monthly amount", value: `${Math.round(monthlyShare * 100)}%`, hint: `Of the ${formatINR(monthlyPool)} you add every month.` },
+  ];
 
   return (
     <div className="flex flex-col gap-4">
       {/* One bar, one meaning. */}
       <div>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="num text-row font-medium text-text">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+          <span className="num whitespace-nowrap text-row font-medium text-text">
             {formatINR(saved)} saved <span className="font-normal text-text-2">of {formatINR(need)}</span>
           </span>
           <span
-            className="num text-caption text-text-2"
+            className="num whitespace-nowrap text-support text-text-2"
             title={`${formatINR(goal.targetToday)} today, at ${formatPct(inflation, 0)} inflation a year`}
           >
             needed by {year}
           </span>
         </div>
         <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-2">
-          <div className="h-full rounded-full bg-text transition-[width] duration-500 ease-out" style={{ width: `${savedPct}%` }} />
+          <div className="h-full rounded-full bg-text transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${savedPct}%` }} />
         </div>
       </div>
 
-      {/* The projection in one sentence, with the fix beside it. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="num text-support text-text">
-          At this rate: <span className="font-medium">{formatINR(r.projectedCorpus)}</span> by {year}.{" "}
-          {r.onTrack ? (
-            <span className="font-medium text-pos">
-              On track{reachedEarly && r.goalReachedMonth !== null ? `, there in about ${formatYears(r.goalReachedMonth / 12)}` : ""}.
-            </span>
-          ) : (
-            <span className="font-medium text-cau">{formatINR(Math.abs(r.gap))} short.</span>
-          )}
-        </p>
-      </div>
+      {/* The projection in one sentence, ending in the status. */}
+      <p className="num text-body text-text">
+        At this rate: <span className="font-medium">{inr(reachFigure(r))}</span> by {year}.{" "}
+        <span className={`inline-flex items-center gap-1 whitespace-nowrap align-bottom font-medium ${TONE_TEXT[gapTone(level)]}`}>
+          <StatusIcon level={level} size={16} />
+          {r.onTrack ? "On track." : `${formatINR(Math.abs(r.gap))} short.`}
+        </span>
+        {reachedEarly && r.goalReachedMonth !== null ? <span className="text-text-2"> {reachedText(r.goalReachedMonth)}.</span> : null}
+      </p>
 
-      {/* The three honest moves, as buttons that do the thing. */}
+      {/* The ways to close the gap, as buttons that do the thing. */}
       {!r.onTrack && options && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          {canFix ? (
-            <button type="button" onClick={() => actions.setGoalAmount(goal.id, options.monthly)} className={fill}>
-              Put in {formatINR(options.monthly)} a month
-            </button>
-          ) : (
-            <span className="num text-caption text-text-2">
-              To get there, put in {formatINR(options.monthly)} a month. You have {formatINR(available)} free after your other goals.{" "}
+        <div>
+          <h3 className={label}>Ways to close the gap</h3>
+          {!canFix && (
+            <p className="num mt-1 max-w-[68ch] text-pretty text-support text-text-2">
+              This goal needs {inr(options.monthly)} a month. {inr(available)} is free after your other goals.
+            </p>
+          )}
+          <div className="mt-2 grid gap-2 sm:flex sm:flex-wrap">
+            {canFix ? (
+              <button type="button" onClick={() => actions.setGoalAmount(goal.id, options.monthly)} className={`${btnGhost} num`}>
+                Put in {formatINR(options.monthly)} a month
+              </button>
+            ) : (
               <button
                 type="button"
                 // The monthly sheet, prefilled so this goal gets what it
@@ -118,78 +131,66 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
                     prefill: Math.max(0, Math.round(monthlyPool + options.monthly - monthly)),
                   })
                 }
-                className="font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+                className={btnGhost}
               >
                 Put in more
               </button>
-            </span>
-          )}
-          {options.year !== null && (
-            <button
-              type="button"
-              onClick={() => actions.setGoalTenure(goal.id, options.year!)}
-              title={`At this rate this goal is on track by ${THIS_YEAR + options.year}`}
-              className={pill}
-            >
-              Move to {THIS_YEAR + options.year}
-            </button>
-          )}
-          {canLower && (
-            <button
-              type="button"
-              onClick={() => actions.setGoalTarget(goal.id, options.target)}
-              title={`At this rate you reach ${formatINR(options.target)} in today's money by ${year}`}
-              className={pill}
-            >
-              Aim for {formatINR(options.target)} instead
-            </button>
-          )}
+            )}
+            {options.year !== null && (
+              <button
+                type="button"
+                onClick={() => actions.setGoalTenure(goal.id, options.year!)}
+                title={`At this rate this goal is on track by ${THIS_YEAR + options.year}`}
+                className={`${btnGhost} num`}
+              >
+                Move to {THIS_YEAR + options.year}
+              </button>
+            )}
+            {canLower && (
+              <button
+                type="button"
+                onClick={() => actions.setGoalTarget(goal.id, options.target)}
+                title={`At this rate you reach ${formatINR(options.target)} in today's money by ${year}`}
+                className={`${btnGhost} num`}
+              >
+                Aim for {formatINR(options.target)} instead
+              </button>
+            )}
+          </div>
         </div>
       )}
-      {context && <p className="text-caption text-text-2">{context}</p>}
+      {context && <p className="max-w-[68ch] text-pretty text-support text-text-2">{context}</p>}
 
       {/* Why a goal is getting nothing: the money is going to nearer goals
           first. Said plainly, with the year the first of them is done. */}
       {starved && (
-        <p className="text-caption text-text-2">
-          Nothing flows here yet: your {formatINR(monthlyPool)} a month goes to {listNames(ahead)} first. It starts here when
-          you raise the monthly amount, or once {ahead[0].name} is done ({ahead[0].year}).
+        <p className="num max-w-[68ch] text-pretty text-support text-text-2">
+          No money reaches this goal yet. Your {inr(monthlyPool)} a month goes to {listNames(ahead)} first. It starts here when the
+          monthly amount goes up, or once {ahead[0].name} is done ({ahead[0].year}).
         </p>
       )}
 
-      {/* The small facts, as chips. */}
-      <div className="flex flex-wrap gap-1.5">
-        <span className={chip} title={`Target year ${year}`}>
-          {goal.horizonYears} {goal.horizonYears === 1 ? "year" : "years"} to go
-        </span>
-        <span className={chip} title={`${Math.round(monthlyShare * 100)}% of your ${formatINR(monthlyPool)} a month`}>
-          {formatINR(monthly)} a month
-        </span>
-        <span className={chip} title="What this mix grew by in the past">
-          assumes {formatPct(r.blendedReturn, 1)} growth a year
-        </span>
-        <button
-          type="button"
-          onClick={() => setShowNumbers((v) => !v)}
-          className="rounded-full border border-dashed border-line px-2.5 py-1 text-caption text-text-2 transition hover:border-line-2 hover:text-text"
-        >
+      {/* The small facts, as one sentence. The technical numbers sit behind a tap. */}
+      <div>
+        <p className="num text-pretty text-support text-text-2">
+          {goal.horizonYears} {goal.horizonYears === 1 ? "year" : "years"} to go, at {inr(monthly)} a month. Assumes{" "}
+          {formatPct(r.blendedReturn, 1)} growth a year.
+        </p>
+        <button type="button" onClick={() => setShowNumbers((v) => !v)} aria-expanded={showNumbers} className={`${textLink} inline-flex h-11 items-center`}>
           {showNumbers ? "Hide the maths" : "Show the maths"}
         </button>
+        {showNumbers && (
+          <dl className="mt-1 divide-y divide-line border-y border-line">
+            {maths.map((f) => (
+              <div key={f.label} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 py-2.5">
+                <dt className="text-support text-text">{f.label}</dt>
+                <dd className="num row-span-2 self-center text-row font-medium text-text">{f.value}</dd>
+                <dd className="text-support text-text-2">{f.hint}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </div>
-      {showNumbers && (
-        <dl className="grid grid-cols-3 gap-x-4">
-          {[
-            { label: "Growth / yr", value: formatPct(r.blendedReturn), hint: "A rough yearly average across your portfolio" },
-            ...(hasXirr ? [{ label: "XIRR", value: formatPct(r.xirr), hint: "Your true return after the timing of each deposit" }] : []),
-            { label: "Volatility", value: formatPct(r.blendedVolatility, 0), hint: "Higher means bigger ups and downs along the way" },
-          ].map((f) => (
-            <div key={f.label} className="min-w-0" title={f.hint}>
-              <dt className="truncate text-eyebrow uppercase text-text-3">{f.label}</dt>
-              <dd className="num mt-0.5 truncate text-row font-medium text-text">{f.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
     </div>
   );
 }

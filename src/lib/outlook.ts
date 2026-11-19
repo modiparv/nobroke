@@ -2,6 +2,7 @@ import type { Allocation, PlanGoal } from "./types";
 import { blendedReturn, computePlan } from "./finance.ts";
 import { gapLevel, type GapLevel } from "./gap.ts";
 import { splitCapital, splitMonthly } from "./split.ts";
+import { reachFigure } from "./verdict.ts";
 
 /**
  * What every goal looks like under a plan that may differ from the saved
@@ -38,6 +39,9 @@ export interface GoalOutlook {
   projected: number;
   need: number;
   gap: number;
+  /** The figure to print for what the goal reaches (lib/verdict): the goal's
+      own cost when the difference is rounding, so every screen agrees. */
+  reach: number;
   /** Months from now at which the goal is reached, when it is on track and
       reached before its date. Null otherwise. */
   reachedMonth: number | null;
@@ -87,6 +91,7 @@ export function outlook(p: PlanShape): GoalOutlook[] {
       projected: r.projectedCorpus,
       need: r.requiredCorpus,
       gap: r.gap,
+      reach: reachFigure(r),
       reachedMonth: early ? r.goalReachedMonth : null,
       monthly,
     };
@@ -95,4 +100,28 @@ export function outlook(p: PlanShape): GoalOutlook[] {
 
 export function onTrackCount(items: GoalOutlook[]): number {
   return items.filter((i) => i.level === "on_track").length;
+}
+
+/**
+ * The monthly amount at which the named goal reads on track, for the
+ * "Put in more" sheet. The sheet shares money out again as the amount
+ * changes, so nearer goals take their part first and a figure worked out
+ * for this goal alone can leave it short. This starts at that figure and
+ * steps up until the outlook itself says on track. If no amount within the
+ * limit does it, the starting figure stands and the sheet shows the result.
+ */
+export function monthlyToPutOnTrack(shape: PlanShape, goalId: string, start: number, step = 500, max = 1_000_000): number {
+  const from = Math.max(0, Math.round(start));
+  const onTrackAt = (monthly: number) => outlook({ ...shape, monthlySip: monthly }).find((i) => i.id === goalId)?.level === "on_track";
+  if (from > max || onTrackAt(from)) return from;
+  // More a month never takes money from a goal, so the first amount that works can be found by halving.
+  let hi = Math.floor((max - from) / step);
+  if (hi < 1 || !onTrackAt(from + hi * step)) return from;
+  let lo = 0;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (onTrackAt(from + mid * step)) hi = mid;
+    else lo = mid;
+  }
+  return from + hi * step;
 }

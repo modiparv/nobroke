@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
-import { amountsINR, parseCommand } from "./command.ts";
+import { DECLINE_PICK_REPLY, amountsINR, parseCommand } from "./command.ts";
 
 /**
  * Golden phrasings for the deterministic command layer: the copilot's fast
@@ -46,9 +46,10 @@ const GOLDENS: Array<[string, Record<string, unknown> | null]> = [
   // portfolio + split
   ["auto-balance my money", { kind: "autoSplit" }],
   ["split money across goals", { kind: "autoSplit" }],
-  ["rebalance my portfolio", { kind: "recommendPortfolio" }],
-  ["fix my mix", { kind: "recommendPortfolio" }],
-  ["recommend funds for me", { kind: "recommendPortfolio" }],
+  // asking NoBroke to choose: a fixed reply, never a change and never the model
+  ["rebalance my portfolio", { kind: "declinePick" }],
+  ["fix my mix", { kind: "declinePick" }],
+  ["recommend funds for me", { kind: "declinePick" }],
   // fresh start
   ["start over", { kind: "newPlan" }],
   ["make a new plan", { kind: "newPlan" }],
@@ -150,4 +151,40 @@ test("command grammar goldens", () => {
       }
     }
   }
+});
+
+test("asking NoBroke to choose funds or a mix gets the fixed reply, and changes nothing", () => {
+  const asks = [
+    "recommend funds for me", "suggest a portfolio", "optimise my mix", "tune my allocation", "match my funds to my goals",
+    "pick funds for me", "choose a mix for me", "select stocks for me", "recommend investments", "suggest some etfs", "fix my mix",
+    // Asked as a question, it still gets the fixed reply: it never reaches the model.
+    "which fund should i buy", "which fund should i buy?", "best mutual fund to invest in", "what stocks should i buy?",
+    "where should i invest", "what should i invest in?", "give me your best funds",
+  ];
+  for (const phrase of asks) {
+    assert.deepEqual(parseCommand(phrase, YEAR), { kind: "declinePick" }, `"${phrase}"`);
+  }
+  // Edits and ordinary questions that share a word with the asks are left alone.
+  const notAsks: Array<[string, string | null]> = [
+    ["adjust my emergency fund to 3 lakh", "setTarget"],
+    ["set emergency fund target to 2 lakh", "setTarget"],
+    ["add an emergency fund goal", "addGoal"],
+    ["adjust my monthly investment to 20000", "setPool"],
+    ["invest 40k a month", "setPool"],
+    ["i want to buy a house", "addGoal"],
+    ["fix my monthly investment", null],
+    ["top up my emergency fund", null],
+    ["what is an index fund", null],
+    ["should i rebalance my portfolio?", null],
+    ["which funds am i in?", null],
+    ["what is the best way to build an emergency fund?", null],
+  ];
+  for (const [phrase, kind] of notAsks) {
+    const got = parseCommand(phrase, YEAR);
+    assert.equal(got?.kind ?? null, kind, `"${phrase}" gave ${JSON.stringify(got)}`);
+  }
+  // The reply says who chooses and where, and names no fund and no mix.
+  assert.match(DECLINE_PICK_REPLY, /does not pick/);
+  assert.match(DECLINE_PICK_REPLY, /choose one yourself/);
+  assert.doesNotMatch(DECLINE_PICK_REPLY, /conservative|balanced|growth|index|equity|debt|gold/i);
 });

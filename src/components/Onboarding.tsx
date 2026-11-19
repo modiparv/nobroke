@@ -1,14 +1,94 @@
-import { useState } from "react";
-import { STEPS, TOTAL_STAGES, goalCostKey, type Step } from "../lib/onboarding";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  STAGES,
+  STEPS,
+  TOTAL_STAGES,
+  clampStepIndex,
+  goalCostAnswer,
+  goalCostKey,
+  goalEstimate,
+  resumeStepIndex,
+  stageFill,
+  type Step,
+} from "../lib/onboarding";
 import { GOAL_MAP, GOALS } from "../lib/goals";
-import { adjustedTarget } from "../lib/profile";
-import { credentialError, login, register } from "../lib/authApi";
+import { inr } from "../lib/glue";
+import { credentialError, inviteCodeError, login, register } from "../lib/authApi";
 import type { Profile } from "../lib/types";
 import { actions, getState, useStore } from "../store";
 import { btnIntake } from "../ui";
+import { CredentialFields } from "./AuthSheet";
 import SupportPill from "./SupportPill";
 import Logo from "./Logo";
-import PasswordField from "./PasswordField";
+
+/**
+ * The intake, one question to a screen. Every step has the same anatomy,
+ * top to bottom and left-aligned like the rest of the app: the question (the
+ * one serif line on the screen), a sentence of help, the control, and at
+ * most one blue button. A chosen option is marked in ink with a tick; blue
+ * is only ever the way forward.
+ */
+
+/** The question. Serif, so the intake reads as a conversation rather than
+    a form; sized in rem, so the phone's text setting scales it. */
+const question =
+  "text-balance font-serif text-[1.75rem] font-normal leading-[1.15] tracking-[-0.01em] text-text outline-none sm:text-[2.125rem]";
+const helper = "mt-3 max-w-[52ch] text-pretty text-body text-text-2";
+/** A second, quieter action under the main button: text, 44px to tap. */
+const quietLink = "inline-flex min-h-11 items-center text-left text-support transition-colors";
+/** The most digits a rupee field takes: enough for thousands of crores, and
+    short enough that the amount always fits its field on a 360px phone. */
+const MAX_DIGITS = 12;
+const digitsOnly = (text: string) => text.replace(/[^\d]/g, "").slice(0, MAX_DIGITS);
+const grouped = (digits: string) => (digits === "" ? "" : Number(digits).toLocaleString("en-IN"));
+
+function Tick({ size = 14 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3.5 8.5l3 3 6-6.5" />
+    </svg>
+  );
+}
+
+/** The mark on a single-choice option: an empty ring, or an ink disc with a
+    tick once chosen. With the ink outline around the option, the choice
+    reads without colour. */
+function ChoiceMark({ on }: { on: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={`grid h-6 w-6 flex-none place-items-center rounded-full ${on ? "bg-text text-bg" : "border-[1.5px] border-text-3 bg-surface"}`}
+    >
+      {on && <Tick />}
+    </span>
+  );
+}
+
+const PROFILE_FIELDS = new Set([
+  "cityTier",
+  "employment",
+  "careerStage",
+  "dependents",
+  "rent",
+  "emi",
+  "monthlySpend",
+  "takeHome",
+  "cashOnHand",
+  "investedValue",
+]);
+
+function setAnswer(field: string, value: string | number) {
+  if (PROFILE_FIELDS.has(field)) actions.setProfileField(field as keyof Profile, value);
+  else actions.setAnswer(field, String(value));
+}
+
+/** What is stored for a step's field so far: a profile value or an intake answer. */
+function storedAnswer(field: string): string | number | null | undefined {
+  const st = getState();
+  return PROFILE_FIELDS.has(field)
+    ? (st.profile as unknown as Record<string, string | number | null>)[field]
+    : st.onboardingAnswers[field];
+}
 
 /**
  * The commitment moment: the intake is done, so this is when someone is most
@@ -21,17 +101,21 @@ function AccountStep({ step }: { step: Step }) {
   const [mode, setMode] = useState<"register" | "login">("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [invite, setInvite] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   // Already signed in (they signed in earlier, or chose "New plan"): no auth
   // form, just save this plan to their account and show it.
-  if (s.user) {
+  if (s.user && !busy && !s.owedAccountPlan) {
     return (
-      <div className="fade-up mx-auto w-full max-w-md">
-        <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">Your plan is ready.</h1>
-        <p className="mt-3 text-muted">Signed in as {s.user.email}. We will save it to your account.</p>
-        <button className={`${btnIntake} mx-auto mt-6 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
+      <div>
+        <h1 id="intake-question" tabIndex={-1} className={question}>
+          Your plan is ready.
+        </h1>
+        {/* A long email has no natural break: let it wrap anywhere so it never runs off a phone. */}
+        <p className={`${helper} [overflow-wrap:anywhere]`}>You are signed in as {s.user.email}. The plan is saved to your account.</p>
+        <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={() => actions.finishOnboarding()}>
           {step.cta}
         </button>
       </div>
@@ -40,7 +124,7 @@ function AccountStep({ step }: { step: Step }) {
 
   const submit = async () => {
     if (busy) return;
-    const invalid = credentialError(email, password, mode === "register");
+    const invalid = credentialError(email, password, mode === "register") ?? (mode === "register" ? inviteCodeError(invite) : null);
     if (invalid) {
       setError(invalid);
       return;
@@ -54,20 +138,27 @@ function AccountStep({ step }: { step: Step }) {
       existing && existing.email.toLowerCase() === email.trim().toLowerCase()
         ? { ok: true as const, user: existing }
         : mode === "register"
-          ? await register(email, password)
+          ? await register(email, password, invite)
           : await login(email, password);
     // A returning user often types correct credentials into the register
     // form. "Email already exists" with these credentials means they meant to
     // sign in - try that before showing anyone an error.
     let usedLogin = mode === "login";
-    if (mode === "register" && !r.ok && r.status === 409) {
+    // The same goes for a refused invite code (403): someone who already has
+    // an account needs no invitation.
+    if (mode === "register" && !r.ok && (r.status === 409 || r.status === 403)) {
+      const refused = r;
       const asLogin = await login(email, password);
       if (asLogin.ok && asLogin.user) {
         r = asLogin;
         usedLogin = true;
       } else {
         setBusy(false);
-        setError("An account with this email already exists, but this password doesn't match it. Sign in with the password you created earlier.");
+        setError(
+          refused.status === 409
+            ? "An account with this email already exists, but this password doesn't match it. Sign in with the password you created earlier."
+            : (refused.error ?? "That invite code was not accepted."),
+        );
         return;
       }
     }
@@ -93,105 +184,71 @@ function AccountStep({ step }: { step: Step }) {
         setError("You're signed in, but your saved plan couldn't be loaded. Check your connection and try again.");
         return;
       }
-      if (getState().goals.length === 0) actions.finishOnboarding();
-      else actions.goPlan();
+      actions.finishIntakeAfterSignIn();
     }
   };
 
-  // Same affordance as AuthSheet: 56px fields, hints in placeholders, and
-  // the button disabled until the group validates instead of erroring after.
-  const field =
-    "h-14 w-full rounded-2xl border border-line bg-surface px-4 text-base outline-none transition focus:border-text focus:ring-1 focus:ring-text";
-  const invalid = credentialError(email, password, mode === "register") != null;
+  // The same fields as the sign-in sheet, at the intake's own height. The
+  // button stays disabled until they validate: "not yet", never an error
+  // after the fact.
+  const invalid = credentialError(email, password, mode === "register") != null || (mode === "register" && inviteCodeError(invite) != null);
 
   return (
-    <div className="fade-up mx-auto w-full max-w-md">
-      <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
-      <p className="mt-3 text-muted">{step.subtitle}</p>
+    <div>
+      <h1 id="intake-question" tabIndex={-1} className={question}>
+        {step.title}
+      </h1>
+      <p className={helper}>{step.subtitle}</p>
+      {/* Sign-up is by invitation, so for most people this is the way on. It
+          sits above the form, where it is seen without scrolling on a short phone. */}
+      <button
+        type="button"
+        onClick={() => actions.finishOnboarding()}
+        className={`${quietLink} mt-2 font-medium text-text underline underline-offset-2 hover:text-text-2`}
+      >
+        See my plan without an account
+      </button>
 
       <form
-        className="mt-5 flex w-full flex-col gap-3"
+        className="mt-4 flex w-full max-w-sm flex-col gap-3"
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
           void submit();
         }}
       >
-        <div className="flex flex-col gap-1.5 text-left">
-          <label htmlFor="ob-email" className="text-caption font-medium text-text-2">
-            Email
-          </label>
-          <input
-            id="ob-email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@email.com"
-            className={field}
-          />
-        </div>
-        <div className="flex flex-col gap-1.5 text-left">
-          <label htmlFor="ob-password" className="text-caption font-medium text-text-2">
-            Password
-          </label>
-          <PasswordField
-            id="ob-password"
-            value={password}
-            onChange={setPassword}
-            autoComplete={mode === "register" ? "new-password" : "current-password"}
-            placeholder={mode === "register" ? "Create a password (8+ characters)" : "Password"}
-            className={field}
-          />
-        </div>
-        {error && (
-          <p role="alert" aria-live="polite" className="rounded-control bg-neg-bg px-3 py-2 text-support text-neg">
-            {error}
-          </p>
-        )}
-        <button type="submit" disabled={busy || invalid} className={`${btnIntake} w-full`}>
+        <CredentialFields
+          idPrefix="ob"
+          mode={mode}
+          size="intake"
+          email={email}
+          password={password}
+          invite={invite}
+          onEmail={setEmail}
+          onPassword={setPassword}
+          onInvite={setInvite}
+          error={error}
+        />
+        {/* The longest label in the intake: it may wrap when the phone's text size is turned up. */}
+        <button type="submit" disabled={invalid} aria-disabled={busy} className={`${btnIntake} mt-1 !h-auto min-h-14 w-full !whitespace-normal py-2`}>
           {busy ? "One moment…" : mode === "register" ? "Create account and see plan" : "Sign in and see plan"}
         </button>
       </form>
 
-      <div className="mt-4 flex flex-col items-center gap-2">
+      <div className="mt-2 flex flex-col items-start">
         <button
           type="button"
           onClick={() => {
             setMode(mode === "register" ? "login" : "register");
             setError(null);
           }}
-          className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+          className={`${quietLink} font-medium text-text underline underline-offset-2 hover:text-text-2`}
         >
           {mode === "register" ? "Already have an account? Sign in" : "New here? Create an account"}
-        </button>
-        <button
-          type="button"
-          onClick={() => actions.finishOnboarding()}
-          className="text-caption text-text-2 transition hover:text-text"
-        >
-          Skip for now, just show my plan
         </button>
       </div>
     </div>
   );
-}
-
-const PROFILE_FIELDS = new Set([
-  "cityTier",
-  "employment",
-  "careerStage",
-  "dependents",
-  "rent",
-  "emi",
-  "monthlySpend",
-  "takeHome",
-  "cashOnHand",
-  "investedValue",
-]);
-
-function setAnswer(field: string, value: string | number) {
-  if (PROFILE_FIELDS.has(field)) actions.setProfileField(field as keyof Profile, value);
-  else actions.setAnswer(field, String(value));
 }
 
 /**
@@ -201,29 +258,28 @@ function setAnswer(field: string, value: string | number) {
  * are the plan's foundation.
  */
 const CHECKS: Record<string, (v: number, p: Profile) => string | null> = {
-  takeHome: (v) => (v > 0 && v < 1000 ? "Under ₹1,000 a month. Confirm if that is right." : null),
-  rent: (v, p) => (p.takeHome > 0 && v >= p.takeHome ? "Rent alone equals everything that comes in. Confirm if that is right." : null),
+  takeHome: (v) => (v > 0 && v < 1000 ? "That is under ₹1,000 a month. Confirm if that is right." : null),
+  rent: (v, p) => (p.takeHome > 0 && v >= p.takeHome ? "Rent alone takes everything that comes in. Confirm if that is right." : null),
   emi: (v, p) =>
-    p.takeHome > 0 && p.rent + v >= p.takeHome ? "Rent and EMIs together exceed what comes in. Confirm if that is right." : null,
+    p.takeHome > 0 && p.rent + v >= p.takeHome ? "Rent and EMIs together take everything that comes in. Confirm if that is right." : null,
   monthlySpend: (v, p) => {
     if (p.takeHome > 0 && p.rent + p.emi + v >= p.takeHome)
-      return "These numbers say you spend more than comes in. Confirm if that is right; the plan is only as good as its numbers.";
+      return "These numbers say you spend everything that comes in, or more. Confirm if that is right.";
     if (v === 0) return "Nothing at all for groceries, bills and transport? Confirm if family covers all of it.";
     return null;
   },
   investedValue: (v, p) =>
-    p.takeHome > 0 && v > p.takeHome * 600 ? "That is a very large portfolio against this income. Confirm if the value is right." : null,
+    p.takeHome > 0 && v > p.takeHome * 600 ? "That is a very large amount next to this income. Confirm if the value is right." : null,
 };
 
 /**
  * A compulsory money question: type the exact amount, then continue. Continue
  * stays disabled until an explicit answer exists (0 typed out counts; an empty
- * field does not), which is what makes the intake honest.
+ * field does not), which is what makes the intake honest. The field starts
+ * empty, with no grey "0" in it that could be read as an answer.
  */
 function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void }) {
-  const prior = PROFILE_FIELDS.has(step.field!)
-    ? Number((getState().profile as unknown as Record<string, unknown>)[step.field!] ?? 0)
-    : Number(getState().onboardingAnswers[step.field!] ?? 0);
+  const prior = Number(storedAnswer(step.field!) ?? 0);
   const [raw, setRaw] = useState(prior > 0 ? String(prior) : "");
   const [challenge, setChallenge] = useState<string | null>(null);
 
@@ -244,38 +300,58 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
     onContinue();
   };
 
+  // One line under the field: what is wrong with the amount, or a large
+  // amount said back in lakhs and crores so a slipped zero is caught here.
+  const tooLow = min > 0 && raw !== "" && !ok;
+  const echo = ok && value! >= 100000 ? `That is ${inr(value!)}.` : null;
+
   return (
-    <div className="fade-up mx-auto w-full max-w-xl">
-      <h1 className="mx-auto max-w-[22ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
-      {step.subtitle && <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>}
-      <div className="mx-auto mt-6 flex w-full max-w-sm items-center gap-2 border-b-2 border-line pb-2 transition focus-within:border-text">
-        <span className="text-lg font-medium text-muted">₹</span>
+    <div>
+      <h1 id="intake-question" tabIndex={-1} className={question}>
+        {step.title}
+      </h1>
+      {step.subtitle && (
+        <p id="intake-help" className={helper}>
+          {step.subtitle}
+        </p>
+      )}
+      <label className="mt-6 flex h-16 w-full max-w-sm cursor-text items-center gap-2 rounded-2xl border border-line-2 bg-surface px-4 transition-colors focus-within:border-text focus-within:ring-1 focus-within:ring-text">
+        <span aria-hidden className="text-[1.5rem] font-medium leading-none text-text-2">
+          ₹
+        </span>
         <input
           autoFocus
           type="text"
           inputMode="numeric"
-          value={raw === "" ? "" : Number(raw).toLocaleString("en-IN")}
-          placeholder="0"
-          aria-label={step.title}
+          autoComplete="off"
+          value={grouped(raw)}
+          aria-labelledby="intake-question"
+          aria-describedby={step.subtitle ? "intake-help" : undefined}
           onChange={(e) => {
-            setRaw(e.target.value.replace(/[^\d]/g, ""));
+            setRaw(digitsOnly(e.target.value));
             setChallenge(null);
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") commit();
           }}
-          className="num w-full bg-transparent text-xl font-medium tracking-tight outline-none sm:text-2xl"
+          className="num h-full w-full min-w-0 bg-transparent text-[1.75rem] font-medium tracking-tight text-text outline-none"
         />
-      </div>
-      {min > 0 && raw !== "" && !ok && (
-        <p className="mt-3 text-caption text-muted">Enter at least ₹{min.toLocaleString("en-IN")}.</p>
-      )}
+      </label>
+      <p aria-live="polite" className="mt-2 min-h-[1.25rem] max-w-sm text-support text-text-2">
+        {tooLow ? `Enter at least ₹${min.toLocaleString("en-IN")}.` : echo}
+      </p>
+      {/* Amber, a mark and the words: a question back to the person, not an error. */}
       {challenge && (
-        <p className="mx-auto mt-5 max-w-[46ch] rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-left text-caption text-text">
-          {challenge}
+        <p role="alert" className="mt-2 flex max-w-sm items-start gap-2 rounded-control bg-cau-bg px-3 py-2.5 text-support text-cau">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden className="mt-0.5 flex-none">
+            <circle cx="8" cy="8" r="6.25" />
+            <path d="M8 4.8v3.6" />
+            <path d="M8 11v.1" />
+          </svg>
+          <span>{challenge}</span>
         </p>
       )}
-      <button className={`${btnIntake} mx-auto mt-6 w-full max-w-sm`} onClick={commit} disabled={!ok}>
+      <button className={`${btnIntake} mt-4 w-full max-w-sm`} onClick={commit} disabled={!ok}>
         {challenge ? "Yes, this is right" : "Continue"}
       </button>
     </div>
@@ -283,101 +359,277 @@ function MoneyStep({ step, onContinue }: { step: Step; onContinue: () => void })
 }
 
 /**
- * What each picked goal will cost, in today's money: one field per goal,
- * prefilled with the catalogue's estimate for this city. Every field is
- * optional; "Keep these estimates" moves on with the defaults, and a price
- * typed here becomes that goal's target. A student's trip is ₹20,000, not
- * the ₹2 L a family trip costs, and the first screen should know it.
+ * One question, a short list of answers. Tapping an answer stores it and
+ * moves on, so a first pass needs no button. Coming back to a question that
+ * already has its answer shows Continue, so the way forward never depends
+ * on tapping the same answer again.
  */
-function CostsStep({ step, onContinue }: { step: Step; onContinue: () => void }) {
+function SingleStep({ step, onContinue }: { step: Step; onContinue: () => void }) {
   const s = useStore();
-  const picked = s.selectedGoalIds.map((id) => GOAL_MAP[id]).filter(Boolean);
-  const [raw, setRaw] = useState<Record<string, string>>(() =>
-    Object.fromEntries(picked.map((g) => [g.id, s.onboardingAnswers[goalCostKey(g.id)] || String(adjustedTarget(g, s.profile.cityTier))])),
-  );
-  const ok = picked.every((g) => Number(raw[g.id]) > 0);
-
-  const commit = () => {
-    for (const g of picked) {
-      const v = Number(raw[g.id]);
-      actions.setAnswer(goalCostKey(g.id), v > 0 ? String(Math.round(v)) : "");
-    }
-    onContinue();
-  };
-  const keep = () => {
-    for (const g of picked) actions.setAnswer(goalCostKey(g.id), "");
-    onContinue();
-  };
+  const current = String(storedAnswer(step.field!) ?? "");
+  const [hadAnswer] = useState(current !== "");
+  // The chosen answer shows for a moment before the next question. If the
+  // person presses Back in that moment, the move forward is dropped.
+  const moveOn = useRef<number>();
+  useEffect(() => () => window.clearTimeout(moveOn.current), []);
+  // "The first one" is the first goal picked, and the plan uses the answer
+  // for that goal alone. The screen says which goal that is.
+  const firstGoal = step.field === "timeline" ? GOAL_MAP[s.selectedGoalIds[0]] : undefined;
+  const lead = firstGoal ? `This is for ${firstGoal.name}, the first goal you picked. ` : "";
 
   return (
-    <div className="fade-up mx-auto w-full max-w-md">
-      <h1 className="mx-auto max-w-[22ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
-      <p className="mx-auto mt-3 max-w-[46ch] text-muted">{step.subtitle}</p>
-      <div className="mt-5 flex flex-col gap-2.5 text-left">
-        {picked.map((g) => (
-          <label key={g.id} className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3">
-            <span className="flex min-w-0 items-center gap-2.5">
-              <span aria-hidden="true" className="text-xl leading-none">
-                {g.emoji}
+    <div>
+      <h1 id="intake-question" tabIndex={-1} className={question}>
+        {step.title}
+      </h1>
+      {(lead || step.subtitle) && (
+        <p className={helper}>
+          {lead}
+          {step.subtitle}
+        </p>
+      )}
+      <div role="group" aria-labelledby="intake-question" className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        {step.options!.map((opt) => {
+          const sel = current === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              aria-pressed={sel}
+              onClick={() => {
+                setAnswer(step.field!, opt.value);
+                window.clearTimeout(moveOn.current);
+                moveOn.current = window.setTimeout(onContinue, 200);
+              }}
+              className={`flex min-h-16 items-center justify-between gap-3 rounded-2xl border bg-surface px-4 py-3 text-left transition-colors ${
+                sel ? "border-text ring-1 ring-text" : "border-line-2 hover:border-text-3"
+              }`}
+            >
+              <span className="min-w-0">
+                <span className="block text-body font-medium text-text">{opt.label}</span>
+                {opt.hint && <span className="mt-0.5 block text-support text-text-2">{opt.hint}</span>}
               </span>
-              <span className="truncate text-support font-medium text-text">{g.name}</span>
-            </span>
-            <span className="flex flex-none items-center gap-1">
-              <span className="text-support text-text-2">₹</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={raw[g.id] === "" ? "" : Number(raw[g.id]).toLocaleString("en-IN")}
-                onChange={(e) => setRaw({ ...raw, [g.id]: e.target.value.replace(/[^\d]/g, "") })}
-                aria-label={`${g.name}, cost today`}
-                className="num w-28 bg-transparent text-right text-row font-medium text-text outline-none"
-              />
-            </span>
-          </label>
-        ))}
+              <ChoiceMark on={sel} />
+            </button>
+          );
+        })}
       </div>
-      <button className={`${btnIntake} mx-auto mt-6 w-full max-w-sm`} onClick={commit} disabled={!ok}>
+      {hadAnswer && (
+        <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={onContinue}>
+          Continue
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Up to three goals from the catalogue. Each tile carries the goal's name
+ * and the price the plan would start it at for this person (their city, and
+ * for the emergency fund their own outgoings). Names wrap rather than clip,
+ * and an amount never splits from its unit. A picked tile turns ink with a
+ * tick. Once three are picked the rest step back, and the count says why.
+ * On a phone the count and Continue hold to the bottom of the screen while
+ * the list scrolls.
+ */
+function GoalsStep({ step, onContinue }: { step: Step; onContinue: () => void }) {
+  const s = useStore();
+  const count = s.selectedGoalIds.length;
+  const full = count >= 3;
+
+  return (
+    <div>
+      <h1 id="intake-question" tabIndex={-1} className={question}>
+        {step.title}
+      </h1>
+      <p className={helper}>{step.subtitle}</p>
+      {/* Two tiles to a row on a phone. A tile is never narrower than its
+          longest word, so with the phone's text size turned up the grid
+          falls to one column instead of breaking a name. If the catalogue
+          ever has an odd count, the last tile takes its whole row. */}
+      <div role="group" aria-labelledby="intake-question" className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-2 sm:grid-cols-2">
+        {GOALS.map((g) => {
+          const sel = s.selectedGoalIds.includes(g.id);
+          const blocked = full && !sel;
+          return (
+            <button
+              key={g.id}
+              type="button"
+              onClick={() => actions.toggleGoal(g.id)}
+              aria-pressed={sel}
+              aria-disabled={blocked}
+              className={`flex min-h-[4.5rem] flex-col justify-between gap-1 rounded-2xl border px-3.5 py-3 text-left transition-colors last:odd:col-span-full sm:min-h-14 sm:flex-row sm:items-center sm:gap-3 sm:px-4 ${
+                sel
+                  ? "border-accent-fill bg-accent-fill text-on-accent"
+                  : blocked
+                    ? "cursor-not-allowed border-line text-text-2"
+                    : "border-line-2 bg-surface text-text hover:border-text-3"
+              }`}
+            >
+              <span className="text-balance text-body font-medium leading-snug">{g.name}</span>
+              <span className="flex items-center justify-between gap-2 sm:flex-none">
+                <span className={`num whitespace-nowrap text-support ${sel ? "text-on-accent/80" : "text-text-2"}`}>
+                  {inr(goalEstimate(g, s.profile))}
+                </span>
+                {sel && <Tick size={16} />}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {/* On a phone this bar is held to the bottom of the screen, and at the
+          end of the list it sits flush on the bottom edge (the negative margin
+          takes back the page's own bottom padding). */}
+      <div className="sticky bottom-0 -mx-5 -mb-10 mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line bg-bg px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:static sm:mx-0 sm:mb-0 sm:mt-6 sm:flex-row-reverse sm:flex-nowrap sm:justify-end sm:border-0 sm:p-0">
+        {/* Side by side while both fit. With the phone's text size turned
+            up, the button drops to its own full-width row instead of
+            squeezing the count. */}
+        <p aria-live="polite" className="flex-[1_1_9rem] text-support text-text-2 sm:flex-none">
+          <span className="block text-body font-medium text-text">{count} of 3 picked</span>
+          {full && <span className="block">Remove one to pick another.</span>}
+        </p>
+        <button className={`${btnIntake} flex-[999_0_auto] sm:flex-[0_1_24rem]`} disabled={count === 0} onClick={onContinue}>
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * What each picked goal will cost, in today's money: one field per goal,
+ * holding the price the plan would start it at. Nothing here has to be
+ * typed. A field left alone, or emptied, keeps the estimate; a price typed
+ * here becomes that goal's target. A student's trip is ₹20,000, not the
+ * ₹2 L a family trip costs, and the first screen should know it.
+ */
+function CostsStep({ step, onContinue, onBack }: { step: Step; onContinue: () => void; onBack: () => void }) {
+  const s = useStore();
+  const picked = s.selectedGoalIds.map((id) => GOAL_MAP[id]).filter(Boolean);
+  const estimate = (id: string) => goalEstimate(GOAL_MAP[id], s.profile);
+  const [raw, setRaw] = useState<Record<string, string>>(() =>
+    Object.fromEntries(picked.map((g) => [g.id, s.onboardingAnswers[goalCostKey(g.id)] || String(estimate(g.id))])),
+  );
+  const changed = picked.some((g) => goalCostAnswer(Number(raw[g.id]), estimate(g.id)) !== "");
+
+  const commit = () => {
+    for (const g of picked) actions.setAnswer(goalCostKey(g.id), goalCostAnswer(Number(raw[g.id]), estimate(g.id)));
+    onContinue();
+  };
+
+  // Reached with nothing picked (an older saved intake can land here): the
+  // one thing to do is go and pick.
+  if (picked.length === 0) {
+    return (
+      <div>
+        <h1 id="intake-question" tabIndex={-1} className={question}>
+          {step.title}
+        </h1>
+        <p className={helper}>You have not picked a goal yet. Pick at least one and its price shows here.</p>
+        <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={onBack}>
+          Pick your goals
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1 id="intake-question" tabIndex={-1} className={question}>
+        {step.title}
+      </h1>
+      <p className={helper}>{step.subtitle}</p>
+      <div className="mt-6 flex w-full max-w-sm flex-col gap-5">
+        {picked.map((g) => {
+          const id = `intake-cost-${g.id}`;
+          return (
+            <div key={g.id}>
+              <label htmlFor={id} className="block text-body font-medium text-text">
+                {g.name}
+              </label>
+              <p id={`${id}-about`} className="text-support text-text-2">
+                {g.blurb}
+              </p>
+              <div className="mt-2 flex h-14 cursor-text items-center gap-2 rounded-2xl border border-line-2 bg-surface px-4 transition-colors focus-within:border-text focus-within:ring-1 focus-within:ring-text">
+                <span aria-hidden className="text-headline font-medium text-text-2">
+                  ₹
+                </span>
+                <input
+                  id={id}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={grouped(raw[g.id] ?? "")}
+                  // An emptied field shows the estimate it will fall back to.
+                  placeholder={estimate(g.id).toLocaleString("en-IN")}
+                  aria-describedby={`${id}-about`}
+                  onChange={(e) => setRaw({ ...raw, [g.id]: digitsOnly(e.target.value).replace(/^0+/, "") })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commit();
+                  }}
+                  className="num h-full w-full min-w-0 bg-transparent text-headline font-medium text-text outline-none placeholder:font-normal placeholder:text-text-3"
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={commit}>
         Continue
       </button>
-      <button type="button" onClick={keep} className="mt-3 block w-full text-caption text-text-2 transition hover:text-text">
-        Keep these estimates
+      {changed && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setRaw(Object.fromEntries(picked.map((g) => [g.id, String(estimate(g.id))])))}
+            className={`${quietLink} mt-1 text-text-2 underline underline-offset-2 hover:text-text`}
+          >
+            Use our estimates instead
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The opening screen. The five sections are a real sequence, so they are
+    numbered. On a wide screen the rail beside the question already lists
+    them, so the list here is for phones and tablets. */
+function IntroStep({ step, onContinue }: { step: Step; onContinue: () => void }) {
+  return (
+    <div>
+      <h1 id="intake-question" tabIndex={-1} className={question}>
+        {step.title}
+      </h1>
+      <p className={helper}>{step.subtitle}</p>
+      <ol className="mt-6 max-w-md divide-y divide-line border-y border-line lg:hidden">
+        {STAGES.map((st) => (
+          <li key={st.n} className="flex gap-3 py-2.5">
+            <span aria-hidden className="num w-4 flex-none text-body text-text-2">
+              {st.n}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-body font-medium text-text">{st.label}</span>
+              <span className="block text-support text-text-2">{st.desc}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <button className={`${btnIntake} mt-6 w-full max-w-sm`} onClick={onContinue}>
+        {step.cta}
       </button>
     </div>
   );
 }
 
 /**
- * The five sections of the intake, listed in full from the very first screen
- * so the person knows the size of what they are agreeing to. One line each on
- * what the active section needs. Deliberately monochrome: the rail is not
- * interactive, and the accent never decorates.
+ * The five sections of the intake, listed in full beside every question on
+ * a wide screen, so the person knows the size of what they are agreeing to.
+ * The order is real, so each carries its number. A finished section swaps
+ * the number for a tick on ink, the current one has an ink ring and its one
+ * line of description, and the ones ahead are grey. Deliberately monochrome:
+ * the rail is not interactive, and blue stays with the button.
  */
-const STAGES = [
-  { n: 1, label: "Income", desc: "What lands in your account each month." },
-  { n: 2, label: "Spending", desc: "Rent, EMIs and everything else that goes out." },
-  { n: 3, label: "What you hold", desc: "Cash and investments you already have." },
-  { n: 4, label: "Context", desc: "City, career and who depends on you." },
-  { n: 5, label: "Goals", desc: "What you are building toward, and when." },
-];
-
-// The goal grid is two columns on phones, three on tablets, four on desktop.
-// Whenever the count leaves one orphan in the last row, that tile stretches
-// across the row. Literal class names per breakpoint, so Tailwind sees them.
-const LAST_TILE_SPAN = [
-  GOALS.length % 2 === 1 ? "col-span-2" : "col-span-1",
-  GOALS.length % 3 === 1 ? "sm:col-span-3" : "sm:col-span-1",
-  GOALS.length % 4 === 1 ? "md:col-span-4" : "md:col-span-1",
-].join(" ");
-
-/** Indian account rails, listed honestly as coming soon. Nothing here fakes
- *  a connection: the step informs and steps aside. */
-const CONNECT_SOURCES = [
-  { name: "Investment portfolio", via: "CAMS · KFintech" },
-  { name: "Banking and income", via: "Finvu · OneMoney · CAMSFinserv" },
-  { name: "Trading and execution", via: "DhanHQ · HDFC Sec · AngelOne" },
-  { name: "Identity and KYC", via: "NSDL · KRA" },
-];
-
 function StageRail({ current, allDone }: { current: number; allDone: boolean }) {
   return (
     <nav aria-label="Intake sections">
@@ -385,25 +637,28 @@ function StageRail({ current, allDone }: { current: number; allDone: boolean }) 
         {STAGES.map((st, idx) => {
           const state = allDone || st.n < current ? "done" : st.n === current ? "active" : "todo";
           return (
-            <li key={st.n} className="relative pb-8 pl-5 last:pb-0">
+            <li key={st.n} aria-current={state === "active" ? "step" : undefined} className="relative flex gap-3 pb-7 last:pb-0">
               {idx < STAGES.length - 1 && (
-                <span aria-hidden className="absolute bottom-2 left-[3px] top-4 w-px bg-line-2" />
+                <span aria-hidden className={`absolute bottom-1 left-[11.5px] top-7 w-px ${state === "done" ? "bg-text" : "bg-line-2"}`} />
               )}
-              <span
-                aria-hidden
-                className={`absolute left-0 top-[6px] h-[7px] w-[7px] rounded-full ${
-                  state === "active" ? "bg-text" : state === "done" ? "bg-text-2" : "border border-line-2"
-                }`}
-              />
-              <p
-                className={`text-support font-medium ${
-                  state === "active" ? "text-text" : state === "done" ? "text-display" : "text-text-2"
-                }`}
-              >
-                {st.label}
-                {state === "done" && <span className="sr-only"> (completed)</span>}
-              </p>
-              {state === "active" && <p className="mt-1 text-caption text-text-2">{st.desc}</p>}
+              {state === "done" ? (
+                <span role="img" aria-label="Done" className="grid h-6 w-6 flex-none place-items-center rounded-full bg-text text-bg">
+                  <Tick />
+                </span>
+              ) : (
+                <span
+                  aria-hidden
+                  className={`num grid h-6 w-6 flex-none place-items-center rounded-full text-index font-medium ${
+                    state === "active" ? "border-[1.5px] border-text text-text" : "border border-text-3 text-text-2"
+                  }`}
+                >
+                  {st.n}
+                </span>
+              )}
+              <div className="min-w-0 pt-0.5">
+                <p className={`text-support font-medium ${state === "todo" ? "text-text-2" : "text-text"}`}>{st.label}</p>
+                {state === "active" && <p className="mt-1 text-support text-text-2">{st.desc}</p>}
+              </div>
             </li>
           );
         })}
@@ -412,19 +667,87 @@ function StageRail({ current, allDone }: { current: number; allDone: boolean }) 
   );
 }
 
+/**
+ * The same five sections on a phone or tablet, where there is no room for
+ * the rail: one segment per section, in ink. Sections passed are full, the
+ * current one fills as its questions go by, and the words under it say
+ * which section this is and how many there are.
+ */
+function ProgressRail({ index }: { index: number }) {
+  const step = STEPS[index];
+  const fill = stageFill(index);
+  return (
+    <div className="lg:hidden">
+      <div aria-hidden className="flex gap-1.5">
+        {fill.map((f, k) => (
+          <span key={k} className="h-1.5 flex-1 overflow-hidden rounded-full bg-line-2">
+            <span
+              className="block h-full rounded-full bg-text transition-[width] duration-300 motion-reduce:transition-none"
+              style={{ width: `${f * 100}%` }}
+            />
+          </span>
+        ))}
+      </div>
+      {step.stage > 0 && (
+        <p className="mt-2 flex items-baseline justify-between gap-3 text-support">
+          <span className="font-medium text-text">{step.stageLabel}</span>
+          <span className="whitespace-nowrap text-text-2">
+            Section {step.stage} of {TOTAL_STAGES}
+          </span>
+        </p>
+      )}
+      {step.kind === "account" && <p className="mt-2 text-support text-text-2">All {TOTAL_STAGES} sections done</p>}
+    </div>
+  );
+}
+
+/**
+ * True when the page itself opened on the intake: the browser had saved an
+ * intake in progress and has just restored it. The saved place is a step
+ * number, and the list has lost a step since, so it can sit one question
+ * ahead of the answers. In that one case the place is checked against the
+ * answers before the first paint. Moving about inside a running app is never
+ * second-guessed. (In development a hot reload runs this file again, so the
+ * check is remembered as done.)
+ */
+let restoredOnLoad = !import.meta.hot?.data.intakeChecked && getState().screen === "onboarding";
+if (import.meta.hot) import.meta.hot.data.intakeChecked = true;
+
 export default function Onboarding() {
   const s = useStore();
-  const i = s.onboardingStepIndex;
+  // The saved index is clamped where it is read: an intake saved before a
+  // step was removed can point past the end of the list.
+  const i = clampStepIndex(s.onboardingStepIndex);
   const step = STEPS[i];
-  const next = () => actions.setStep(i + 1);
 
-  const progress = step.kind === "account" ? 100 : step.stage <= 0 ? 0 : (step.stage / TOTAL_STAGES) * 100;
+  // A restored intake never resumes past a question that has no answer.
+  useLayoutEffect(() => {
+    if (!restoredOnLoad) return;
+    restoredOnLoad = false;
+    const st = getState();
+    const at = resumeStepIndex(st.onboardingStepIndex, st.profile, st.onboardingAnswers, st.selectedGoalIds);
+    if (at !== st.onboardingStepIndex) actions.setStep(at);
+  }, []);
+
+  const next = () => actions.setStep(Math.min(i + 1, STEPS.length - 1));
+  const back = () => (i > 0 ? actions.setStep(i - 1) : actions.leaveOnboarding());
+  // Step 0 with an existing plan offers the way back out: "New plan" from
+  // the app must never trap someone in the intake.
+  const canGoBack = i > 0 || (i === 0 && s.goals.length > 0);
+
+  // A new question starts at the top of the page (the goal list can be
+  // scrolled) and takes keyboard focus, so a screen reader reads it. A money
+  // question puts focus in its field instead.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    if (STEPS[i].kind !== "money") document.getElementById("intake-question")?.focus({ preventScroll: true });
+  }, [i]);
 
   return (
     <div className="flex min-h-screen">
-      {/* The journey lives in its own column, on its own ground: every
-          section visible from the first screen, ticked off as it completes. */}
-      <aside className="hidden w-72 flex-none flex-col justify-between border-r border-line bg-sidebar px-7 pb-6 pt-6 lg:flex">
+      {/* The sections live in their own column, on their own ground: every
+          one visible from the first screen, ticked off as it completes. */}
+      <aside className="sticky top-0 hidden h-screen w-72 flex-none flex-col justify-between self-start border-r border-line bg-sidebar px-7 pb-6 pt-6 lg:flex">
         <div>
           <Logo />
           <div className="mt-12">
@@ -435,171 +758,51 @@ export default function Onboarding() {
           <button
             type="button"
             onClick={() => void actions.signOut()}
-            className="flex items-center gap-2 text-support text-text-2 transition hover:text-text"
+            className="flex min-h-11 items-center gap-2 self-start text-support text-text-2 transition-colors hover:text-text"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <path d="M16 17l5-5-5-5M21 12H9" />
             </svg>
-            Log out of account
+            Sign out
           </button>
         )}
       </aside>
 
-      <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-1 flex-col px-5 pb-10 pt-5 sm:px-8">
-        <div className="flex items-center justify-between gap-3 pb-4">
-          {/* Step 0 with an existing plan offers the way back out: "New plan"
-              from the app must never trap someone in the intake. */}
+      <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-1 flex-col px-5 pb-10 pt-3 sm:px-8">
+        {/* Back on the left, the logo in the middle on a phone. There is
+            deliberately no skip: the intake is the plan's foundation, so
+            every question is answered. */}
+        <div className="grid h-11 grid-cols-[1fr_auto_1fr] items-center gap-3">
           <button
-            className="w-20 px-1 py-1.5 text-left text-sm font-medium text-muted hover:text-ink"
-            style={{
-              visibility: (i > 0 && step.kind !== "account") || (i === 0 && s.goals.length > 0) ? "visible" : "hidden",
-            }}
-            onClick={() => (i > 0 ? actions.setStep(i - 1) : actions.goPlan())}
+            type="button"
+            className="-ml-2 inline-flex min-h-11 items-center gap-1 justify-self-start rounded-control pl-1 pr-2 text-support font-medium text-text-2 transition-colors hover:text-text"
+            style={{ visibility: canGoBack ? "visible" : "hidden" }}
+            onClick={back}
           >
-            {i > 0 ? "← Back" : "← My plan"}
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M10 3.5L5.5 8l4.5 4.5" />
+            </svg>
+            {i > 0 ? "Back" : "My plan"}
           </button>
           <span className="lg:hidden">
             <Logo />
           </span>
-          {/* Spacer keeps the logo centred. There is deliberately no skip: the
-              intake is the plan's foundation, so every question is answered. */}
-          <span className="w-20" aria-hidden="true" />
         </div>
 
-        {/* On small screens the rail collapses to the progress bar. */}
-        <div className="mb-2 flex items-center gap-3 lg:hidden">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-            <div className="h-full rounded-full bg-brand-deep transition-all duration-300" style={{ width: `${progress}%` }} />
-          </div>
-          {step.stage > 0 && (
-            <span className="whitespace-nowrap text-xs font-medium text-muted">
-              {step.stageLabel} · {step.stage} of {TOTAL_STAGES}
-            </span>
-          )}
+        <div className="mt-3">
+          <ProgressRail index={i} />
         </div>
 
-        {/* Every question composes around the column's centre: heading,
-            copy and control share one axis, so a wide screen never reads
-            as a block hugging the left. Cards keep their own left-aligned
-            text inside. */}
-        <div className="flex-1 pt-5 text-center sm:pt-8">
-        {step.kind === "intro" && (
-          <div className="fade-up mx-auto w-full max-w-xl">
-            <h1 className="mx-auto max-w-[16ch] text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
-            <p className="mx-auto mt-4 max-w-[52ch] text-muted">{step.subtitle}</p>
-            <button className={`${btnIntake} mx-auto mt-6 w-full max-w-sm`} onClick={next}>
-              {step.cta}
-            </button>
-          </div>
-        )}
-
-        {/* Sixteen goals in one frame with no scrollbar: each tile is one
-            short row, a small picture beside a name, so four rows of four
-            stand about as tall as the old three. The catalogue's sentences
-            belong to the plan page, not to a choice made in seconds. An
-            orphan in the last row stretches across it. Picks are counted by
-            three dots, not a sentence. */}
-        {step.kind === "goals" && (
-          <div className="fade-up mx-auto w-full">
-            <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
-            <p className="mt-2 text-muted">{step.subtitle}</p>
-            <div className="mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
-              {GOALS.map((g, i) => {
-                const sel = s.selectedGoalIds.includes(g.id);
-                const last = i === GOALS.length - 1;
-                return (
-                  <button
-                    key={g.id}
-                    onClick={() => actions.toggleGoal(g.id)}
-                    aria-pressed={sel}
-                    className={`flex min-h-10 items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left transition ${
-                      last ? LAST_TILE_SPAN : ""
-                    } ${sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-accent"}`}
-                  >
-                    <span aria-hidden="true" className="text-base leading-none">
-                      {g.emoji}
-                    </span>
-                    <span className="text-caption font-medium leading-tight">{g.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="mt-4 flex items-center justify-center gap-5">
-              <span role="img" aria-label={`${s.selectedGoalIds.length} of 3 picked`} className="flex items-center gap-1.5">
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className={`h-2.5 w-2.5 rounded-full transition ${i < s.selectedGoalIds.length ? "bg-brand-deep" : "border border-line-2 bg-surface"}`}
-                  />
-                ))}
-              </span>
-              <button className={`${btnIntake} px-10`} disabled={s.selectedGoalIds.length === 0} onClick={next}>
-                Continue
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step.kind === "single" && (
-          <div className="fade-up mx-auto w-full">
-            <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
-            {step.subtitle && <p className="mt-3 text-muted">{step.subtitle}</p>}
-            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {step.options!.map((opt) => {
-                const current = PROFILE_FIELDS.has(step.field!)
-                  ? String((s.profile as unknown as Record<string, unknown>)[step.field!] ?? "")
-                  : s.onboardingAnswers[step.field!] ?? "";
-                const sel = current === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    onClick={() => {
-                      setAnswer(step.field!, opt.value);
-                      window.setTimeout(next, 200);
-                    }}
-                    className={`flex flex-col gap-1 rounded-card border p-5 text-left transition ${
-                      sel ? "border-brand-deep bg-brand-deep text-on-accent" : "border-line hover:border-accent"
-                    }`}
-                  >
-                    <span className="text-base font-medium">{opt.label}</span>
-                    {opt.hint && <span className={`text-xs ${sel ? "text-on-accent/70" : "text-muted"}`}>{opt.hint}</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-          {step.kind === "connect" && (
-            <div className="fade-up mx-auto w-full">
-              <h1 className="text-lg font-serif font-normal tracking-[-0.01em] text-display sm:text-xl">{step.title}</h1>
-              <p className="mt-3 text-muted">{step.subtitle}</p>
-              <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
-                {CONNECT_SOURCES.map((c, idx) => (
-                  <div
-                    key={c.name}
-                    className={`flex items-center justify-between gap-3 px-4 py-2.5 text-left ${idx > 0 ? "border-t border-line" : ""}`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-support font-medium text-text">{c.name}</p>
-                      <p className="truncate text-caption text-text-2">{c.via}</p>
-                    </div>
-                    <span className="flex-none rounded-full bg-surface-2 px-2 py-0.5 text-index uppercase tracking-wide text-text-2">
-                      Soon
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <button className={`${btnIntake} mx-auto mt-5 w-full max-w-sm`} onClick={next}>
-                Skip for now
-              </button>
-            </div>
-          )}
-
-          {step.kind === "money" && <MoneyStep key={step.id} step={step} onContinue={next} />}
-          {step.kind === "costs" && <CostsStep key={step.id} step={step} onContinue={next} />}
-
+        {/* One step at a time. Moving to the next question is the answer to
+            a tap, so the new step eases in once (and does not when motion is
+            reduced). Nothing else on the screen moves on its own. */}
+        <div key={step.id} className="fade-up flex-1 pt-7 sm:pt-10">
+          {step.kind === "intro" && <IntroStep step={step} onContinue={next} />}
+          {step.kind === "single" && <SingleStep step={step} onContinue={next} />}
+          {step.kind === "money" && <MoneyStep step={step} onContinue={next} />}
+          {step.kind === "goals" && <GoalsStep step={step} onContinue={next} />}
+          {step.kind === "costs" && <CostsStep step={step} onContinue={next} onBack={back} />}
           {step.kind === "account" && <AccountStep step={step} />}
         </div>
       </div>

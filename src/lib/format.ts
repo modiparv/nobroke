@@ -11,7 +11,8 @@ export function formatINR(value: number, opts: { compact?: boolean } = {}): stri
   const sign = value < 0 ? "-" : "";
   const abs = Math.abs(value);
   if (!compact) return sign + "₹" + inrGroup.format(Math.round(abs));
-  if (abs >= 1e7) return `${sign}₹${trim(abs / 1e7)} Cr`;
+  // Just under a crore would round up to "₹100 L", so it is written as ₹1 Cr.
+  if (abs >= 9_999_500) return `${sign}₹${trim(abs / 1e7)} Cr`;
   if (abs >= 1e5) return `${sign}₹${trim(abs / 1e5)} L`;
   if (abs >= 1e3) return sign + "₹" + inrGroup.format(Math.round(abs));
   return sign + "₹" + Math.round(abs).toString();

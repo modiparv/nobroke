@@ -1,74 +1,84 @@
-import { riskBandIndex, riskBandLabel } from "../lib/risk";
+import { RISK_BANDS, riskBandIndex, riskBandLabel } from "../lib/risk";
 import { actions, useStore } from "../store";
+import { card } from "../ui";
 
 /**
- * The risk level dial: five segments from Conservative to Aggressive with
- * the person's position marked. Assessed from the intake, slidable by hand
- * (a real range input drives it, so keyboard and screen readers work), and
- * every mix recommendation respects it as a ceiling.
+ * The risk level: five steps from Conservative to Aggressive with the
+ * person's position marked by a knob and named in a word. Worked out from
+ * the intake, slidable by hand (a real range input drives it, so keyboard
+ * and screen readers work), and the starting mix stays within it.
  *
  * The familiar green-to-red arc, filled up to the selection: calm at one
  * end, bold at the other, the reading every Indian investor already knows.
- * The steps resolve through theme tokens, so light and dark each get their
- * own ramp.
+ * The colours only repeat what the knob and the word already say, so the
+ * meter still reads in greyscale.
  */
 const RAMP = ["var(--risk-1)", "var(--risk-2)", "var(--risk-3)", "var(--risk-4)", "var(--risk-5)"];
 const UNFILLED = "var(--risk-unfilled)";
+/** The knob's width in px. It travels the track inset by half of this, the
+    way a native range thumb does, so it never hangs off either end. */
+const KNOB = 24;
 
-/** readOnly: the literal meter without the slider — for the plan page's
- *  glimpse, where risk is shown but only the Portfolio tab may change it. */
-export default function RiskMeter({ readOnly = false }: { readOnly?: boolean }) {
+export default function RiskMeter({ className = "" }: { className?: string }) {
   const s = useStore();
   const v = s.riskAppetite;
   const active = riskBandIndex(v);
 
+  // How the level was set, and what moving it does, in plain sight: a
+  // tooltip never shows on a phone.
+  const source =
+    s.riskAppetiteSource === "assessed"
+      ? "Worked out from your income, how long your cash lasts, who depends on you and your goal dates. Slide it if it feels wrong."
+      : "Set by you.";
+  const follows = !s.portfolioCustom && s.goals.length > 0 ? " Until you pick a mix yourself, your mix stays within this level." : "";
+
   return (
-    <div
-      className="mb-3 rounded-control bg-surface-2 px-3 py-2"
-      title={
-        readOnly
-          ? "Your risk level. Change it on the Portfolio tab."
-          : s.riskAppetiteSource === "assessed"
-            ? "Worked out from your income, how long your cash lasts, your dependants and your goal dates. Slide it if it feels wrong."
-            : "Set by you. Recommendations stay within it."
-      }
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-eyebrow uppercase text-text-3">Your risk level</span>
-        <span className="text-support font-medium">{riskBandLabel(v)}</span>
+    <section className={`${card} min-w-0 ${className}`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+        <h2 className="text-section font-medium text-text">Your risk level</h2>
+        <span className="text-row font-medium text-text">{riskBandLabel(v)}</span>
       </div>
 
-      <div className="relative mt-2.5 pb-3">
-        <div className="flex h-2.5 gap-1" aria-hidden>
+      {/* A full 44px row to slide in. The range input is the control; the
+          segments and the knob are its picture. */}
+      <div className="relative mt-1 flex h-11 items-center">
+        <div className="flex h-3 w-full gap-1" aria-hidden>
           {RAMP.map((c, i) => (
             <div
               key={c}
-              className="flex-1 rounded-full transition-colors"
+              className="flex-1 rounded-full transition-colors motion-reduce:transition-none"
               style={{ background: i <= active ? c : UNFILLED }}
             />
           ))}
         </div>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={v}
+          onChange={(e) => actions.setRiskAppetite(Number(e.target.value))}
+          aria-label="Your risk level"
+          aria-valuetext={`${riskBandLabel(v)}, level ${active + 1} of ${RISK_BANDS.length}`}
+          className="peer absolute inset-0 m-0 w-full cursor-pointer opacity-0"
+          // The page's base style sets every range input to 4px tall.
+          style={{ height: "100%" }}
+        />
         <span
           aria-hidden
-          className="absolute top-3 text-[9px] leading-none text-text"
-          style={{ left: `${v}%`, transform: "translateX(-50%)" }}
-        >
-          ▲
-        </span>
-        {!readOnly && (
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={5}
-            value={v}
-            onChange={(e) => actions.setRiskAppetite(Number(e.target.value))}
-            aria-label="Your risk level"
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          />
-        )}
+          className="pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-text bg-surface peer-focus-visible:ring-2 peer-focus-visible:ring-text peer-focus-visible:ring-offset-2"
+          style={{ width: KNOB, height: KNOB, left: `calc(${KNOB / 2}px + (100% - ${KNOB}px) * ${v / 100})` }}
+        />
+      </div>
+      <div className="flex justify-between gap-3 text-support text-text-2">
+        <span>{RISK_BANDS[0]}</span>
+        <span>{RISK_BANDS[RISK_BANDS.length - 1]}</span>
       </div>
 
-    </div>
+      <p className="mt-3 text-pretty text-support text-text-2">
+        {source}
+        {follows}
+      </p>
+    </section>
   );
 }

@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
-import { GAP_LABEL, gapLevel, gapTone } from "./gap.ts";
+import { GAP_LABEL, gapIcon, gapLevel, gapTone } from "./gap.ts";
 
 const need = 1_000_000;
 const short = (fraction: number) => ({ onTrack: false, gap: -need * fraction, requiredCorpus: need });
@@ -27,4 +27,15 @@ test("labels and tones", () => {
   assert.equal(gapTone("little_short"), "cau");
   assert.equal(gapTone("short"), "cau");
   assert.equal(gapTone("far_short"), "neg");
+});
+
+test("every level has its own icon, so status never rests on colour alone", () => {
+  assert.equal(gapIcon("on_track"), "tick");
+  assert.equal(gapIcon("little_short"), "clock");
+  assert.equal(gapIcon("short"), "clock");
+  assert.equal(gapIcon("far_short"), "alert");
+  // The three colour families map to three different icons.
+  const byTone = new Map<string, string>();
+  for (const level of ["on_track", "little_short", "short", "far_short"] as const) byTone.set(gapTone(level), gapIcon(level));
+  assert.equal(new Set(byTone.values()).size, 3);
 });

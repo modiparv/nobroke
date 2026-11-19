@@ -1,51 +1,39 @@
-import { mixLabel } from "../lib/portfolios";
-import { actions, useStore } from "../store";
+import { actions } from "../store";
 import BucketBuilder from "./BucketBuilder";
-import MacroStrip from "./MacroStrip";
 import PortfolioBuilder from "./PortfolioBuilder";
 
 /**
- * The portfolio room: where the portfolio is BUILT. LEFT: the live
- * portfolio (ready-made mixes, the fund search, the weights, the macro
- * backdrop), exactly what the plan runs on today. RIGHT: build your own
- * mix by hand from every option and apply it only when it is ready.
- * READING the portfolio happens on the plan page's glimpse. This room is
- * for hands.
+ * The Portfolio tab: the one mix every goal is funded from. It opens on
+ * the mix itself, then what the mix holds (with the search that adds one
+ * more fund) and the ways to change it (the risk level and the three
+ * ready-made mixes), and ends with the advanced corner for building a mix
+ * by hand. One grid lays all of it out: a single column on a phone, two
+ * from the lg breakpoint up, with the column widths the Money tab uses.
  */
 export default function PortfolioTab() {
-  const s = useStore();
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-[88px] pt-5 sm:px-6">
-      {/* Orientation, one line: what this room is for, and the way back to
+    <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
+      {/* Orientation, one line: what this page is for, and the way back to
           where its result shows. */}
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="text-support text-text-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 pt-3">
+        <p className="text-pretty text-support text-text-2">
           All your goals are funded from this one mix of funds. Change it here and your goals update.
         </p>
         <button
           type="button"
           onClick={() => actions.setTab("plan")}
-          className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+          className="inline-flex min-h-11 items-center text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
         >
-          See your goals →
+          See your goals
         </button>
       </div>
-      <div className="grid items-start gap-5 lg:grid-cols-2">
-        <section className="min-w-0 rounded-card border border-line bg-surface">
-          <div className="flex items-baseline justify-between gap-3 border-b border-line px-4 py-3">
-            <span className="text-support text-text">Your portfolio</span>
-            <span className="text-caption text-text-2">{mixLabel(s.portfolio)}</span>
-          </div>
-          <div className="p-3.5 sm:p-4">
-            <PortfolioBuilder />
-          </div>
-          <MacroStrip />
-        </section>
 
-        <BucketBuilder />
+      <div className="grid gap-4 pb-4 pt-2 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:gap-6">
+        <PortfolioBuilder />
+        <BucketBuilder className="order-6 lg:col-span-2" />
       </div>
 
-      <p className="pb-2 pt-5 text-center text-caption text-text-2">
+      <p className="text-balance pb-2 pt-1 text-center text-support text-text-2">
         Projections are illustrative and not investment advice.
       </p>
     </div>
