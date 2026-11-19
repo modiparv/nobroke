@@ -1,224 +1,184 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { formatINR, formatPct } from "../lib/format";
+import { HERO_EXAMPLES, HERO_GROWTH, heroExampleFigures, heroLabel, heroLines, type HeroExample } from "../lib/heroExample";
 import { actions, getState, useStore } from "../store";
-import { btnGhost } from "../ui";
 import AuthSheet from "./AuthSheet";
 import Logo from "./Logo";
 import SupportPill from "./SupportPill";
 
 /**
- * Landing, in NoBroke's own register: blueprint minimalism. White ruled
- * paper (the notebook a plan is born in), one geometric face, brand blue as
- * the single accent, and the logo's rising line as the recurring motif —
- * the product's own chart language doing the talking. The one deep moment
- * is the brand navy, never black. Every claim is scoped to what the
- * product does today.
+ * Landing: one sheet of ruled paper. The promise, one worked example drawn
+ * the way the product draws a plan, and three plain facts about who is
+ * behind NoBroke, what it is, and where a plan is kept. Under 150 words, so
+ * every line has to be true and has to earn its place.
  */
 
-/** Set to the founder's LinkedIn URL to light up the footer link. */
 const FOUNDER_LINKEDIN = "https://www.linkedin.com/in/parv-modi-3008p/";
 
-// One sentence per row: the page is scanned, not read.
-const OFFERINGS = [
-  {
-    title: "See everything you own",
-    paras: ["Cash, mutual funds, FDs, gold, EPF. One clean view of your wealth, today."],
-  },
-  {
-    title: "A plan built from real numbers",
-    paras: ["Income, spending, what you hold, your goals. Every answer shapes the plan, and the plan shows its work."],
-  },
-  {
-    title: "One portfolio funds every goal",
-    paras: ["You choose one mix. It carries the house, the wedding and the retirement together."],
-  },
-  {
-    title: "Ask. It runs the numbers.",
-    paras: ["Change the plan in plain words and every number recomputes on the spot."],
-  },
-];
+/** The goals chart's own colours, in draw order. */
+const LINE_COLOURS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)"];
 
-/** Line art for the layer cards: quiet hairlines with the blue doing only
- *  the load-bearing stroke, drawn from tokens. */
-const LAYERS = [
-  {
-    title: "Protect",
-    body: "A cushion check first: if cash covers under three months of expenses, the plan says so. Risk is read from your answers, then handed to you.",
-    art: (
-      <div className="relative" aria-hidden>
-        <div className="absolute -bottom-4 left-1/2 h-10 w-40 -translate-x-1/2 rounded-xl border border-line bg-surface" />
-        <div className="absolute -bottom-2 left-1/2 h-10 w-44 -translate-x-1/2 rounded-xl border border-line bg-surface" />
-        <div className="relative flex h-11 w-48 items-center justify-center gap-2 rounded-xl border border-line-2 bg-surface">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--accent-text))" strokeWidth="1.6">
-            <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
-          </svg>
-          <span className="text-index text-text-2">Safety net</span>
-        </div>
-      </div>
-    ),
-  },
-  {
-    title: "Plan",
-    body: "Every goal gets a target in today's money, a date, and the monthly it truly needs. Inflation is priced in.",
-    art: (
-      <div className="flex flex-col items-center gap-1" aria-hidden>
-        <span className="text-index text-text-3">Goals</span>
-        <svg viewBox="0 0 200 78" className="w-44 text-text-2">
-          <path d="M22 74 A 78 78 0 0 1 178 74" fill="none" stroke="rgb(var(--text-3))" strokeDasharray="3 4" />
-          <g fill="rgb(var(--surface))" stroke="rgb(var(--accent-text))">
-            <circle cx="46" cy="45" r="13" />
-            <circle cx="100" cy="20" r="13" />
-            <circle cx="154" cy="45" r="13" />
-          </g>
-          <g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M41 49v-5l5-4 5 4v5h-10z" />
-            <path d="M100 25c-1.4-2.2-5-1.9-5 .8 0 2 2.9 3.7 5 5.2 2.1-1.5 5-3.2 5-5.2 0-2.7-3.6-3-5-.8z" />
-            <path d="M148 44l6-3 6 3-6 3-6-3zM158 46v4" />
-          </g>
-        </svg>
-      </div>
-    ),
-  },
-  {
-    title: "Prosper",
-    body: "One portfolio carries every goal, tuned to your horizon and risk. Projections show the arithmetic, gap included.",
-    art: (
-      <svg viewBox="0 0 220 120" className="w-52" aria-hidden>
-        <g stroke="rgb(var(--line))" strokeWidth="1">
-          <line x1="10" y1="10" x2="10" y2="110" />
-          <line x1="60" y1="10" x2="60" y2="110" />
-          <line x1="110" y1="10" x2="110" y2="110" />
-          <line x1="160" y1="10" x2="160" y2="110" />
-          <line x1="210" y1="10" x2="210" y2="110" />
-          <line x1="10" y1="35" x2="210" y2="35" />
-          <line x1="10" y1="60" x2="210" y2="60" />
-          <line x1="10" y1="85" x2="210" y2="85" />
-          <line x1="10" y1="110" x2="210" y2="110" />
-        </g>
-        <polyline
-          points="10,105 30,98 50,100 70,88 90,90 110,78 130,72 150,60 170,50 190,35 210,18"
-          fill="none"
-          stroke="rgb(var(--accent-text))"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-        <circle cx="210" cy="18" r="3.5" fill="rgb(var(--accent-text))" />
-      </svg>
-    ),
-  },
-];
+// Main buttons are the one blue (ui.ts btnPrimary), sized here for the page:
+// compact in the header, large in the hero.
+const mainButton =
+  "inline-flex items-center justify-center whitespace-nowrap rounded-control bg-primary font-medium text-on-primary transition hover:bg-primary-hi active:opacity-90";
+const quietButton =
+  "inline-flex h-11 items-center justify-center whitespace-nowrap rounded-control px-3 text-support font-medium text-text transition hover:bg-surface";
 
-/** The division of labour as a plain two-column ledger. The AI column states
- *  only what the engine truly does. */
-const HUMAN_ROWS = [
-  "Chooses the goals that matter",
-  "Sets the risk you can live with",
-  "Sees the life behind the numbers",
-  "Makes the final call, always",
-];
-const AI_ROWS = [
-  "Recomputes every number in seconds",
-  "Prices inflation into every target",
-  "Shows what each mix does to every goal",
-  "Answers from your plan, instantly",
-];
+const container = "mx-auto max-w-page px-4 sm:px-6";
+// One pair of columns down the whole page: words on the left, the thing
+// itself on the right.
+const columns = "lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16";
 
 /**
- * The hero graphic is the product's own chart, drawn on the ruled paper:
- * one monthly amount splits across the goals, so each goal gets ITS OWN
- * line, growing to its own date and hollow circle — exactly how the app's
- * goals chart draws it, in the same categorical palette. The printed
- * figures are the whole pool's honest arithmetic: ₹25,000 a month for 20
- * years at the same conservative pace is put in ₹60.0L, growth ₹1.4Cr,
- * about ₹2.0Cr by 2046.
+ * Follows `target`, easing from the numbers on screen to the new ones. It
+ * only moves when the target changes, which here means the person picked
+ * the other example. People who ask for less motion get the new numbers at
+ * once.
  */
-function HeroPath() {
-  return (
-    <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="text-eyebrow text-accent">One plan, every goal</span>
-        <span className="num text-support text-text-2">₹25,000 a month</span>
-      </div>
-      <svg
-        viewBox="0 0 720 216"
-        className="hero-path mt-3 w-full"
-        role="img"
-        aria-label="Three rising lines from one monthly amount: safety net by 2027, first home by 2034, early retirement by 2046"
-      >
-        {/* One monthly amount fans into three trajectories from a shared
-            origin — each goal's share on its own line, in the app's own
-            palette. The safety net finishes high early (it hits its small
-            target first); the longer horizons pass beneath and overtake.
-            Geometry generated and gap-checked, not eyeballed. */}
-        <polyline
-          points="0,196 100,190 200,177 300,158 400,133 500,105 600,71 700,34"
-          fill="none"
-          stroke="var(--chart-3)"
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        <polyline
-          points="0,196 63,191 126,181 189,168 251,153 314,136 377,117 440,96"
-          fill="none"
-          stroke="var(--chart-2)"
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        <polyline
-          points="0,196 26,192 51,185 77,177 103,169 129,160 154,150 180,140"
-          fill="none"
-          stroke="var(--chart-1)"
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        <g fill="rgb(var(--surface))" strokeWidth="2">
-          <circle cx="180" cy="140" r="6" stroke="var(--chart-1)" />
-          <circle cx="440" cy="96" r="6" stroke="var(--chart-2)" />
-          <circle cx="700" cy="34" r="6" stroke="var(--chart-3)" />
-        </g>
-        <g fontSize="11" fill="rgb(var(--text-2))">
-          <text x="180" y="124">Safety net · 2027</text>
-          <text x="440" y="78" textAnchor="middle">First home · 2034</text>
-          <text x="700" y="16" textAnchor="end">Early retirement · 2046</text>
-        </g>
-      </svg>
-      <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-line pt-3.5">
-        <span className="num text-section font-medium text-text">₹2.0Cr</span>
-        <span className="text-support text-text-2">
-          together by 2046 · put in <span className="num font-medium text-text">₹60.0L</span> · growth{" "}
-          <span className="num font-medium text-text">₹1.4Cr</span>
-        </span>
-      </div>
-    </div>
-  );
+function useEased(target: number[], ms = 420): number[] {
+  const [shown, setShown] = useState(target);
+  const current = useRef(target);
+  useEffect(() => {
+    const from = current.current;
+    const still =
+      from === target ||
+      from.length !== target.length ||
+      typeof window.matchMedia !== "function" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (still) {
+      current.current = target;
+      setShown(target);
+      return;
+    }
+    let frame = 0;
+    const began = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - began) / ms);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const next = t === 1 ? target : target.map((v, i) => from[i] + (v - from[i]) * eased);
+      current.current = next;
+      setShown(next);
+      if (t < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [target, ms]);
+  return shown;
 }
 
-/** Once-per-element scroll reveal. Motion-reduced users see content
- *  immediately (handled in CSS). */
-function Reveal({ children, className = "" }: { children: ReactNode; className?: string }) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.12 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+/**
+ * The worked example. One monthly amount, a line for each goal that ends at
+ * the goal's own year, and the sum underneath: what goes in, what growth
+ * adds, what it comes to. Every number is computed in lib/heroExample by the
+ * engine's own projection.
+ */
+function Example() {
+  const [id, setId] = useState<HeroExample["id"]>(HERO_EXAMPLES[0].id);
+  const example = HERO_EXAMPLES.find((e) => e.id === id) ?? HERO_EXAMPLES[0];
+  const startYear = useMemo(() => new Date().getFullYear(), []);
+  const lines = useMemo(() => heroLines(example.goals, startYear), [example, startYear]);
+  const figures = heroExampleFigures(example, startYear);
+
+  // The drawing as one flat list of numbers, so it can ease as a whole.
+  const drawn = useEased(useMemo(() => lines.flatMap((l) => l.points.flat()), [lines]));
+  const perLine = drawn.length / lines.length;
+  const shapes = lines.map((line, i) => {
+    const flat = drawn.slice(i * perLine, (i + 1) * perLine);
+    const points: string[] = [];
+    for (let k = 0; k < flat.length; k += 2) points.push(`${(flat[k] * 100).toFixed(2)},${((1 - flat[k + 1]) * 100).toFixed(2)}`);
+    return { ...line, colour: LINE_COLOURS[i % LINE_COLOURS.length], path: points.join(" "), x: flat[flat.length - 2], y: flat[flat.length - 1] };
+  });
+
   return (
-    <div ref={ref} className={`reveal ${inView ? "is-in" : ""} ${className}`}>
-      {children}
-    </div>
+    <section aria-label="An example plan">
+      <div className="sm:flex sm:flex-wrap sm:items-center sm:gap-x-6">
+        <span id="example-label" className="block text-support text-text-2">
+          Example
+        </span>
+        <div role="radiogroup" aria-labelledby="example-label" className="flex flex-col sm:flex-row sm:gap-7">
+          {HERO_EXAMPLES.map((e) => (
+            <label key={e.id} className="group flex h-11 cursor-pointer items-center gap-2.5">
+              <input
+                type="radio"
+                name="hero-example"
+                className="peer sr-only"
+                checked={e.id === id}
+                onChange={() => setId(e.id)}
+              />
+              {/* The mark: an ink dot in a ring when chosen, an empty ring when not. */}
+              <span
+                aria-hidden
+                className="h-5 w-5 flex-none rounded-full border-2 border-text-3 bg-surface shadow-[inset_0_0_0_4px_rgb(var(--surface))] transition-colors group-hover:border-text peer-checked:border-text peer-checked:bg-text peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-text"
+              />
+              <span className="whitespace-nowrap text-body font-medium text-text-2 transition-colors group-hover:text-text peer-checked:text-text">
+                {heroLabel(e)}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* The drawing. Lines stretch with the box; circles and labels are
+          placed over them in real text sizes, so a 360px phone reads the
+          same words at the same size as a desktop. */}
+      <div
+        role="img"
+        aria-label={`One monthly amount, a line for each goal: ${lines.map((l) => `${l.name} by ${l.year}`).join(", ")}.`}
+        className="mt-3 border-b border-line-2 pt-12"
+      >
+        <div className="relative mr-2 h-[11.5rem] sm:h-[14rem]">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
+            {/* Furthest goal first, so the nearer lines sit on top where they share a start. */}
+            {[...shapes].reverse().map((s) => (
+              <polyline
+                key={s.colour}
+                points={s.path}
+                fill="none"
+                stroke={s.colour}
+                strokeWidth="2.5"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+          </svg>
+          {shapes.map((s) => (
+            <span
+              key={s.colour}
+              className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-bg"
+              style={{ left: `${s.x * 100}%`, top: `${(1 - s.y) * 100}%`, borderColor: s.colour }}
+            />
+          ))}
+          {shapes.map((s) => (
+            <div
+              key={s.colour}
+              className="absolute left-0 whitespace-nowrap text-right"
+              style={{ width: `calc(${s.x * 100}% + 0.5rem)`, bottom: `calc(${s.y * 100}% + 0.75rem)` }}
+            >
+              <div className="text-support font-medium text-text">{s.name}</div>
+              <div className="num text-support text-text-2">{s.year}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* The sum, set as a sum: two lines and a rule above the total. */}
+      <dl>
+        <div className="flex items-baseline justify-between gap-4 border-b border-line py-2.5">
+          <dt className="text-support text-text-2">Put in over {figures.years} years</dt>
+          <dd className="num whitespace-nowrap text-body font-medium text-text">{formatINR(figures.putIn)}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4 py-2.5">
+          <dt className="text-support text-text-2">Growth, assumed at {formatPct(HERO_GROWTH)} a year</dt>
+          <dd className="num whitespace-nowrap text-body font-medium text-text">{formatINR(figures.growth)}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4 border-t border-text pt-3">
+          <dt className="text-body font-medium text-text">Total by {figures.endYear}</dt>
+          <dd className="num whitespace-nowrap text-headline font-medium text-text">{formatINR(figures.total)}</dd>
+        </div>
+      </dl>
+    </section>
   );
 }
 
@@ -233,228 +193,127 @@ export default function Landing() {
     if (getState().goals.length > 0) actions.goPlan();
     else actions.startOnboarding();
   };
+  const start = signedIn ? afterAuth : actions.startOnboarding;
+  const startLabel = signedIn ? "Go to my plan" : "Start your plan";
 
-  // The landing's accent is the brand blue — the same stroke that rises in
-  // the logo. In the product, fills stay ink; out here the blue is the brand.
-  const btnBlue =
-    "inline-flex h-10 items-center justify-center whitespace-nowrap rounded-control bg-accent px-4 text-support font-medium text-surface transition hover:bg-accent-hi";
-  const btnBlueLg =
-    "inline-flex h-12 items-center justify-center whitespace-nowrap rounded-control bg-accent px-7 text-sm font-medium text-surface transition hover:bg-accent-hi";
-
-  const container = "mx-auto max-w-page px-4 sm:px-6";
-  const eyebrow = "text-eyebrow text-accent";
+  // One main button in view at a time: the header carries it only once the
+  // hero's own button has scrolled away under the header.
+  const heroButton = useRef<HTMLButtonElement | null>(null);
+  const [heroButtonInView, setHeroButtonInView] = useState(true);
+  useEffect(() => {
+    const el = heroButton.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setHeroButtonInView(false);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => setHeroButtonInView(entry.isIntersecting), {
+      rootMargin: "-56px 0px 0px 0px",
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="min-h-screen bg-bg">
       <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
         <div className={`${container} flex h-14 items-center justify-between`}>
           <Logo />
-          {signedIn ? (
-            <button className={btnBlue} onClick={afterAuth}>
-              Go to my plan
-            </button>
-          ) : (
-            <div className="flex items-center gap-2">
-              <button className={`${btnGhost} border-transparent px-3.5 py-2`} onClick={() => setShowAuth(true)}>
+          <div className="flex items-center gap-1">
+            {!heroButtonInView && (
+              <button className={`${mainButton} h-11 px-4 text-support`} onClick={start}>
+                {startLabel}
+              </button>
+            )}
+            {!signedIn && (
+              <button className={quietButton} onClick={() => setShowAuth(true)}>
                 Login
               </button>
-              <button className={btnBlue} onClick={actions.startOnboarding}>
-                Start your plan
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </header>
 
       {showAuth && <AuthSheet initialMode="login" onClose={() => setShowAuth(false)} onAuthed={afterAuth} />}
 
-      {/* Hero: warm beige paper, ruled with blue ink, one column, and the
-          product's own rising lines. */}
-      <section className="paper-grid border-b border-line">
-        <div className={`${container} py-14 sm:py-20`}>
-          <div className="max-w-3xl">
-            <span className={eyebrow}>Wealth, minus the noise</span>
-            <h1 className="mt-4 text-3xl font-medium leading-[1.06] tracking-[-0.025em] text-text sm:text-5xl">
-              We won't let you go broke.
-            </h1>
-            <p className="mt-5 max-w-xl text-prose text-text-2">
-              Money planning for the Bharat that has goals to reach, but no one to plan them with.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-2.5">
-              {signedIn ? (
-                <button className={btnBlueLg} onClick={afterAuth}>
-                  Go to my plan
-                </button>
-              ) : (
-                <>
-                  <button className={btnBlueLg} onClick={actions.startOnboarding}>
-                    Start your plan
-                  </button>
-                  <button className={`${btnGhost} h-12 bg-surface px-6`} onClick={() => setShowAuth(true)}>
-                    Login
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="mt-14 sm:mt-16">
-            <HeroPath />
-          </div>
-        </div>
-      </section>
-
-      {/* What it does: a ledger, not a brochure. Row by row, hairline by
-          hairline, each entry marked with the blue index square. */}
-      <section className={container}>
-        <Reveal className="py-14 sm:py-20">
-          <span className={eyebrow}>What it does</span>
-          <div className="mt-5 border-t border-line">
-            {OFFERINGS.map((o) => (
-              <article key={o.title} className="grid gap-3 border-b border-line py-7 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-10 sm:py-9">
-                <h3 className="flex items-baseline gap-3 text-headline font-medium text-text">
-                  <span aria-hidden className="relative top-[-2px] inline-block h-2 w-2 flex-none bg-accent" />
-                  {o.title}
-                </h3>
-                <div className="flex max-w-xl flex-col gap-3 sm:pl-0">
-                  {o.paras.map((p) => (
-                    <p key={p} className="text-prose text-text-2">
-                      {p}
-                    </p>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        </Reveal>
-      </section>
-
-      {/* Human + AI: a plain two-column ledger. No circles, no theatre. The
-          white table lifts off the warm paper on its own. */}
-      <section className="border-y border-line">
-        <div className={`${container} py-14 sm:py-20`}>
-          <Reveal>
-            <div className="text-center">
-              <span className={eyebrow}>Human + AI</span>
-              <h2 className="mx-auto mt-3 max-w-2xl text-xl font-medium leading-[1.15] tracking-[-0.02em] text-text sm:text-2xl">
-                Your judgment, carried by numbers that never sleep.
-              </h2>
-            </div>
-            <div className="mx-auto mt-10 grid max-w-3xl border border-line bg-surface sm:grid-cols-2">
-              <div className="p-6 max-sm:border-b max-sm:border-line sm:border-r sm:border-line sm:p-8">
-                <span className="text-support font-medium text-text">Human judgment</span>
-                <ul className="mt-3">
-                  {HUMAN_ROWS.map((r) => (
-                    <li key={r} className="border-b border-line py-3 text-prose text-text-2 last:border-b-0">
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="p-6 sm:p-8">
-                <span className="text-support font-medium text-text">NoBroke AI</span>
-                <ul className="mt-3">
-                  {AI_ROWS.map((r) => (
-                    <li key={r} className="border-b border-line py-3 text-prose text-text-2 last:border-b-0">
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <p className="mt-5 text-center text-support text-text-2">
-              Where the two meet, we call it{" "}
-              <span className="inline-flex items-baseline gap-1.5 font-medium text-text">
-                <span aria-hidden className="relative top-[-1px] inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-                Goal Intelligence
-              </span>
-              .
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      <section className={container}>
-        <Reveal className="py-14 sm:py-20">
-          <div className="text-center">
-            <span className={eyebrow}>Our philosophy</span>
-            <h2 className="mt-3 text-xl font-medium tracking-[-0.02em] text-text sm:text-2xl">
-              We plan in lifetimes, not market cycles.
-            </h2>
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            {LAYERS.map((l, idx) => (
-              <div key={l.title} className="overflow-hidden rounded-card border border-line bg-surface">
-                <div className="paper-grid flex h-44 items-center justify-center border-b border-line">{l.art}</div>
-                <div className="p-5">
-                  <span className="num text-index text-accent">Layer {idx + 1}</span>
-                  <h3 className="mt-2 text-section font-medium">{l.title}</h3>
-                  <p className="mt-2 text-body text-text-2">{l.body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-      </section>
-
-      {/* The one deep moment: brand navy on ruled paper, never black. */}
-      <section className="paper-grid-deep">
-        <div className={`${container} py-16 text-center sm:py-24`}>
-          <Reveal>
-            <h2 className="text-xl font-medium tracking-[-0.02em] text-on-band sm:text-2xl">
-              Start with what you have.
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-body text-on-band-2">
-              Five short sections. A plan that shows its work.
-            </p>
-            <button className={`${btnBlueLg} mt-8 px-8`} onClick={actions.startOnboarding}>
-              Start now
-            </button>
-          </Reveal>
-        </div>
-      </section>
-
-      <footer className="border-t border-line">
-        <div className={`${container} py-12`}>
-          <div className="grid gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-20">
+      <main>
+        {/* The sheet: warm paper ruled in blue ink, the promise on the left
+            and the worked example on the right. */}
+        <section className="paper-grid">
+          <div className={`${container} grid gap-10 py-10 sm:py-14 lg:items-center lg:py-20 ${columns}`}>
             <div>
-              <Logo />
-              <p className="mt-3 max-w-xs text-support text-text-2">Wealth, minus the noise. Built in Bharat.</p>
+              <h1 className="text-balance text-[2.5rem] font-medium leading-[1.05] tracking-[-0.03em] text-text sm:text-[3rem] lg:text-[3.75rem] xl:text-[4.5rem]">
+                We won't let you go broke.
+              </h1>
+              <p className="mt-5 max-w-[30rem] text-balance text-prose text-text-2">
+                Money planning for the Bharat that has goals to reach, but no one to plan them with.
+              </p>
+              <button
+                ref={heroButton}
+                className={`${mainButton} mt-7 h-[3.25rem] w-full px-8 text-body sm:w-auto`}
+                onClick={start}
+              >
+                {startLabel}
+              </button>
             </div>
-            <div>
-              <span className="text-eyebrow text-text-3">Product</span>
-              <ul className="mt-3 space-y-2 text-support">
-                <li>
-                  <button onClick={actions.startOnboarding} className="text-text-2 transition hover:text-text">
-                    Start
-                  </button>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <span className="text-eyebrow text-text-3">About</span>
-              <ul className="mt-3 space-y-2 text-support">
-                <li className="text-text-2">Parv Modi · Founder</li>
-                {FOUNDER_LINKEDIN && (
-                  <li>
-                    <a
-                      href={FOUNDER_LINKEDIN}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-text-2 transition hover:text-text"
-                    >
-                      LinkedIn
-                    </a>
-                  </li>
-                )}
-              </ul>
-            </div>
+            <Example />
           </div>
-          <div className="mt-10 border-t border-line pt-6">
-            <p className="max-w-2xl text-support text-text-2">
-              NoBroke is an early prototype and is not a SEBI-registered investment adviser. Projections are
-              illustrative, use simplified assumptions, and are not investment advice.
-            </p>
+        </section>
+
+        {/* Three plain facts, set as a ledger on the brand navy: the question
+            on the left, the answer on the right. The page's one deep band,
+            left plain so nothing runs behind the reading text. */}
+        <section aria-label="About NoBroke" className="bg-band">
+          <div className={`${container} py-6 sm:py-10`}>
+            <dl className="divide-y divide-on-band-3/40">
+              <div className={`grid gap-1 py-5 lg:items-baseline ${columns}`}>
+                <dt className="text-section font-medium text-on-band lg:text-headline">Founder</dt>
+                <dd className="flex flex-wrap items-center gap-x-4 text-body text-on-band-2">
+                  <span className="text-on-band">Parv Modi</span>
+                  <a
+                    href={FOUNDER_LINKEDIN}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Parv Modi on LinkedIn, opens in a new tab"
+                    className="inline-flex h-11 items-center text-on-band underline decoration-on-band-3 underline-offset-4 transition hover:decoration-on-band focus-visible:outline-on-band"
+                  >
+                    LinkedIn
+                  </a>
+                </dd>
+              </div>
+              <div className={`grid gap-2 py-5 lg:items-baseline ${columns}`}>
+                <dt className="text-section font-medium text-on-band lg:text-headline">What it is</dt>
+                <dd className="max-w-[38rem] text-body text-on-band-2">
+                  An early product that shows the arithmetic of your goals. It is not a SEBI-registered investment
+                  adviser and does not give investment advice.
+                </dd>
+              </div>
+              <div className={`grid gap-2 py-5 lg:items-baseline ${columns}`}>
+                <dt className="text-section font-medium text-on-band lg:text-headline">Your data</dt>
+                <dd className="max-w-[38rem] text-body text-on-band-2">
+                  <ul className="space-y-2">
+                    <li>Without an account, your plan stays in your browser.</li>
+                    <li>With one, it is saved to NoBroke's database and follows you to other devices.</li>
+                    <li>Passwords are stored hashed, never as typed.</li>
+                    <li>NoBroke does not connect to your bank or broker and cannot move your money.</li>
+                  </ul>
+                </dd>
+              </div>
+            </dl>
           </div>
+        </section>
+      </main>
+
+      <footer>
+        <div className={`${container} grid gap-6 py-10 ${columns}`}>
+          <div>
+            <Logo />
+            <p className="mt-3 text-support text-text-2">Wealth, minus the noise. Built in Bharat.</p>
+          </div>
+          <p className="max-w-[38rem] text-support text-text-2">
+            NoBroke is an early prototype and is not a SEBI-registered investment adviser. Projections are
+            illustrative, use simplified assumptions, and are not investment advice.
+          </p>
         </div>
       </footer>
 

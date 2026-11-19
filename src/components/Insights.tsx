@@ -125,7 +125,7 @@ function Mark({ reason }: { reason: Reason }) {
   }
   if (reason.kind === "caution") {
     return (
-      <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden className="flex-none text-cau">
+      <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" role="img" aria-label="Worth a second look" className="flex-none text-cau">
         <circle cx="8" cy="8" r="5.75" />
         <path d="M8 5v3.4" />
         <path d="M8 10.9v.1" />
@@ -147,11 +147,8 @@ export default function Insights({ r, inputs, expanded = true }: { r: PlanResult
             <Mark reason={x} />
           </span>
           <div className="min-w-0">
-            <p className="text-body font-medium text-text">
-              {x.title}
-              {x.kind === "caution" && <span className="sr-only"> (worth a second look)</span>}
-            </p>
-            <p className="num mt-0.5 text-support text-text-2">{x.message}</p>
+            <p className="text-body font-medium text-text">{x.title}</p>
+            <p className="num mt-0.5 max-w-[68ch] text-pretty text-support text-text-2">{x.message}</p>
           </div>
         </li>
       ))}

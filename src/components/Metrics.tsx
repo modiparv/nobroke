@@ -110,7 +110,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
         <div>
           <h3 className={label}>Ways to close the gap</h3>
           {!canFix && (
-            <p className="num mt-1 text-support text-text-2">
+            <p className="num mt-1 max-w-[68ch] text-pretty text-support text-text-2">
               This goal needs {inr(options.monthly)} a month. {inr(available)} is free after your other goals.
             </p>
           )}
@@ -159,12 +159,12 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
           </div>
         </div>
       )}
-      {context && <p className="text-support text-text-2">{context}</p>}
+      {context && <p className="max-w-[68ch] text-pretty text-support text-text-2">{context}</p>}
 
       {/* Why a goal is getting nothing: the money is going to nearer goals
           first. Said plainly, with the year the first of them is done. */}
       {starved && (
-        <p className="num text-support text-text-2">
+        <p className="num max-w-[68ch] text-pretty text-support text-text-2">
           No money reaches this goal yet. Your {inr(monthlyPool)} a month goes to {listNames(ahead)} first. It starts here when the
           monthly amount goes up, or once {ahead[0].name} is done ({ahead[0].year}).
         </p>
@@ -172,11 +172,11 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
 
       {/* The small facts, as one sentence. The technical numbers sit behind a tap. */}
       <div>
-        <p className="num text-support text-text-2">
+        <p className="num text-pretty text-support text-text-2">
           {goal.horizonYears} {goal.horizonYears === 1 ? "year" : "years"} to go, at {inr(monthly)} a month. Assumes{" "}
           {formatPct(r.blendedReturn, 1)} growth a year.
         </p>
-        <button type="button" onClick={() => setShowNumbers((v) => !v)} aria-expanded={showNumbers} className={`${textLink} mt-0.5 inline-flex h-9 items-center`}>
+        <button type="button" onClick={() => setShowNumbers((v) => !v)} aria-expanded={showNumbers} className={`${textLink} inline-flex h-11 items-center`}>
           {showNumbers ? "Hide the maths" : "Show the maths"}
         </button>
         {showNumbers && (

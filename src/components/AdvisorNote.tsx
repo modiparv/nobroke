@@ -34,7 +34,7 @@ export default function AdvisorNote() {
     const cover = coverMonths < 1 ? "under a month" : `only ${whole} ${whole === 1 ? "month" : "months"}`;
     notes.push({
       id: "emergency",
-      text: `Your cash covers ${cover} of expenses. The plan looks for ${band} in the bank. For you that is ${inr(RUNWAY_FLOOR_MONTHS * s.monthlyExpenses)} to ${inr(RUNWAY_COMFORT_MONTHS * s.monthlyExpenses)}.`,
+      text: `Your cash covers ${cover} of expenses. The plan looks for ${band} in the bank, which is ${inr(RUNWAY_FLOOR_MONTHS * s.monthlyExpenses)} to ${inr(RUNWAY_COMFORT_MONTHS * s.monthlyExpenses)}.`,
       cta: "Add to cash",
       // The cash sheet, with how long the cash lasts shown live.
       onCta: () => actions.openSheet({ kind: "cash" }),
@@ -63,26 +63,28 @@ export default function AdvisorNote() {
   // A tinted strip, not another white card: it is a remark beside the plan,
   // and it should not compete with the goal it sits above.
   return (
-    <div role="note" className="relative rounded-control bg-surface-2 py-3 pl-4 pr-12 sm:flex sm:items-center sm:gap-4">
-      <div className="min-w-0 flex-1">
+    <div role="note" className="rounded-control bg-surface-2 px-4 pb-3.5 pt-1">
+      <div className="flex items-center justify-between gap-3">
         <span className="text-support font-medium text-text-2">Note</span>
-        <p className="num mt-0.5 text-body text-text">{note.text}</p>
-      </div>
-      {note.cta && (
-        <button type="button" onClick={note.onCta} className={`${btnGhost} mt-3 flex-none bg-surface sm:mt-0`}>
-          {note.cta}
+        <button
+          type="button"
+          onClick={() => setDismissed((d) => [...d, note.id])}
+          aria-label="Dismiss note"
+          className="-mr-3 grid h-11 w-11 flex-none place-items-center rounded-control text-text-2 transition hover:text-text"
+        >
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+            <path d="M4 4l8 8M12 4l-8 8" />
+          </svg>
         </button>
-      )}
-      <button
-        type="button"
-        onClick={() => setDismissed((d) => [...d, note.id])}
-        aria-label="Dismiss note"
-        className="absolute right-0.5 top-0.5 grid h-11 w-11 place-items-center rounded-control text-text-2 transition hover:text-text"
-      >
-        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
-          <path d="M4 4l8 8M12 4l-8 8" />
-        </svg>
-      </button>
+      </div>
+      <div className="-mt-1.5 sm:flex sm:items-end sm:justify-between sm:gap-6">
+        <p className="num max-w-[62ch] text-pretty text-body text-text">{note.text}</p>
+        {note.cta && (
+          <button type="button" onClick={note.onCta} className={`${btnGhost} mt-3 flex-none bg-surface sm:mt-0`}>
+            {note.cta}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

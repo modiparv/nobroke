@@ -10,7 +10,7 @@ import { GAP_TEXT } from "../ui";
 import Chart from "./Chart";
 import Metrics from "./Metrics";
 import Insights from "./Insights";
-import MoneyInput, { StepGlyph, fieldLabel, fieldRow, fieldShell, fieldStep } from "./MoneyInput";
+import MoneyInput, { StepGlyph, fieldCompact, fieldLabel, fieldRow, fieldShell, fieldStep } from "./MoneyInput";
 import StatusPill from "./StatusPill";
 
 const BASE_YEAR = new Date().getFullYear();
@@ -102,15 +102,13 @@ export function GoalTile({
         onDrop();
       }}
       title={`${g.name}, priority ${rank}. Tap to open, drag to reorder.`}
-      className={`relative block w-full px-3 py-3.5 text-left transition-colors sm:px-4 ${ground} ${isDragging ? "opacity-50" : ""}`}
+      // The focus ring sits inside the row: the list clips anything outside it.
+      className={`relative block w-full px-3 py-3.5 text-left transition-colors focus-visible:-outline-offset-2 sm:px-4 ${ground} ${isDragging ? "opacity-50" : ""}`}
     >
       {/* The selected row: an ink bar on its left edge, so it also reads in greyscale. */}
       {selected && <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-text" />}
       <span className="grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-x-2 md:grid-cols-[1.25rem_minmax(0,5fr)_minmax(0,7fr)_7.5rem] md:gap-x-5">
-        <span className="num col-start-1 row-start-1 text-support text-text-2">
-          {rank}
-          <span className="sr-only">. </span>
-        </span>
+        <span className="num col-start-1 row-start-1 text-support text-text-2">{rank}</span>
         <span className="col-span-2 col-start-2 row-start-1 break-words text-row font-medium text-text md:col-span-1 md:col-start-2">{g.name}</span>
         <span className="num col-start-2 row-start-2 mt-0.5 whitespace-nowrap text-support text-text-2">
           {formatINR(g.targetToday)} by {year}
@@ -182,7 +180,7 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             {/* The year wears the money fields' shell, so the three line up. */}
             <div className={`min-w-0 ${fieldRow}`}>
               <div className={`mb-1.5 sm:mb-0 ${fieldLabel}`}>By when</div>
-              <div className={`${fieldShell} h-11`}>
+              <div className={`${fieldShell} ${fieldCompact}`}>
                 <span className="num flex min-w-0 flex-1 items-center pl-3 text-row font-medium text-text" aria-live="polite">
                   {year}
                 </span>
@@ -251,7 +249,11 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             <h3 className={label}>How {g.name} grows</h3>
             {/* Every goal is funded from the one mix: the funds list on the
                 Portfolio tab is where this money is invested today. */}
-            <button type="button" onClick={() => actions.setTab("portfolio", { focus: FOCUS.funds })} className={`${textLink} whitespace-nowrap`}>
+            <button
+              type="button"
+              onClick={() => actions.setTab("portfolio", { focus: FOCUS.funds })}
+              className={`${textLink} -my-3 inline-flex h-11 items-center whitespace-nowrap`}
+            >
               Where this money is invested
             </button>
           </div>
@@ -270,7 +272,7 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             type="button"
             onClick={() => setShowWhy((v) => !v)}
             aria-expanded={showWhy}
-            className={`${textLink} mt-1 inline-flex h-9 items-center`}
+            className={`${textLink} inline-flex h-11 items-center`}
           >
             {showWhy ? "Less" : "More"}
           </button>
@@ -286,7 +288,7 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
             maxLength={2000}
             aria-label={`Notes for ${g.name}`}
             placeholder='Notes, e.g. "Papa is paying half. Flights are booked."'
-            className="mt-2 w-full resize-none rounded-control border border-line-2 bg-surface px-3 py-2.5 text-body text-text outline-none transition focus:border-text focus:ring-1 focus:ring-text [field-sizing:content]"
+            className="mt-2 block min-h-[5.5rem] w-full resize-none rounded-control border border-line-2 bg-surface px-3 py-2.5 text-body text-text outline-none transition focus:border-text focus:ring-1 focus:ring-text focus-visible:outline-none [field-sizing:content]"
           />
         </div>
 

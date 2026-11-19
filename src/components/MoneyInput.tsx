@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatINR } from "../lib/format";
+import { typedAmount } from "../lib/typedAmount";
 
 /**
  * A money field: type the exact rupee amount (grouped the Indian way) or
@@ -16,9 +17,11 @@ export const fieldLabel = "text-support text-text-2";
     a short form reads as a table, with every field starting on one line. */
 export const fieldRow = "sm:grid sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:items-center sm:gap-x-4";
 export const fieldShell =
-  "flex items-stretch overflow-hidden rounded-control border border-line-2 bg-surface transition focus-within:border-text focus-within:ring-1 focus-within:ring-text";
+  "relative flex items-stretch overflow-hidden rounded-control border border-line-2 bg-surface";
+/** The compact height: 46px, so the steppers inside the 1px border are a full 44px. */
+export const fieldCompact = "h-[2.875rem]";
 export const fieldStep =
-  "grid w-11 flex-none place-items-center border-l border-line text-text-2 transition hover:bg-surface-2 hover:text-text disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-2";
+  "grid w-11 flex-none place-items-center border-l border-line text-text-2 transition hover:bg-surface-2 hover:text-text focus-visible:-outline-offset-2 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-2";
 
 /** The minus and plus marks on a stepper, drawn so both sit on one axis. */
 export function StepGlyph({ plus }: { plus?: boolean }) {
@@ -58,12 +61,13 @@ export default function MoneyInput({
 }) {
   const clamp = (v: number) => Math.max(min, Math.min(max, Math.round(v)));
   const set = (v: number) => onChange(clamp(v));
-  // While the digits typed so far are below the field's minimum, they are
-  // held here and nothing is saved, so "7" on the way to "7,500" is not
-  // snapped up to the minimum mid-word. Leaving the field drops them.
+  // Digits typed on the way to an amount can be below the field's minimum.
+  // They are held here and nothing is saved (lib/typedAmount). Leaving the
+  // field drops them and shows the saved amount again.
   const [draft, setDraft] = useState<string | null>(null);
   const shown = draft ?? (value > 0 ? value.toLocaleString("en-IN") : "");
-  const name = label ?? "amount";
+  // For the steppers' spoken names: "Decrease cash in the bank".
+  const name = label ? label.charAt(0).toLowerCase() + label.slice(1) : "amount";
 
   return (
     <div className={`min-w-0 ${row ? fieldRow : ""}`}>
@@ -73,7 +77,7 @@ export default function MoneyInput({
           {hint && <span className={fieldLabel}>{hint}</span>}
         </div>
       )}
-      <div className={`${fieldShell} ${compact ? "h-11" : "h-12"} ${disabled ? "opacity-50" : ""}`}>
+      <div className={`${fieldShell} ${compact ? fieldCompact : "h-[3.125rem]"} ${disabled ? "opacity-50" : ""}`}>
         <label className="flex min-w-0 flex-1 cursor-text items-center gap-1.5 pl-3 pr-2">
           <span className={`flex-none font-medium text-text-2 ${compact ? "text-row" : "text-section"}`} aria-hidden>
             ₹
@@ -85,20 +89,18 @@ export default function MoneyInput({
             value={shown}
             placeholder="0"
             onChange={(e) => {
-              const digits = e.target.value.replace(/[^\d]/g, "");
-              const n = Number(digits);
-              if (!Number.isFinite(n)) return;
-              if (n < min) {
-                setDraft(digits ? n.toLocaleString("en-IN") : "");
-                return;
-              }
+              const typed = typedAmount(e.target.value, min, max);
+              if ("hold" in typed) return setDraft(typed.hold);
               setDraft(null);
-              set(n);
+              onChange(typed.save);
             }}
             onBlur={() => setDraft(null)}
             aria-label={label}
-            className={`num h-full w-full min-w-0 bg-transparent font-medium text-text outline-none ${compact ? "text-row" : "text-section"}`}
+            className={`peer num h-full w-full min-w-0 bg-transparent font-medium text-text outline-none focus-visible:outline-none ${compact ? "text-row" : "text-section"}`}
           />
+          {/* Typing in the field rings the whole shell in ink. A stepper
+              gets its own ring, so the two never show at once. */}
+          <span aria-hidden className="pointer-events-none absolute inset-0 rounded-control peer-focus:ring-2 peer-focus:ring-inset peer-focus:ring-text" />
         </label>
         <button
           type="button"
@@ -139,7 +141,7 @@ export default function MoneyInput({
                   setDraft(null);
                   set(q);
                 }}
-                className={`num inline-flex h-9 items-center whitespace-nowrap rounded-full border px-3 text-support transition ${
+                className={`num inline-flex h-11 items-center whitespace-nowrap rounded-full border px-3.5 text-support transition ${
                   on ? "border-accent-fill bg-accent-fill text-on-accent" : "border-line-2 text-text hover:border-text"
                 }`}
               >

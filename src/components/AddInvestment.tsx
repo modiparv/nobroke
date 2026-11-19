@@ -39,7 +39,7 @@ export function SheetFrame({ title, intro, onClose, children }: { title: string;
       <div
         ref={panel}
         tabIndex={-1}
-        className="fade-up relative max-h-[92dvh] w-full overflow-y-auto overscroll-contain rounded-t-screen border border-line bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 outline-none sm:max-w-md sm:rounded-card sm:pb-5"
+        className="fade-up relative max-h-[92dvh] w-full overflow-y-auto overscroll-contain rounded-t-screen border border-line bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 outline-none focus-visible:outline-none sm:max-w-md sm:rounded-card sm:pb-5"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 pt-2">
@@ -66,7 +66,7 @@ export function SheetFrame({ title, intro, onClose, children }: { title: string;
 
 /** A typed field in a sheet: 16px text (so an iPhone does not zoom in), 48px tall. */
 const input =
-  "mt-1.5 h-12 w-full rounded-control border border-line-2 bg-surface px-3 text-body text-text outline-none transition focus:border-text focus:ring-1 focus:ring-text";
+  "mt-1.5 h-12 w-full rounded-control border border-line-2 bg-surface px-3 text-body text-text outline-none transition focus:border-text focus:ring-1 focus:ring-text focus-visible:outline-none";
 
 /**
  * Add one investment you already hold: its type, its name, what it is

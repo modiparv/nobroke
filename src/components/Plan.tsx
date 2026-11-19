@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { GOALS } from "../lib/goals";
 import { computePlan } from "../lib/finance";
 import { formatINR } from "../lib/format";
+import { FOCUS } from "../lib/links";
 import { runwayLabel, runwayMonths } from "../lib/runway";
 import { actions, goalsByPriority, holdingsTotal, planInputsForGoal, totalCapital, useStore } from "../store";
-import { btnPrimary, card, sectionLabel } from "../ui";
+import { btnPrimary, card } from "../ui";
+import { SheetFrame } from "./AddInvestment";
 import AdvisorNote from "./AdvisorNote";
 import AppHeader from "./AppHeader";
 import { GoalDetail, GoalTile } from "./GoalCard";
@@ -15,78 +17,71 @@ import PortfolioTab from "./PortfolioTab";
 
 const inrDigits = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 
-/** Hero figure, one clean weight and colour. */
+const label = "text-support font-medium text-text-2";
+const textLink = "text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2";
+/** A quiet button on the night band: outlined, never filled. The focus ring
+    turns light here, because the page's ink ring would vanish on night. */
+const nightGhost =
+  "inline-flex h-11 w-full items-center justify-center whitespace-nowrap rounded-control border border-on-night-3 px-4 text-support font-medium text-on-night transition hover:border-on-night hover:bg-on-night/10 focus-visible:outline-on-night sm:w-auto";
+
+/** The band's one big figure, written out in full. */
 function HeroAmount({ value }: { value: number }) {
   return (
-    <div className="num mt-1.5 text-3xl font-medium tracking-[-0.02em] text-on-night sm:text-4xl">
+    <p className="num mt-1 text-[2.25rem] font-medium leading-[1.1] tracking-[-0.025em] text-on-night sm:text-[2.75rem]">
       ₹{inrDigits.format(Math.max(0, Math.round(value)))}
-    </div>
+    </p>
   );
 }
 
-function Pill({ label, onClick, accent, onBand }: { label: string; onClick: () => void; accent?: boolean; onBand?: boolean }) {
-  const tone = accent
-    ? "bg-on-night text-night hover:opacity-85"
-    : onBand
-      ? "border border-on-night-3/60 text-on-night hover:border-on-night-2"
-      : "border border-line text-text hover:border-line-2";
-  return (
-    <button onClick={onClick} className={`inline-flex h-9 items-center rounded-full px-3.5 text-support transition ${tone}`}>
-      {label}
-    </button>
-  );
-}
-
-function AddGoal({ onAdd, onBand }: { onAdd: (id: string) => void; onBand?: boolean }) {
+/** Add a goal: a quiet button on the band that opens the list of goals not
+    in the plan yet, each with the amount and date it starts with. */
+function AddGoal({ onAdd }: { onAdd: (id: string) => void }) {
   const s = useStore();
   const [open, setOpen] = useState(false);
   const remaining = GOALS.filter((g) => !s.goals.some((x) => x.id === g.id));
 
   return (
-    <span className="relative inline-block">
-      <Pill label="New goal" onBand={onBand} onClick={() => setOpen((o) => !o)} />
+    <>
+      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className={nightGhost}>
+        New goal
+      </button>
       {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          {/* Anchored to the pill's left edge, where the band has room; on a
-              phone it becomes a sheet above the copilot bar. Each row shows
-              what the goal is and roughly what it costs, not just a name. */}
-          <div className="absolute left-0 top-[calc(100%+8px)] z-20 flex max-h-80 w-80 flex-col overflow-y-auto rounded-card border border-line bg-surface p-1.5 max-sm:fixed max-sm:inset-x-3 max-sm:bottom-24 max-sm:top-auto max-sm:w-auto">
-            {remaining.length === 0 && <span className="p-3 text-center text-support text-text-2">All goals added</span>}
-            {remaining.map((g) => (
-              <button
-                key={g.id}
-                onClick={() => {
-                  onAdd(g.id);
-                  setOpen(false);
-                }}
-                className="flex items-start gap-2.5 rounded-control px-2.5 py-2 text-left transition hover:bg-surface-2"
-              >
-                <span className="pt-px text-base leading-none" aria-hidden>
-                  {g.emoji}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-support font-medium text-text">{g.name}</span>
-                  <span className="block text-support text-text-2">{g.blurb}</span>
-                </span>
-                <span className="num flex-none pt-px text-support text-text-2">
-                  {formatINR(g.targetToday)}, {g.horizonYears} {g.horizonYears === 1 ? "year" : "years"}
-                </span>
-              </button>
-            ))}
-          </div>
-        </>
+        <SheetFrame title="New goal" intro="Each goal starts with the amount and date shown. You can change both." onClose={() => setOpen(false)}>
+          {remaining.length === 0 ? (
+            <p className="text-body text-text-2">Every goal is already in your plan.</p>
+          ) : (
+            <ul className="-mt-1 divide-y divide-line border-y border-line">
+              {remaining.map((g) => (
+                <li key={g.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onAdd(g.id);
+                      setOpen(false);
+                    }}
+                    className="-mx-2 flex min-h-12 w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2 text-left transition hover:bg-surface-2"
+                  >
+                    <span className="min-w-0 text-body font-medium text-text">{g.name}</span>
+                    <span className="num flex-none whitespace-nowrap text-support text-text-2">
+                      {formatINR(g.targetToday)} in {g.horizonYears} {g.horizonYears === 1 ? "year" : "years"}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SheetFrame>
       )}
-    </span>
+    </>
   );
 }
 
 /**
- * The plan screen, master–detail. The night band carries the numbers and
- * every trajectory. Beneath it, ALL goals sit in one row of tiles —
- * comparable at a glance, draggable to reorder — with the selected goal's
- * full workbench below on the left and the portfolio glimpse beside it on
- * the right. Tapping a tile, or a goal in the glimpse's heatmap, swaps the
+ * The plan screen, master and detail. The night band carries the numbers
+ * and every goal's path. Beneath it, every goal is one row of a single
+ * list (comparable line by line, draggable to reorder), with the selected
+ * goal's full workbench below on the left and the portfolio glimpse beside
+ * it on the right. Tapping a row, or a goal in the glimpse, swaps the
  * workbench; nothing ever shoves the list around.
  */
 export default function Plan() {
@@ -95,7 +90,7 @@ export default function Plan() {
 
   const [openId, setOpenId] = useState<string>(() => s.currentGoalId);
 
-  // The glimpse's "By goal" tiles call setCurrentGoal; opening that goal here
+  // The glimpse's "By goal" rows call setCurrentGoal; opening that goal here
   // is what makes the two panes feel like ONE synced view.
   useEffect(() => {
     if (s.currentGoalId) setOpenId(s.currentGoalId);
@@ -117,14 +112,20 @@ export default function Plan() {
     actions.setCurrentGoal(id);
     setOpenId(id);
   };
+  // From the band, the goal's workbench is a screen or two below: open it
+  // AND go there, so the tap visibly does something.
+  const showGoal = (id: string) => {
+    openGoal(id);
+    actions.setTab("plan", { focus: FOCUS.goalDetail });
+  };
   // The workbench always shows something: the selected goal, else the first.
   const detailGoal = ordered.find((g) => g.id === openId) ?? ordered[0];
   const addGoal = (id: string) => {
     actions.addGoal(id);
-    setOpenId(id);
+    showGoal(id);
   };
   const del = (g: { id: string; name: string }) => {
-    if (window.confirm(`Remove "${g.name}"? Its money is shared across your other goals.`)) {
+    if (window.confirm(`Delete "${g.name}"? Its money goes to your other goals.`)) {
       actions.removeGoal(g.id);
       setOpenId("");
     }
@@ -152,144 +153,152 @@ export default function Plan() {
     );
   }
 
+  // The band's small facts, one per line: the words on the left, the
+  // figure on the right, so three facts or four line up the same way.
+  const facts = [
+    { label: "In the bank", text: formatINR(s.currentSavings) },
+    { label: "Invested", text: formatINR(holdingsTotal(s)) },
+    { label: "Added every month", text: formatINR(s.monthlySip) },
+    // Months of expenses the cash would carry, by the same rule as the
+    // note and the cash sheet (lib/runway).
+    ...(s.monthlyExpenses > 0 ? [{ label: "Cash lasts", text: runwayLabel(runwayMonths(s.currentSavings, s.monthlyExpenses)) }] : []),
+  ];
+
   return (
     <div className="min-h-screen bg-bg">
       <AppHeader />
       <div key="plan" className="fade-up">
+        {/* The overview band: night ground carrying the numbers AND the
+            goals' paths. The chart is the band's second column; on small
+            screens it stacks beneath the numbers. */}
+        <section className="bg-night">
+          <div className="mx-auto grid max-w-page gap-x-10 gap-y-7 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-stretch">
+            <div className="flex h-full flex-col">
+              <div>
+                <p className="text-support text-on-night-2">Saved so far</p>
+                <HeroAmount value={totalCapital(s)} />
+                <p className="num mt-2 text-body text-on-night">
+                  {s.goals.length
+                    ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track`
+                    : "Add a goal to start your plan"}
+                </p>
+              </div>
 
-      {/* The overview band: night ground carrying the numbers AND the goal
-          trajectories, Decade-style. The dark chart is the band's second
-          column; on small screens it stacks beneath the stats. */}
-      <section className="bg-night">
-        <div className="mx-auto grid max-w-page gap-x-10 gap-y-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-stretch">
-          <div className="flex h-full flex-col">
-            <div>
-              <span className="text-eyebrow text-on-night-2">Saved so far</span>
-              <HeroAmount value={totalCapital(s)} />
-              <p className="mt-2 flex items-center gap-2 text-support text-on-night-2">
-                {s.goals.length > 0 && (
-                  <span
-                    aria-hidden
-                    className={`live-dot h-1.5 w-1.5 flex-none rounded-full ${
-                      onTrackCount === s.goals.length ? "bg-positive" : "bg-cau"
-                    }`}
-                  />
-                )}
-                {s.goals.length
-                  ? `${onTrackCount} of ${s.goals.length} ${s.goals.length === 1 ? "goal" : "goals"} on track`
-                  : "Add a goal to start your plan"}
-              </p>
-            </div>
+              <div className="min-h-5 flex-1" />
 
-            <div className="flex-1" />
+              <dl className="divide-y divide-on-night-3/30 border-y border-on-night-3/30 sm:max-w-md lg:max-w-none">
+                {facts.map(({ label: name, text }) => (
+                  <div key={name} className="flex items-baseline justify-between gap-4 py-2">
+                    <dt className="text-support text-on-night-2">{name}</dt>
+                    <dd className="num whitespace-nowrap text-row font-medium text-on-night">{text}</dd>
+                  </div>
+                ))}
+              </dl>
 
-            {/* The breakup, inline in the band on a hairline divider. */}
-            <dl className="flex flex-wrap items-stretch gap-x-6 gap-y-2 border-t border-on-night-3/40 pt-3">
-              {[
-                { label: "In the bank", text: formatINR(s.currentSavings) },
-                { label: "Invested", text: formatINR(holdingsTotal(s)) },
-                { label: "Added every month", text: formatINR(s.monthlySip) },
-                // Months of expenses the cash would carry: the Protect layer
-                // as a number, the same rule as the advisor note and the
-                // cash sheet (lib/runway).
-                ...(s.monthlyExpenses > 0
-                  ? [{ label: "Cash lasts", text: runwayLabel(runwayMonths(s.currentSavings, s.monthlyExpenses)) }]
-                  : []),
-              ].map(({ label, text }) => (
-                <div key={label}>
-                  <dt className="text-eyebrow text-on-night-3">{label}</dt>
-                  <dd className="num mt-0.5 text-support font-medium text-on-night">{text}</dd>
-                </div>
-              ))}
-            </dl>
-
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <Pill label="Add money" onBand onClick={() => actions.openSheet({ kind: "add_money" })} />
-              <AddGoal onAdd={addGoal} onBand />
-              {firstOffTrack && (
-                <Pill label={`Fix ${firstOffTrack.name.toLowerCase()}`} accent onClick={() => openGoal(firstOffTrack.id)} />
-              )}
-            </div>
-          </div>
-
-          {s.goals.length > 0 && (
-            <div className="min-w-0 lg:border-l lg:border-on-night-3/40 lg:pl-10">
-              <GoalsChart variant="night" />
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
-      <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
-        <div className="flex flex-col gap-4 py-5">
-          {s.goals.length === 0 ? (
-            <div className={`${card} py-10 text-center`}>
-              <p className="text-row font-medium">No goals yet</p>
-              <p className="mx-auto mt-1 max-w-xs text-support text-text-2">Add your first goal, or start a fresh plan.</p>
-              <button className={`${btnPrimary} mt-4`} onClick={actions.startOnboarding}>
-                Start a new plan
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* Every goal at once: one row of tiles, priority order. */}
-              <div className="flex items-center justify-between gap-3">
-                <span className={sectionLabel}>Your goals, most urgent first</span>
-                {s.goals.length > 1 && (
+              {/* One main button: fix the first goal that is short. Adding
+                  money and adding a goal stay quiet beside it. */}
+              <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                {firstOffTrack && (
                   <button
                     type="button"
-                    onClick={actions.recommendGoalSplit}
-                    className="text-support font-medium text-text underline underline-offset-2 transition hover:text-text-2"
+                    onClick={() => showGoal(firstOffTrack.id)}
+                    className={`${btnPrimary} w-full focus-visible:outline-on-night sm:w-auto`}
                   >
-                    Split my money for me
+                    Fix {firstOffTrack.name.toLowerCase()}
                   </button>
                 )}
-              </div>
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4" aria-label="Your goals">
-                {ordered.map((g, i) => (
-                  <GoalTile
-                    key={g.id}
-                    g={g}
-                    rank={i + 1}
-                    selected={detailGoal?.id === g.id}
-                    onSelect={() => openGoal(g.id)}
-                    dragActive={dragId !== null}
-                    isDragging={dragId === g.id}
-                    isOver={overId === g.id && dragId !== g.id}
-                    onDragStart={() => setDragId(g.id)}
-                    onDragEnd={() => {
-                      setDragId(null);
-                      setOverId(null);
-                    }}
-                    onDragOver={() => {
-                      if (overId !== g.id) setOverId(g.id);
-                    }}
-                    onDrop={() => {
-                      if (dragId && dragId !== g.id) actions.reorderGoals(dragId, g.id);
-                      setDragId(null);
-                      setOverId(null);
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* The selected goal's workbench, with the portfolio beside it. */}
-              <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-                <div className="flex min-w-0 flex-col gap-4">
-                  <AdvisorNote />
-                  {detailGoal && <GoalDetail g={detailGoal} onDelete={() => del(detailGoal)} />}
+                <div className="grid grid-cols-2 gap-2 sm:flex">
+                  <button type="button" onClick={() => actions.openSheet({ kind: "add_money" })} className={nightGhost}>
+                    Add money
+                  </button>
+                  <AddGoal onAdd={addGoal} />
                 </div>
-                <PortfolioGlimpse />
               </div>
-            </>
-          )}
-        </div>
+            </div>
 
-        <p className="pb-2 text-center text-support text-text-2">
-          Projections are illustrative and not investment advice.
-        </p>
-      </div>
+            {s.goals.length > 0 && (
+              <div className="min-w-0 lg:border-l lg:border-on-night-3/40 lg:pl-10">
+                <GoalsChart variant="night" />
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 88px of bottom padding keeps the sticky copilot clear of the content. */}
+        <div className="mx-auto max-w-page px-4 pb-[88px] sm:px-6">
+          <div className="flex flex-col gap-5 py-6">
+            {s.goals.length === 0 ? (
+              <div className={`${card} py-10 text-center`}>
+                <h2 className="text-section font-medium text-text">No goals yet</h2>
+                <p className="mx-auto mt-1 max-w-xs text-support text-text-2">Add one with New goal above, or start a fresh plan.</p>
+                <button type="button" className={`${btnPrimary} mt-4`} onClick={actions.startOnboarding}>
+                  Start a new plan
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Every goal at once: one list, one row per goal, in priority
+                    order. A row is as wide as the list, so no goal is left
+                    on its own in a half-empty grid. */}
+                <section>
+                  <h2 className={label}>Your goals, most urgent first</h2>
+                  <div className="mt-2 overflow-hidden rounded-card border border-line bg-surface">
+                    <ol className="divide-y divide-line" aria-label="Your goals">
+                      {ordered.map((g, i) => (
+                        <li key={g.id}>
+                          <GoalTile
+                            g={g}
+                            rank={i + 1}
+                            selected={detailGoal?.id === g.id}
+                            onSelect={() => openGoal(g.id)}
+                            dragActive={dragId !== null}
+                            isDragging={dragId === g.id}
+                            isOver={overId === g.id && dragId !== g.id}
+                            onDragStart={() => setDragId(g.id)}
+                            onDragEnd={() => {
+                              setDragId(null);
+                              setOverId(null);
+                            }}
+                            onDragOver={() => {
+                              if (overId !== g.id) setOverId(g.id);
+                            }}
+                            onDrop={() => {
+                              if (dragId && dragId !== g.id) actions.reorderGoals(dragId, g.id);
+                              setDragId(null);
+                              setOverId(null);
+                            }}
+                          />
+                        </li>
+                      ))}
+                    </ol>
+                    {s.goals.length > 1 && (
+                      <div className="flex flex-wrap items-center justify-between gap-x-4 border-t border-line px-3 sm:px-4">
+                        <p className="text-pretty py-2.5 text-support text-text-2">
+                          Saved money covers these goals in order, top first.
+                          <span className="hidden md:inline"> Drag a goal to move it.</span>
+                        </p>
+                        <button type="button" onClick={actions.recommendGoalSplit} className={`${textLink} inline-flex h-11 items-center whitespace-nowrap`}>
+                          Split my money for me
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* The selected goal's workbench, with the portfolio beside it. */}
+                <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                  <div className="flex min-w-0 flex-col gap-4">
+                    <AdvisorNote />
+                    {detailGoal && <GoalDetail g={detailGoal} onDelete={() => del(detailGoal)} />}
+                  </div>
+                  <PortfolioGlimpse />
+                </div>
+              </>
+            )}
+          </div>
+
+          <p className="pb-2 text-center text-support text-text-2">Projections are illustrative and not investment advice.</p>
+        </div>
       </div>
     </div>
   );

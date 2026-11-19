@@ -144,7 +144,7 @@ function CashSheet() {
               type="button"
               onClick={() => setCash((c) => Math.min(50000000, c + add))}
               aria-label={`Add ${formatINR(add)}`}
-              className="num inline-flex h-9 items-center whitespace-nowrap rounded-full border border-line-2 px-3 text-support text-text transition hover:border-text"
+              className="num inline-flex h-11 items-center whitespace-nowrap rounded-full border border-line-2 px-3.5 text-support text-text transition hover:border-text"
             >
               + {formatINR(add)}
             </button>
