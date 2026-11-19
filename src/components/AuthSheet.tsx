@@ -70,6 +70,11 @@ export function CredentialFields({
 }) {
   const field = `${fieldBase} ${FIELD_SHAPE[size]}`;
   const isNew = mode === "register";
+  // The main button stays off until the fields are valid, so a mistyped
+  // email needs saying somewhere. It is said under the field, once the
+  // person has left it, in the words the sign-in check itself uses.
+  const [emailLeft, setEmailLeft] = useState(false);
+  const emailProblem = emailLeft && email.trim() !== "" ? credentialError(email, "long enough", false) : null;
   // A new error is brought into view: with the keyboard open it can appear
   // below the visible part of the sheet.
   const errorBox = useRef<HTMLParagraphElement>(null);
@@ -89,8 +94,17 @@ export function CredentialFields({
           spellCheck={false}
           value={email}
           onChange={(e) => onEmail(e.target.value)}
+          onBlur={() => setEmailLeft(true)}
+          aria-invalid={emailProblem ? true : undefined}
+          aria-describedby={emailProblem ? `${idPrefix}-email-problem` : undefined}
           className={field}
         />
+        {emailProblem && (
+          <p id={`${idPrefix}-email-problem`} className="flex items-start gap-1.5 text-support text-neg">
+            <StatusIcon level="far_short" size={16} className="mt-0.5" />
+            <span>{emailProblem}</span>
+          </p>
+        )}
       </Field>
       <Field id={`${idPrefix}-password`} label="Password" hint={isNew ? "8 or more characters" : undefined}>
         <PasswordField

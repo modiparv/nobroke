@@ -63,7 +63,8 @@ async function slices(page, name, w, h = 1500, max = 3) {
     if (screens.includes('landing')) console.log(JSON.stringify({ screen: 'landing', width: w, ...(await page.evaluate(STATS)), heightPx: await slices(page, 'landing', w) }));
     await page.setViewportSize({ width: w, height: hgt });
     if (screens.includes('intake')) {
-      for (const step of [1, 2, 12]) {
+      // 1 is a choice step, 2 a money step, 11 the goals step, 14 the account step.
+      for (const step of [1, 2, 11, 14]) {
         await page.evaluate(`(async()=>{const m=await import(performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.split('?')[0].endsWith('/src/store.ts')).pop() || '/src/store.ts');m.actions.startOnboarding();m.actions.setStep(${step});})()`);
         await page.waitForTimeout(400);
         await page.screenshot({ path: `${tag}-intake${step}-${w}-1.png` });

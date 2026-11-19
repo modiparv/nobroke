@@ -13,7 +13,7 @@ import type { Goal } from "./types";
  * get "move to a later year" as a fix.
  */
 export const GOALS: Goal[] = [
-  { id: "emergency", name: "Emergency fund", emoji: "🛟", targetToday: 300000, horizonYears: 1, blurb: "Six months of your rent, EMIs and spending.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
+  { id: "emergency", name: "Emergency fund", emoji: "🛟", targetToday: 300000, horizonYears: 1, blurb: "About six months of your rent, EMIs and spending.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
   { id: "course", name: "Upskill or a course", emoji: "📚", targetToday: 50000, horizonYears: 1, blurb: "A certification, a bootcamp or a short course.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
   { id: "gadget", name: "New phone or laptop", emoji: "📱", targetToday: 100000, horizonYears: 1, blurb: "A phone or laptop, paid for in full.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },
   { id: "bike", name: "Bike or scooter", emoji: "🛵", targetToday: 100000, horizonYears: 1, blurb: "A two-wheeler, paid for in full.", defaultProfile: "steady", costSensitivity: "none", dateFixed: false },

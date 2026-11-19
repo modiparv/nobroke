@@ -35,7 +35,7 @@ const question =
   "text-balance font-serif text-[1.75rem] font-normal leading-[1.15] tracking-[-0.01em] text-text outline-none sm:text-[2.125rem]";
 const helper = "mt-3 max-w-[52ch] text-pretty text-body text-text-2";
 /** A second, quieter action under the main button: text, 44px to tap. */
-const quietLink = "inline-flex min-h-11 items-center text-support transition-colors";
+const quietLink = "inline-flex min-h-11 items-center text-left text-support transition-colors";
 /** The most digits a rupee field takes: enough for thousands of crores, and
     short enough that the amount always fits its field on a 360px phone. */
 const MAX_DIGITS = 12;
@@ -220,7 +220,8 @@ function AccountStep({ step }: { step: Step }) {
           onInvite={setInvite}
           error={error}
         />
-        <button type="submit" disabled={invalid} aria-disabled={busy} className={`${btnIntake} mt-1 w-full`}>
+        {/* The longest label in the intake: it may wrap when the phone's text size is turned up. */}
+        <button type="submit" disabled={invalid} aria-disabled={busy} className={`${btnIntake} mt-1 !h-auto min-h-14 w-full !whitespace-normal py-2`}>
           {busy ? "One moment…" : mode === "register" ? "Create account and see plan" : "Sign in and see plan"}
         </button>
       </form>
@@ -429,8 +430,6 @@ function GoalsStep({ step, onContinue }: { step: Step; onContinue: () => void })
   const s = useStore();
   const count = s.selectedGoalIds.length;
   const full = count >= 3;
-  // An odd catalogue would leave one tile alone in the last row: it takes the row.
-  const lastSpan = GOALS.length % 2 === 1 ? "col-span-2" : "";
 
   return (
     <div>
@@ -438,8 +437,12 @@ function GoalsStep({ step, onContinue }: { step: Step; onContinue: () => void })
         {step.title}
       </h1>
       <p className={helper}>{step.subtitle}</p>
-      <div role="group" aria-labelledby="intake-question" className="mt-6 grid grid-cols-2 gap-2">
-        {GOALS.map((g, k) => {
+      {/* Two tiles to a row on a phone. A tile is never narrower than its
+          longest word, so with the phone's text size turned up the grid
+          falls to one column instead of breaking a name. If the catalogue
+          ever has an odd count, the last tile takes its whole row. */}
+      <div role="group" aria-labelledby="intake-question" className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-2 sm:grid-cols-2">
+        {GOALS.map((g) => {
           const sel = s.selectedGoalIds.includes(g.id);
           const blocked = full && !sel;
           return (
@@ -449,9 +452,7 @@ function GoalsStep({ step, onContinue }: { step: Step; onContinue: () => void })
               onClick={() => actions.toggleGoal(g.id)}
               aria-pressed={sel}
               aria-disabled={blocked}
-              className={`flex min-h-[4.5rem] flex-col justify-between gap-1 rounded-2xl border px-3.5 py-3 text-left transition-colors sm:min-h-14 sm:flex-row sm:items-center sm:gap-3 sm:px-4 ${
-                k === GOALS.length - 1 ? lastSpan : ""
-              } ${
+              className={`flex min-h-[4.5rem] flex-col justify-between gap-1 rounded-2xl border px-3.5 py-3 text-left transition-colors last:odd:col-span-full sm:min-h-14 sm:flex-row sm:items-center sm:gap-3 sm:px-4 ${
                 sel
                   ? "border-accent-fill bg-accent-fill text-on-accent"
                   : blocked
@@ -473,12 +474,15 @@ function GoalsStep({ step, onContinue }: { step: Step; onContinue: () => void })
       {/* On a phone this bar is held to the bottom of the screen, and at the
           end of the list it sits flush on the bottom edge (the negative margin
           takes back the page's own bottom padding). */}
-      <div className="sticky bottom-0 -mx-5 -mb-10 mt-4 flex items-center justify-between gap-4 border-t border-line bg-bg px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:static sm:mx-0 sm:mb-0 sm:mt-6 sm:flex-row-reverse sm:justify-end sm:border-0 sm:p-0">
-        <p aria-live="polite" className="text-support text-text-2">
+      <div className="sticky bottom-0 -mx-5 -mb-10 mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line bg-bg px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:static sm:mx-0 sm:mb-0 sm:mt-6 sm:flex-row-reverse sm:flex-nowrap sm:justify-end sm:border-0 sm:p-0">
+        {/* Side by side while both fit. With the phone's text size turned
+            up, the button drops to its own full-width row instead of
+            squeezing the count. */}
+        <p aria-live="polite" className="flex-[1_1_9rem] text-support text-text-2 sm:flex-none">
           <span className="block text-body font-medium text-text">{count} of 3 picked</span>
           {full && <span className="block">Remove one to pick another.</span>}
         </p>
-        <button className={`${btnIntake} flex-none`} disabled={count === 0} onClick={onContinue}>
+        <button className={`${btnIntake} flex-[999_0_auto] sm:flex-[0_1_24rem]`} disabled={count === 0} onClick={onContinue}>
           Continue
         </button>
       </div>

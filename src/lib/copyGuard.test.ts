@@ -17,8 +17,8 @@ function screens(): Array<{ file: string; text: string }> {
   const files = (readdirSync(dir, { recursive: true }) as string[])
     .filter((f) => f.endsWith(".tsx"))
     .map((f) => `src/components/${f}`);
-  // The intake's questions live in a lib file, and a person reads every word of them.
-  return [...files, "src/lib/onboarding.ts", "index.html"].map((file) => ({ file, text: readFileSync(`${root}${file}`, "utf8") }));
+  // The intake's questions and the goals' descriptions live in lib files, and a person reads every word of them.
+  return [...files, "src/lib/onboarding.ts", "src/lib/goals.ts", "index.html"].map((file) => ({ file, text: readFileSync(`${root}${file}`, "utf8") }));
 }
 
 function assertAbsent(pattern: RegExp, why: string) {
