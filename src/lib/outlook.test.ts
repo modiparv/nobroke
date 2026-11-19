@@ -125,3 +125,22 @@ test("a goal no amount within the limit can reach keeps the starting figure", ()
   const shape: PlanShape = { ...base, goals: [abroad], goalOrder: ["education"], monthlySip: 0, capital: 0 };
   assert.equal(monthlyToPutOnTrack(shape, "education", 4000, 500, 6000), 4000);
 });
+
+test("the amount is found in a few tries, not by walking every step", () => {
+  // Six goals, and the one asked about comes last, so it needs well over a lakh a month.
+  // Walking there in ₹10 steps is more than ten thousand full plans, which takes seconds.
+  const goals = [trip, laptop, goal("car", 900000, 4), goal("wedding", 1500000, 3), goal("home", 2500000, 8), abroad];
+  const shape: PlanShape = { ...base, goals, goalOrder: goals.map((g) => g.id), monthlySip: 0, capital: 0 };
+  const began = performance.now();
+  const offered = monthlyToPutOnTrack(shape, "education", 0, 10);
+  // A split fixed by hand that gives the goal nothing: no amount works, and the answer is the starting figure.
+  const pinned: PlanShape = { ...shape, goalShares: { travel: 100, gadget: 0, education: 0, car: 0, home: 0, wedding: 0 } };
+  assert.equal(monthlyToPutOnTrack(pinned, "education", 4000, 10), 4000);
+  assert.ok(performance.now() - began < 1000, "the sheet must open at once");
+
+  // The answer is still the first amount that works.
+  assert.ok(offered > 100000);
+  const level = (m: number) => outlook({ ...shape, monthlySip: m }).find((i) => i.id === "education")!.level;
+  assert.equal(level(offered), "on_track");
+  assert.notEqual(level(offered - 10), "on_track");
+});

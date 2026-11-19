@@ -36,7 +36,8 @@ export function autoAllocation(horizonYears: number): { profile: RiskProfile; al
  *  name, so it is simply their own. One vocabulary on both tabs. */
 export function mixName(alloc: Allocation, profile: RiskProfile | null): string {
   if (allocationTotal(alloc) <= 0) return "Not invested yet";
-  return profile ? MODEL_PORTFOLIOS[profile].label : "Your own mix";
+  const preset = profile && Object.prototype.hasOwnProperty.call(MODEL_PORTFOLIOS, profile) ? MODEL_PORTFOLIOS[profile] : null;
+  return preset ? preset.label : "Your own mix";
 }
 
 /** Share of the portfolio in stocks, 0..1 (0 when nothing is invested). */

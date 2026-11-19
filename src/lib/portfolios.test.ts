@@ -10,6 +10,9 @@ test("the mix is named as the Portfolio tab names it", () => {
   assert.equal(mixName(MODEL_PORTFOLIOS.bold.allocation, "bold"), "Bold");
   // Edited by hand: no ready-made name fits.
   assert.equal(mixName({ icici_nifty: 50, hdfc_corp_bond: 50 }, null), "Your own mix");
+  // A saved plan can carry a name the app does not know. It must not break the page.
+  for (const odd of ["growth", "Balanced", "toString"])
+    assert.equal(mixName(MODEL_PORTFOLIOS.balanced.allocation, odd as never), "Your own mix");
 });
 
 test("equityShare is a clean fraction, zero when empty", () => {

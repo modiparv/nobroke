@@ -107,8 +107,16 @@ export function onTrackCount(items: GoalOutlook[]): number {
  */
 export function monthlyToPutOnTrack(shape: PlanShape, goalId: string, start: number, step = 500, max = 1_000_000): number {
   const from = Math.max(0, Math.round(start));
-  for (let monthly = from; monthly <= max; monthly += step) {
-    if (outlook({ ...shape, monthlySip: monthly }).find((i) => i.id === goalId)?.level === "on_track") return monthly;
+  const onTrackAt = (monthly: number) => outlook({ ...shape, monthlySip: monthly }).find((i) => i.id === goalId)?.level === "on_track";
+  if (from > max || onTrackAt(from)) return from;
+  // More a month never takes money from a goal, so the first amount that works can be found by halving.
+  let hi = Math.floor((max - from) / step);
+  if (hi < 1 || !onTrackAt(from + hi * step)) return from;
+  let lo = 0;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (onTrackAt(from + mid * step)) hi = mid;
+    else lo = mid;
   }
-  return from;
+  return from + hi * step;
 }

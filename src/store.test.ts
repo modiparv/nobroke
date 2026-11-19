@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { allocationTotal } from "./lib/finance.ts";
 import { FUND_MAP } from "./lib/funds.ts";
+import { mixName } from "./lib/portfolios.ts";
 import type { Profile } from "./lib/types";
 import { SIGN_IN_TEXT, actions, getState } from "./store.ts";
 
@@ -52,6 +53,40 @@ function intake(who: Person) {
 
 const lastReply = () => getState().chat[getState().chat.length - 1];
 const goalIds = () => getState().goals.map((g) => g.id).sort();
+const puts = () => calls.filter((c) => c.method === "PUT");
+const goalsSent = (put: Call) => (JSON.parse(put.body ?? "{}").state.goals as { id: string }[]).map((g) => g.id);
+const turn = () => new Promise((resolve) => setImmediate(resolve));
+/** Run a store promise to its end, letting its retry waits pass at once. Needs mocked timers. */
+async function settle<V>(t: { mock: { timers: { tick: (ms: number) => void } } }, p: Promise<V>): Promise<V> {
+  let done = false;
+  void p.finally(() => (done = true));
+  while (!done) {
+    await turn();
+    t.mock.timers.tick(3000);
+  }
+  return p;
+}
+/** A browser with nobody signed in and no plan. */
+async function freshBrowser() {
+  answer = () => ({ status: 200, body: { ok: true } });
+  await actions.signOut();
+  calls.length = 0;
+}
+/** The plan as an account would hold it, from what is on screen now. */
+function planAsSaved(stamp: number): Record<string, unknown> {
+  const s = getState();
+  return {
+    planUpdatedAt: stamp,
+    profile: s.profile,
+    goals: s.goals,
+    goalOrder: s.goalOrder,
+    selectedGoalIds: s.selectedGoalIds,
+    monthlySip: s.monthlySip,
+    portfolio: s.portfolio,
+    portfolioProfile: s.portfolioProfile,
+    portfolioCustom: s.portfolioCustom,
+  };
+}
 
 test("adding or removing a goal leaves the person's mix alone", () => {
   intake(aarav);
@@ -172,4 +207,145 @@ test("a sign-in whose saved plan could not be read is still owed that plan, and 
     const sent = (JSON.parse(put.body ?? "{}").state.goals as { id: string }[]).map((g) => g.id);
     assert.ok(!sent.includes("gadget"), "the scratch plan must never reach the account");
   }
+});
+
+test("leaving New plan by the logo puts the saved answers back, and a finished intake keeps its own", () => {
+  intake(rajesh);
+  const profile = getState().profile;
+  actions.startOnboarding();
+  actions.setProfileField("takeHome", 90000);
+  // Pressing New plan again on the intake must not replace the kept answers with the blanks.
+  actions.startOnboarding();
+  actions.goLanding();
+  assert.equal(getState().screen, "landing");
+  assert.deepEqual(getState().profile, profile);
+  // "Go to my plan" then prices a new goal from this family's numbers, as before.
+  actions.goPlan();
+  actions.addGoal("emergency");
+  assert.equal(getState().goals.find((g) => g.id === "emergency")?.targetToday, 620000);
+
+  // An intake that was finished is the plan now: nothing older comes back.
+  intake(aarav);
+  assert.equal(getState().intakeBackup, null);
+  actions.goLanding();
+  assert.equal(getState().profile.takeHome, 8000);
+});
+
+test("after the goals change, a step on the risk level never moves the mix the other way", () => {
+  intake(aarav);
+  assert.equal(getState().portfolioProfile, "steady");
+  // A goal twenty years out: the mix stays, and no longer matches what the goals would be given.
+  actions.addGoal("fire");
+  const level = getState().riskAppetite;
+  const mix = { ...getState().portfolio };
+  actions.setRiskAppetite(level - 5);
+  assert.equal(getState().riskAppetite, level - 5);
+  assert.equal(getState().portfolioProfile, "steady", "a lower level must not bring a riskier mix");
+  assert.deepEqual(getState().portfolio, mix);
+  // The level still does its job in its own direction.
+  actions.setRiskAppetite(level + 5);
+  assert.equal(getState().portfolioProfile, "bold");
+  actions.setRiskAppetite(0);
+  assert.equal(getState().portfolioProfile, "steady");
+});
+
+test("a fund lookup or the inflation feed at boot never makes an old copy look newer than the account's", async (t) => {
+  const opened = Date.now();
+  t.mock.timers.enable({ apis: ["Date", "setTimeout"], now: opened });
+  await freshBrowser();
+  // This browser's copy: the family's plan with a search fund, saved before funds were stored with plans.
+  intake(rajesh);
+  actions.setPortfolio({ icici_nifty: 50, live_999002: 50 }, null);
+  const stamp = getState().planUpdatedAt;
+  // The account's copy was edited on another device a little later: one goal fewer, more a month.
+  const accountPlan = { ...planAsSaved(stamp + 2000), goals: getState().goals.filter((g) => g.id !== "parents"), monthlySip: 45000, portfolio: { icici_nifty: 100 } };
+
+  // The next day this browser opens. The lookup and the feed both answer before the plan is read.
+  t.mock.timers.tick(86_400_000);
+  answer = (call) => {
+    if (call.url.includes("/api/instruments?code=999002"))
+      return { status: 200, body: { code: "999002", name: "A Liquid Fund - Direct - Growth", category: "Debt Scheme - Liquid Fund", fundHouse: "", nav: 10, navDate: null, cagr1y: null, cagr3y: null, cagr5y: null } };
+    if (call.url === "/api/plan" && call.method === "GET") return { status: 200, body: { ok: true, state: accountPlan } };
+    return { status: 200, body: { ok: true } };
+  };
+  await actions.restoreLiveFunds();
+  assert.equal(getState().liveFunds.live_999002?.assetClass, "debt", "the fund is still restored");
+  assert.equal(getState().planUpdatedAt, stamp, "a lookup is not an edit by the person");
+  actions.applyMacroInflation(5.2);
+  assert.equal(getState().inflation, 0.052);
+  assert.equal(getState().planUpdatedAt, stamp, "the feed is not an edit by the person");
+
+  assert.equal(await settle(t, actions.completeAuth({ id: "u2", email: "c@d.co" })), "ok");
+  assert.deepEqual(goalIds(), ["child", "fire"], "the account's newer plan is the one shown");
+  assert.equal(getState().monthlySip, 45000);
+  t.mock.timers.tick(5000);
+  await turn();
+  assert.deepEqual(puts(), [], "the old copy must never be sent to the account");
+});
+
+test("an explicit sign-in is owed the account's plan from its first moment, so a reconnect in the middle cannot push local work", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const user = { id: "u3", email: "e@f.co" };
+  await freshBrowser();
+  intake(rajesh);
+  const accountPlan = planAsSaved(getState().planUpdatedAt - 60_000);
+  // Newer scratch work on this device, then Sign in. The first read of the plan fails.
+  intake(aarav);
+  let planReads = 0;
+  answer = (call) => {
+    if (call.url === "/api/auth/me") return { status: 200, body: { ok: true, user } };
+    if (call.url === "/api/plan" && call.method === "GET")
+      return ++planReads === 1 ? { status: 500, body: { ok: false } } : { status: 200, body: { ok: true, state: accountPlan } };
+    return { status: 200, body: { ok: true } };
+  };
+  const signIn = actions.completeAuth(user, { preferServer: true });
+  await turn();
+  // While the sign-in waits to try again, the window regains focus and the heal path reads the plan itself.
+  await actions.revalidateSession();
+  await turn();
+  await turn();
+  assert.deepEqual(goalIds(), ["child", "fire", "parents"], "the account's plan wins, though the scratch plan is newer");
+  assert.equal(await settle(t, signIn), "ok");
+  t.mock.timers.tick(5000);
+  await turn();
+  for (const put of puts()) assert.ok(!goalsSent(put).includes("gadget"), "the scratch plan must never reach the account");
+  assert.deepEqual(goalIds(), ["child", "fire", "parents"]);
+  assert.equal(getState().owedAccountPlan, null);
+});
+
+test("a saved plan whose mix has a name the app does not know opens as a mix of the person's own", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  await freshBrowser();
+  intake(rajesh);
+  assert.equal(getState().portfolioProfile, "balanced");
+  const stamp = getState().planUpdatedAt + 1000;
+  // An older name, or a value changed by hand. It used to replace the whole app with the error card.
+  answer = (call) => (call.method === "GET" ? { status: 200, body: { ok: true, state: { ...planAsSaved(stamp), portfolioProfile: "growth" } } } : { status: 200, body: { ok: true } });
+  assert.equal(await settle(t, actions.completeAuth({ id: "u4", email: "g@h.co" })), "ok");
+  assert.equal(getState().portfolioProfile, null);
+  assert.equal(mixName(getState().portfolio, getState().portfolioProfile), "Your own mix");
+
+  // A mix the person built by hand on another device has no name: this device's old name must not stick to it.
+  await freshBrowser();
+  intake(rajesh);
+  const later = getState().planUpdatedAt + 1000;
+  answer = (call) =>
+    call.method === "GET"
+      ? { status: 200, body: { ok: true, state: { ...planAsSaved(later), portfolio: { icici_nifty: 50, hdfc_corp_bond: 50 }, portfolioProfile: null, portfolioCustom: true } } }
+      : { status: 200, body: { ok: true } };
+  assert.equal(await settle(t, actions.completeAuth({ id: "u4", email: "g@h.co" })), "ok");
+  assert.equal(getState().portfolioProfile, null);
+  assert.equal(getState().portfolioCustom, true);
+});
+
+test("a new plan starts with the split following need, even after the last plan's split was fixed by hand", () => {
+  intake(rajesh);
+  actions.setGoalAmount("child", 1000);
+  assert.equal(getState().goalSharesCustom, true);
+  intake(aarav);
+  assert.equal(getState().goalSharesCustom, false);
+  // So more a month is shared out again, instead of landing on the old fixed parts.
+  const before = { ...getState().goalShares };
+  actions.setSip(getState().monthlySip * 4);
+  assert.notDeepEqual(getState().goalShares, before);
 });

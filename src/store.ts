@@ -93,6 +93,8 @@ export interface AppState {
   /** The account whose saved plan an explicit sign-in asked for and could
       not read. Until a read lands, that plan still wins over local work. */
   owedAccountPlan: string | null;
+  /** The answers "New plan" set aside, put back if the intake is left unfinished. Not part of the plan. */
+  intakeBackup: Pick<AppState, "profile" | "selectedGoalIds" | "onboardingAnswers"> | null;
   /** True while a full-screen overlay (auth sheet, account menu) is open, so
       the copilot bar can step out of its way. Never persisted. */
   modalOpen: boolean;
@@ -186,6 +188,7 @@ const defaults: AppState = {
   user: null,
   planUpdatedAt: 0,
   owedAccountPlan: null,
+  intakeBackup: null,
   modalOpen: false,
   sheet: null,
   focus: null,
@@ -290,9 +293,14 @@ function coercePlan(raw: unknown): Partial<AppState> {
     const v = num(r[k]);
     if (v !== undefined) out[k] = v;
   }
-  for (const k of ["inflationSource", "riskAppetiteSource", "currentGoalId", "portfolioProfile"]) {
+  for (const k of ["inflationSource", "riskAppetiteSource", "currentGoalId"]) {
     const v = str(r[k]);
     if (v !== undefined) out[k] = v;
+  }
+  // A mix made by hand has no ready-made name, and a name the app does not know counts as none.
+  if ("portfolioProfile" in r) {
+    const v = r.portfolioProfile;
+    out.portfolioProfile = typeof v === "string" && Object.prototype.hasOwnProperty.call(MODEL_PORTFOLIOS, v) ? v : null;
   }
   for (const k of ["goalOrderCustom", "goalSharesCustom", "portfolioCustom"]) {
     const v = bool(r[k]);
@@ -515,11 +523,16 @@ export function recommendedPortfolio(
 export const SIGN_IN_TEXT =
   'Sign in to ask questions in your own words. Simple commands like "add a car goal" work without an account.';
 
-let beforeIntake: Pick<AppState, "profile" | "selectedGoalIds" | "onboardingAnswers"> | null = null;
+/** Leaving the intake unfinished puts back the answers "New plan" set aside. */
+function leftIntake(): Partial<AppState> {
+  const kept = state.screen === "onboarding" ? state.intakeBackup : null;
+  if (!kept) return {};
+  return { profile: kept.profile, selectedGoalIds: kept.selectedGoalIds, onboardingAnswers: kept.onboardingAnswers, intakeBackup: null };
+}
 
 // ---- Navigation ----
 export const actions = {
-  goLanding: () => set({ screen: "landing" }),
+  goLanding: () => set({ screen: "landing", ...leftIntake() }),
   goPlan: () => set({ screen: "plan" }),
   /** Show a tab. With `focus`, land on that section of it: the page scrolls
       there and lights it up for a moment (lib/links names the sections). */
@@ -551,7 +564,7 @@ export const actions = {
     // on the heal path and after a reload too.
     const owed = state.owedAccountPlan === user.id;
     const preferServer = !!opts.preferServer || owed;
-    set({ user });
+    set(preferServer ? { user, owedAccountPlan: user.id } : { user });
 
     // A cold serverless function or a paused database must not decide the
     // outcome of a sign-in: retry the read with a little patience, since a
@@ -576,7 +589,10 @@ export const actions = {
         const adopted = coercePlan(result.state);
         // A healed sign-in from the intake shows the account's plan, as the sign-in itself would have.
         const toPlan = owed && state.screen === "onboarding" && (adopted.goals?.length ?? 0) > 0;
-        set({ ...adopted, planUpdatedAt: serverRev, user, owedAccountPlan: null, ...(toPlan ? { screen: "plan" as const } : {}) });
+        // The answers "New plan" set aside survive only when the account's copy is this browser's own
+        // (same stamp: the intake's blanks, synced, then a reload). Any other copy brings its own answers.
+        const intakeBackup = serverRev === state.planUpdatedAt ? state.intakeBackup : null;
+        set({ ...adopted, planUpdatedAt: serverRev, user, owedAccountPlan: null, intakeBackup, ...(toPlan ? { screen: "plan" as const } : {}) });
         syncReady = true;
         void actions.restoreLiveFunds();
         return "ok";
@@ -647,16 +663,15 @@ export const actions = {
 
   startOnboarding: () => {
     // "New plan" over an existing plan: remember its answers, so leaving the intake at once puts them back.
-    beforeIntake = state.goals.length
-      ? { profile: state.profile, selectedGoalIds: state.selectedGoalIds, onboardingAnswers: state.onboardingAnswers }
-      : null;
-    set({ screen: "onboarding", onboardingStepIndex: 0, onboardingAnswers: {}, selectedGoalIds: [], profile: emptyProfile() });
+    const intakeBackup = !state.goals.length
+      ? null
+      : state.screen === "onboarding" && state.intakeBackup
+        ? state.intakeBackup
+        : { profile: state.profile, selectedGoalIds: state.selectedGoalIds, onboardingAnswers: state.onboardingAnswers };
+    set({ screen: "onboarding", onboardingStepIndex: 0, onboardingAnswers: {}, selectedGoalIds: [], profile: emptyProfile(), intakeBackup });
   },
   /** "My plan" on the intake's first screen: back to the plan as it was. */
-  leaveOnboarding: () => {
-    set({ screen: "plan", ...(beforeIntake ?? {}) });
-    beforeIntake = null;
-  },
+  leaveOnboarding: () => set({ screen: "plan", ...leftIntake() }),
 
   setStep: (i: number) => set({ onboardingStepIndex: Math.min(STEPS.length - 1, Math.max(0, Math.round(i) || 0)) }),
 
@@ -699,6 +714,8 @@ export const actions = {
       goalOrder: order,
       goalShares: recommendShares(goals, order, monthlySip, state.inflation, portfolio, p.cashOnHand + p.investedValue),
       goalOrderCustom: false,
+      // A new plan starts with the split following need, even if the last plan's split was fixed by hand.
+      goalSharesCustom: false,
       riskAppetite,
       riskAppetiteSource: "assessed",
       monthlySip,
@@ -712,6 +729,7 @@ export const actions = {
       portfolio,
       portfolioProfile,
       portfolioCustom: false,
+      intakeBackup: null,
       // A freshly built plan always opens on the plan, whatever tab was open.
       screen: "plan",
       tab: "plan",
@@ -753,6 +771,7 @@ export const actions = {
       goalOrder: order,
       goalShares: recommendShares(goals, order, monthlySip, state.inflation, portfolio, profile.cashOnHand + profile.investedValue),
       goalOrderCustom: false,
+      goalSharesCustom: false,
       monthlySip,
       monthlyIncome: profile.takeHome,
       monthlyExpenses: profile.rent + profile.emi + profile.monthlySpend,
@@ -763,6 +782,7 @@ export const actions = {
       portfolio,
       portfolioProfile,
       portfolioCustom: false,
+      intakeBackup: null,
       // A freshly built plan always opens on the plan, whatever tab was open.
       screen: "plan",
       tab: "plan",
@@ -797,7 +817,13 @@ export const actions = {
     for (const id of ids) {
       if (!/^live_\d+$/.test(id) || FUND_MAP[id]) continue;
       const detail = await getLiveSchemeDetail(id.slice(5));
-      if (detail) actions.addLiveFund(fundFromLiveScheme(detail));
+      if (!detail || !detail.name) continue;
+      const f = fundFromLiveScheme(detail);
+      // The plan may have changed while the lookup was out (adopted, signed out).
+      if (f.id !== id || !(id in state.portfolio || id in state.bucket)) continue;
+      registerFund(f);
+      // A lookup is not an edit: the plan keeps its stamp, so an old copy never looks newer than the account's.
+      set({ liveFunds: { ...state.liveFunds, [f.id]: f }, planUpdatedAt: state.planUpdatedAt });
     }
   },
   /** The draft bucket. Curating it never touches the live mix. */
@@ -818,6 +844,14 @@ export const actions = {
       return;
     }
     const rec = recommendedPortfolio(state.goals, riskAppetite);
+    // Goals may have changed since the mix was picked. A lower level never brings a riskier mix, nor a higher one a calmer mix.
+    const ORDER: RiskProfile[] = ["steady", "balanced", "bold"];
+    const cur = state.portfolioProfile ? ORDER.indexOf(state.portfolioProfile) : -1;
+    const next = ORDER.indexOf(rec.profile);
+    if (cur >= 0 && ((riskAppetite <= state.riskAppetite && next > cur) || (riskAppetite >= state.riskAppetite && next < cur))) {
+      set({ riskAppetite, riskAppetiteSource: "user" });
+      return;
+    }
     set({
       riskAppetite,
       riskAppetiteSource: "user",
@@ -869,7 +903,8 @@ export const actions = {
   applyMacroInflation: (annualPct: number) => {
     if (state.inflationSource === "user") return;
     if (!(annualPct > 0) || annualPct > 25) return;
-    set({ inflation: Math.round(annualPct * 10) / 1000, inflationSource: "macro" });
+    // The feed is not an edit by the person: the plan keeps its stamp.
+    set({ inflation: Math.round(annualPct * 10) / 1000, inflationSource: "macro", planUpdatedAt: state.planUpdatedAt });
   },
 
   // ---- Goal-based waterfall: target year, priority, money split ----
