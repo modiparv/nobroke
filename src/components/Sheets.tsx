@@ -25,7 +25,7 @@ function goalLine(o: GoalOutlook): string {
   const year = THIS_YEAR + o.horizonYears;
   if (o.level === "on_track") {
     if (o.reachedMonth !== null) return reachedText(o.reachedMonth);
-    return `Reaches ${inr(o.projected)} by ${year}`;
+    return `Reaches ${inr(o.reach)} by ${year}`;
   }
   return `${inr(Math.abs(o.gap))} short by ${year}`;
 }

@@ -144,3 +144,14 @@ test("the amount is found in a few tries, not by walking every step", () => {
   assert.equal(level(offered), "on_track");
   assert.notEqual(level(offered - 10), "on_track");
 });
+
+test("a goal funded to the rupee carries one figure to print, the goal's own", () => {
+  // The split gives the trip exactly what it needs, rounded up to whole rupees, so it lands a rupee or two over.
+  const item = outlook(base).find((i) => i.id === "travel")!;
+  assert.equal(item.level, "on_track");
+  assert.ok(item.projected > item.need && item.projected - item.need < 5);
+  assert.equal(item.reach, item.need);
+  // A goal that is short prints what it really reaches.
+  const short = outlook(base).find((i) => i.id === "education")!;
+  assert.equal(short.reach, short.projected);
+});

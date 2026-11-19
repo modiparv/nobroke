@@ -3,6 +3,7 @@ import { blendedReturn, computePlan, projectionSeries, requiredCorpus } from "..
 import { GAP_LABEL, gapLevel } from "../lib/gap";
 import { inr } from "../lib/glue";
 import { SHARE_CAP, niceTicks, placeLabels, shareAxis, shareLabel, sharePath, shortName, yearTicks, type Box } from "../lib/goalPaths";
+import { reachFigure } from "../lib/verdict";
 import { goalsByPriority, planInputsForGoal, useStore } from "../store";
 import { sectionLabel } from "../ui";
 import { useChartWidth, useTextMeasure } from "./Chart";
@@ -84,6 +85,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
       const inputs = planInputsForGoal(s, g);
       const points = projectionSeries(inputs, ret);
       const shares = sharePath(points, g.targetToday, s.inflation);
+      const plan = computePlan(inputs);
       return {
         goal: g,
         color: palette[i % palette.length],
@@ -94,9 +96,11 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
         shares,
         need: requiredCorpus(g.targetToday, s.inflation, g.horizonYears),
         projected: points[points.length - 1]?.value ?? 0,
+        // The figure the key prints: the same one the goal's row gives.
+        reach: reachFigure(plan),
         endShare: shares[shares.length - 1]?.share ?? 0,
         endYear: baseYear + Math.round(g.horizonYears),
-        level: gapLevel(computePlan(inputs)),
+        level: gapLevel(plan),
       };
     });
   }, [s, night, baseYear]);
@@ -224,7 +228,7 @@ export default function GoalsChart({ variant = "card" }: { variant?: "card" | "n
   const halo = { paintOrder: "stroke", stroke: tone.ground, strokeWidth: 4, strokeLinejoin: "round" } as const;
 
   const figure = (sr: Series) =>
-    share ? `${shareLabel(sr.endShare)} by ${sr.endYear}` : `${rupees(sr.projected)} of ${rupees(sr.need)} by ${sr.endYear}`;
+    share ? `${shareLabel(sr.endShare)} by ${sr.endYear}` : `${rupees(sr.reach)} of ${rupees(sr.need)} by ${sr.endYear}`;
   const summary = series.map((sr) => `${sr.goal.name}: ${figure(sr)}, ${GAP_LABEL[sr.level].toLowerCase()}.`).join(" ");
 
   // The readout: every goal's figure in the year under the pointer.

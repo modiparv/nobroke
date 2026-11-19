@@ -290,6 +290,11 @@ export function GoalDetail({ g, onDelete }: { g: PlanGoal; onDelete: () => void 
           <textarea
             value={g.notes ?? ""}
             onChange={(e) => actions.setGoalNotes(g.id, e.target.value)}
+            // A browser brings only a textarea's caret into view on focus and
+            // ignores the scroll margin, so the field could stay under the
+            // header. This brings the whole field clear, and moves nothing
+            // when it already is.
+            onFocus={(e) => e.currentTarget.scrollIntoView({ block: "nearest" })}
             rows={3}
             maxLength={2000}
             aria-label={`Notes for ${g.name}`}
