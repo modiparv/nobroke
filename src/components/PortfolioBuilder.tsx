@@ -396,12 +396,12 @@ export default function PortfolioBuilder() {
               </p>
               {/* Ranges, never point estimates (section 5): one plain paragraph. */}
               <p className="num text-pretty text-support text-text-2">
-                In the past this mix grew{" "}
+                This plan assumes this mix grows{" "}
                 <span className="whitespace-nowrap font-medium text-text">
                   {formatPct(band.low, 0)} to {formatPct(band.high, 0)}
                 </span>{" "}
-                a year. ₹1 lakh became {range(band.threeYearLow, band.threeYearHigh)} in 3 years and{" "}
-                {range(band.tenYearLow, band.tenYearHigh)} in 10. The future can be different.
+                a year. At that pace ₹1 lakh becomes {range(band.threeYearLow, band.threeYearHigh)} in 3 years and{" "}
+                {range(band.tenYearLow, band.tenYearHigh)} in 10. These are assumptions, not past returns and not a forecast.
               </p>
             </div>
             {/* A plain fact about this mix, shown only when it applies: a goal

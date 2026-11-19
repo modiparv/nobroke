@@ -69,7 +69,7 @@ export default function Metrics({ r, inputs, goal, inflation, saved, monthly, mo
   // A projected XIRR of nothing is noise, not a number: it appears once money is in.
   const hasXirr = r.totalInvested > 0 && Number.isFinite(r.xirr) && r.xirr !== 0;
   const maths = [
-    { label: "Growth a year", value: formatPct(r.blendedReturn), hint: "A rough yearly average across your mix, from how it grew in the past." },
+    { label: "Growth a year", value: formatPct(r.blendedReturn), hint: "The yearly growth this plan assumes for your mix. It is an assumption, not a forecast." },
     ...(hasXirr ? [{ label: "Your return (XIRR)", value: formatPct(r.xirr), hint: "The yearly return once the timing of each deposit is counted." }] : []),
     { label: "Ups and downs (volatility)", value: formatPct(r.blendedVolatility, 0), hint: "Higher means bigger swings along the way." },
     { label: "Share of your monthly amount", value: `${Math.round(monthlyShare * 100)}%`, hint: `Of the ${formatINR(monthlyPool)} you add every month.` },

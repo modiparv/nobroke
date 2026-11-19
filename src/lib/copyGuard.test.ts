@@ -54,3 +54,16 @@ test("no screen says a mix fits the person, and the copilot cannot re-tune the m
 test("no screen calls what the app shows a recommendation, or says a mix is matched to the person", () => {
   assertAbsent(/every recommendation|recommendations stay|matched to (your|the) risk|good fits for your/i, "The app shows arithmetic and choices, not recommendations.");
 });
+
+test("the ready-made mixes are built from kinds of fund, never named schemes", () => {
+  const funds = readFileSync(`${root}src/lib/funds.ts`, "utf8");
+  const names = [...funds.matchAll(/name: "([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(names.length >= 12, "the fund list should be readable here");
+  for (const name of names) {
+    assert.doesNotMatch(name, /parag|nippon|icici|mirae|quant|hdfc|sbi|axis|kotak|uti|tata|aditya|birla|dsp|franklin|bandhan|motilal|edelweiss|invesco|canara|sundaram/i, `"${name}" names a fund house. A mix must list kinds of fund, not schemes.`);
+  }
+});
+
+test("no screen presents an assumption as past returns", () => {
+  assertAbsent(/in the past this mix|how it grew in the past/i, "The growth range is an assumption, not a record of past returns.");
+});
