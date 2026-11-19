@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { inr } from "../lib/glue";
-import { RUNWAY_COMFORT_MONTHS, RUNWAY_FLOOR_MONTHS, runwayMonths } from "../lib/runway";
+import { RUNWAY_COMFORT_MONTHS, RUNWAY_FLOOR_MONTHS, runwayLabel, runwayMonths } from "../lib/runway";
 import { actions, holdingsTotal, useStore } from "../store";
 import { btnGhost } from "../ui";
 
@@ -30,8 +30,8 @@ export default function AdvisorNote() {
   const band = `${RUNWAY_FLOOR_MONTHS} to ${RUNWAY_COMFORT_MONTHS} months`;
 
   if (coverMonths != null && coverMonths < RUNWAY_FLOOR_MONTHS) {
-    const whole = Math.floor(coverMonths);
-    const cover = coverMonths < 1 ? "under a month" : `only ${whole} ${whole === 1 ? "month" : "months"}`;
+    // The same figure the band shows as "Cash lasts", so the two never disagree.
+    const cover = coverMonths < 1 ? "under a month" : runwayLabel(coverMonths);
     notes.push({
       id: "emergency",
       text: `Your cash covers ${cover} of expenses. The plan looks for ${band} in the bank, which is ${inr(RUNWAY_FLOOR_MONTHS * s.monthlyExpenses)} to ${inr(RUNWAY_COMFORT_MONTHS * s.monthlyExpenses)}.`,
@@ -53,7 +53,7 @@ export default function AdvisorNote() {
   if (coverMonths != null && coverMonths > 8 && s.currentSavings > holdingsTotal(s)) {
     notes.push({
       id: "cash_drag",
-      text: `Your cash covers ${coverMonths >= 12 ? "more than 12" : Math.floor(coverMonths)} months of expenses. The plan looks for ${band}. Cash buys a little less each year as prices rise.`,
+      text: `Your cash covers ${coverMonths >= 12 ? "more than 12 months" : runwayLabel(coverMonths)} of expenses. The plan looks for ${band}. Cash buys a little less each year as prices rise.`,
     });
   }
 
