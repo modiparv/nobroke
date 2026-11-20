@@ -38,7 +38,7 @@ const OFFERINGS = [
     title: "A plan built from real numbers",
     text: "Income, spending, what you hold, your goals. Every answer shapes the plan, and the plan shows its work.",
   },
-  { title: "One portfolio funds every goal", text: "You choose one mix. It carries the house, the wedding and the retirement together." },
+  { title: "One portfolio funds every goal", text: "One mix carries the house, the wedding and the retirement together. It is yours to change." },
   { title: "Ask. It runs the numbers.", text: "Change the plan in plain words and every number recomputes on the spot." },
 ];
 
@@ -305,16 +305,21 @@ export default function Landing() {
   // intake clears the answers it is about to ask for again.
   const hasPlan = s.goals.length > 0;
   const start = hasPlan ? actions.goPlan : signedIn ? afterAuth : actions.startOnboarding;
-  const startLabel = hasPlan || signedIn ? "Go to my plan" : "Start your plan";
+  const startLabel = hasPlan ? "Go to my plan" : "Start your plan";
 
   // One main button in view at a time: the header carries it only while the
-  // hero's own button and the closing one are both out of view.
+  // hero's own button and the closing one are both out of view. The footer
+  // counts with the closing button: on a short phone it is taller than the
+  // screen, and the header's button must not come back under it.
   const heroButton = useRef<HTMLButtonElement | null>(null);
   const closingButton = useRef<HTMLButtonElement | null>(null);
+  const footer = useRef<HTMLElement | null>(null);
   const [ownButtonInView, setOwnButtonInView] = useState(true);
+  // The header's button is never taken away from under a keyboard's focus.
+  const [headerButtonFocused, setHeaderButtonFocused] = useState(false);
   useEffect(() => {
-    const buttons = [heroButton.current, closingButton.current].filter((el): el is HTMLButtonElement => el !== null);
-    if (buttons.length === 0) return;
+    const watched = [heroButton.current, closingButton.current, footer.current].filter((el): el is HTMLElement => el !== null);
+    if (watched.length === 0) return;
     if (typeof IntersectionObserver === "undefined") {
       setOwnButtonInView(false);
       return;
@@ -330,7 +335,7 @@ export default function Landing() {
       },
       { rootMargin: "-56px 0px 0px 0px" },
     );
-    for (const el of buttons) observer.observe(el);
+    for (const el of watched) observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
@@ -340,8 +345,13 @@ export default function Landing() {
         <div className={`${container} flex h-14 items-center justify-between`}>
           <Logo />
           <div className="flex items-center gap-1">
-            {!ownButtonInView && (
-              <button className={`${mainButton} h-11 px-4 text-support`} onClick={start}>
+            {(!ownButtonInView || headerButtonFocused) && (
+              <button
+                className={`${mainButton} h-11 px-4 text-support`}
+                onClick={start}
+                onFocus={() => setHeaderButtonFocused(true)}
+                onBlur={() => setHeaderButtonFocused(false)}
+              >
                 {startLabel}
               </button>
             )}
@@ -472,15 +482,19 @@ export default function Landing() {
             <h2 id="start-with-what-you-have" className="text-balance text-2xl font-medium tracking-[-0.02em] text-on-band sm:text-3xl">
               Start with what you have.
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-body text-on-band-2">Five short sections. A plan that shows its work.</p>
-            <button ref={closingButton} className={`${mainButton} mt-8 h-[3.25rem] px-8 text-body`} onClick={start}>
-              {hasPlan || signedIn ? startLabel : "Start now"}
+            <p className="mx-auto mt-2 max-w-md text-balance text-body text-on-band-2">Five short sections. A plan that shows its work.</p>
+            <button
+              ref={closingButton}
+              className={`${mainButton} mt-8 h-[3.25rem] px-8 text-body focus-visible:outline-on-band`}
+              onClick={start}
+            >
+              {hasPlan ? startLabel : "Start now"}
             </button>
           </div>
         </section>
       </main>
 
-      <footer>
+      <footer ref={footer}>
         <div className={`${container} py-12`}>
           <div className="grid gap-8 sm:grid-cols-[1fr_auto_auto] sm:gap-20">
             <div>
@@ -492,7 +506,7 @@ export default function Landing() {
               <ul className="mt-1 text-support">
                 <li>
                   <button type="button" onClick={start} className={footerLink}>
-                    {hasPlan || signedIn ? "My plan" : "Start"}
+                    {hasPlan ? "My plan" : "Start"}
                   </button>
                 </li>
               </ul>
@@ -517,8 +531,8 @@ export default function Landing() {
           </div>
           <div className="mt-8 border-t border-line pt-6">
             <p className="max-w-2xl text-support text-text-2">
-              NoBroke is an early prototype and is not a SEBI-registered investment adviser. Projections are
-              illustrative, use simplified assumptions, and are not investment advice.
+              NoBroke is an early prototype. It is not a SEBI-registered investment adviser and does not give
+              investment advice. Projections are illustrative and use simplified assumptions.
             </p>
           </div>
         </div>

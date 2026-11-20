@@ -81,3 +81,9 @@ test("no screen and no link preview says NoBroke grows money, or calls an assump
 test("no screen uses the word pace for growth", () => {
   assertAbsent(/\bpace\b/i, "The brief replaces pace with growth or rate.");
 });
+
+test("the landing page still says what NoBroke is not", () => {
+  // The page has been rebuilt more than once. This line must survive every rebuild.
+  const page = readFileSync(`${root}src/components/Landing.tsx`, "utf8").replace(/\s+/g, " ");
+  assert.match(page, /not a SEBI-registered investment adviser and does not give investment advice/);
+});
