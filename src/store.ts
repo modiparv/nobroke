@@ -1030,7 +1030,7 @@ export const actions = {
     const t = text.trim();
     if (!t || state.chatTyping) return;
     const history: ChatMessage[] = [...state.chat, { role: "user", text: t }];
-    // No account, no request: the plan stays in this browser, as the landing page says.
+    // No account, no request: the plan stays in this browser.
     if (!state.user) {
       set({ chat: [...history, { role: "ai", text: SIGN_IN_TEXT }] });
       return;

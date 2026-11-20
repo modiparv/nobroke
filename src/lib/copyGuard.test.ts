@@ -52,7 +52,7 @@ test("no screen says a mix fits the person, and the copilot cannot re-tune the m
 });
 
 test("no screen calls what the app shows a recommendation, or says a mix is matched to the person", () => {
-  assertAbsent(/every recommendation|recommendations stay|matched to (your|the) risk|good fits for your/i, "The app shows arithmetic and choices, not recommendations.");
+  assertAbsent(/every recommendation|recommendations stay|(matched|tuned) to (your|the) (risk|horizon)|good fits for your/i, "The app shows arithmetic and choices, not recommendations.");
 });
 
 test("the ready-made mixes are built from kinds of fund, never named schemes", () => {
@@ -80,4 +80,10 @@ test("no screen and no link preview says NoBroke grows money, or calls an assump
 
 test("no screen uses the word pace for growth", () => {
   assertAbsent(/\bpace\b/i, "The brief replaces pace with growth or rate.");
+});
+
+test("the landing page still says what NoBroke is not", () => {
+  // The page has been rebuilt more than once. This line must survive every rebuild.
+  const page = readFileSync(`${root}src/components/Landing.tsx`, "utf8").replace(/\s+/g, " ");
+  assert.match(page, /not a SEBI-registered investment adviser and does not give investment advice/);
 });

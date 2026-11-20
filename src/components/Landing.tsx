@@ -7,10 +7,11 @@ import Logo from "./Logo";
 import SupportPill from "./SupportPill";
 
 /**
- * Landing: one sheet of ruled paper. The promise, one worked example drawn
- * the way the product draws a plan, and three plain facts about who is
- * behind NoBroke, what it is, and where a plan is kept. Under 150 words, so
- * every line has to be true and has to earn its place.
+ * Landing: ruled paper from top to bottom. First the promise and one worked
+ * example, drawn the way the product draws a plan. Below that, the page the
+ * product has always had: what it does, who does what between the person and
+ * the engine, how a plan is layered, and one more way in. Every claim is
+ * scoped to what the product does today.
  */
 
 const FOUNDER_LINKEDIN = "https://www.linkedin.com/in/parv-modi-3008p/";
@@ -29,6 +30,110 @@ const container = "mx-auto max-w-page px-4 sm:px-6";
 // One pair of columns down the whole page: words on the left, the thing
 // itself on the right.
 const columns = "lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16";
+
+// One sentence per row: the page is scanned, not read.
+const OFFERINGS = [
+  { title: "See everything you own", text: "Cash, mutual funds, FDs, gold, EPF. One clean view of your wealth, today." },
+  {
+    title: "A plan built from real numbers",
+    text: "Income, spending, what you hold, your goals. Every answer shapes the plan, and the plan shows its work.",
+  },
+  { title: "One portfolio funds every goal", text: "One mix carries the house, the wedding and the retirement together. It is yours to change." },
+  { title: "Ask. It runs the numbers.", text: "Change the plan in plain words and every number recomputes on the spot." },
+];
+
+/** The division of labour as a plain two-column ledger. The AI column states
+ *  only what the engine truly does. */
+const HUMAN_ROWS = [
+  "Chooses the goals that matter",
+  "Sets the risk you can live with",
+  "Sees the life behind the numbers",
+  "Makes the final call, always",
+];
+const AI_ROWS = [
+  "Recomputes every number in seconds",
+  "Prices inflation into every target",
+  "Shows what each mix does to every goal",
+  "Answers from your plan, instantly",
+];
+
+/** Line art for the layer cards: quiet hairlines with the blue doing only
+ *  the load-bearing stroke, drawn from tokens. The words inside the drawings
+ *  are part of the picture, so they are hidden from screen readers. */
+const LAYERS = [
+  {
+    title: "Protect",
+    body: "A cushion check first: if cash covers under three months of expenses, the plan says so. Risk is read from your answers, then handed to you.",
+    art: (
+      <div className="relative" aria-hidden>
+        <div className="absolute -bottom-4 left-1/2 h-10 w-40 -translate-x-1/2 rounded-xl border border-line bg-surface" />
+        <div className="absolute -bottom-2 left-1/2 h-10 w-44 -translate-x-1/2 rounded-xl border border-line bg-surface" />
+        <div className="relative flex h-11 w-48 items-center justify-center gap-2 rounded-xl border border-line-2 bg-surface">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--accent-text))" strokeWidth="1.6">
+            <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
+          </svg>
+          <span className="text-support font-medium text-text-2">Safety net</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "Plan",
+    body: "Every goal gets a target in today's money, a date, and the monthly it truly needs. Inflation is priced in.",
+    art: (
+      <div className="flex flex-col items-center gap-1" aria-hidden>
+        <span className="text-support font-medium text-text-2">Goals</span>
+        <svg viewBox="0 0 200 78" className="w-44 max-w-full text-text-2">
+          <path d="M22 74 A 78 78 0 0 1 178 74" fill="none" stroke="rgb(var(--text-3))" strokeDasharray="3 4" />
+          <g fill="rgb(var(--surface))" stroke="rgb(var(--accent-text))">
+            <circle cx="46" cy="45" r="13" />
+            <circle cx="100" cy="20" r="13" />
+            <circle cx="154" cy="45" r="13" />
+          </g>
+          <g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M41 49v-5l5-4 5 4v5h-10z" />
+            <path d="M100 25c-1.4-2.2-5-1.9-5 .8 0 2 2.9 3.7 5 5.2 2.1-1.5 5-3.2 5-5.2 0-2.7-3.6-3-5-.8z" />
+            <path d="M148 44l6-3 6 3-6 3-6-3zM158 46v4" />
+          </g>
+        </svg>
+      </div>
+    ),
+  },
+  {
+    title: "Prosper",
+    body: "One mix carries every goal. Projections show the arithmetic, gap included.",
+    art: (
+      <svg viewBox="0 0 220 120" className="w-52 max-w-full" aria-hidden>
+        <g stroke="rgb(var(--line))" strokeWidth="1">
+          <line x1="10" y1="10" x2="10" y2="110" />
+          <line x1="60" y1="10" x2="60" y2="110" />
+          <line x1="110" y1="10" x2="110" y2="110" />
+          <line x1="160" y1="10" x2="160" y2="110" />
+          <line x1="210" y1="10" x2="210" y2="110" />
+          <line x1="10" y1="35" x2="210" y2="35" />
+          <line x1="10" y1="60" x2="210" y2="60" />
+          <line x1="10" y1="85" x2="210" y2="85" />
+          <line x1="10" y1="110" x2="210" y2="110" />
+        </g>
+        <polyline
+          points="10,105 30,98 50,100 70,88 90,90 110,78 130,72 150,60 170,50 190,35 210,18"
+          fill="none"
+          stroke="rgb(var(--accent-text))"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <circle cx="210" cy="18" r="3.5" fill="rgb(var(--accent-text))" />
+      </svg>
+    ),
+  },
+];
+
+// The lower sections' two text styles: a small label in the page's blue ink,
+// and the line under it.
+const sectionMark = "text-support font-medium text-accent";
+const sectionTitle = "text-balance text-2xl font-medium leading-[1.15] tracking-[-0.02em] text-text sm:text-3xl";
+const footerLink =
+  "inline-flex h-11 items-center text-text-2 underline-offset-4 transition hover:text-text hover:underline";
 
 /**
  * Follows `target`, easing from the numbers on screen to the new ones. It
@@ -200,23 +305,37 @@ export default function Landing() {
   // intake clears the answers it is about to ask for again.
   const hasPlan = s.goals.length > 0;
   const start = hasPlan ? actions.goPlan : signedIn ? afterAuth : actions.startOnboarding;
-  const startLabel = hasPlan || signedIn ? "Go to my plan" : "Start your plan";
+  const startLabel = hasPlan ? "Go to my plan" : "Start your plan";
 
-  // One main button in view at a time: the header carries it only once the
-  // hero's own button has scrolled away under the header.
+  // One main button in view at a time: the header carries it only while the
+  // hero's own button and the closing one are both out of view. The footer
+  // counts with the closing button: on a short phone it is taller than the
+  // screen, and the header's button must not come back under it.
   const heroButton = useRef<HTMLButtonElement | null>(null);
-  const [heroButtonInView, setHeroButtonInView] = useState(true);
+  const closingButton = useRef<HTMLButtonElement | null>(null);
+  const footer = useRef<HTMLElement | null>(null);
+  const [ownButtonInView, setOwnButtonInView] = useState(true);
+  // The header's button is never taken away from under a keyboard's focus.
+  const [headerButtonFocused, setHeaderButtonFocused] = useState(false);
   useEffect(() => {
-    const el = heroButton.current;
-    if (!el) return;
+    const watched = [heroButton.current, closingButton.current, footer.current].filter((el): el is HTMLElement => el !== null);
+    if (watched.length === 0) return;
     if (typeof IntersectionObserver === "undefined") {
-      setHeroButtonInView(false);
+      setOwnButtonInView(false);
       return;
     }
-    const observer = new IntersectionObserver(([entry]) => setHeroButtonInView(entry.isIntersecting), {
-      rootMargin: "-56px 0px 0px 0px",
-    });
-    observer.observe(el);
+    const inView = new Set<Element>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) inView.add(entry.target);
+          else inView.delete(entry.target);
+        }
+        setOwnButtonInView(inView.size > 0);
+      },
+      { rootMargin: "-56px 0px 0px 0px" },
+    );
+    for (const el of watched) observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
@@ -226,8 +345,13 @@ export default function Landing() {
         <div className={`${container} flex h-14 items-center justify-between`}>
           <Logo />
           <div className="flex items-center gap-1">
-            {!heroButtonInView && (
-              <button className={`${mainButton} h-11 px-4 text-support`} onClick={start}>
+            {(!ownButtonInView || headerButtonFocused) && (
+              <button
+                className={`${mainButton} h-11 px-4 text-support`}
+                onClick={start}
+                onFocus={() => setHeaderButtonFocused(true)}
+                onBlur={() => setHeaderButtonFocused(false)}
+              >
                 {startLabel}
               </button>
             )}
@@ -245,7 +369,7 @@ export default function Landing() {
       <main>
         {/* The sheet: warm paper ruled in blue ink, the promise on the left
             and the worked example on the right. */}
-        <section className="paper-grid">
+        <section className="paper-grid border-b border-line">
           <div className={`${container} grid gap-10 py-10 sm:py-14 lg:items-center lg:py-20 ${columns}`}>
             <div>
               <h1 className="text-balance text-[2.5rem] font-medium leading-[1.05] tracking-[-0.03em] text-text sm:text-[3rem] lg:text-[3.75rem] xl:text-[4.5rem]">
@@ -266,64 +390,151 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Three plain facts, set as a ledger on the brand navy: the question
-            on the left, the answer on the right. The page's one deep band,
-            left plain so nothing runs behind the reading text. */}
-        <section aria-label="About NoBroke" className="bg-band">
-          <div className={`${container} py-6 sm:py-10`}>
-            <dl className="divide-y divide-on-band-3/40">
-              <div className={`grid gap-1 py-5 lg:items-baseline ${columns}`}>
-                <dt className="text-section font-medium text-on-band lg:text-headline">Founder</dt>
-                <dd className="flex flex-wrap items-center gap-x-4 text-body text-on-band-2">
-                  <span className="text-on-band">Parv Modi</span>
+        {/* What it does: a ledger, not a brochure. Row by row, hairline by
+            hairline, each entry marked with the blue index square. */}
+        <section aria-labelledby="what-it-does" className={`${container} py-14 sm:py-20`}>
+          <h2 id="what-it-does" className={sectionMark}>
+            What it does
+          </h2>
+          <div className="mt-5 border-t border-line">
+            {OFFERINGS.map((o) => (
+              <article
+                key={o.title}
+                className="grid gap-3 border-b border-line py-7 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-10 sm:py-9"
+              >
+                <h3 className="flex items-baseline gap-3 text-headline font-medium text-text">
+                  <span aria-hidden className="relative top-[-2px] inline-block h-2 w-2 flex-none bg-accent" />
+                  {o.title}
+                </h3>
+                <p className="max-w-xl text-prose text-text-2">{o.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* Human + AI: a plain two-column ledger. No circles, no theatre. The
+            white table lifts off the warm paper on its own. */}
+        <section aria-labelledby="human-and-ai" className="border-y border-line">
+          <div className={`${container} py-14 sm:py-20`}>
+            <div className="text-center">
+              <p className={sectionMark}>Human + AI</p>
+              <h2 id="human-and-ai" className={`mx-auto mt-3 max-w-2xl ${sectionTitle}`}>
+                Your judgment, carried by numbers that never sleep.
+              </h2>
+            </div>
+            <div className="mx-auto mt-10 grid max-w-3xl border border-line bg-surface sm:grid-cols-2">
+              <div className="p-6 max-sm:border-b max-sm:border-line sm:border-r sm:border-line sm:p-8">
+                <h3 className="text-support font-medium text-text">Human judgment</h3>
+                <ul className="mt-3">
+                  {HUMAN_ROWS.map((r) => (
+                    <li key={r} className="border-b border-line py-3 text-prose text-text-2 last:border-b-0">
+                      {r}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="p-6 sm:p-8">
+                <h3 className="text-support font-medium text-text">NoBroke AI</h3>
+                <ul className="mt-3">
+                  {AI_ROWS.map((r) => (
+                    <li key={r} className="border-b border-line py-3 text-prose text-text-2 last:border-b-0">
+                      {r}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <p className="mt-5 text-center text-support text-text-2">
+              Where the two meet, we call it{" "}
+              <span className="ml-0.5 inline-flex items-baseline gap-1.5 whitespace-nowrap font-medium text-text">
+                <span aria-hidden className="relative top-[-1px] inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+                Goal Intelligence
+              </span>
+              .
+            </p>
+          </div>
+        </section>
+
+        <section aria-labelledby="our-philosophy" className={`${container} py-14 sm:py-20`}>
+          <div className="text-center">
+            <p className={sectionMark}>Our philosophy</p>
+            <h2 id="our-philosophy" className={`mt-3 ${sectionTitle}`}>
+              We plan in lifetimes, not market cycles.
+            </h2>
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {LAYERS.map((l, idx) => (
+              <div key={l.title} className="overflow-hidden rounded-card border border-line bg-surface">
+                <div className="paper-grid flex h-44 items-center justify-center border-b border-line">{l.art}</div>
+                <div className="p-5">
+                  <p className="num text-support font-medium text-accent">Layer {idx + 1}</p>
+                  <h3 className="mt-2 text-section font-medium text-text">{l.title}</h3>
+                  <p className="mt-2 text-body text-text-2">{l.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* The one deep moment: brand navy on ruled paper, never black. */}
+        <section aria-labelledby="start-with-what-you-have" className="paper-grid-deep">
+          <div className={`${container} py-16 text-center sm:py-24`}>
+            <h2 id="start-with-what-you-have" className="text-balance text-2xl font-medium tracking-[-0.02em] text-on-band sm:text-3xl">
+              Start with what you have.
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-balance text-body text-on-band-2">Five short sections. A plan that shows its work.</p>
+            <button
+              ref={closingButton}
+              className={`${mainButton} mt-8 h-[3.25rem] px-8 text-body focus-visible:outline-on-band`}
+              onClick={start}
+            >
+              {hasPlan ? startLabel : "Start now"}
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <footer ref={footer}>
+        <div className={`${container} py-12`}>
+          <div className="grid gap-8 sm:grid-cols-[1fr_auto_auto] sm:gap-20">
+            <div>
+              <Logo />
+              <p className="mt-3 max-w-xs text-support text-text-2">Wealth, minus the noise. Built in Bharat.</p>
+            </div>
+            <div>
+              <h2 className="text-support font-medium text-text">Product</h2>
+              <ul className="mt-1 text-support">
+                <li>
+                  <button type="button" onClick={start} className={footerLink}>
+                    {hasPlan ? "My plan" : "Start"}
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h2 className="text-support font-medium text-text">About</h2>
+              <ul className="mt-1 text-support">
+                <li className="flex h-11 items-center text-text-2">Parv Modi · Founder</li>
+                <li>
                   <a
                     href={FOUNDER_LINKEDIN}
                     target="_blank"
                     rel="noreferrer"
                     aria-label="Parv Modi on LinkedIn, opens in a new tab"
-                    className="inline-flex h-11 items-center text-on-band underline decoration-on-band-3 underline-offset-4 transition hover:decoration-on-band focus-visible:outline-on-band"
+                    className={footerLink}
                   >
                     LinkedIn
                   </a>
-                </dd>
-              </div>
-              <div className={`grid gap-2 py-5 lg:items-baseline ${columns}`}>
-                <dt className="text-section font-medium text-on-band lg:text-headline">What it is</dt>
-                <dd className="max-w-[38rem] text-body text-on-band-2">
-                  An early product that shows the arithmetic of your goals. It is not a SEBI-registered investment
-                  adviser and does not give investment advice.
-                </dd>
-              </div>
-              <div className={`grid gap-2 py-5 lg:items-baseline ${columns}`}>
-                <dt className="text-section font-medium text-on-band lg:text-headline">Your data</dt>
-                <dd className="max-w-[38rem] text-body text-on-band-2">
-                  <ul className="space-y-2">
-                    <li>Without an account, your plan stays in your browser.</li>
-                    <li>With one, it is saved to NoBroke's database and follows you to other devices.</li>
-                    <li>
-                      Questions you ask NoBroke AI in your own words are sent with your plan, including goal notes and
-                      holding names, to Groq, the company that runs the AI model.
-                    </li>
-                    <li>Passwords are stored hashed, never as typed.</li>
-                    <li>NoBroke does not connect to your bank or broker and cannot move your money.</li>
-                  </ul>
-                </dd>
-              </div>
-            </dl>
+                </li>
+              </ul>
+            </div>
           </div>
-        </section>
-      </main>
-
-      <footer>
-        <div className={`${container} grid gap-6 py-10 ${columns}`}>
-          <div>
-            <Logo />
-            <p className="mt-3 text-support text-text-2">Wealth, minus the noise. Built in Bharat.</p>
+          <div className="mt-8 border-t border-line pt-6">
+            <p className="max-w-2xl text-support text-text-2">
+              NoBroke is an early prototype. It is not a SEBI-registered investment adviser and does not give
+              investment advice. Projections are illustrative and use simplified assumptions.
+            </p>
           </div>
-          <p className="max-w-[38rem] text-support text-text-2">
-            NoBroke is an early prototype and is not a SEBI-registered investment adviser. Projections are
-            illustrative, use simplified assumptions, and are not investment advice.
-          </p>
         </div>
       </footer>
 
