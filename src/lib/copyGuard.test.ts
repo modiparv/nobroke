@@ -52,7 +52,7 @@ test("no screen says a mix fits the person, and the copilot cannot re-tune the m
 });
 
 test("no screen calls what the app shows a recommendation, or says a mix is matched to the person", () => {
-  assertAbsent(/every recommendation|recommendations stay|matched to (your|the) risk|good fits for your/i, "The app shows arithmetic and choices, not recommendations.");
+  assertAbsent(/every recommendation|recommendations stay|(matched|tuned) to (your|the) (risk|horizon)|good fits for your/i, "The app shows arithmetic and choices, not recommendations.");
 });
 
 test("the ready-made mixes are built from kinds of fund, never named schemes", () => {

@@ -119,7 +119,7 @@ test("a question from someone without an account never leaves the browser", () =
   assert.equal(getState().user, null);
   calls.length = 0;
   actions.submitCopilot("can I retire at 55?");
-  assert.deepEqual(calls, [], "the landing page says the plan stays in the browser without an account");
+  assert.deepEqual(calls, [], "without an account the plan stays in the browser");
   assert.deepEqual(lastReply(), { role: "ai", text: SIGN_IN_TEXT });
   assert.equal(getState().chatTyping, false);
   // The app and the endpoint answer in the same words.
